@@ -10,7 +10,8 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", default="unsafe-development-key-change-me"
 # A clean source extraction is a local-development checkout. Deployments must
 # explicitly set DJANGO_DEBUG=False (see the production checklist in README.md).
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["127.0.0.1", "localhost", "testserver"])
+#ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["127.0.0.1", "localhost", "testserver"])
+ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 INSTALLED_APPS = [

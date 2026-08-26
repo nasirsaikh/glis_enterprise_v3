@@ -90,21 +90,6 @@ ASGI_APPLICATION = "glis.asgi.application"
 #     DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / env("DATABASE_NAME", default="db.sqlite3")}}
 
 
-print("=== VERCEL TEMPLATE DEBUG ===")
-print("BASE_DIR:", BASE_DIR)
-print("templates dir:", BASE_DIR / "templates")
-print("templates exists:", (BASE_DIR / "templates").exists())
-print(
-    "home exists:",
-    (BASE_DIR / "templates" / "public" / "home.html").exists(),
-)
-
-if (BASE_DIR / "templates").exists():
-    print(
-        "template directory contents:",
-        list((BASE_DIR / "templates").iterdir()),
-    )
-
 DATABASE_URL="postgresql://postgres.rrbytxusjypzaqviqcrr:mHIIS7Iy1tLmlI48@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
 db_engine = "postgresql"
 if DATABASE_URL:

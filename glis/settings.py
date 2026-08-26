@@ -3,6 +3,7 @@ import environ
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 env = environ.Env(DJANGO_DEBUG=(bool, True), SECURE_SSL_REDIRECT=(bool, False))
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -63,10 +64,12 @@ MIDDLEWARE = [
     "csp.middleware.CSPMiddleware",
 ]
 
+import os
 ROOT_URLCONF = "glis.urls"
 TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates",
-    "DIRS": [BASE_DIR / "templates"],
+    #"DIRS": [BASE_DIR / "templates"],
+    "DIRS": os.path.join(BASE_DIR, 'templates'),
     "APP_DIRS": True,
     "OPTIONS": {"context_processors": [
         "django.template.context_processors.request", "django.contrib.auth.context_processors.auth",
@@ -74,6 +77,7 @@ TEMPLATES = [{
         "apps.accounts.context_processors.auth_provider_context", "apps.tickets.context_processors.notification_context",
     ]},
 }]
+
 WSGI_APPLICATION = "glis.wsgi.application"
 ASGI_APPLICATION = "glis.asgi.application"
 

@@ -8,18 +8,52 @@ from .models import HeroSection, Page, Service, ServiceCategory, SiteSettings, S
 
 
 def home(request):
-    services = Service.objects.filter(is_active=True).select_related("category")[:9]
+    services_qs = (
+        Service.objects
+        .filter(is_active=True)
+        .select_related("category")
+    )
+
+    services = services_qs[:9]
+
     context = {
-        "hero": HeroSection.load(), "services": services,
-        "service_categories": ServiceCategory.objects.prefetch_related(Prefetch("services", queryset=services))[:6],
-        "statistics": Statistic.objects.filter(is_active=True)[:4],
-        "testimonials": Testimonial.objects.filter(is_active=True)[:3],
+        "hero": HeroSection.load(),
+
+        "services": services,
+
+        "service_categories": (
+            ServiceCategory.objects
+            .prefetch_related(
+                Prefetch(
+                    "services",
+                    queryset=services_qs,
+                )
+            )[:6]
+        ),
+
+        "statistics": Statistic.objects.filter(
+            is_active=True
+        )[:4],
+
+        "testimonials": Testimonial.objects.filter(
+            is_active=True
+        )[:3],
     }
+
     try:
         from apps.knowledge.models import Article
-        context["featured_articles"] = Article.objects.filter(state="published", is_public=True, is_featured=True)[:3]
+
+        context["featured_articles"] = (
+            Article.objects
+            .filter(
+                state="published",
+                is_public=True,
+                is_featured=True,
+            )[:3]
+        )
     except Exception:
         context["featured_articles"] = []
+
     return render(request, "public/home.html", context)
 
 

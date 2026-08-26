@@ -65,8 +65,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "glis.urls"
 TEMPLATES = [{
-    "BACKEND": "django.template.backends.django.DjangoTemplates", "DIRS": [BASE_DIR / "templates"],
-    "APP_DIRS": False,
+    "BACKEND": "django.template.backends.django.DjangoTemplates",
+    "DIRS": [BASE_DIR / "templates"],
+    "APP_DIRS": True,
     "OPTIONS": {"context_processors": [
         "django.template.context_processors.request", "django.contrib.auth.context_processors.auth",
         "django.contrib.messages.context_processors.messages", "apps.cms.context_processors.site_context",
@@ -276,3 +277,9 @@ EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.
 LOGGING = {"version": 1, "disable_existing_loggers": False,
            "handlers": {"console": {"class": "logging.StreamHandler"}},
            "root": {"handlers": ["console"], "level": "INFO"}}
+
+
+import os
+print("BASE_DIR:", BASE_DIR)
+print("Templates dir exists:", os.path.exists(BASE_DIR / 'templates'))
+print("Contents:", os.listdir(BASE_DIR / 'templates') if os.path.exists(BASE_DIR / 'templates') else "N/A")

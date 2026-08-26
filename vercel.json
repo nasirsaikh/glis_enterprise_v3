@@ -1,0 +1,18 @@
+{
+  "builds": [
+    {
+      "src": "glis_enterprise_v3/wsgi.py", 
+      "use": "@vercel/python",
+      "config": {
+        "maxDuration": 15,
+        "includeFiles": "templates/**"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "glis_enterprise_v3/wsgi.py"
+    }
+  ]
+}

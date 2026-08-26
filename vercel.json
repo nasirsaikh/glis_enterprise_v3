@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "**/*.py": {
+      "includeFiles": "{templates/**,static/**,locale/**}"
+    }
+  }
+}

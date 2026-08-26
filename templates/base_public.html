@@ -27,7 +27,7 @@
     <nav class="navbar navbar-expand-xl" aria-label="{% translate 'Primary navigation' %}">
       <div class="container">
         <a class="navbar-brand brand-lockup" href="{% url 'public:home' %}">
-          <img style="height:50px;width:100px" src="{{ hero.hero_image.url }}" alt="">
+          <img style="height:50px;width:100px" src="/api/v1/hero-image/1/" alt="">
           <!-- <span>
             <strong>{{ glis_site.short_name|default:'GLIS' }}</strong>
             <small>
@@ -62,10 +62,14 @@
   <footer class="site-footer" id="contact">
     <div class="container py-5"><div class="row g-5">
       <div class="col-lg-5"><div class="brand-lockup footer-brand">
-        <img style="height:50px;width:100px" src="{{ hero.hero_image.url }}" alt="">
-        <span class="brand-mark"><span></span></span><span>
+        <img style="height:50px;width:100px" src="/api/v1/hero-image/1/" alt="">
+        <!-- <span class="brand-mark"><span></span></span><span>
           <strong>{{ glis_site.short_name|default:'GLIS' }}</strong>
-          <small>{% if LANGUAGE_CODE == 'ar' %}{{ glis_site.tagline_ar|default:'خدمات التأمين، بوضوح وسهولة' }}{% else %}{{ glis_site.tagline_en|default:'Insurance service, made clear' }}{% endif %}</small></span></div><p class="mt-3 footer-summary">{% translate "A secure service layer connecting customers, providers, insurers and support teams across every request." %}</p></div>
+          <small>{% if LANGUAGE_CODE == 'ar' %}{{ glis_site.tagline_ar|default:'خدمات التأمين، بوضوح وسهولة' }}
+            {% else %}{{ glis_site.tagline_en|default:'Insurance service, made clear' }}{% endif %}</small>
+          </span> -->
+        </div>
+        <p class="mt-3 footer-summary">{% translate "A secure service layer connecting customers, providers, insurers and support teams across every request." %}</p></div>
       <div class="col-6 col-lg-2"><h2 class="footer-title">{% translate "Company" %}</h2><a href="#about">{% translate "About" %}</a><a href="#services">{% translate "Services" %}</a><a href="{% url 'knowledge:list' %}">{% translate "Knowledge" %}</a></div>
       <div class="col-6 col-lg-2"><h2 class="footer-title">{% translate "Support" %}</h2><a href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}</a><a href="{% url 'portal:ticket_list' %}">{% translate "Track requests" %}</a><a href="#contact">{% translate "Contact us" %}</a></div>
       <div class="col-lg-3"><h2 class="footer-title">{% translate "Contact" %}</h2><p><i class="bi bi-geo-alt me-2"></i>{% if LANGUAGE_CODE == 'ar' %}{{ glis_site.address_ar|default:'مسقط، سلطنة عُمان' }}{% else %}{{ glis_site.address_en|default:'Muscat, Sultanate of Oman' }}{% endif %}</p><p><i class="bi bi-envelope me-2"></i>{{ glis_site.contact_email|default:'care@glis.example' }}</p><p><i class="bi bi-telephone me-2"></i>{{ glis_site.contact_phone|default:'+968 2400 0000' }}</p></div>

@@ -1744,7 +1744,6 @@ button:focus-visible {
 }
 
 .portal-table thead th {
-    background: #f7f9f8;
     color: #6d7b74;
     text-transform: uppercase;
     letter-spacing: .06em;
@@ -1767,7 +1766,7 @@ button:focus-visible {
 }
 
 .portal-table tbody tr:hover {
-    background: #fbfdfc
+    background: transparent;
 }
 
 .portal-table td>span:not(.status-chip, .priority-chip, .sla-chip, .restricted-label, .avatar) {
@@ -1776,7 +1775,6 @@ button:focus-visible {
 
 .portal-table td>small {
     display: block;
-    color: var(--glis-muted);
     font-size: .59rem;
     margin-top: 3px
 }
@@ -1784,7 +1782,6 @@ button:focus-visible {
 .ticket-link {
     display: flex;
     flex-direction: column;
-    color: var(--glis-text);
     min-width: 170px
 }
 
@@ -1798,7 +1795,6 @@ button:focus-visible {
 
 .ticket-link span {
     font-size: .66rem;
-    color: #526159;
     margin-top: 3px
 }
 
@@ -2961,7 +2957,7 @@ button:focus-visible {
 }
 
 [data-bs-theme=dark] .portal-table thead th {
-    background: #131e18
+    background: transparent;
 }
 
 [data-bs-theme=dark] .comment>div {

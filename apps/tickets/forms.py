@@ -40,12 +40,30 @@ class TicketReviewForm(forms.Form):
     acknowledgment = forms.BooleanField(label=_("I confirm that the information is accurate and may be processed to provide this service."))
 
 
+# class TicketCommentForm(forms.ModelForm):
+#     class Meta:
+#         model = TicketComment
+#         fields = ("body", "is_internal")
+#         widgets = {"body": forms.Textarea(attrs={"class": "form-control richtext-source", "rows": 3, "placeholder": _("Write an update…")}), "is_internal": forms.CheckboxInput(attrs={"class": "form-check-input"})}
+
 class TicketCommentForm(forms.ModelForm):
     class Meta:
         model = TicketComment
-        fields = ("body", "is_internal")
-        widgets = {"body": forms.Textarea(attrs={"class": "form-control richtext-source", "rows": 3, "placeholder": _("Write an update…")}), "is_internal": forms.CheckboxInput(attrs={"class": "form-check-input"})}
+        fields = ["body", "is_internal"]
 
+        widgets = {
+            "body": forms.Textarea(
+                attrs={
+                    "class": "form-control richtext-source",
+                    "rows": 3,
+                    "placeholder": "Write an update…",
+                }
+            ),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["body"].required = False
+        self.fields["body"].widget.attrs.pop("required", None)
 
 class TicketEditForm(forms.ModelForm):
     class Meta:

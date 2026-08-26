@@ -202,10 +202,6 @@ CONTENT_SECURITY_POLICY = {
             "'self'",
         ],
 
-        # Required for Django admin + JSON widget initialization.
-        #
-        # Do NOT add data: here.
-        # We avoid JSONEditor's Ace/code mode instead.
         "script-src": [
             "'self'",
             "'unsafe-inline'",
@@ -214,7 +210,6 @@ CONTENT_SECURITY_POLICY = {
             "https://cdn.plot.ly",
         ],
 
-        # Kept for libraries that legitimately use blob workers.
         "worker-src": [
             "'self'",
             "blob:",
@@ -242,6 +237,7 @@ CONTENT_SECURITY_POLICY = {
 
         "connect-src": [
             "'self'",
+            "https://cdn.jsdelivr.net",
         ],
 
         "frame-ancestors": [
@@ -257,7 +253,6 @@ CONTENT_SECURITY_POLICY = {
         ],
     }
 }
-
 
 AI_PROVIDER = env("AI_PROVIDER", default="mock")
 AI_ENDPOINT = env("AI_ENDPOINT", default="")

@@ -81,20 +81,26 @@ class Category(TimeStampedModel, LocalizedModelMixin):
     default_user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="default_categories", on_delete=models.SET_NULL)
     ai_enabled = models.BooleanField(default=True)
     required_documents = models.JSONField(default=list, blank=True, help_text="Admin-driven attachment definitions used by the ticket form.")
+    comment_attachment_required = models.BooleanField(default=False,help_text="Enable and require attachments when posting comments for this category.",)
+    comment_attachment_max_size_mb = models.PositiveIntegerField(default=5,help_text=("Maximum size in MB for each file uploaded ""with a ticket comment."),)    
+    comment_attachment_max_count = models.PositiveIntegerField(default=5,help_text=("Maximum number of files allowed per comment."),)
+    comment_attachment_extensions = models.CharField(max_length=500,default="pdf,jpg,jpeg,png,doc,docx,xls,xlsx",help_text=("Comma-separated allowed file extensions. ""Example: pdf,jpg,jpeg,png,doc,docx,xls,xlsx"),)
     auto_close_days = models.PositiveSmallIntegerField(default=7)
     reopen_allowed_days = models.PositiveSmallIntegerField(default=14)
     send_initial_email = models.BooleanField(default=True)
     send_update_email = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
 
+    @property
+    def comment_attachment_extensions_list(self):
+        return [f".{extension.strip().lower().lstrip('.')}" for extension in self.comment_attachment_extensions.split(",") if extension.strip()]
     class Meta:
         verbose_name_plural = "Categories"
-        constraints = [models.UniqueConstraint(fields=["product", "code"], name="unique_product_category")]
-        permissions = [("manage_categories", "Can manage categories")]
-
+        constraints = [
+            models.UniqueConstraint(fields=["product", "code"],name="unique_product_category",)]
+        permissions = [("manage_categories","Can manage categories",)]
     def __str__(self):
         return self.name_en
-
 
 def default_pause_statuses():
     return ["pending_customer"]
@@ -319,6 +325,7 @@ class TicketComment(TimeStampedModel):
 
 class TicketAttachment(TimeStampedModel):
     ticket = models.ForeignKey(Ticket, related_name="attachments", on_delete=models.CASCADE)
+    comment = models.ForeignKey(TicketComment,related_name="attachments",on_delete=models.CASCADE,null=True,blank=True,)    
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     file = models.FileField(upload_to="attachments/%Y/%m/", validators=[validate_attachment])
     original_name = models.CharField(max_length=255)
@@ -327,6 +334,8 @@ class TicketAttachment(TimeStampedModel):
     is_restricted = models.BooleanField(default=False)
     scan_status = models.CharField(max_length=20, default="pending", choices=[("pending", "Pending"), ("clean", "Clean"), ("blocked", "Blocked")])
     source_field = models.CharField(max_length=80, blank=True)
+    def __str__(self):
+        return self.original_name    
 
 
 class TicketEvent(models.Model):

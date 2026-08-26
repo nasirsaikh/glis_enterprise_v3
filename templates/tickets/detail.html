@@ -1,224 +1,512 @@
-{% extends 'base_portal.html' %}{% load i18n %}{% block title %}{{ ticket.reference }}{% endblock %}{% block content %}
+{% extends 'base_portal.html' %}
+{% load i18n %}
+
+{% block title %}{{ ticket.reference }}{% endblock %}
+
+{% block content %}
+
 <nav aria-label="breadcrumb">
-<ol class="breadcrumb">
-<li class="breadcrumb-item">
-<a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a>
-</li>
-<li class="breadcrumb-item active">{{ ticket.reference }}</li>
-</ol>
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ ticket.reference }}</li>
+    </ol>
 </nav>
-<div class="ticket-header">
-<div>
-<div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-<span class="ticket-reference">{{ ticket.reference }}</span>
-<span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
-<span class="priority-chip priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span>
-<span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span>{% if ticket.visibility == 'restricted' %}<span class="restricted-label">
-<i class="bi bi-lock-fill">
-</i>{% translate "Restricted" %}</span>{% endif %}{% if ticket.is_sensitive %}<span class="sensitive-label">
-<i class="bi bi-eye-slash">
-</i>{% translate "Sensitive" %}</span>{% endif %}</div>
-<h1>{{ ticket.subject }}</h1>
-<p>{% blocktranslate with date=ticket.created_at|date:"d M Y H:i" requester=ticket.requester.get_full_name|default:ticket.requester.email %}Created {{ date }} by {{ requester }}{% endblocktranslate %}</p>
+
+<div class="panel mb-3">
+    <div class="p-3 p-lg-4">
+        <div class="d-flex flex-column flex-xl-row justify-content-between gap-3">
+            <div class="flex-grow-1">
+                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <span class="ticket-reference">{{ ticket.reference }}</span>
+
+                    {% if ticket.project %}
+                        <span class="group-badge">{{ ticket.project.name_en }}</span>
+                    {% endif %}
+
+                    <span class="priority-chip priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span>
+                    <span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                    <span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span>
+
+                    {% if ticket.visibility == 'restricted' %}
+                        <span class="restricted-label"><i class="bi bi-lock-fill"></i> {% translate "Restricted" %}</span>
+                    {% endif %}
+
+                    {% if ticket.is_sensitive %}
+                        <span class="sensitive-label"><i class="bi bi-eye-slash"></i> {% translate "Sensitive" %}</span>
+                    {% endif %}
+                </div>
+
+                <h1 class="h4 mb-2">{{ ticket.subject }}</h1>
+
+                <div class="text-muted small">
+                    {% blocktranslate with date=ticket.created_at|date:"d M Y, h:i A" requester=ticket.requester.get_full_name|default:ticket.requester.email %}
+                        Logged by {{ requester }} on {{ date }}
+                    {% endblocktranslate %}
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-start gap-2">
+                <a class="btn btn-outline-primary btn-sm" href="{% url 'portal:ticket_list' %}"><i class="bi bi-arrow-left me-1"></i>{% translate "Back" %}</a>
+
+                {% if can_take_over %}
+                    <form action="{% url 'portal:take_over_ticket' ticket.reference %}" method="post">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-primary btn-sm" type="submit"><i class="bi bi-person-check me-1"></i>{% translate "Take over" %}</button>
+                    </form>
+                {% endif %}
+
+                {% if can_assign %}
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#assignmentModal"><i class="bi bi-arrow-left-right me-1"></i>{% translate "Reassign" %}</button>
+                {% endif %}
+
+                {% if ticket.approval_state != 'not_required' %}
+                    <a href="#approval-panel" class="btn btn-outline-primary btn-sm"><i class="bi bi-envelope-check me-1"></i>{% translate "Approval Request" %}</a>
+                {% endif %}
+
+                {% if can_edit %}
+                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal:edit_ticket' ticket.reference %}"><i class="bi bi-pencil me-1"></i>{% translate "Edit" %}</a>
+                {% endif %}
+
+                <div class="dropdown">
+                    <button class="btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots"></i></button>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% if can_share %}
+                            <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#shareModal"><i class="bi bi-box-arrow-up-right me-2"></i>{% translate "Share" %}</button></li>
+                        {% endif %}
+
+                        <li><a class="dropdown-item" href="{% url 'portal:export_tickets' %}?q={{ ticket.reference|urlencode }}"><i class="bi bi-file-earmark-arrow-down me-2"></i>{% translate "Export" %}</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div class="ticket-actions">{% if can_take_over %}<form action="{% url 'portal:take_over_ticket' ticket.reference %}" method="post">{% csrf_token %}<button class="btn btn-warning" type="submit"><i class="bi bi-hand-index-thumb me-2"></i>{% translate "Take over" %}</button></form>{% endif %}{% if can_edit %}<a class="btn btn-outline-primary" href="{% url 'portal:edit_ticket' ticket.reference %}">
-<i class="bi bi-pencil me-2"></i>{% translate "Edit" %}</a>{% endif %}
-{% if can_assign %}<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#assignmentModal"><i class="bi bi-person-plus me-2"></i>{% translate "Assign" %}</button>{% endif %}<div class="dropdown">
-<button class="btn btn-icon" data-bs-toggle="dropdown">
-<i class="bi bi-three-dots">
-</i>
-</button>
-<ul class="dropdown-menu dropdown-menu-end">
-<li>
-{% if can_share %}<button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#shareModal">
-<i class="bi bi-box-arrow-up-right me-2">
-</i>{% translate "Share" %}</button>{% endif %}
-</li>
-<li>
-<a class="dropdown-item" href="{% url 'portal:export_tickets' %}?q={{ ticket.reference|urlencode }}">
-<i class="bi bi-file-earmark-arrow-down me-2">
-</i>{% translate "Export" %}</a>
-</li>
-</ul>
+
+<div class="row g-3 align-items-start">
+
+    <div class="col-12 col-xl-3">
+
+        <section class="panel side-panel mb-3">
+            <h2 class="d-flex align-items-center gap-2 mb-3"><i class="bi bi-card-checklist"></i>{% translate "Request Details" %}</h2>
+
+            {% if dynamic_values %}
+                <dl class="mb-0">
+                    {% for key, value in dynamic_values.items %}
+                        <div>
+                            <dt>{{ key|title }}</dt>
+                            <dd>{{ value|default:"—" }}</dd>
+                        </div>
+                    {% endfor %}
+                </dl>
+            {% else %}
+                <dl class="mb-0">
+                    <div>
+                        <dt>{% translate "Project" %}</dt>
+                        <dd>{{ ticket.project.name_en|default:"—" }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>{% translate "Product" %}</dt>
+                        <dd>{{ ticket.product.name_en|default:"—" }}</dd>
+                    </div>
+
+                    <div>
+                        <dt>{% translate "Category" %}</dt>
+                        <dd>{{ ticket.category.name_en|default:"—" }}</dd>
+                    </div>
+                </dl>
+            {% endif %}
+        </section>
+
+        <section class="panel side-panel mb-3">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="d-flex align-items-center gap-2 mb-0"><i class="bi bi-person-check"></i>{% translate "Assignment" %}</h2>
+
+                {% if can_assign %}
+                    <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="modal" data-bs-target="#assignmentModal">{% translate "Manage" %}</button>
+                {% endif %}
+            </div>
+
+            <dl class="mb-0 mt-2">
+                <div>
+                    <dt>{% translate "Assigned to" %}</dt>
+                    <dd>
+                        {% for assignee in ticket.assignees.all %}
+                            <span class="group-badge">{{ assignee.get_full_name|default:assignee.email }}</span>
+                        {% empty %}
+                            <span class="text-muted">{% translate "Unassigned" %}</span>
+                        {% endfor %}
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>{% translate "Group" %}</dt>
+                    <dd>
+                        {% for group in ticket.groups.all %}
+                            <span class="group-badge">{{ group.name }}</span>
+                        {% empty %}
+                            <span class="text-muted">{% translate "Unassigned" %}</span>
+                        {% endfor %}
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>{% translate "Resolution due" %}</dt>
+                    <dd>{{ ticket.resolution_due_at|date:"d M Y h:i A"|default:"—" }}</dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="panel side-panel mb-3">
+            <h2 class="d-flex align-items-center gap-2"><i class="bi bi-info-circle"></i>{% translate "Ticket Information" %}</h2>
+
+            <dl class="mb-0">
+                <div>
+                    <dt>{% translate "Created" %}</dt>
+                    <dd>{{ ticket.created_at|date:"d M Y h:i A" }}</dd>
+                </div>
+
+                <div>
+                    <dt>{% translate "Status" %}</dt>
+                    <dd><span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></dd>
+                </div>
+
+                <div>
+                    <dt>{% translate "Priority" %}</dt>
+                    <dd><span class="priority-chip priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></dd>
+                </div>
+
+                <div>
+                    <dt>{% translate "Messages" %}</dt>
+                    <dd>{{ comments|length }}</dd>
+                </div>
+
+                <div>
+                    <dt>{% translate "Files" %}</dt>
+                    <dd>{{ ticket.attachments.count }}</dd>
+                </div>
+            </dl>
+        </section>
+
+    </div>
+
+    <div class="col-12 col-xl-6">
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <h2 class="d-flex align-items-center gap-2"><i class="bi bi-chat-left-text"></i>{% translate "Conversation" %}</h2>
+                    <p>{{ comments|length }} {% translate "updates" %}</p>
+                </div>
+
+                <span class="text-muted small"><i class="bi bi-paperclip me-1"></i>{{ ticket.attachments.count }} {% translate "files" %}</span>
+            </div>
+
+            <div class="p-3 p-lg-4 border-bottom">
+                <div class="d-flex gap-3">
+                    <span class="avatar">{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span>
+
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="d-flex flex-wrap justify-content-between gap-2">
+                            <div>
+                                <strong class="d-block">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong>
+                                <small class="text-muted">{% translate "Requester" %}</small>
+                            </div>
+
+                            <small class="text-muted">{{ ticket.created_at|date:"d M Y, h:i A" }}</small>
+                        </div>
+
+                        <div class="prose rich-content mt-3">{{ ticket.description|safe }}</div>
+
+                        <div class="attachment-list mt-3">
+                            {% for attachment in ticket.attachments.all %}
+                                {% if not attachment.comment_id %}
+                                    <a href="{% url 'portal:download_attachment' attachment.pk %}">
+                                        <span class="file-icon"><i class="bi bi-file-earmark"></i></span>
+
+                                        <span class="flex-grow-1 overflow-hidden">
+                                            <strong class="d-block text-truncate">{{ attachment.original_name }}</strong>
+                                            <small>{{ attachment.size|filesizeformat }} · {{ attachment.created_at|date:"d M Y, h:i A" }} · {{ attachment.scan_status|title }}</small>
+                                        </span>
+
+                                        <i class="bi bi-download ms-auto"></i>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <div class="text-end mt-2"><small class="text-muted">{{ ticket.created_at|date:"h:i A" }}</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="comment-list" class="comment-list p-3 p-lg-4">
+                {% for comment in comments %}
+                    {% include "tickets/partials/comment.html" %}
+                {% empty %}
+                    <div id="no-comments" class="text-center text-muted py-5">
+                        <i class="bi bi-chat-square fs-3 d-block mb-2"></i>
+                        <strong class="d-block">{% translate "No conversation yet" %}</strong>
+                        <span class="small">{% translate "Add the first update below." %}</span>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="border-top p-3 p-lg-4">
+                {% include "tickets/partials/comment_form.html" %}
+            </div>
+
+        </section>
+
+    </div>
+
+    <div class="col-12 col-xl-3">
+
+        <section class="panel side-panel mb-3">
+            <div class="d-flex justify-content-between align-items-center gap-2">
+                <h2 class="d-flex align-items-center gap-2 mb-0"><i class="bi bi-hourglass-split"></i>{% translate "SLA Time Left" %}</h2>
+                <span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span>
+            </div>
+
+            <div class="sla-meter mt-3"><span class="sla-{{ ticket.sla_state }}"></span></div>
+
+            <dl class="mb-0 mt-2">
+                <div>
+                    <dt>{% translate "First response" %}</dt>
+                    <dd>{{ ticket.first_response_due_at|date:"d M Y h:i A"|default:"—" }}</dd>
+                </div>
+
+                <div>
+                    <dt>{% translate "Resolution due" %}</dt>
+                    <dd>{{ ticket.resolution_due_at|date:"d M Y h:i A"|default:"—" }}</dd>
+                </div>
+
+                <div>
+                    <dt>{% translate "Policy" %}</dt>
+                    <dd>{{ ticket.sla_policy.name|default:"Standard service" }}</dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="panel side-panel mb-3">
+            <h2 class="d-flex align-items-center gap-2"><i class="bi bi-activity"></i>{% translate "Activity" %}</h2>
+
+            <div class="d-flex align-items-end gap-4 mt-3">
+                <div>
+                    <strong class="d-block fs-5">{{ comments|length }}</strong>
+                    <small class="text-muted">{% translate "messages" %}</small>
+                </div>
+
+                <div>
+                    <strong class="d-block fs-5">{{ ticket.attachments.count }}</strong>
+                    <small class="text-muted">{% translate "files" %}</small>
+                </div>
+            </div>
+
+            <hr>
+
+            {% for event in ticket.events.all|slice:":5" %}
+                <div class="d-flex gap-2 py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <i class="bi bi-circle-fill text-muted small mt-1"></i>
+
+                    <div>
+                        <strong class="d-block small">{{ event.summary }}</strong>
+
+                        <small class="text-muted">
+                            {% if event.actor %}
+                                {{ event.actor.get_full_name|default:event.actor.email }} ·
+                            {% endif %}
+
+                            {{ event.created_at|timesince }} {% translate "ago" %}
+                        </small>
+                    </div>
+                </div>
+            {% empty %}
+                <small class="text-muted">{% translate "No additional activity." %}</small>
+            {% endfor %}
+        </section>
+
+        <section class="panel side-panel mb-3">
+            <h2 class="d-flex align-items-center gap-2"><i class="bi bi-people"></i>{% translate "Team" %}</h2>
+
+            {% for group in ticket.groups.all %}
+                <div class="d-flex align-items-center gap-2 mt-3">
+                    <span class="avatar sm">{{ group.name|first|upper }}</span>
+                    <strong class="small">{{ group.name }}</strong>
+                </div>
+            {% empty %}
+                <span class="text-muted small">{% translate "No team assigned" %}</span>
+            {% endfor %}
+
+            {% for assignee in ticket.assignees.all %}
+                <div class="d-flex align-items-center gap-2 mt-3">
+                    <span class="avatar sm">{{ assignee.first_name|first|default:assignee.email|first|upper }}</span>
+
+                    <div>
+                        <strong class="small d-block">{{ assignee.get_full_name|default:assignee.email }}</strong>
+                        <small class="text-muted">{% translate "Assigned staff" %}</small>
+                    </div>
+                </div>
+            {% endfor %}
+        </section>
+
+        {% if ticket.approval_state != 'not_required' %}
+            <section id="approval-panel" class="panel side-panel mb-3">
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                    <h2 class="d-flex align-items-center gap-2 mb-0"><i class="bi bi-check2-square"></i>{% translate "Approvals" %}</h2>
+                    <span class="status-chip status-{{ ticket.approval_state }}">{{ ticket.get_approval_state_display }}</span>
+                </div>
+
+                <div class="mt-3">
+                    {% for approval in ticket.approvals.all %}
+                        <div class="d-flex justify-content-between gap-2 py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                            <div>
+                                <strong class="d-block small">{{ approval.step.sequence }}. {{ approval.step.name }}</strong>
+                                <small class="text-muted">{{ approval.approver.get_full_name|default:approval.approver.email }}</small>
+                            </div>
+
+                            <span class="status-chip status-{{ approval.status }}">{{ approval.get_status_display }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {% for approval in actionable_approvals %}
+                    <form class="mt-3" action="{% url 'portal:decide_ticket_approval' ticket.reference approval.pk %}" method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-2">{{ approval_form.decision }}</div>
+                        <div class="mb-2">{{ approval_form.note }}</div>
+
+                        <button class="btn btn-primary btn-sm w-100" type="submit">{% translate "Record decision" %}</button>
+                    </form>
+                {% endfor %}
+            </section>
+        {% endif %}
+
+        <section class="panel side-panel mb-3">
+            <h2 class="d-flex align-items-center gap-2"><i class="bi bi-person"></i>{% translate "Requester" %}</h2>
+
+            <div class="d-flex align-items-center gap-2 mt-3">
+                <span class="avatar">{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span>
+
+                <div class="overflow-hidden">
+                    <strong class="d-block small text-truncate">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong>
+                    <small class="text-muted text-truncate d-block">{{ ticket.requester.email }}</small>
+                </div>
+            </div>
+        </section>
+
+        {% if ticket.ai_summary or ticket.ai_recommendations %}
+            <section class="panel side-panel mb-3">
+                <h2 class="d-flex align-items-center gap-2"><i class="bi bi-stars"></i>{% translate "AI Insights" %}</h2>
+
+                {% if ticket.ai_summary %}
+                    <p class="small mb-3">{{ ticket.ai_summary }}</p>
+                {% endif %}
+
+                {% if ticket.ai_recommendations %}
+                    <dl class="mb-0">
+                        <div>
+                            <dt>{% translate "Priority" %}</dt>
+                            <dd>{{ ticket.ai_recommendations.suggested_priority|title|default:"—" }}</dd>
+                        </div>
+
+                        <div>
+                            <dt>{% translate "Group" %}</dt>
+                            <dd>{{ ticket.ai_recommendations.suggested_group|default:"—" }}</dd>
+                        </div>
+
+                        <div>
+                            <dt>{% translate "Confidence" %}</dt>
+                            <dd>{{ ticket.ai_recommendations.confidence|default:"—" }}</dd>
+                        </div>
+                    </dl>
+                {% endif %}
+            </section>
+        {% endif %}
+
+    </div>
+
 </div>
+
+{% if can_assign %}
+<div class="modal fade" id="assignmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{% url 'portal:assign_ticket' ticket.reference %}" method="post">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h2 class="modal-title h5">{% translate "Assign groups and staff" %}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="text-muted small">{% translate "A ticket may have multiple groups and multiple staff members." %}</p>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">{% translate "Staff members" %}</label>
+                            {{ assignment_form.users }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">{% translate "Support groups" %}</label>
+                            {{ assignment_form.groups }}
+                        </div>
+                    </div>
+
+                    <label class="form-check mt-3">
+                        {{ assignment_form.replace_existing }}
+                        <span class="form-check-label">{% translate "Replace current assignment" %}</span>
+                    </label>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
+                    <button class="btn btn-primary" type="submit">{% translate "Save assignment" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+{% endif %}
+
+{% if can_share %}
+<div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{% url 'portal:share_ticket' ticket.reference %}" method="post">
+                {% csrf_token %}
+
+                <div class="modal-header">
+                    <h2 class="modal-title h5">{% translate "Share securely" %}</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="small text-muted">{% translate "Only the selected signed-in recipient can open this expiring link." %}</p>
+
+                    <div class="mb-3">
+                        <label class="form-label">{% translate "Recipient" %}</label>
+                        {{ share_form.recipient }}
+                    </div>
+
+                    <div>
+                        <label class="form-label">{% translate "Expires in days" %}</label>
+                        {{ share_form.expires_in_days }}
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-primary" type="submit">{% translate "Create secure link" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
-<div class="row g-4">
-<div class="col-xl-8">
-<section class="panel ticket-tabs">
-<ul class="nav nav-tabs" role="tablist">
-<li class="nav-item">
-<button class="nav-link active" data-bs-toggle="tab" data-bs-target="#details">{% translate "Details" %}</button>
-</li>
-<li class="nav-item">
-<button class="nav-link" data-bs-toggle="tab" data-bs-target="#conversation">{% translate "Conversation" %}<span class="tab-count">{{ comments|length }}</span>
-</button>
-</li>
-<li class="nav-item">
-<button class="nav-link" data-bs-toggle="tab" data-bs-target="#activity">{% translate "Activity" %}</button>
-</li>
-<li class="nav-item">
-<button class="nav-link" data-bs-toggle="tab" data-bs-target="#attachments">{% translate "Attachments" %}<span class="tab-count">{{ ticket.attachments.count }}</span>
-</button>
-</li>
-<li class="nav-item">
-<button class="nav-link" data-bs-toggle="tab" data-bs-target="#ai">
-<i class="bi bi-stars">
-</i>{% translate "AI insights" %}</button>
-</li>
-</ul>
-<div class="tab-content">
-<div class="tab-pane fade show active" id="details">
-<div class="content-block">
-<h2>{% translate "Request description" %}</h2>
-<div class="prose rich-content">{{ ticket.description|safe }}</div>
-</div>{% if dynamic_values %}<div class="content-block">
-<div class="d-flex justify-content-between align-items-center">
-<h2>{% translate "Request information" %}</h2>
-<span class="visibility-note">
-<i class="bi bi-shield-lock">
-</i>{% translate "Permission controlled" %}</span>
-</div>
-<dl class="dynamic-details">{% for key,value in dynamic_values.items %}<div>
-<dt>{{ key|title }}</dt>
-<dd>{{ value|default:"—" }}</dd>
-</div>{% endfor %}</dl>
-</div>{% endif %}</div>
-<div class="tab-pane fade" id="conversation">
-<div id="comment-list" class="comment-list">{% for comment in comments %}{% include 'tickets/partials/comment.html' %}{% empty %}<div class="empty-state compact">
-<i class="bi bi-chat-square">
-</i>
-<strong>{% translate "No conversation yet" %}</strong>
-<span>{% translate "Add the first update below." %}</span>
-</div>{% endfor %}</div>{% include 'tickets/partials/comment_form.html' %}</div>
-<div class="tab-pane fade" id="activity">
-<ol class="timeline">{% for event in ticket.events.all %}<li>
-<span class="timeline-dot">
-</span>
-<div>
-<strong>{{ event.summary }}</strong>
-<small>{% if event.actor %}{{ event.actor.get_full_name|default:event.actor.email }} · {% endif %}{{ event.created_at|timesince }} {% translate "ago" %}</small>
-</div>
-</li>{% empty %}<li>
-<span class="timeline-dot">
-</span>
-<div>
-<strong>{% translate "Ticket created" %}</strong>
-<small>{{ ticket.created_at }}</small>
-</div>
-</li>{% endfor %}</ol>
-</div>
-<div class="tab-pane fade" id="attachments">
-<div class="attachment-list">{% for attachment in ticket.attachments.all %}<a href="{% url 'portal:download_attachment' attachment.pk %}">
-<span class="file-icon">
-<i class="bi bi-file-earmark">
-</i>
-</span>
-<span>
-<strong>{{ attachment.original_name }}</strong>
-<small>{{ attachment.size|filesizeformat }} · {{ attachment.scan_status|title }}</small>
-</span>
-<i class="bi bi-download ms-auto">
-</i>
-</a>{% empty %}<div class="empty-state compact">
-<i class="bi bi-paperclip">
-</i>
-<strong>{% translate "No attachments" %}</strong>
-</div>{% endfor %}</div>
-{% if can_edit %}{% for spec in attachment_specs %}<form class="dropzone mt-3" action="{% url 'portal:upload_attachments' ticket.reference %}" method="post" enctype="multipart/form-data" data-dropzone>{% csrf_token %}<input type="hidden" name="source_field" value="{{ spec.name }}"><input class="visually-hidden" type="file" name="files" {% if spec.multiple %}multiple{% endif %} accept="{{ spec.allowed_extensions|join:',' }}"><i class="bi bi-cloud-arrow-up"></i><strong>{{ spec.label }}{% if spec.required %} *{% endif %}</strong><span>{{ spec.help_text }} · {% blocktranslate with size=spec.max_size_mb|default:10 %}up to {{ size }} MB{% endblocktranslate %}</span><button class="btn btn-sm btn-outline-primary" type="submit">{% translate "Upload selected" %}</button></form>{% empty %}<form class="dropzone mt-3" action="{% url 'portal:upload_attachments' ticket.reference %}" method="post" enctype="multipart/form-data" data-dropzone>{% csrf_token %}<input type="hidden" name="source_field" value="general"><input class="visually-hidden" type="file" name="files" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"><i class="bi bi-cloud-arrow-up"></i><strong>{% translate "Drop documents here or click to browse" %}</strong><span>{% translate "PDF, images, Word or Excel · up to 10 MB each" %}</span><button class="btn btn-sm btn-outline-primary" type="submit">{% translate "Upload selected" %}</button></form>{% endfor %}{% endif %}
-</div>
-<div class="tab-pane fade" id="ai">
-<div class="ai-label">
-<i class="bi bi-stars">
-</i>{% translate "AI-generated recommendation — human review required" %}</div>
-<div class="content-block">
-<h2>{% translate "Summary" %}</h2>
-<p>{{ ticket.ai_summary|default:"AI summary is not available for this ticket." }}</p>
-</div>{% if ticket.ai_recommendations %}<dl class="dynamic-details">
-<div>
-<dt>{% translate "Suggested priority" %}</dt>
-<dd>{{ ticket.ai_recommendations.suggested_priority|title }}</dd>
-</div>
-<div>
-<dt>{% translate "Suggested group" %}</dt>
-<dd>{{ ticket.ai_recommendations.suggested_group }}</dd>
-</div>
-<div>
-<dt>{% translate "Confidence" %}</dt>
-<dd>{{ ticket.ai_recommendations.confidence }}</dd>
-</div>
-<div>
-<dt>{% translate "Suggested solution" %}</dt>
-<dd>{{ ticket.ai_recommendations.suggested_solution }}</dd>
-</div>
-</dl>{% endif %}</div>
-</div>
-</section>
-</div>
-<div class="col-xl-4">
-<section class="panel side-panel">
-<h2>{% translate "Assignment" %}</h2>
-<dl>
-<div>
-<dt>{% translate "Project" %}</dt>
-<dd>{{ ticket.project.name_en }}</dd>
-</div>
-<div>
-<dt>{% translate "Product" %}</dt>
-<dd>{{ ticket.product.name_en }}</dd>
-</div>
-<div>
-<dt>{% translate "Category" %}</dt>
-<dd>{{ ticket.category.name_en }}</dd>
-</div>
-<div>
-<dt>{% translate "Groups" %}</dt>
-<dd>{% for group in ticket.groups.all %}<span class="group-badge">{{ group.name }}</span>{% empty %}<span class="unassigned">{% translate "Unassigned" %}</span>{% endfor %}</dd>
-</div>
-<div>
-<dt>{% translate "Assignee" %}</dt>
-<dd>{% for assignee in ticket.assignees.all %}<span class="group-badge">{{ assignee.get_full_name|default:assignee.email }}</span>{% empty %}<span class="unassigned">{% translate "Unassigned" %}</span>{% endfor %}</dd>
-</div>
-</dl>
-{% if can_assign %}<div class="d-grid gap-2 mt-3"><button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignmentModal">{% translate "Manage assignments" %}</button><div class="btn-group"><form class="w-100" action="{% url 'portal:unassign_ticket' ticket.reference %}" method="post">{% csrf_token %}<input type="hidden" name="target" value="users"><button class="btn btn-sm btn-outline-danger w-100" type="submit">{% translate "Unassign staff" %}</button></form><form class="w-100" action="{% url 'portal:unassign_ticket' ticket.reference %}" method="post">{% csrf_token %}<input type="hidden" name="target" value="groups"><button class="btn btn-sm btn-outline-danger w-100" type="submit">{% translate "Unassign groups" %}</button></form></div></div>{% endif %}
-</section>
-{% if ticket.approval_state != 'not_required' %}<section class="panel side-panel mt-4"><div class="d-flex justify-content-between"><h2>{% translate "Approvals" %}</h2><span class="status-chip status-{{ ticket.approval_state }}">{{ ticket.get_approval_state_display }}</span></div><ol class="approval-list">{% for approval in ticket.approvals.all %}<li><span><strong>{{ approval.step.sequence }}. {{ approval.step.name }}</strong><small>{{ approval.approver.get_full_name|default:approval.approver.email }}</small></span><span class="status-chip status-{{ approval.status }}">{{ approval.get_status_display }}</span></li>{% endfor %}</ol>{% for approval in actionable_approvals %}<form class="approval-form" action="{% url 'portal:decide_ticket_approval' ticket.reference approval.pk %}" method="post">{% csrf_token %}{{ approval_form.decision }}{{ approval_form.note }}<button class="btn btn-primary w-100 mt-2" type="submit">{% translate "Record decision" %}</button></form>{% endfor %}</section>{% endif %}
-<section class="panel side-panel mt-4">
-<div class="d-flex justify-content-between">
-<h2>{% translate "SLA health" %}</h2>
-<span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span>
-</div>
-<div class="sla-meter">
-<span class="sla-{{ ticket.sla_state }}">
-</span>
-</div>
-<dl>
-<div>
-<dt>{% translate "First response" %}</dt>
-<dd>{{ ticket.first_response_due_at|date:"d M Y H:i"|default:"—" }}</dd>
-</div>
-<div>
-<dt>{% translate "Resolution due" %}</dt>
-<dd>{{ ticket.resolution_due_at|date:"d M Y H:i"|default:"—" }}</dd>
-</div>
-<div>
-<dt>{% translate "Policy" %}</dt>
-<dd>{{ ticket.sla_policy.name|default:"Standard service" }}</dd>
-</div>
-</dl>
-</section>
-<section class="panel side-panel requester-panel mt-4">
-<h2>{% translate "Requester" %}</h2>
-<div class="requester-card">
-<span class="avatar">{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span>
-<span>
-<strong>{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong>
-<small>{{ ticket.requester.email }}</small>
-</span>
-</div>
-</section>
-</div>
-</div>
-{% if can_assign %}<div class="modal fade" id="assignmentModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><form action="{% url 'portal:assign_ticket' ticket.reference %}" method="post">{% csrf_token %}<div class="modal-header"><h2 class="modal-title h5">{% translate "Assign groups and staff" %}</h2><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p class="text-muted">{% translate "A ticket may have multiple groups and multiple staff members." %}</p><div class="row g-4"><div class="col-md-6"><label class="form-label">{% translate "Staff members" %}</label>{{ assignment_form.users }}</div><div class="col-md-6"><label class="form-label">{% translate "Support groups" %}</label>{{ assignment_form.groups }}</div></div><label class="form-check mt-3">{{ assignment_form.replace_existing }} <span class="form-check-label">{% translate "Replace current assignment" %}</span></label></div><div class="modal-footer"><button class="btn btn-light" data-bs-dismiss="modal" type="button">{% translate "Cancel" %}</button><button class="btn btn-primary" type="submit">{% translate "Save assignment" %}</button></div></form></div></div></div>{% endif %}
-{% if can_share %}<div class="modal fade" id="shareModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form action="{% url 'portal:share_ticket' ticket.reference %}" method="post">{% csrf_token %}<div class="modal-header"><h2 class="modal-title h5">{% translate "Share securely" %}</h2><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>{% translate "Only the selected signed-in recipient can open this expiring link." %}</p><div class="mb-3"><label class="form-label">{% translate "Recipient" %}</label>{{ share_form.recipient }}</div><div><label class="form-label">{% translate "Expires in days" %}</label>{{ share_form.expires_in_days }}</div></div><div class="modal-footer"><button class="btn btn-primary" type="submit">{% translate "Create secure link" %}</button></div></form></div></div></div>{% endif %}
+{% endif %}
+
 {% endblock %}

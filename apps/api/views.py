@@ -6,13 +6,9 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Q
 from django.utils import timezone
-
+from django.http import FileResponse, Http404
 from rest_framework import status
-from rest_framework.decorators import (
-    api_view,
-    permission_classes,
-    parser_classes,
-)
+from rest_framework.decorators import (api_view,permission_classes,parser_classes,)
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -435,20 +431,8 @@ def current_user(request):
             )
 
     data = user_json(user)
-
-    data["groups"] = list(
-        user.groups.values(
-            "id",
-            "name",
-        )
-    )
-
-    profile = getattr(
-        user,
-        "profile",
-        None,
-    )
-
+    data["groups"] = list(user.groups.values("id","name",))
+    profile = getattr(user,"profile",None,)
     data["role"] = (
         getattr(
             profile,
@@ -1011,24 +995,13 @@ def support_groups(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def hero_sections(request):
-
     queryset = HeroSection.objects.all()
-
-    if hasattr(
-        HeroSection,
-        "is_active",
-    ):
-        queryset = queryset.filter(
-            is_active=True
-        )
-
+    if hasattr(HeroSection,"is_active",):
+        queryset = queryset.filter(is_active=True)
     data = []
-
     for hero in queryset:
-
         data.append({
             "id": hero.pk,
-
             "hero_image": absolute_file_url(
                 request,
                 getattr(
@@ -1044,6 +1017,17 @@ def hero_sections(request):
         "data": data,
     })
 
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def hero_image(request, pk):
+    try:
+        hero = HeroSection.objects.get(pk=pk)
+    except HeroSection.DoesNotExist:
+        raise Http404("Hero section not found")
+    if not hero.hero_image:
+        raise Http404("Hero image not found")
+    return FileResponse(hero.hero_image.open("rb"),content_type="image/jpeg",)
 
 # ============================================================
 # DYNAMIC FORMS

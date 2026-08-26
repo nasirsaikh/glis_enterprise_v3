@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "glis_enterprise_v3/wsgi.py",
+      "src": "config/wsgi.py",
       "use": "@vercel/python",
       "config": { 
         "includeFiles": "templates/**" 
@@ -12,7 +12,7 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "glis_enterprise_v3/wsgi.py"
+      "dest": "config/wsgi.py"
     }
   ]
 }

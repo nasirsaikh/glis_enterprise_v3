@@ -1,18 +1,9 @@
 {
-  "version": 2,
   "builds": [
     {
-      "src": "glis_enterprise_v3/wsgi.py",
+      "src": "glis_enterprise_v3.py",
       "use": "@vercel/python",
-      "config": { 
-        "includeFiles": "templates/**" 
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "glis_enterprise_v3/wsgi.py"
+      "config": { "includeFiles": ["templates/**", "public/**"] }
     }
   ]
 }

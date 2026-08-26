@@ -1,0 +1,90 @@
+{% extends 'tickets/wizard/base.html' %}{% load i18n %}{% block wizard_content %}<div class="wizard-panel-heading"><span
+        class="step-icon"><i class="bi bi-check2-square"></i></span>
+    <div><span>{% translate "Step 4 of 4" %}</span>
+        <h2>{% translate "Review and submit" %}</h2>
+        <p>{% translate "Check the final request, adjust the AI recommendations where needed, and attach supporting
+            documents." %}</p>
+    </div>
+</div>
+<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}<div class="review-grid">
+        <div class="review-main">
+            <section class="review-section">
+                <div class="review-section-title"><i class="bi bi-pencil-square"></i>
+                    <h3>{% translate "Final request" %}</h3>
+                </div>
+                <div class="mb-3"><label class="form-label" for="{{ form.subject.id_for_label }}">
+                    {% translate "Subject" %}
+                </label>
+                {{ form.subject }}
+                {{ form.subject.errors }}
+            </div>
+                <div class="mb-3"><label class="form-label" for="{{ form.description.id_for_label }}">{% translate "Description" %}</label>
+                    {{ form.description }}{{ form.description.errors }}</div>
+                <div><label class="form-label" for="{{ form.priority.id_for_label }}">{% translate "Priority"%}</label>{{ form.priority }}{{ form.priority.errors }}</div>
+            </section>{% if attachment_specs %}<section class="review-section">
+                <div class="review-section-title"><i class="bi bi-paperclip"></i>
+                    <h3>{% translate "Supporting documents" %}</h3>
+                </div>
+                <div class="upload-list">{% for item in attachment_specs %}<label class="upload-item"><span class="file-icon"><i class="bi bi-cloud-arrow-up"></i></span><span><strong>{{ item.label}}{% if item.required %}<em>*</em>{% endif %}</strong><small>{{ item.help_text}}</small></span><input type="file" name="{{ item.name }}" 
+                                {% if item.multiple %}
+                                multiple
+                                {% endif %} {% if item.required %}required{% endif %}
+                            accept="{{ item.allowed_extensions|join:',' }}"></label>{% endfor %}</div>
+            </section>{% endif %}
+        </div>
+        <aside class="review-side">
+            <section class="ai-review-card">
+                <div class="ai-review-heading"><span><i class="bi bi-stars"></i></span>
+                    <div><strong>{% translate "AI recommendation" %}</strong><small>{% translate "Human review required"
+                            %}</small></div>
+                </div>
+                <dl>
+                    <div>
+                        <dt>{% translate "Category" %}</dt>
+                        <dd>{{ category.name_en }}</dd>
+                    </div>
+                    <div>
+                        <dt>{% translate "Suggested group" %}</dt>
+                        <dd>{{ analysis.suggested_group|default:"Customer Service" }}</dd>
+                    </div>
+                    <div>
+                        <dt>{% translate "Confidence" %}</dt>
+                        <dd><span class="confidence-bar"><span style="width:82%"></span></span>{{
+                            analysis.confidence|default:"0.82" }}</dd>
+                    </div>
+                </dl>
+                <p><i class="bi bi-info-circle"></i>{% translate "Recommendations do not determine policy coverage,
+                    claim liability or payment approval." %}</p>
+            </section>
+            <section class="review-summary">
+                <h3>{% translate "Request summary" %}</h3>
+                <dl>
+                    <div>
+                        <dt>{% translate "Project" %}</dt>
+                        <dd>{{ wizard.selection.project }}</dd>
+                    </div>
+                    <div>
+                        <dt>{% translate "Product" %}</dt>
+                        <dd>{{ wizard.selection.product }}</dd>
+                    </div>
+                    <div>
+                        <dt>{% translate "Category" %}</dt>
+                        <dd>{{ category.name_en }}</dd>
+                    </div>
+                    <div>
+                        <dt>{% translate "Clarifications" %}</dt>
+                        <dd>4 / 4</dd>
+                    </div>
+                </dl>
+            </section>
+        </aside>
+    </div>
+    <div class="alert alert-info p-2 mt-2">{{ form.acknowledgment }}
+        <label class="form-check-label" for="{{ form.acknowledgment.id_for_label }}"> &nbsp; {{ form.acknowledgment.label }}</label>
+        {{ form.acknowledgment.errors }}
+    </div>
+    <div class="wizard-actions">
+        <a class="btn btn-soft btn-lg" href="{% url 'portal:create_ticket' 3 %}"><i class="bi bi-arrow-left me-2"></i>{% translate "Back" %}</a>
+        <button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-send-check me-2"></i> {% translate "Submit request" %}</button>
+    </div>
+</form>{% endblock %}

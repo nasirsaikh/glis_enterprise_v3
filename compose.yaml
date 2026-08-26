@@ -1,0 +1,11 @@
+services:
+  web:
+    build: .
+    command: gunicorn glis.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 90
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - media_data:/app/media
+volumes:
+  media_data:

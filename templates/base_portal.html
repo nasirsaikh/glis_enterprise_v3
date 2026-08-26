@@ -1,0 +1,63 @@
+{% load static i18n %}{% get_current_language as LANGUAGE_CODE %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}" data-bs-theme="light">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% translate "Portal" %}{% endblock %} · GLIS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  {% if LANGUAGE_CODE == 'ar' %}<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css" rel="stylesheet">{% else %}<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">{% endif %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{% url 'public:theme_css' %}" rel="stylesheet"><link href="{% static 'css/glis.css' %}" rel="stylesheet">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="portal-shell sidebar-mode-{{ user.profile.sidebar_mode|default:'mini' }}" x-data="siteShell" data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}" data-sidebar-preference-url="{% url 'accounts:sidebar_preference' %}">
+<a class="skip-link" href="#portal-main">{% translate "Skip to content" %}</a>
+<aside class="portal-sidebar d-none d-lg-flex" id="portal-sidebar">
+  <a class="brand-lockup portal-brand" href="{% url 'portal:dashboard' %}" title="GLIS"><span class="brand-mark"><span></span></span><span class="sidebar-label"><strong>GLIS</strong>
+    <!-- <small>{% translate "Service portal" %}</small> -->
+  </span>
+  </a>
+  <nav class="portal-nav" aria-label="{% translate 'Portal navigation' %}">
+    {% for section in portal_navigation_sections %}
+      <span class="nav-label sidebar-label">{{ section.label }}</span>
+      {% for item in section.items %}<a class="{% if item.active %}active {% endif %}{% if item.emphasized %}nav-create{% endif %}" href="{{ item.url }}" title="{{ item.label }}"{% if item.new_window %} target="_blank" rel="noopener"{% endif %}><i class="bi {{ item.icon }}"></i><span class="sidebar-label">{{ item.label }}</span></a>{% endfor %}
+    {% empty %}
+      <span class="nav-label sidebar-label">{% translate "Workspace" %}</span>
+      <a href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i><span class="sidebar-label">{% translate "Overview" %}</span></a>
+      <a href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated"></i><span class="sidebar-label">{% translate "Tickets" %}</span></a>
+      <a href="{% url 'orchestrator:console' %}"><i class="bi bi-stars"></i><span class="sidebar-label">{% translate "Vanna analytics" %}</span></a>
+    {% endfor %}
+  </nav>
+  <div class="sidebar-footer"><div class="support-mini"><i class="bi bi-headset"></i><div class="sidebar-label"><strong>{% translate "Need help?" %}</strong><small>{% translate "Contact platform support" %}</small></div></div></div>
+</aside>
+<div class="portal-stage">
+  <header class="portal-header">
+    <div class="d-flex align-items-center gap-3">
+      <button class="btn btn-icon d-none d-lg-inline-flex" id="sidebar-toggle" type="button" aria-controls="portal-sidebar" aria-expanded="{% if user.profile.sidebar_mode == 'full' %}true{% else %}false{% endif %}" title="{% translate 'Change navigation size' %}"><i class="bi bi-layout-sidebar-inset"></i></button>
+      <button class="btn btn-icon d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#mobilePortalNav" aria-label="{% translate 'Open menu' %}"><i class="bi bi-list fs-4"></i></button>
+      <div class="global-search position-relative d-none d-md-block"><i class="bi bi-search"></i><input class="form-control" type="search" name="q" placeholder="{% translate 'Search tickets, requesters, projects…' %}" hx-get="{% url 'portal:global_search' %}" hx-trigger="input changed delay:300ms" hx-target="#global-search-results" autocomplete="off"><div id="global-search-results" class="search-results"></div></div>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-primary d-none d-sm-inline-flex" href="{% url 'portal:create_ticket' 1 %}"><i class="bi bi-plus-lg me-2"></i>{% translate "New ticket" %}</a>
+      <button class="btn btn-icon" x-on:click="toggleTheme" aria-label="{% translate 'Change theme' %}"><i class="bi" x-bind:class="themeIcon"></i></button>
+      <form action="{% url 'switch_language' %}" method="post">{% csrf_token %}<input name="next" type="hidden" value="{{ request.get_full_path }}"><input name="language" type="hidden" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}"><button class="btn btn-icon language-icon" type="submit" title="{% translate 'Change language' %}">{% if LANGUAGE_CODE == 'ar' %}EN{% else %}ع{% endif %}</button></form>
+      <div class="dropdown notification-dropdown">
+        <button class="btn btn-icon position-relative" data-bs-toggle="dropdown" aria-label="{% translate 'Notifications' %}" id="notification-button"><i class="bi bi-bell"></i><span id="notification-count" class="notification-count{% if not unread_notification_count %} d-none{% endif %}">{{ unread_notification_count }}</span></button>
+        <div class="dropdown-menu dropdown-menu-end notification-menu shadow border-0">
+          <div class="notification-menu-head"><strong>{% translate "Notifications" %}</strong><form action="{% url 'portal:mark_notifications_read' %}" method="post">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-link btn-sm" type="submit">{% translate "Mark all read" %}</button></form></div>
+          <div id="notification-items">{% for item in header_notifications %}<a class="notification-item{% if not item.read_at %} unread{% endif %}" href="{{ item.link|default:'#' }}"><span class="notification-kind"><i class="bi bi-{% if item.kind == 'sla' %}alarm{% elif item.kind == 'assignment' %}person-check{% elif item.kind == 'approval' %}check2-square{% else %}bell{% endif %}"></i></span><span><strong>{{ item.title }}</strong><small>{{ item.body|truncatechars:80 }}</small><time>{{ item.created_at|timesince }} {% translate "ago" %}</time></span></a>{% empty %}<div class="empty-state compact"><i class="bi bi-bell-slash"></i><strong>{% translate "No notifications" %}</strong></div>{% endfor %}</div>
+          <a class="notification-view-all" href="{% url 'portal:notifications' %}">{% translate "View all notifications" %}</a>
+        </div>
+      </div>
+      <div class="dropdown"><button class="user-menu" data-bs-toggle="dropdown" aria-expanded="false">{% if user.profile.avatar %}<img class="avatar image-avatar" src="{{ user.profile.avatar.url }}" alt="">{% else %}<span class="avatar">{{ user.first_name|first|default:user.email|first|upper }}</span>{% endif %}<span class="d-none d-xl-block">
+        <strong>{{ user.get_full_name|default:user.email }}</strong><br/>
+        <small>{{ user.profile.get_role_display|default:'User' }}</small></span><i class="bi bi-chevron-down"></i></button><ul class="dropdown-menu dropdown-menu-end shadow border-0"><li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i>{% translate "Profile & security" %}</a></li>{% if user.is_staff %}<li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="bi bi-gear me-2"></i>{% translate "Administration" %}</a></li>{% endif %}<li><hr class="dropdown-divider"></li><li><form action="{% url 'account_logout' %}" method="post">{% csrf_token %}<button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right me-2"></i>{% translate "Sign out" %}</button></form></li></ul></div>
+    </div>
+  </header>
+  <div class="offcanvas offcanvas-start" tabindex="-1" id="mobilePortalNav"><div class="offcanvas-header"><h2 class="h5 mb-0">GLIS {% translate "Portal" %}</h2><button class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body"><nav class="portal-nav">{% for section in portal_navigation_sections %}<span class="nav-label">{{ section.label }}</span>{% for item in section.items %}<a class="{% if item.active %}active {% endif %}{% if item.emphasized %}nav-create{% endif %}" href="{{ item.url }}"{% if item.new_window %} target="_blank" rel="noopener"{% endif %}><i class="bi {{ item.icon }}"></i>{{ item.label }}</a>{% endfor %}{% empty %}<a href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Overview" %}</a><a href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated"></i>{% translate "Tickets" %}</a>{% endfor %}</nav></div></div>
+  {% if messages %}<div class="portal-messages">{% for message in messages %}<div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show"><i class="bi bi-info-circle-fill me-2"></i>{{ message }}<button class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}</div>{% endif %}
+  <main id="portal-main" class="portal-main {% block main_class %}{% endblock %}">{% block content %}{% endblock %}</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" defer></script><script src="https://unpkg.com/htmx.org@2.0.8" defer></script><script src="https://cdn.plot.ly/plotly-3.1.0.min.js" defer></script><script src="{% static 'js/app.js' %}" defer></script><script src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.15.8/dist/cdn.min.js" defer></script>{% block extra_js %}{% endblock %}
+</body></html>

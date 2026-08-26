@@ -1,0 +1,481 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GLIS 1.0\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0?0:n==1?1:n==2?2:n%100>=3 && n%100<=10?"
+"3:n%100>=11 && n%100<=99?4:5);\n"
+
+msgid "Home"
+msgstr "الرئيسية"
+
+msgid "About GLIS"
+msgstr "عن جرين لاين"
+
+msgid "About"
+msgstr "عن الشركة"
+
+msgid "Services"
+msgstr "الخدمات"
+
+msgid "Insurance Solutions"
+msgstr "حلول التأمين"
+msgid "Claims Support"
+msgstr "دعم المطالبات"
+msgid "Customer Support"
+msgstr "دعم العملاء"
+
+msgid "Knowledge Base"
+msgstr "قاعدة المعرفة"
+
+msgid "Contact"
+msgstr "اتصل بنا"
+
+msgid "Support"
+msgstr "الدعم"
+
+msgid "Sign in"
+msgstr "تسجيل الدخول"
+
+msgid "Sign out"
+msgstr "تسجيل الخروج"
+
+msgid "Open portal"
+msgstr "فتح البوابة"
+
+msgid "Create request"
+msgstr "إنشاء طلب"
+
+msgid "Submit a request"
+msgstr "تقديم طلب"
+
+msgid "Track requests"
+msgstr "متابعة الطلبات"
+
+msgid "Contact us"
+msgstr "تواصل معنا"
+
+msgid "Privacy"
+msgstr "الخصوصية"
+
+msgid "Terms"
+msgstr "الشروط"
+
+msgid "Accessibility"
+msgstr "إمكانية الوصول"
+
+msgid "All rights reserved."
+msgstr "جميع الحقوق محفوظة."
+
+msgid "Skip to content"
+msgstr "انتقل إلى المحتوى"
+
+msgid "Change theme"
+msgstr "تغيير المظهر"
+
+msgid "Close"
+msgstr "إغلاق"
+
+msgid "Secure by design"
+msgstr "أمان منذ التصميم"
+
+msgid "English & Arabic"
+msgstr "العربية والإنجليزية"
+
+msgid "Track every request"
+msgstr "تتبّع كل طلب"
+
+msgid "Service desk live"
+msgstr "مركز الخدمة متاح"
+
+msgid "Protected"
+msgstr "محمي"
+
+msgid "In progress"
+msgstr "قيد التنفيذ"
+
+msgid "Received"
+msgstr "تم الاستلام"
+
+msgid "Under review"
+msgstr "قيد المراجعة"
+
+msgid "Resolved"
+msgstr "تم الحل"
+
+msgid "Clear updates"
+msgstr "تحديثات واضحة"
+
+msgid "One conversation"
+msgstr "محادثة واحدة"
+
+msgid "SLA tracked"
+msgstr "متابعة مستوى الخدمة"
+
+msgid "Proactive alerts"
+msgstr "تنبيهات استباقية"
+
+msgid "Document received"
+msgstr "تم استلام المستند"
+
+msgid "Just now"
+msgstr "الآن"
+
+msgid "Privacy-aware"
+msgstr "مراعاة الخصوصية"
+
+msgid "Multi-team routing"
+msgstr "توجيه متعدد الفرق"
+
+msgid "Bilingual service"
+msgstr "خدمة ثنائية اللغة"
+
+msgid "Auditable outcomes"
+msgstr "نتائج قابلة للتدقيق"
+
+msgid "Support across the insurance journey"
+msgstr "دعم عبر رحلة التأمين"
+
+msgid "Insurance services"
+msgstr "خدمات التأمين"
+
+msgid "Start a request"
+msgstr "ابدأ طلباً"
+
+msgid "Learn more"
+msgstr "اعرف المزيد"
+
+msgid "How we help"
+msgstr "كيف نساعدك"
+
+msgid "From question to clear outcome"
+msgstr "من السؤال إلى نتيجة واضحة"
+
+msgid "Choose your service"
+msgstr "اختر خدمتك"
+
+msgid "Share the essentials"
+msgstr "شارك المعلومات الأساسية"
+
+msgid "Collaborate securely"
+msgstr "تعاون بأمان"
+
+msgid "See the outcome"
+msgstr "اطّلع على النتيجة"
+
+msgid "Claims"
+msgstr "المطالبات"
+
+msgid "Policy service"
+msgstr "خدمة الوثائق"
+
+msgid "Provider network"
+msgstr "شبكة مقدمي الخدمة"
+
+msgid "Finance"
+msgstr "المالية"
+
+msgid "Complaints"
+msgstr "الشكاوى"
+
+msgid "Compliance"
+msgstr "الامتثال"
+
+msgid "Role-aware access"
+msgstr "وصول حسب الدور"
+
+msgid "Intelligent routing"
+msgstr "توجيه ذكي"
+
+msgid "Operational visibility"
+msgstr "وضوح تشغيلي"
+
+msgid "Helpful guidance"
+msgstr "إرشادات مفيدة"
+
+msgid "Browse knowledge base"
+msgstr "تصفح قاعدة المعرفة"
+
+msgid "Ready when you are"
+msgstr "جاهزون عندما تكون جاهزاً"
+
+msgid "Portal"
+msgstr "البوابة"
+
+msgid "Service portal"
+msgstr "بوابة الخدمات"
+
+msgid "Workspace"
+msgstr "مساحة العمل"
+
+msgid "Overview"
+msgstr "نظرة عامة"
+
+msgid "My tickets"
+msgstr "طلباتي"
+
+msgid "Group tickets"
+msgstr "طلبات المجموعة"
+
+msgid "All tickets"
+msgstr "جميع الطلبات"
+
+msgid "Create ticket"
+msgstr "إنشاء طلب"
+
+msgid "Resources"
+msgstr "المصادر"
+
+msgid "AI assistant"
+msgstr "مساعد الذكاء الاصطناعي"
+
+msgid "Administration"
+msgstr "الإدارة"
+
+msgid "Platform admin"
+msgstr "إدارة المنصة"
+
+msgid "CMS & public site"
+msgstr "المحتوى والموقع العام"
+
+msgid "Audit logs"
+msgstr "سجلات التدقيق"
+
+msgid "New ticket"
+msgstr "طلب جديد"
+
+msgid "Notifications"
+msgstr "الإشعارات"
+
+msgid "Profile"
+msgstr "الملف الشخصي"
+
+msgid "View tickets"
+msgstr "عرض الطلبات"
+
+msgid "Open tickets"
+msgstr "الطلبات المفتوحة"
+
+msgid "Assigned to me"
+msgstr "مسندة إليّ"
+
+msgid "Overdue"
+msgstr "متأخرة"
+
+msgid "Resolved this month"
+msgstr "تم حلها هذا الشهر"
+
+msgid "Ticket health"
+msgstr "حالة الطلبات"
+
+msgid "Priority mix"
+msgstr "توزيع الأولويات"
+
+msgid "Recent tickets"
+msgstr "أحدث الطلبات"
+
+msgid "Needs attention"
+msgstr "تحتاج اهتماماً"
+
+msgid "All clear"
+msgstr "كل شيء مستقر"
+
+msgid "Ticket workspace"
+msgstr "مساحة عمل الطلبات"
+
+msgid "Service requests"
+msgstr "طلبات الخدمة"
+
+msgid "Search"
+msgstr "بحث"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Priority"
+msgstr "الأولوية"
+
+msgid "Project"
+msgstr "المشروع"
+
+msgid "Product"
+msgstr "المنتج"
+
+msgid "Category"
+msgstr "الفئة"
+
+msgid "Requester"
+msgstr "مقدم الطلب"
+
+msgid "Assignment"
+msgstr "الإسناد"
+
+msgid "SLA due"
+msgstr "موعد مستوى الخدمة"
+
+msgid "Actions"
+msgstr "الإجراءات"
+
+msgid "Unassigned"
+msgstr "غير مسند"
+
+msgid "Restricted"
+msgstr "مقيد"
+
+msgid "Sensitive"
+msgstr "حساس"
+
+msgid "Details"
+msgstr "التفاصيل"
+
+msgid "Conversation"
+msgstr "المحادثة"
+
+msgid "Activity"
+msgstr "النشاط"
+
+msgid "Attachments"
+msgstr "المرفقات"
+
+msgid "AI insights"
+msgstr "رؤى الذكاء الاصطناعي"
+
+msgid "Request description"
+msgstr "وصف الطلب"
+
+msgid "Request information"
+msgstr "معلومات الطلب"
+
+msgid "Internal note"
+msgstr "ملاحظة داخلية"
+
+msgid "Public reply"
+msgstr "رد عام"
+
+msgid "Post update"
+msgstr "نشر التحديث"
+
+msgid "SLA health"
+msgstr "حالة مستوى الخدمة"
+
+msgid "Resolution due"
+msgstr "موعد الحل"
+
+msgid "Guided service request"
+msgstr "طلب خدمة موجه"
+
+msgid "Create a ticket"
+msgstr "إنشاء طلب"
+
+msgid "Service"
+msgstr "الخدمة"
+
+msgid "Clarify"
+msgstr "التوضيح"
+
+msgid "Review"
+msgstr "المراجعة"
+
+msgid "Step 1 of 4"
+msgstr "الخطوة 1 من 4"
+
+msgid "What can we help with?"
+msgstr "كيف يمكننا مساعدتك؟"
+
+msgid "Continue to details"
+msgstr "المتابعة إلى التفاصيل"
+
+msgid "Step 2 of 4"
+msgstr "الخطوة 2 من 4"
+
+msgid "Tell us about the request"
+msgstr "أخبرنا عن الطلب"
+
+msgid "Continue to questions"
+msgstr "المتابعة إلى الأسئلة"
+
+msgid "Back"
+msgstr "رجوع"
+
+msgid "Step 3 of 4"
+msgstr "الخطوة 3 من 4"
+
+msgid "Four quick clarifications"
+msgstr "أربعة أسئلة توضيحية سريعة"
+
+msgid "Optional"
+msgstr "اختياري"
+
+msgid "Generate review"
+msgstr "إنشاء المراجعة"
+
+msgid "Step 4 of 4"
+msgstr "الخطوة 4 من 4"
+
+msgid "Review and submit"
+msgstr "راجع وقدّم"
+
+msgid "Final request"
+msgstr "الطلب النهائي"
+
+msgid "Subject"
+msgstr "الموضوع"
+
+msgid "Description"
+msgstr "الوصف"
+
+msgid "Supporting documents"
+msgstr "المستندات الداعمة"
+
+msgid "AI recommendation"
+msgstr "توصية الذكاء الاصطناعي"
+
+msgid "Human review required"
+msgstr "تتطلب مراجعة بشرية"
+
+msgid "Request summary"
+msgstr "ملخص الطلب"
+
+msgid "Submit request"
+msgstr "تقديم الطلب"
+
+msgid "Welcome back"
+msgstr "مرحباً بعودتك"
+
+msgid "Email address"
+msgstr "البريد الإلكتروني"
+
+msgid "Password"
+msgstr "كلمة المرور"
+
+msgid "Forgot password?"
+msgstr "نسيت كلمة المرور؟"
+
+msgid "Create an account"
+msgstr "إنشاء حساب"
+
+msgid "Reset your password"
+msgstr "إعادة تعيين كلمة المرور"
+
+msgid "Search guides and answers…"
+msgstr "ابحث في الأدلة والإجابات…"
+
+msgid "All topics"
+msgstr "جميع المواضيع"
+
+msgid "No articles found"
+msgstr "لم يتم العثور على مقالات"
+
+msgid "Was this article helpful?"
+msgstr "هل كانت هذه المقالة مفيدة؟"
+
+msgid "Yes"
+msgstr "نعم"
+
+msgid "Not yet"
+msgstr "ليس بعد"
+
+msgid "Thank you for your feedback."
+msgstr "شكراً لملاحظاتك."

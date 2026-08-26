@@ -34,6 +34,8 @@ from .models import (
     TicketEvent, TicketShare,
 )
 
+from apps.cms.models import HeroSection
+
 
 RICH_TEXT_TAGS = ["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "blockquote", "a", "img", "h2", "h3", "code"]
 RICH_TEXT_ATTRIBUTES = {"a": ["href", "title", "target", "rel"], "img": ["src", "alt", "title"]}
@@ -117,7 +119,7 @@ def dashboard(request):
         row["label"] = row["label"] or "Unassigned"
     daily_open = list(qs.filter(created_at__gte=now - timedelta(days=13)).annotate(day=TruncDate("created_at")).values("day").annotate(total=Count("id")).order_by("day"))
     chart_data = {"status": by_status, "priority": by_priority, "category": by_category, "product": by_product, "project": by_project, "assignee": by_assignee, "daily_open": daily_open}
-    return render(request, "portal/dashboard.html", {"metrics": metrics, "chart_data": chart_data, "recent_tickets": qs[:7], "attention": qs.filter(Q(priority="critical") | Q(resolution_due_at__lt=now + timedelta(hours=2)))[:6]})
+    return render(request, "portal/dashboard.html", {"hero": HeroSection.load(), "metrics": metrics, "chart_data": chart_data, "recent_tickets": qs[:7], "attention": qs.filter(Q(priority="critical") | Q(resolution_due_at__lt=now + timedelta(hours=2)))[:6]})
 
 
 @login_required

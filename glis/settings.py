@@ -1,6 +1,7 @@
 from pathlib import Path
 import environ
 import dj_database_url
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -32,6 +33,12 @@ INSTALLED_APPS = [
 
     "django_htmx",
     "widget_tweaks",
+
+    # REST API
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "django_filters",
+    "drf_spectacular",
 
     "apps.core",
     "apps.accounts",
@@ -79,40 +86,40 @@ TEMPLATES = [{
 WSGI_APPLICATION = "glis.wsgi.application"
 ASGI_APPLICATION = "glis.asgi.application"
 
-# db_engine = env("DATABASE_ENGINE", default="sqlite").lower()
-# if db_engine == "mssql":
-#     DATABASES = {"default": {
-#         "ENGINE": "mssql", "NAME": env("DATABASE_NAME"), "HOST": env("DATABASE_HOST"),
-#         "PORT": env("DATABASE_PORT", default="1433"), "USER": env("DATABASE_USER"),
-#         "PASSWORD": env("DATABASE_PASSWORD"),
-#         "OPTIONS": {
-#             "driver": env("DATABASE_DRIVER", default="ODBC Driver 18 for SQL Server"),
-#             "extra_params": env("DATABASE_EXTRA_PARAMS", default="TrustServerCertificate=yes"),
-#         },
-#     }}
-# else:
-#     DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / env("DATABASE_NAME", default="db.sqlite3")}}
-
-
-DATABASE_URL="postgresql://postgres.rrbytxusjypzaqviqcrr:mHIIS7Iy1tLmlI48@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
-db_engine = "postgresql"
-if DATABASE_URL:
-    # Production / Vercel
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
+db_engine = env("DATABASE_ENGINE", default="sqlite").lower()
+if db_engine == "mssql":
+    DATABASES = {"default": {
+        "ENGINE": "mssql", "NAME": env("DATABASE_NAME"), "HOST": env("DATABASE_HOST"),
+        "PORT": env("DATABASE_PORT", default="1433"), "USER": env("DATABASE_USER"),
+        "PASSWORD": env("DATABASE_PASSWORD"),
+        "OPTIONS": {
+            "driver": env("DATABASE_DRIVER", default="ODBC Driver 18 for SQL Server"),
+            "extra_params": env("DATABASE_EXTRA_PARAMS", default="TrustServerCertificate=yes"),
+        },
+    }}
 else:
-    # Local development
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / env("DATABASE_NAME", default="db.sqlite3")}}
+
+
+# DATABASE_URL="postgresql://postgres.rrbytxusjypzaqviqcrr:mHIIS7Iy1tLmlI48@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
+# db_engine = "postgresql"
+# if DATABASE_URL:
+#     # Production / Vercel
+#     DATABASES = {
+#         "default": dj_database_url.parse(
+#             DATABASE_URL,
+#             conn_max_age=600,
+#             conn_health_checks=True,
+#         )
+#     }
+# else:
+#     # Local development
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.sqlite3",
+#             "NAME": BASE_DIR / "db.sqlite3",
+#         }
+#     }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -269,13 +276,64 @@ elif db_engine == "postgresql":
     default_schema = "public"
 else:
     default_schema = "main"
-VANNA_DB_SCHEMA = env("VANNA_DB_SCHEMA",default=default_schema,)
 
-CHROMA_PERSIST_DIRECTORY = env(
-    "CHROMA_PERSIST_DIRECTORY", default=str(BASE_DIR / "data" / "chroma")
-)
+VANNA_DB_SCHEMA = env("VANNA_DB_SCHEMA",default=default_schema,)
+CHROMA_PERSIST_DIRECTORY = env("CHROMA_PERSIST_DIRECTORY", default=str(BASE_DIR / "data" / "chroma"))
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@glis.local")
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST","smtp.office365.com",)
+EMAIL_PORT = int(os.getenv("EMAIL_PORT","587",))
+EMAIL_USE_TLS = (os.getenv("EMAIL_USE_TLS","True",).lower() == "true")
+EMAIL_USE_SSL = (os.getenv("EMAIL_USE_SSL","False",).lower() == "true")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER","",)
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD","",)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL",EMAIL_HOST_USER,)
+SERVER_EMAIL = os.getenv("SERVER_EMAIL",DEFAULT_FROM_EMAIL,)
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT","30",))
+
 LOGGING = {"version": 1, "disable_existing_loggers": False,
            "handlers": {"console": {"class": "logging.StreamHandler"}},
            "root": {"handlers": ["console"], "level": "INFO"}}
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+
+    "DEFAULT_PAGINATION_CLASS": "apps.api.pagination.GLISPagination",
+    "PAGE_SIZE": 25,
+
+    # IMPORTANT
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+
+    "EXCEPTION_HANDLER": "apps.api.exceptions.glis_exception_handler",
+}
+
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "GLIS Enterprise Platform API",
+    "DESCRIPTION": "REST API for GLIS Enterprise Platform",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+
+    "COMPONENT_SPLIT_REQUEST": True,
+
+    # JWT bearer authentication
+    "SECURITY": [
+        {
+            "jwtAuth": []
+        }
+    ],
+}

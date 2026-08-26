@@ -22,7 +22,8 @@ urlpatterns += i18n_patterns(
     path("portal/", include(("apps.tickets.urls", "portal"), namespace="portal")),
     path("knowledge/", include(("apps.knowledge.urls", "knowledge"), namespace="knowledge")),
     path("analytics/", include(("apps.orchestrator.urls", "orchestrator"), namespace="orchestrator")),
-    path("api/v1/", include(("apps.core.api_urls", "api"), namespace="api")),
+    path("api/v1/",include("apps.api.urls"),),
+    #path("api/v1/", include(("apps.core.api_urls", "api"), namespace="api")),
     path("", include(("apps.cms.urls", "public"), namespace="public")),
     prefix_default_language=False,
 )

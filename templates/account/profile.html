@@ -8,8 +8,7 @@
         <form class="panel p-3" method="post" enctype="multipart/form-data">{% csrf_token %}<input type="hidden"
                 name="action" value="profile">
             <div class="profile-hero">{% if user.profile.avatar %}<img class="profile-avatar"
-                    src="{{ user.profile.avatar.url }}" alt="">{% else %}<span class="profile-avatar fallback">{{
-                    user.first_name|first|default:user.email|first|upper }}</span>{% endif %}<div>
+                    src="{{ user.profile.avatar.url }}" alt="">{% else %}<span class="profile-avatar fallback">{{user.first_name|first|default:user.email|first|upper }}</span>{% endif %}<div>
                     <h2>{{ user.get_full_name|default:user.email }}</h2>
                     <p>{{ user.profile.get_role_display }}</p>
                 </div>

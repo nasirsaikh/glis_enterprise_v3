@@ -12,3 +12,5 @@ psycopg[binary]>=3.2,<4.0
 bleach>=6.2,<7.0
 vanna[chromadb,ollama]==2.0.2
 httpx[socks]>=0.28,<1.0
+django_json_widget>=2.1.1
+dj-database-url>=2.2,<3.0

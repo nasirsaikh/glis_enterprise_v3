@@ -1,5 +1,6 @@
 from pathlib import Path
 import environ
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(DJANGO_DEBUG=(bool, True), SECURE_SSL_REDIRECT=(bool, False))
@@ -74,19 +75,55 @@ TEMPLATES = [{
 WSGI_APPLICATION = "glis.wsgi.application"
 ASGI_APPLICATION = "glis.asgi.application"
 
-db_engine = env("DATABASE_ENGINE", default="sqlite").lower()
-if db_engine == "mssql":
-    DATABASES = {"default": {
-        "ENGINE": "mssql", "NAME": env("DATABASE_NAME"), "HOST": env("DATABASE_HOST"),
-        "PORT": env("DATABASE_PORT", default="1433"), "USER": env("DATABASE_USER"),
-        "PASSWORD": env("DATABASE_PASSWORD"),
-        "OPTIONS": {
-            "driver": env("DATABASE_DRIVER", default="ODBC Driver 18 for SQL Server"),
-            "extra_params": env("DATABASE_EXTRA_PARAMS", default="TrustServerCertificate=yes"),
-        },
-    }}
+# db_engine = env("DATABASE_ENGINE", default="sqlite").lower()
+# if db_engine == "mssql":
+#     DATABASES = {"default": {
+#         "ENGINE": "mssql", "NAME": env("DATABASE_NAME"), "HOST": env("DATABASE_HOST"),
+#         "PORT": env("DATABASE_PORT", default="1433"), "USER": env("DATABASE_USER"),
+#         "PASSWORD": env("DATABASE_PASSWORD"),
+#         "OPTIONS": {
+#             "driver": env("DATABASE_DRIVER", default="ODBC Driver 18 for SQL Server"),
+#             "extra_params": env("DATABASE_EXTRA_PARAMS", default="TrustServerCertificate=yes"),
+#         },
+#     }}
+# else:
+#     DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / env("DATABASE_NAME", default="db.sqlite3")}}
+
+
+print("=== VERCEL TEMPLATE DEBUG ===")
+print("BASE_DIR:", BASE_DIR)
+print("templates dir:", BASE_DIR / "templates")
+print("templates exists:", (BASE_DIR / "templates").exists())
+print(
+    "home exists:",
+    (BASE_DIR / "templates" / "public" / "home.html").exists(),
+)
+
+if (BASE_DIR / "templates").exists():
+    print(
+        "template directory contents:",
+        list((BASE_DIR / "templates").iterdir()),
+    )
+
+DATABASE_URL="postgresql://postgres.rrbytxusjypzaqviqcrr:mHIIS7Iy1tLmlI48@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
+db_engine = "postgresql"
+if DATABASE_URL:
+    # Production / Vercel
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
 else:
-    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / env("DATABASE_NAME", default="db.sqlite3")}}
+    # Local development
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -235,7 +272,16 @@ OLLAMA_MODEL = env("OLLAMA_MODEL", default="qwen2.5-coder:7b")
 OLLAMA_EMBED_MODEL = env("OLLAMA_EMBED_MODEL", default="nomic-embed-text")
 OLLAMA_CONTEXT_WINDOW = env.int("OLLAMA_CONTEXT_WINDOW", default=8192)
 OLLAMA_TEMPERATURE = env.float("OLLAMA_TEMPERATURE", default=0.1)
-VANNA_DB_SCHEMA = env("VANNA_DB_SCHEMA", default="dbo" if db_engine == "mssql" else "main")
+#VANNA_DB_SCHEMA = env("VANNA_DB_SCHEMA", default="dbo" if db_engine == "mssql" else "main")
+
+if db_engine == "mssql":
+    default_schema = "dbo"
+elif db_engine == "postgresql":
+    default_schema = "public"
+else:
+    default_schema = "main"
+VANNA_DB_SCHEMA = env("VANNA_DB_SCHEMA",default=default_schema,)
+
 CHROMA_PERSIST_DIRECTORY = env(
     "CHROMA_PERSIST_DIRECTORY", default=str(BASE_DIR / "data" / "chroma")
 )

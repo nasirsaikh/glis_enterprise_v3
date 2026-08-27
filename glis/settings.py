@@ -125,19 +125,43 @@ TEMPLATES = [{
 WSGI_APPLICATION = "glis.wsgi.application"
 ASGI_APPLICATION = "glis.asgi.application"
 
-db_engine = env("DATABASE_ENGINE", default="sqlite").lower()
-if db_engine == "mssql":
-    DATABASES = {"default": {
-        "ENGINE": "mssql", "NAME": env("DATABASE_NAME"), "HOST": env("DATABASE_HOST"),
-        "PORT": env("DATABASE_PORT", default="1433"), "USER": env("DATABASE_USER"),
-        "PASSWORD": env("DATABASE_PASSWORD"),
-        "OPTIONS": {
-            "driver": env("DATABASE_DRIVER", default="ODBC Driver 18 for SQL Server"),
-            "extra_params": env("DATABASE_EXTRA_PARAMS", default="TrustServerCertificate=yes"),
-        },
-    }}
+# db_engine = env("DATABASE_ENGINE", default="sqlite").lower()
+# if db_engine == "mssql":
+#     DATABASES = {"default": {
+#         "ENGINE": "mssql", "NAME": env("DATABASE_NAME"), "HOST": env("DATABASE_HOST"),
+#         "PORT": env("DATABASE_PORT", default="1433"), "USER": env("DATABASE_USER"),
+#         "PASSWORD": env("DATABASE_PASSWORD"),
+#         "OPTIONS": {
+#             "driver": env("DATABASE_DRIVER", default="ODBC Driver 18 for SQL Server"),
+#             "extra_params": env("DATABASE_EXTRA_PARAMS", default="TrustServerCertificate=yes"),
+#         },
+#     }}
+# else:
+#     DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / env("DATABASE_NAME", default="db.sqlite3")}}
+
+
+#DATABASE_URL="postgresql://postgres.rrbytxusjypzaqviqcrr:mHIIS7Iy1tLmlI48@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
+# Connect to Postgres via the shared transaction-mode pooler (IPv4-only)
+DATABASE_URL="postgresql://postgres.djqaqvcsjfgauraibflk:mHIIS7Iy1tLmlI48@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+db_engine = "postgresql"
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
 else:
-    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / env("DATABASE_NAME", default="db.sqlite3")}}
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -145,6 +169,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
 LANGUAGE_CODE = "en"
 LANGUAGES = [("en", "English"), ("ar", "العربية")]
 LOCALE_PATHS = [BASE_DIR / "locale"]

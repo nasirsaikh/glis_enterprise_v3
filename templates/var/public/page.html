@@ -1,9 +1,0 @@
-{% extends 'base_public.html' %}{% load i18n %}{% get_current_language as LANGUAGE_CODE %}
-{% block title %}{% if LANGUAGE_CODE == 'ar' %}{{ page.seo_title_ar|default:page.title_ar|default:page.title_en }}{% else %}{{ page.seo_title_en|default:page.title_en }}{% endif %} · GLIS{% endblock %}
-{% block description %}{% if LANGUAGE_CODE == 'ar' %}{{ page.seo_description_ar|default:page.summary_ar|default:page.summary_en }}{% else %}{{ page.seo_description_en|default:page.summary_en }}{% endif %}{% endblock %}
-{% block content %}
-{% if preview %}<div class="preview-banner"><i class="bi bi-eye"></i>{% translate "Staff preview — this page may not be published" %}</div>{% endif %}
-<header class="page-hero"><div class="container"><span class="section-kicker">GLIS</span><h1>{% if LANGUAGE_CODE == 'ar' %}{{ page.title_ar|default:page.title_en }}{% else %}{{ page.title_en }}{% endif %}</h1><p>{% if LANGUAGE_CODE == 'ar' %}{{ page.summary_ar|default:page.summary_en }}{% else %}{{ page.summary_en }}{% endif %}</p></div></header>
-<article class="section-space"><div class="container content-prose">{% if LANGUAGE_CODE == 'ar' %}{{ page.body_ar|default:page.body_en|linebreaks }}{% else %}{{ page.body_en|linebreaks }}{% endif %}
-{% for section in page.sections.all %}{% if section.is_visible %}<section class="content-section {% if section.animation %}{{ section.animation.css_class }}{% endif %}"><h2>{% if LANGUAGE_CODE == 'ar' %}{{ section.title_ar|default:section.title_en }}{% else %}{{ section.title_en }}{% endif %}</h2>{% if LANGUAGE_CODE == 'ar' %}{{ section.content_ar|default:section.content_en|linebreaks }}{% else %}{{ section.content_en|linebreaks }}{% endif %}</section>{% endif %}{% endfor %}</div></article>
-{% endblock %}

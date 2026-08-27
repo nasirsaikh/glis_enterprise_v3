@@ -1,0 +1,9 @@
+{% load i18n %}
+
+{% include "tickets/partials/comment_form.html" %}
+
+<div id="comment-list" hx-swap-oob="beforeend">
+    {% include "tickets/partials/comment.html" %}
+</div>
+
+<div id="no-comments" hx-swap-oob="delete"></div>

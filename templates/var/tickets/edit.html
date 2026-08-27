@@ -1,0 +1,15 @@
+{% extends 'base_portal.html' %}{% load i18n %}{% block title %}{% translate "Edit" %} {{ ticket.reference }}{% endblock %}
+{% block content %}
+<nav><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a></li><li class="breadcrumb-item active">{% translate "Edit" %}</li></ol></nav>
+<div class="page-heading"><span class="page-eyebrow">{% translate "Permission controlled" %}</span><h1>{% translate "Edit ticket" %}</h1><p>{% translate "Update core details and administrator-defined fields." %}</p></div>
+<form class="panel editor-form" method="post">{% csrf_token %}
+  <div class="row g-4">
+    <div class="{% if form.priority %}col-lg-8{% else %}col-12{% endif %}"><label class="form-label">{% translate "Subject" %}</label>{{ form.subject }}{{ form.subject.errors }}</div>
+    {% if form.priority %}<div class="col-lg-2"><label class="form-label">{% translate "Priority" %}</label>{{ form.priority }}</div><div class="col-lg-2"><label class="form-label">{% translate "Status" %}</label>{{ form.status }}{{ form.status.errors }}</div>{% endif %}
+    <div class="col-12"><label class="form-label">{% translate "Description" %}</label>{{ form.description }}{{ form.description.errors }}</div>
+    {% for field in dynamic_form %}<div class="col-md-6"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>{{ field }}{% if field.help_text %}<small class="form-text">{{ field.help_text }}</small>{% endif %}{{ field.errors }}</div>{% endfor %}
+  </div>
+  {% if form.non_field_errors or dynamic_form.non_field_errors %}<div class="alert alert-danger mt-3">{{ form.non_field_errors }}{{ dynamic_form.non_field_errors }}</div>{% endif %}
+  <div class="d-flex justify-content-end gap-2 mt-4"><a class="btn btn-light" href="{% url 'portal:ticket_detail' ticket.reference %}">{% translate "Cancel" %}</a><button class="btn btn-primary" type="submit"><i class="bi bi-check2 me-2"></i>{% translate "Save changes" %}</button></div>
+</form>
+{% endblock %}

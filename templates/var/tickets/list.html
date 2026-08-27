@@ -1,0 +1,24 @@
+{% extends 'base_portal.html' %}{% load i18n %}{% block title %}{% translate "Tickets" %}{% endblock %}
+{% block content%}
+<div class="page-heading d-flex flex-wrap justify-content-between align-items-end gap-3">
+    <div><span class="page-eyebrow">{% translate "Ticket workspace" %}</span>
+        <h1>{% translate "Service requests" %}</h1>
+        <p>{% translate "Search, filter and act on tickets you are permitted to access." %}</p>
+    </div><a class="btn btn-primary" href="{% url 'portal:create_ticket' 1 %}"><i class="bi bi-plus-lg me-2"></i>{% translate "Create ticket" %}</a>
+</div>
+<section class="panel filter-panel">
+    <form method="get" hx-get="{% url 'portal:ticket_list' %}" hx-target="#ticket-table"
+        hx-trigger="change delay:150ms, submit" hx-push-url="true">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6 col-xl-3"><label class="form-label" for="{{ filter_form.q.id_for_label }}">{% translate "Search" %}</label>{{ filter_form.q }}</div>
+            <div class="col-6 col-md-3 col-xl-2"><label class="form-label">{% translate "Status" %}</label>{{filter_form.status }}</div>
+            <div class="col-6 col-md-3 col-xl-2"><label class="form-label">{% translate "Priority" %}</label>{{filter_form.priority }}</div>
+            <div class="col-md-4 col-xl-2"><label class="form-label">{% translate "Project" %}</label>{{filter_form.project }}</div>
+            <div class="col-md-4 col-xl-2"><label class="form-label">{% translate "SLA" %}</label>{{ filter_form.sla }}</div>
+            <div class="col-md-4 col-xl-1"><button class="btn btn-soft w-100" type="submit" aria-label="{% translate 'Apply filters' %}"><i class="bi bi-funnel"></i></button></div>
+        </div>
+        <div class="htmx-indicator filter-loading"><span class="spinner-border spinner-border-sm"></span>{% translate "Updating…" %}</div>
+    </form>
+</section>
+<div id="ticket-table">{% include 'tickets/partials/table.html' %}</div>
+{% endblock %}

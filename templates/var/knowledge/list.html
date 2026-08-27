@@ -1,0 +1,42 @@
+{% extends 'base_public.html' %}{% load i18n %}{% get_current_language as LANGUAGE_CODE %}
+{% block title %}{% translate "Knowledge Base" %} · GLIS{% endblock %}{% block content %}<header class="knowledge-hero">
+    <div class="container text-center">
+        <span class="section-kicker">{% translate "GLIS Knowledge" %}</span>
+        <h3 style="font-size: 50px;" class="section-kicker text-center">{% translate "Clear guidance for your next step" %}</h3>
+        <h3 style="font-size: 20px;" class="section-kicker text-center">
+            {% translate "Find practical answers for claims, policies, payments, providers and service requests." %}
+        </h3>
+        <form class="knowledge-search" method="get"><i class="bi bi-search"></i><input class="form-control" name="q"
+                value="{{ term }}" placeholder="{% translate 'Search guides and answers…' %}"><button
+                class="btn btn-primary">{% translate "Search" %}</button>
+        </form>
+    </div>
+</header>
+<section class="section-space">
+    <div class="container">
+        <div class="category-pills"><a class="{% if not request.GET.category %}active{% endif %}"
+                href="{% url 'knowledge:list' %}">{% translate "All topics" %}</a>{% for category in categories %}<a
+                class="{% if request.GET.category == category.slug %}active{% endif %}"
+                href="?category={{ category.slug }}"><i class="bi {{ category.icon }}"></i>
+                {% if LANGUAGE_CODE == 'ar' %}{{ category.name_ar|default:category.name_en }}{% else %}
+                {{ category.name_en }}{% endif %}</a>{% endfor %}</div>
+        <div class="row g-4 mt-3">{% for article in articles %}<div class="col-md-6 col-lg-4">
+                <article class="article-card h-100"><span>{% if LANGUAGE_CODE == 'ar' %}
+                    {{ article.category.name_ar|default:article.category.name_en }}{% else %}
+                    {{ article.category.name_en }}{% endif %}</span>
+                    <h2><a href="{{ article.get_absolute_url }}">{% if LANGUAGE_CODE == 'ar' %}
+                        {{article.title_ar|default:article.title_en }}{% else %}{{ article.title_en }}{% endif %}</a>
+                    </h2>
+                    <p>{% if LANGUAGE_CODE == 'ar' %}{{ article.summary_ar|default:article.summary_en }}{% else %}
+                        {{ article.summary_en }}{% endif %}</p>
+                    <div class="article-meta"><small><i class="bi bi-clock"></i>{% translate " 4 min read" %}</small>
+                        {% if article.is_featured %}<small><i class="bi bi-star-fill text-warning"></i>{% translate " Featured" %}</small>{% endif %}</div>
+                </article>
+            </div>{% empty %}<div class="col-12">
+                <div class="empty-state"><span class="empty-icon"><i class="bi bi-journal-x"></i></span><strong>{% translate "No articles found" %}</strong>
+                    <p>{% translate "Try a broader search or choose another topic." %}</p>
+                </div>
+            </div>{% endfor %}</div>
+    </div>
+</section>
+{% endblock %}

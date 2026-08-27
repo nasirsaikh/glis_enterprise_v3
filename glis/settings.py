@@ -9,22 +9,51 @@ env = environ.Env(DJANGO_DEBUG=(bool, True), SECURE_SSL_REDIRECT=(bool, False))
 environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="unsafe-development-key-change-me")
-# A clean source extraction is a local-development checkout. Deployments must
-# explicitly set DJANGO_DEBUG=False (see the production checklist in README.md).
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
-#ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["127.0.0.1", "localhost", "testserver"])
 ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 INSTALLED_APPS = [
+    # django CMS admin styling must be before django.contrib.admin.
+    "djangocms_simple_admin_style",
+
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     "django.contrib.sites",
+
+    # django CMS core.
+    "cms",
+    "menus",
+    "treebeard",
+    "sekizai",
+
+    # django CMS content/file components.
+    "filer",
+    "easy_thumbnails",
+    "djangocms_text",
+    "djangocms_frontend",
+    "djangocms_frontend.contrib.accordion",
+    "djangocms_frontend.contrib.alert",
+    "djangocms_frontend.contrib.badge",
+    "djangocms_frontend.contrib.card",
+    "djangocms_frontend.contrib.carousel",
+    "djangocms_frontend.contrib.collapse",
+    "djangocms_frontend.contrib.content",
+    "djangocms_frontend.contrib.grid",
+    "djangocms_frontend.contrib.image",
+    "djangocms_frontend.contrib.jumbotron",
+    "djangocms_frontend.contrib.link",
+    "djangocms_frontend.contrib.listgroup",
+    "djangocms_frontend.contrib.media",
+    "djangocms_frontend.contrib.tabs",
+    "djangocms_frontend.contrib.utilities",
+    "djangocms_versioning",
+    "djangocms_alias",
+
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -34,15 +63,17 @@ INSTALLED_APPS = [
     "django_htmx",
     "widget_tweaks",
 
-    # REST API
+    # REST API.
     "rest_framework",
     "rest_framework_simplejwt",
     "django_filters",
     "drf_spectacular",
 
+    # GLIS applications. The old apps.cms application has been replaced by
+    # apps.app_settings; the `cms` name above now belongs to django CMS.
     "apps.core",
     "apps.accounts",
-    "apps.cms",
+    "apps.app_settings.apps.AppSettingsConfig",
     "apps.tickets",
     "apps.knowledge",
     "apps.ai",
@@ -52,22 +83,22 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "cms.middleware.utils.ApphookReloadMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-
     "allauth.account.middleware.AccountMiddleware",
-
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-
+    "cms.middleware.user.CurrentUserMiddleware",
+    "cms.middleware.page.CurrentPageMiddleware",
+    "cms.middleware.toolbar.ToolbarMiddleware",
+    "cms.middleware.language.LanguageCookieMiddleware",
     "django_htmx.middleware.HtmxMiddleware",
-
     "csp.middleware.CSPMiddleware",
 ]
 
@@ -77,9 +108,15 @@ TEMPLATES = [{
     "DIRS": [BASE_DIR / "templates"],
     "APP_DIRS": True,
     "OPTIONS": {"context_processors": [
-        "django.template.context_processors.request", "django.contrib.auth.context_processors.auth",
-        "django.contrib.messages.context_processors.messages", "apps.cms.context_processors.site_context",
-        "apps.accounts.context_processors.auth_provider_context", "apps.tickets.context_processors.notification_context",
+        "django.template.context_processors.request",
+        "django.template.context_processors.i18n",
+        "django.contrib.auth.context_processors.auth",
+        "django.contrib.messages.context_processors.messages",
+        "sekizai.context_processors.sekizai",
+        "cms.context_processors.cms_settings",
+        "apps.app_settings.context_processors.site_context",
+        "apps.accounts.context_processors.auth_provider_context",
+        "apps.tickets.context_processors.notification_context",
     ]},
 }]
 
@@ -100,27 +137,6 @@ if db_engine == "mssql":
 else:
     DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / env("DATABASE_NAME", default="db.sqlite3")}}
 
-
-# DATABASE_URL="postgresql://postgres.rrbytxusjypzaqviqcrr:mHIIS7Iy1tLmlI48@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
-# db_engine = "postgresql"
-# if DATABASE_URL:
-#     # Production / Vercel
-#     DATABASES = {
-#         "default": dj_database_url.parse(
-#             DATABASE_URL,
-#             conn_max_age=600,
-#             conn_health_checks=True,
-#         )
-#     }
-# else:
-#     # Local development
-#     DATABASES = {
-#         "default": {
-#             "ENGINE": "django.db.backends.sqlite3",
-#             "NAME": BASE_DIR / "db.sqlite3",
-#         }
-#     }
-
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -139,9 +155,6 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    # Manifest storage intentionally fails when collectstatic has not produced a
-    # manifest, so use it only for production. Django's runserver can then serve
-    # source assets directly during local development on Windows, Linux or macOS.
     "staticfiles": {
         "BACKEND": (
             "django.contrib.staticfiles.storage.StaticFilesStorage"
@@ -157,9 +170,29 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 30 * 1024 * 1024
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SITE_ID = 1
+
+# django CMS page templates. Existing GLIS Bootstrap templates remain the shell;
+# editors control the page body through django CMS placeholders/plugins.
+CMS_TEMPLATES = [
+    ("cms/glis_page.html", "GLIS content page"),
+    ("cms/glis_home.html", "GLIS home page"),
+    ("cms/glis_portal_page.html", "GLIS portal page"),
+]
+CMS_PERMISSION = True
+CMS_PAGE_CACHE = not DEBUG
+CMS_PLACEHOLDER_CACHE = not DEBUG
+CMS_PLUGIN_CACHE = not DEBUG
+CMS_LANGUAGES = {
+    1: [
+        {"code": "en", "name": "English", "fallbacks": ["ar"], "public": True},
+        {"code": "ar", "name": "العربية", "fallbacks": ["en"], "public": True},
+    ],
+    "default": {"fallbacks": ["en"], "redirect_on_fallback": True, "public": True},
+}
+
 LOGIN_URL = "account_login"
 LOGIN_REDIRECT_URL = "portal:dashboard"
-LOGOUT_REDIRECT_URL = "public:home"
+LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = env("ALLAUTH_EMAIL_VERIFICATION", default="optional")
@@ -181,76 +214,31 @@ SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD = env.bool("SECURE_HSTS_PRELOAD", default=False)
 SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = "DENY"
+# django CMS frontend editing uses same-origin frames/sideframes.
+X_FRAME_OPTIONS = "SAMEORIGIN"
 SECURE_REFERRER_POLICY = "same-origin"
-
-# CONTENT_SECURITY_POLICY = {"DIRECTIVES": {
-#     "default-src": ["'self'"],
-#     "script-src": ["'self'", "https://cdn.jsdelivr.net", "https://unpkg.com", "https://cdn.plot.ly"],
-#     "style-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
-#     "font-src": ["'self'", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com", "data:"],
-#     "img-src": ["'self'", "data:", "blob:"],
-#     "connect-src": ["'self'"], "frame-ancestors": ["'none'"],
-#     "base-uri": ["'self'"], "form-action": ["'self'"],
-# }}
-
 
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
-
-        "default-src": [
-            "'self'",
-        ],
-
+        "default-src": ["'self'"],
         "script-src": [
-            "'self'",
-            "'unsafe-inline'",
-            "https://cdn.jsdelivr.net",
-            "https://unpkg.com",
-            "https://cdn.plot.ly",
+            "'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net",
+            "https://unpkg.com", "https://cdn.plot.ly",
         ],
-
-        "worker-src": [
-            "'self'",
-            "blob:",
-        ],
-
+        "worker-src": ["'self'", "blob:"],
         "style-src": [
-            "'self'",
-            "'unsafe-inline'",
-            "https://cdn.jsdelivr.net",
+            "'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net",
             "https://fonts.googleapis.com",
         ],
-
         "font-src": [
-            "'self'",
-            "data:",
-            "https://cdn.jsdelivr.net",
-            "https://fonts.gstatic.com",
+            "'self'", "data:", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com",
         ],
-
-        "img-src": [
-            "'self'",
-            "data:",
-            "blob:",
-        ],
-
-        "connect-src": [
-            "'self'",
-            "https://cdn.jsdelivr.net",
-        ],
-
-        "frame-ancestors": [
-            "'none'",
-        ],
-
-        "base-uri": [
-            "'self'",
-        ],
-
-        "form-action": [
-            "'self'",
-        ],
+        "img-src": ["'self'", "data:", "blob:"],
+        "connect-src": ["'self'", "https://cdn.jsdelivr.net"],
+        "frame-src": ["'self'"],
+        "frame-ancestors": ["'self'"],
+        "base-uri": ["'self'"],
+        "form-action": ["'self'"],
     }
 }
 
@@ -263,7 +251,6 @@ OLLAMA_MODEL = env("OLLAMA_MODEL", default="qwen2.5-coder:7b")
 OLLAMA_EMBED_MODEL = env("OLLAMA_EMBED_MODEL", default="nomic-embed-text")
 OLLAMA_CONTEXT_WINDOW = env.int("OLLAMA_CONTEXT_WINDOW", default=8192)
 OLLAMA_TEMPERATURE = env.float("OLLAMA_TEMPERATURE", default=0.1)
-#VANNA_DB_SCHEMA = env("VANNA_DB_SCHEMA", default="dbo" if db_engine == "mssql" else "main")
 
 if db_engine == "mssql":
     default_schema = "dbo"
@@ -272,63 +259,49 @@ elif db_engine == "postgresql":
 else:
     default_schema = "main"
 
-VANNA_DB_SCHEMA = env("VANNA_DB_SCHEMA",default=default_schema,)
+VANNA_DB_SCHEMA = env("VANNA_DB_SCHEMA", default=default_schema)
 CHROMA_PERSIST_DIRECTORY = env("CHROMA_PERSIST_DIRECTORY", default=str(BASE_DIR / "data" / "chroma"))
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@glis.local")
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
-EMAIL_HOST = os.getenv("EMAIL_HOST","smtp.office365.com",)
-EMAIL_PORT = int(os.getenv("EMAIL_PORT","587",))
-EMAIL_USE_TLS = (os.getenv("EMAIL_USE_TLS","True",).lower() == "true")
-EMAIL_USE_SSL = (os.getenv("EMAIL_USE_SSL","False",).lower() == "true")
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER","",)
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD","",)
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL",EMAIL_HOST_USER,)
-SERVER_EMAIL = os.getenv("SERVER_EMAIL",DEFAULT_FROM_EMAIL,)
-EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT","30",))
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.office365.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "30"))
 
-LOGGING = {"version": 1, "disable_existing_loggers": False,
-           "handlers": {"console": {"class": "logging.StreamHandler"}},
-           "root": {"handlers": ["console"], "level": "INFO"}}
-
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "INFO"},
+}
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
-
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-
     "DEFAULT_PAGINATION_CLASS": "apps.api.pagination.GLISPagination",
     "PAGE_SIZE": 25,
-
-    # IMPORTANT
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-
     "EXCEPTION_HANDLER": "apps.api.exceptions.glis_exception_handler",
 }
-
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "GLIS Enterprise Platform API",
     "DESCRIPTION": "REST API for GLIS Enterprise Platform",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-
     "COMPONENT_SPLIT_REQUEST": True,
-
-    # JWT bearer authentication
-    "SECURITY": [
-        {
-            "jwtAuth": []
-        }
-    ],
+    "SECURITY": [{"jwtAuth": []}],
 }

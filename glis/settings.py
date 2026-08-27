@@ -144,7 +144,7 @@ ASGI_APPLICATION = "glis.asgi.application"
 # Connect to Postgres via the shared transaction-mode pooler (IPv4-only)
 #DATABASE_URL="postgresql://postgres.djqaqvcsjfgauraibflk:Takaful@Oman@1@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
 # Connect to Postgres via the shared transaction-mode pooler (IPv4-only)
-DATABASE_URL="postgresql://postgres.djqaqvcsjfgauraibflk:Takaful@Oman@1@aws-0-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DATABASE_URL="postgresql://postgres.djqaqvcsjfgauraibflk:Takaful%40Oman%401@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
 # Connect to Postgres via the shared session-mode pooler (used for migrations)
 #DIRECT_URL="postgresql://postgres.djqaqvcsjfgauraibflk:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
 db_engine = "postgresql"

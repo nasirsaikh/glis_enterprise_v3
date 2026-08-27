@@ -283,8 +283,10 @@ class Ticket(TimeStampedModel):
 
     @property
     def sla_state(self):
-        if self.status in {self.Status.RESOLVED, self.Status.CLOSED}:
-            return "resolved"
+        if self.status in {self.Status.CLOSED}:
+            return "closed"
+        if self.status in {self.Status.RESOLVED}:
+                    return "resolved"
         if self.status == self.Status.PENDING_CUSTOMER:
             return "paused"
         if not self.resolution_due_at:
@@ -295,6 +297,106 @@ class Ticket(TimeStampedModel):
         if remaining.total_seconds() < 7200:
             return "at_risk"
         return "healthy"
+
+    @property
+    def elapsed_time(self):
+
+        if not self.created_at:
+            return None
+
+        end_date = (
+            self.updated_at
+            or timezone.now()
+        )
+
+        duration = (
+            end_date
+            - self.created_at
+        )
+
+        total_seconds = int(
+            duration.total_seconds()
+        )
+
+        days = total_seconds // 86400
+
+        hours = (
+            total_seconds % 86400
+        ) // 3600
+
+        minutes = (
+            total_seconds % 3600
+        ) // 60
+
+        if days > 0:
+            return (
+                f"{days}d "
+                f"{hours}h "
+                f"{minutes}m"
+            )
+
+        if hours > 0:
+            return (
+                f"{hours}h "
+                f"{minutes}m"
+            )
+
+        return f"{minutes}m"
+
+    # =========================================================
+    # SLA FULL INFORMATION
+    # =========================================================
+
+    @property
+    def sla_state_detail(self):
+
+        return {
+            "state": self.sla_state,
+
+            "logged_at": (
+                self.created_at.isoformat()
+                if self.created_at
+                else None
+            ),
+
+            "last_updated_at": (
+                self.updated_at.isoformat()
+                if self.updated_at
+                else None
+            ),
+
+            "elapsed": self.elapsed_time,
+
+            "first_response_due_at": (
+                self.first_response_due_at.isoformat()
+                if self.first_response_due_at
+                else None
+            ),
+
+            "resolution_due_at": (
+                self.resolution_due_at.isoformat()
+                if self.resolution_due_at
+                else None
+            ),
+
+            "first_responded_at": (
+                self.first_responded_at.isoformat()
+                if self.first_responded_at
+                else None
+            ),
+
+            "resolved_at": (
+                self.resolved_at.isoformat()
+                if self.resolved_at
+                else None
+            ),
+
+            "closed_at": (
+                self.closed_at.isoformat()
+                if self.closed_at
+                else None
+            ),
+        }
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None

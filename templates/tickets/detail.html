@@ -48,6 +48,13 @@
             <div class="d-flex flex-wrap align-items-start gap-2">
                 <a class="btn btn-outline-primary btn-sm" href="{% url 'portal:ticket_list' %}"><i class="bi bi-arrow-left me-1"></i>{% translate "Back" %}</a>
 
+                {% if ticket.get_status_display == "Closed" %}
+                    <a class="btn btn-outline-secondary btn-sm disabled" href="#">
+                        {{ticket.get_status_display}}
+                    </a>
+                        
+                {% else %}
+
                 {% if can_take_over %}
                     <form action="{% url 'portal:take_over_ticket' ticket.reference %}" method="post">
                         {% csrf_token %}
@@ -66,6 +73,9 @@
                 {% if can_edit %}
                     <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal:edit_ticket' ticket.reference %}"><i class="bi bi-pencil me-1"></i>{% translate "Edit" %}</a>
                 {% endif %}
+                
+                {% endif %}
+
 
                 <div class="dropdown">
                     <button class="btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-three-dots"></i></button>
@@ -84,6 +94,77 @@
 </div>
 
 <div class="row g-3 align-items-start">
+    <div class="col-12 col-xl-9">
+
+        <section class="panel">
+
+            <div class="panel-heading">
+                <div>
+                    <h2 class="d-flex align-items-center gap-2"><i class="bi bi-chat-left-text"></i>{% translate "Conversation" %}</h2>
+                    <p>{{ comments|length }} {% translate "updates" %}</p>
+                </div>
+
+                <span class="text-muted small"><i class="bi bi-paperclip me-1"></i>{{ ticket.attachments.count }} {% translate "files" %}</span>
+            </div>
+
+            <div class="p-3 p-lg-4 border-bottom">
+                <div class="d-flex gap-3">
+                    <span class="avatar">{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span>
+
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="d-flex flex-wrap justify-content-between gap-2">
+                            <div>
+                                <strong class="d-block">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong>
+                                <small class="text-muted">{% translate "Requester" %}</small>
+                            </div>
+
+                            <small class="text-muted">{{ ticket.created_at|date:"d M Y, h:i A" }}</small>
+                        </div>
+
+                        <div class="prose rich-content mt-3">{{ ticket.description|safe }}</div>
+
+                        <div class="attachment-list mt-3">
+                            {% for attachment in ticket.attachments.all %}
+                                {% if not attachment.comment_id %}
+                                    <a href="{% url 'portal:download_attachment' attachment.pk %}">
+                                        <span class="file-icon"><i class="bi bi-file-earmark"></i></span>
+
+                                        <span class="flex-grow-1 overflow-hidden">
+                                            <strong class="d-block text-truncate">{{ attachment.original_name }}</strong>
+                                            <small>{{ attachment.size|filesizeformat }} · {{ attachment.created_at|date:"d M Y, h:i A" }} · {{ attachment.scan_status|title }}</small>
+                                        </span>
+
+                                        <i class="bi bi-download ms-auto"></i>
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <div class="text-end mt-2"><small class="text-muted">{{ ticket.created_at|date:"h:i A" }}</small></div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="comment-list" class="comment-list p-3 p-lg-4">
+                {% for comment in comments %}
+                    {% include "tickets/partials/comment.html" %}
+                {% empty %}
+                    <div id="no-comments" class="text-center text-muted py-5">
+                        <i class="bi bi-chat-square fs-3 d-block mb-2"></i>
+                        <strong class="d-block">{% translate "No conversation yet" %}</strong>
+                        <span class="small">{% translate "Add the first update below." %}</span>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if ticket.get_status_display != "Closed" %}
+                <div class="border-top p-3 p-lg-4">
+                {% include "tickets/partials/comment_form.html" %}
+            </div>
+            {% endif %}
+        </section>
+
+    </div>
 
     <div class="col-12 col-xl-3">
 
@@ -124,7 +205,13 @@
                 <h2 class="d-flex align-items-center gap-2 mb-0"><i class="bi bi-person-check"></i>{% translate "Assignment" %}</h2>
 
                 {% if can_assign %}
-                    <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="modal" data-bs-target="#assignmentModal">{% translate "Manage" %}</button>
+                    {% if ticket.get_status_display == "Closed" %}
+                        {{ticket.get_status_display}}
+                    {% else %}
+                    <button class="btn btn-sm btn-link p-0" type="button" data-bs-toggle="modal" data-bs-target="#assignmentModal">
+                        {% translate "Manage" %}
+                    </button>
+                    {% endif %}
                 {% endif %}
             </div>
 
@@ -189,85 +276,11 @@
             </dl>
         </section>
 
-    </div>
-
-    <div class="col-12 col-xl-6">
-
-        <section class="panel">
-
-            <div class="panel-heading">
-                <div>
-                    <h2 class="d-flex align-items-center gap-2"><i class="bi bi-chat-left-text"></i>{% translate "Conversation" %}</h2>
-                    <p>{{ comments|length }} {% translate "updates" %}</p>
-                </div>
-
-                <span class="text-muted small"><i class="bi bi-paperclip me-1"></i>{{ ticket.attachments.count }} {% translate "files" %}</span>
-            </div>
-
-            <div class="p-3 p-lg-4 border-bottom">
-                <div class="d-flex gap-3">
-                    <span class="avatar">{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span>
-
-                    <div class="flex-grow-1 overflow-hidden">
-                        <div class="d-flex flex-wrap justify-content-between gap-2">
-                            <div>
-                                <strong class="d-block">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong>
-                                <small class="text-muted">{% translate "Requester" %}</small>
-                            </div>
-
-                            <small class="text-muted">{{ ticket.created_at|date:"d M Y, h:i A" }}</small>
-                        </div>
-
-                        <div class="prose rich-content mt-3">{{ ticket.description|safe }}</div>
-
-                        <div class="attachment-list mt-3">
-                            {% for attachment in ticket.attachments.all %}
-                                {% if not attachment.comment_id %}
-                                    <a href="{% url 'portal:download_attachment' attachment.pk %}">
-                                        <span class="file-icon"><i class="bi bi-file-earmark"></i></span>
-
-                                        <span class="flex-grow-1 overflow-hidden">
-                                            <strong class="d-block text-truncate">{{ attachment.original_name }}</strong>
-                                            <small>{{ attachment.size|filesizeformat }} · {{ attachment.created_at|date:"d M Y, h:i A" }} · {{ attachment.scan_status|title }}</small>
-                                        </span>
-
-                                        <i class="bi bi-download ms-auto"></i>
-                                    </a>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-
-                        <div class="text-end mt-2"><small class="text-muted">{{ ticket.created_at|date:"h:i A" }}</small></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="comment-list" class="comment-list p-3 p-lg-4">
-                {% for comment in comments %}
-                    {% include "tickets/partials/comment.html" %}
-                {% empty %}
-                    <div id="no-comments" class="text-center text-muted py-5">
-                        <i class="bi bi-chat-square fs-3 d-block mb-2"></i>
-                        <strong class="d-block">{% translate "No conversation yet" %}</strong>
-                        <span class="small">{% translate "Add the first update below." %}</span>
-                    </div>
-                {% endfor %}
-            </div>
-
-            <div class="border-top p-3 p-lg-4">
-                {% include "tickets/partials/comment_form.html" %}
-            </div>
-
-        </section>
-
-    </div>
-
-    <div class="col-12 col-xl-3">
-
         <section class="panel side-panel mb-3">
             <div class="d-flex justify-content-between align-items-center gap-2">
                 <h2 class="d-flex align-items-center gap-2 mb-0"><i class="bi bi-hourglass-split"></i>{% translate "SLA Time Left" %}</h2>
-                <span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span>
+                <span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }} - {{ ticket.elapsed_time }}</span>
+                
             </div>
 
             <div class="sla-meter mt-3"><span class="sla-{{ ticket.sla_state }}"></span></div>

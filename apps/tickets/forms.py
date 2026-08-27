@@ -54,7 +54,7 @@ class TicketCommentForm(forms.ModelForm):
         widgets = {
             "body": forms.Textarea(
                 attrs={
-                    "class": "form-control richtext-source",
+                    "class": "form-control richtext-source text-black",
                     "rows": 3,
                     "placeholder": "Write an update…",
                 }

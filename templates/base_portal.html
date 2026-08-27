@@ -1,4 +1,5 @@
-{% load static i18n %}{% get_current_language as LANGUAGE_CODE %}
+{% load static i18n cms_tags sekizai_tags %}
+{% get_current_language as LANGUAGE_CODE %}
 <!doctype html>
 <html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}" data-bs-theme="light">
 <head>

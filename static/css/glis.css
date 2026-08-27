@@ -244,7 +244,7 @@ button:focus-visible {
 
 .site-header {
     background: rgba(255, 255, 255, .97);
-    border-bottom: 1px solid rgba(22, 74, 53, .08)
+    border-bottom: 1px solid white;
 }
 
 .site-header .navbar {
@@ -325,7 +325,7 @@ button:focus-visible {
 }
 
 .site-header .nav-link {
-    color: #334139;
+    /* color: #334139; */
     font-size: .86rem;
     font-weight: 650;
     padding: .75rem .65rem !important;
@@ -3467,7 +3467,6 @@ html[dir=rtl] .comment>div {
     gap: 3px;
     padding: 7px 9px;
     border-bottom: 1px solid #e3eae6;
-    background: #f6f9f7
 }
 
 .richtext-toolbar button {
@@ -3480,7 +3479,9 @@ html[dir=rtl] .comment>div {
 }
 
 .richtext-toolbar button:hover {
-    background: #e4efe9
+    border-color: var(--bs-border-color) !important;
+    background: var(--bs-body-bg) !important;
+    color: var(--bs-body-color) !important;
 }
 
 .richtext-toolbar span {

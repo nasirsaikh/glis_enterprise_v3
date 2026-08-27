@@ -15,7 +15,7 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 INSTALLED_APPS = [
     # django CMS admin styling must be before django.contrib.admin.
-    "djangocms_simple_admin_style",
+    #"djangocms_simple_admin_style",
 
     "django.contrib.admin",
     "django.contrib.auth",
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "filer",
     "easy_thumbnails",
     "djangocms_text",
+    "djangocms_link",
     "djangocms_frontend",
     "djangocms_frontend.contrib.accordion",
     "djangocms_frontend.contrib.alert",
@@ -80,6 +81,7 @@ INSTALLED_APPS = [
     "apps.orchestrator",
 
     "django_json_widget",
+    "django_ckeditor_5",
 ]
 
 MIDDLEWARE = [
@@ -173,12 +175,14 @@ SITE_ID = 1
 
 # django CMS page templates. Existing GLIS Bootstrap templates remain the shell;
 # editors control the page body through django CMS placeholders/plugins.
+
 CMS_TEMPLATES = [
     ("cms/glis_page.html", "GLIS content page"),
     ("cms/glis_home.html", "GLIS home page"),
     ("cms/glis_portal_page.html", "GLIS portal page"),
 ]
 CMS_PERMISSION = True
+CMS_TREE_BACKEND = "mptree"
 CMS_PAGE_CACHE = not DEBUG
 CMS_PLACEHOLDER_CACHE = not DEBUG
 CMS_PLUGIN_CACHE = not DEBUG
@@ -305,3 +309,4 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "SECURITY": [{"jwtAuth": []}],
 }
+

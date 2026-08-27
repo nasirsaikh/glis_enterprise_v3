@@ -124,5 +124,7 @@ django-treebeard
 djangocms-text
 djangocms-frontend
 django-filer
+easy-thumbnails
 djangocms-versioning
 djangocms-alias
+djangocms-simple-admin-style

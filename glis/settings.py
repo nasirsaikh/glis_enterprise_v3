@@ -533,24 +533,62 @@ JOB_CENTER_MAX_WORKERS = 10
 JOB_CENTER_LOCK_TTL_SECONDS = 90
 JOB_CENTER_HEARTBEAT_SECONDS = 30
 
-SUMMERNOTE_THEME = "bs5"
+SUMMERNOTE_THEME = "lite"
 
 SUMMERNOTE_CONFIG = {
-    "iframe": False,
+    "iframe": True,
 
     "summernote": {
         "width": "100%",
-        "height": "500px",
+        "height": "450px",
 
         "toolbar": [
             ["style", ["style"]],
-            ["font", ["bold", "underline", "clear"]],
+
+            [
+                "font",
+                [
+                    "bold",
+                    "italic",
+                    "underline",
+                    "strikethrough",
+                    "clear",
+                ],
+            ],
+
             ["fontname", ["fontname"]],
+            ["fontsize", ["fontsize"]],
             ["color", ["color"]],
-            ["para", ["ul", "ol", "paragraph"]],
+
+            [
+                "para",
+                [
+                    "ul",
+                    "ol",
+                    "paragraph",
+                ],
+            ],
+
+            ["height", ["height"]],
             ["table", ["table"]],
-            ["insert", ["link", "picture", "video"]],
-            ["view", ["fullscreen", "codeview", "help"]],
+
+            [
+                "insert",
+                [
+                    "link",
+                    "picture",
+                    "video",
+                ],
+            ],
+
+            [
+                "view",
+                [
+                    "fullscreen",
+                    "codeview",
+                    "help",
+                ],
+            ],
         ],
     },
 }

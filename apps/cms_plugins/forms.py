@@ -1,5 +1,5 @@
 from django import forms
-from django_summernote.widgets import SummernoteInplaceWidget
+from django_summernote.widgets import SummernoteWidget
 
 from .models import CustomWebSection
 
@@ -17,7 +17,7 @@ class CustomWebSectionForm(forms.ModelForm):
         ]
 
         widgets = {
-            "html_content": SummernoteInplaceWidget(
+            "html_content": SummernoteWidget(
                 attrs={
                     "summernote": {
                         "width": "100%",

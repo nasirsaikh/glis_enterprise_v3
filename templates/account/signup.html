@@ -1,27 +1,80 @@
 {% extends 'base_public.html' %}
-{% load i18n %}{% block title %}
-{% translate "Create account" %} · GLIS{% endblock %}
-{% block content %}<section class="auth-section simple">
+{% load i18n socialaccount %}
+
+{% block title %}{% translate "Create account" %} · GLIS{% endblock %}
+
+{% block content %}
+<section class="auth-section simple">
     <div class="container">
         <div class="auth-card mx-auto">
-      <div class="d-flex justify-content-center align-items-center hero-wrapper">
-        <img src="/api/v1/hero-image/1/" alt="Hero" style="height: 50px; width: 100px;">
-        </div>
-            <div class="auth-card-heading d-flex justify-content-center align-items-center">
-                
+
+            <div class="d-flex justify-content-center align-items-center hero-wrapper">
+                <img src="/api/v1/hero-image/1/" alt="GLIS" style="height:50px;width:100px;object-fit:contain;">
+            </div>
+
+            <div class="auth-card-heading text-center">
                 <div class="mt-2">
                     <h1 class="h2">{% translate "Create your GLIS account" %}</h1>
+                    <p class="text-body-secondary mb-0">{% translate "Create an account to submit and track your requests." %}</p>
                 </div>
             </div>
-            <form method="post" action="{% url 'account_signup' %}">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}<div class="mb-3"><label class="form-label" for="{{ field.id_for_label }}">
-                    {{ field.label }}</label><input class="form-control form-control-lg" id="{{ field.id_for_label }}"
-                        name="{{ field.html_name }}"
-                        type="{% if 'password' in field.name %}password{% else %}email{% endif %}" required>
-                        {% if field.help_text %}<small class="form-hint">{{ field.help_text|safe }}</small>{% endif %}
-                        {{ field.errors }}</div>{% endfor %}<button class="btn btn-primary btn-lg w-100">
-                            {% translate "Create account" %}</button></form>
-            <p class="auth-footer">{% translate "Already registered?" %} <a href="{% url 'account_login' %}">
-                {% translate "Sign in" %}</a></p>
+
+            <div class="d-grid gap-2 mt-4">
+                <form method="post" action="/accounts/microsoft/login/">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-secondary btn-lg w-100 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-microsoft"></i>
+                        <span>{% translate "Continue with Microsoft" %}</span>
+                    </button>
+                </form>
+
+                <form method="post" action="/accounts/google/login/">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-secondary btn-lg w-100 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-google"></i>
+                        <span>{% translate "Continue with Google" %}</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="d-flex align-items-center gap-3 my-4">
+                <hr class="flex-grow-1 m-0">
+                <span class="text-body-secondary small">{% translate "OR" %}</span>
+                <hr class="flex-grow-1 m-0">
+            </div>
+
+            <form method="post" action="{% url 'account_signup' %}">
+                {% csrf_token %}
+
+                {{ form.non_field_errors }}
+
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+
+                    <input class="form-control form-control-lg{% if field.errors %} is-invalid{% endif %}" id="{{ field.id_for_label }}" name="{{ field.html_name }}" type="{{ field.field.widget.input_type|default:'text' }}" value="{% if field.value and 'password' not in field.name %}{{ field.value }}{% endif %}" {% if field.field.required %}required{% endif %}>
+
+                    {% if field.help_text %}
+                    <small class="form-hint text-body-secondary">{{ field.help_text|safe }}</small>
+                    {% endif %}
+
+                    {% if field.errors %}
+                    <div class="invalid-feedback d-block">{{ field.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-person-plus me-2"></i>{% translate "Create account" %}
+                </button>
+            </form>
+
+            <p class="auth-footer text-center mt-4 mb-0">
+                {% translate "Already registered?" %}
+                <a href="{% url 'account_login' %}" class="fw-semibold">{% translate "Sign in" %}</a>
+            </p>
+
         </div>
     </div>
-</section>{% endblock %}
+</section>
+{% endblock %}

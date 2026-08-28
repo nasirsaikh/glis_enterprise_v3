@@ -36,6 +36,9 @@ urlpatterns = [
     path("site-settings/", views.site_settings_api, name="site_settings_api"),
     path("site-logo/", views.site_logo_api, name="site_logo_api"),
     path("home-content/", views.home_content_api, name="home_content_api"),
+    path("home-content-html/", views.home_content_html, name="home_content_html"),    
     path("site-favicon/", views.site_favicon_api, name="site_favicon_api"),
-    path("hero-image/", views.hero_image_api, name="hero_image_api"),    
+    path("hero-image/", views.hero_image_api, name="hero_image_api"),  
+    path("download-center/", views.download_center_content, name="download_center_content"),  
+    path("downloads/file/<int:pk>/", views.download_document, name="download_document"),
 ]

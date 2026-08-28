@@ -56,3 +56,39 @@ def switch_language(request):
         samesite=settings.LANGUAGE_COOKIE_SAMESITE,
     )
     return response
+
+
+@require_POST
+def switch_theme(request):
+
+    theme = request.POST.get("theme", "light")
+
+    if theme not in ["light", "dark"]:
+        theme = "light"
+
+    next_url = request.POST.get("next") or "/"
+
+    if not url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = "/"
+
+    response = HttpResponseRedirect(next_url)
+
+    response.set_cookie(
+        "glis_theme",
+        theme,
+        max_age=365 * 24 * 60 * 60,
+        path="/",
+        secure=not settings.DEBUG,
+        httponly=False,
+        samesite="Lax",
+    )
+
+    return response
+
+
+
+

@@ -4,20 +4,32 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 from apps.tickets.models import Notification, TicketApproval, TicketEvent
+from apps.job_center.queue import enqueue
+
+
+# def notify_users(users, *, ticket=None, kind="info", title, body="", send_email_message=False):
+#     unique = {user.pk: user for user in users if user and user.is_active}
+#     link = reverse("portal:ticket_detail", args=[ticket.reference]) if ticket else ""
+#     notifications = [Notification(user=user, ticket=ticket, kind=kind, title=title, body=body[:500], link=link) for user in unique.values()]
+#     if notifications:
+#         Notification.objects.bulk_create(notifications)
+#     if send_email_message:
+#         for user in unique.values():
+#             profile = getattr(user, "profile", None)
+#             if user.email and (profile is None or profile.email_notifications):
+#                 send_mail(title, body, getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@glis.local"), [user.email], fail_silently=True)
 
 
 def notify_users(users, *, ticket=None, kind="info", title, body="", send_email_message=False):
     unique = {user.pk: user for user in users if user and user.is_active}
     link = reverse("portal:ticket_detail", args=[ticket.reference]) if ticket else ""
     notifications = [Notification(user=user, ticket=ticket, kind=kind, title=title, body=body[:500], link=link) for user in unique.values()]
-    if notifications:
-        Notification.objects.bulk_create(notifications)
-    if send_email_message:
-        for user in unique.values():
-            profile = getattr(user, "profile", None)
-            if user.email and (profile is None or profile.email_notifications):
-                send_mail(title, body, getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@glis.local"), [user.email], fail_silently=True)
-
+    if notifications: Notification.objects.bulk_create(notifications)
+    if not send_email_message: return
+    recipient_ids = [user.pk for user in unique.values() if user.email and (getattr(user, "profile", None) is None or user.profile.email_notifications)]
+    if not recipient_ids: return
+    payload = {"recipient_ids": recipient_ids, "ticket_id": ticket.pk if ticket else None, "title": title, "body": body, "kind": kind, "link": link}
+    transaction.on_commit(lambda: enqueue("email.ticket_notification", payload, priority=3, max_attempts=3, retry_delay_seconds=60))
 
 @transaction.atomic
 def initialize_approval_workflow(ticket):

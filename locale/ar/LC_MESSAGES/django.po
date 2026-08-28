@@ -1,6 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GLIS 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-28 11:27+0400\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -8,474 +10,2645 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=(n==0?0:n==1?1:n==2?2:n%100>=3 && n%100<=10?"
 "3:n%100>=11 && n%100<=99?4:5);\n"
 
-msgid "Home"
-msgstr "الرئيسية"
-
-msgid "About GLIS"
-msgstr "عن جرين لاين"
-
-msgid "About"
-msgstr "عن الشركة"
-
-msgid "Services"
-msgstr "الخدمات"
-
-msgid "Insurance Solutions"
-msgstr "حلول التأمين"
-msgid "Claims Support"
-msgstr "دعم المطالبات"
-msgid "Customer Support"
-msgstr "دعم العملاء"
-
-msgid "Knowledge Base"
-msgstr "قاعدة المعرفة"
-
-msgid "Contact"
-msgstr "اتصل بنا"
-
-msgid "Support"
-msgstr "الدعم"
-
-msgid "Sign in"
-msgstr "تسجيل الدخول"
-
-msgid "Sign out"
-msgstr "تسجيل الخروج"
-
-msgid "Open portal"
-msgstr "فتح البوابة"
-
-msgid "Create request"
-msgstr "إنشاء طلب"
-
-msgid "Submit a request"
-msgstr "تقديم طلب"
-
-msgid "Track requests"
-msgstr "متابعة الطلبات"
-
-msgid "Contact us"
-msgstr "تواصل معنا"
-
-msgid "Privacy"
-msgstr "الخصوصية"
-
-msgid "Terms"
-msgstr "الشروط"
-
-msgid "Accessibility"
-msgstr "إمكانية الوصول"
-
-msgid "All rights reserved."
-msgstr "جميع الحقوق محفوظة."
-
-msgid "Skip to content"
-msgstr "انتقل إلى المحتوى"
-
-msgid "Change theme"
-msgstr "تغيير المظهر"
-
-msgid "Close"
-msgstr "إغلاق"
-
-msgid "Secure by design"
-msgstr "أمان منذ التصميم"
-
-msgid "English & Arabic"
-msgstr "العربية والإنجليزية"
-
-msgid "Track every request"
-msgstr "تتبّع كل طلب"
-
-msgid "Service desk live"
-msgstr "مركز الخدمة متاح"
-
-msgid "Protected"
-msgstr "محمي"
-
-msgid "In progress"
-msgstr "قيد التنفيذ"
-
-msgid "Received"
-msgstr "تم الاستلام"
-
-msgid "Under review"
-msgstr "قيد المراجعة"
-
-msgid "Resolved"
-msgstr "تم الحل"
-
-msgid "Clear updates"
-msgstr "تحديثات واضحة"
-
-msgid "One conversation"
-msgstr "محادثة واحدة"
-
-msgid "SLA tracked"
-msgstr "متابعة مستوى الخدمة"
-
-msgid "Proactive alerts"
-msgstr "تنبيهات استباقية"
-
-msgid "Document received"
-msgstr "تم استلام المستند"
-
-msgid "Just now"
-msgstr "الآن"
-
-msgid "Privacy-aware"
-msgstr "مراعاة الخصوصية"
-
-msgid "Multi-team routing"
-msgstr "توجيه متعدد الفرق"
-
-msgid "Bilingual service"
-msgstr "خدمة ثنائية اللغة"
-
-msgid "Auditable outcomes"
-msgstr "نتائج قابلة للتدقيق"
-
-msgid "Support across the insurance journey"
-msgstr "دعم عبر رحلة التأمين"
-
-msgid "Insurance services"
-msgstr "خدمات التأمين"
-
-msgid "Start a request"
-msgstr "ابدأ طلباً"
-
-msgid "Learn more"
-msgstr "اعرف المزيد"
-
-msgid "How we help"
-msgstr "كيف نساعدك"
-
-msgid "From question to clear outcome"
-msgstr "من السؤال إلى نتيجة واضحة"
-
-msgid "Choose your service"
-msgstr "اختر خدمتك"
-
-msgid "Share the essentials"
-msgstr "شارك المعلومات الأساسية"
-
-msgid "Collaborate securely"
-msgstr "تعاون بأمان"
-
-msgid "See the outcome"
-msgstr "اطّلع على النتيجة"
-
-msgid "Claims"
-msgstr "المطالبات"
-
-msgid "Policy service"
-msgstr "خدمة الوثائق"
-
-msgid "Provider network"
-msgstr "شبكة مقدمي الخدمة"
-
-msgid "Finance"
-msgstr "المالية"
-
-msgid "Complaints"
-msgstr "الشكاوى"
-
-msgid "Compliance"
-msgstr "الامتثال"
-
-msgid "Role-aware access"
-msgstr "وصول حسب الدور"
-
-msgid "Intelligent routing"
-msgstr "توجيه ذكي"
-
-msgid "Operational visibility"
-msgstr "وضوح تشغيلي"
-
-msgid "Helpful guidance"
-msgstr "إرشادات مفيدة"
-
-msgid "Browse knowledge base"
-msgstr "تصفح قاعدة المعرفة"
-
-msgid "Ready when you are"
-msgstr "جاهزون عندما تكون جاهزاً"
-
-msgid "Portal"
-msgstr "البوابة"
-
-msgid "Service portal"
-msgstr "بوابة الخدمات"
-
-msgid "Workspace"
-msgstr "مساحة العمل"
-
-msgid "Overview"
-msgstr "نظرة عامة"
-
-msgid "My tickets"
-msgstr "طلباتي"
-
-msgid "Group tickets"
-msgstr "طلبات المجموعة"
-
-msgid "All tickets"
-msgstr "جميع الطلبات"
-
-msgid "Create ticket"
-msgstr "إنشاء طلب"
-
-msgid "Resources"
-msgstr "المصادر"
-
-msgid "AI assistant"
-msgstr "مساعد الذكاء الاصطناعي"
-
-msgid "Administration"
-msgstr "الإدارة"
-
-msgid "Platform admin"
-msgstr "إدارة المنصة"
-
-msgid "CMS & public site"
-msgstr "المحتوى والموقع العام"
-
-msgid "Audit logs"
-msgstr "سجلات التدقيق"
-
-msgid "New ticket"
-msgstr "طلب جديد"
-
-msgid "Notifications"
-msgstr "الإشعارات"
-
-msgid "Profile"
-msgstr "الملف الشخصي"
-
-msgid "View tickets"
-msgstr "عرض الطلبات"
-
-msgid "Open tickets"
-msgstr "الطلبات المفتوحة"
-
-msgid "Assigned to me"
-msgstr "مسندة إليّ"
-
-msgid "Overdue"
-msgstr "متأخرة"
-
-msgid "Resolved this month"
-msgstr "تم حلها هذا الشهر"
-
-msgid "Ticket health"
-msgstr "حالة الطلبات"
-
-msgid "Priority mix"
-msgstr "توزيع الأولويات"
-
-msgid "Recent tickets"
-msgstr "أحدث الطلبات"
-
-msgid "Needs attention"
-msgstr "تحتاج اهتماماً"
-
-msgid "All clear"
-msgstr "كل شيء مستقر"
-
-msgid "Ticket workspace"
-msgstr "مساحة عمل الطلبات"
-
-msgid "Service requests"
-msgstr "طلبات الخدمة"
-
-msgid "Search"
-msgstr "بحث"
-
-msgid "Status"
-msgstr "الحالة"
-
-msgid "Priority"
-msgstr "الأولوية"
-
-msgid "Project"
-msgstr "المشروع"
-
-msgid "Product"
-msgstr "المنتج"
-
-msgid "Category"
-msgstr "الفئة"
-
-msgid "Requester"
-msgstr "مقدم الطلب"
-
-msgid "Assignment"
-msgstr "الإسناد"
-
-msgid "SLA due"
-msgstr "موعد مستوى الخدمة"
-
-msgid "Actions"
-msgstr "الإجراءات"
-
-msgid "Unassigned"
-msgstr "غير مسند"
-
-msgid "Restricted"
-msgstr "مقيد"
-
-msgid "Sensitive"
-msgstr "حساس"
-
-msgid "Details"
-msgstr "التفاصيل"
-
-msgid "Conversation"
-msgstr "المحادثة"
-
-msgid "Activity"
-msgstr "النشاط"
-
-msgid "Attachments"
-msgstr "المرفقات"
-
-msgid "AI insights"
-msgstr "رؤى الذكاء الاصطناعي"
-
-msgid "Request description"
-msgstr "وصف الطلب"
-
-msgid "Request information"
-msgstr "معلومات الطلب"
-
-msgid "Internal note"
-msgstr "ملاحظة داخلية"
-
-msgid "Public reply"
-msgstr "رد عام"
-
-msgid "Post update"
-msgstr "نشر التحديث"
-
-msgid "SLA health"
-msgstr "حالة مستوى الخدمة"
-
-msgid "Resolution due"
-msgstr "موعد الحل"
-
-msgid "Guided service request"
-msgstr "طلب خدمة موجه"
-
-msgid "Create a ticket"
-msgstr "إنشاء طلب"
-
-msgid "Service"
-msgstr "الخدمة"
-
-msgid "Clarify"
-msgstr "التوضيح"
-
-msgid "Review"
-msgstr "المراجعة"
-
-msgid "Step 1 of 4"
-msgstr "الخطوة 1 من 4"
-
-msgid "What can we help with?"
-msgstr "كيف يمكننا مساعدتك؟"
-
-msgid "Continue to details"
-msgstr "المتابعة إلى التفاصيل"
-
-msgid "Step 2 of 4"
-msgstr "الخطوة 2 من 4"
-
-msgid "Tell us about the request"
-msgstr "أخبرنا عن الطلب"
-
-msgid "Continue to questions"
-msgstr "المتابعة إلى الأسئلة"
-
-msgid "Back"
-msgstr "رجوع"
-
-msgid "Step 3 of 4"
-msgstr "الخطوة 3 من 4"
-
-msgid "Four quick clarifications"
-msgstr "أربعة أسئلة توضيحية سريعة"
-
-msgid "Optional"
-msgstr "اختياري"
-
-msgid "Generate review"
-msgstr "إنشاء المراجعة"
-
-msgid "Step 4 of 4"
-msgstr "الخطوة 4 من 4"
-
-msgid "Review and submit"
-msgstr "راجع وقدّم"
-
-msgid "Final request"
-msgstr "الطلب النهائي"
-
-msgid "Subject"
-msgstr "الموضوع"
-
-msgid "Description"
-msgstr "الوصف"
-
-msgid "Supporting documents"
-msgstr "المستندات الداعمة"
-
-msgid "AI recommendation"
-msgstr "توصية الذكاء الاصطناعي"
-
-msgid "Human review required"
-msgstr "تتطلب مراجعة بشرية"
-
-msgid "Request summary"
-msgstr "ملخص الطلب"
-
-msgid "Submit request"
-msgstr "تقديم الطلب"
-
-msgid "Welcome back"
-msgstr "مرحباً بعودتك"
-
-msgid "Email address"
-msgstr "البريد الإلكتروني"
-
+#: .\apps\accounts\forms.py:9 .\templates\account\login.html:27
+msgid "Email or username"
+msgstr ""
+
+#: .\apps\accounts\forms.py:10 .\templates\account\login.html:30
 msgid "Password"
 msgstr "كلمة المرور"
 
+#: .\apps\accounts\forms.py:12
+msgid ""
+"The email/username or password is incorrect. Check Caps Lock and try again."
+msgstr ""
+
+#: .\apps\accounts\forms.py:12
+msgid "This account is inactive."
+msgstr ""
+
+#: .\apps\accounts\forms.py:39 .\templates\base_portal.html:25
+msgid "Portal navigation"
+msgstr ""
+
+#: .\apps\accounts\forms.py:61
+msgid "This email address is already in use."
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:6 .\apps\cms_plugins\models.py:26
+#: .\apps\cms_plugins\models.py:34 .\apps\cms_plugins\models.py:98
+msgid "Eyebrow"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:7 .\apps\cms_plugins\models.py:17
+#: .\apps\cms_plugins\models.py:27 .\apps\cms_plugins\models.py:35
+#: .\apps\cms_plugins\models.py:44 .\apps\cms_plugins\models.py:54
+#: .\apps\cms_plugins\models.py:62 .\apps\cms_plugins\models.py:99
+msgid "Title"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:8
+msgid "Subtitle"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:9
+msgid "Primary button text"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:10
+msgid "Primary button URL"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:11
+msgid "Secondary button text"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:12
+msgid "Secondary button URL"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:18
+msgid "Image"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:19
+msgid "Alternative text"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:20
+msgid "Link"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:21
+msgid "Open in new window"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:28 .\apps\cms_plugins\models.py:55
+#: .\apps\cms_plugins\models.py:63 .\templates\tickets\edit.html:9
+#: .\templates\tickets\wizard\step4.html:21
+msgid "Description"
+msgstr "الوصف"
+
+#: .\apps\cms_plugins\models.py:29
+#, fuzzy
+#| msgid "Assignment"
+msgid "Alignment"
+msgstr "الإسناد"
+
+#: .\apps\cms_plugins\models.py:29
+msgid "Start"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:29
+msgid "Center"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:29
+msgid "End"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:36 .\apps\cms_plugins\models.py:100
+#, fuzzy
+#| msgid "Contact"
+msgid "Content"
+msgstr "اتصل بنا"
+
+#: .\apps\cms_plugins\models.py:37 .\apps\cms_plugins\models.py:46
+#: .\apps\cms_plugins\models.py:101
+msgid "Button text"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:38 .\apps\cms_plugins\models.py:47
+#: .\apps\cms_plugins\models.py:102
+msgid "Button URL"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:43 .\apps\cms_plugins\models.py:53
+#: .\apps\cms_plugins\models.py:61 .\apps\cms_plugins\models.py:68
+msgid "Bootstrap icon"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:45
+msgid "Summary"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:48
+msgid "Featured"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:60
+msgid "Step number"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:69
+msgid "Value"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:70
+msgid "Suffix"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:71
+msgid "Label"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:76 .\apps\cms_plugins\models.py:91
+msgid "Name"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:77
+msgid "Role"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:78
+msgid "Quote"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:79
+msgid "Photo"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:80
+msgid "Rating"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:85
+#, fuzzy
+#| msgid "Resolution"
+msgid "Question"
+msgstr "إغلاق الطلب"
+
+#: .\apps\cms_plugins\models.py:86
+msgid "Answer"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:92
+msgid "Logo"
+msgstr ""
+
+#: .\apps\cms_plugins\models.py:93
+msgid "Website"
+msgstr ""
+
+#: .\apps\tickets\forms.py:32 .\templates\tickets\wizard\step3.html:1
+msgid "Optional"
+msgstr "اختياري"
+
+#: .\apps\tickets\forms.py:40
+msgid ""
+"I confirm that the information is accurate and may be processed to provide "
+"this service."
+msgstr ""
+
+#: .\apps\tickets\forms.py:116
+msgid "Approve"
+msgstr ""
+
+#: .\apps\tickets\forms.py:116
+#, fuzzy
+#| msgid "Project"
+msgid "Reject"
+msgstr "المشروع"
+
+#: .\apps\tickets\forms.py:121
+#, fuzzy
+#| msgid "Recent tickets"
+msgid "Search tickets"
+msgstr "أحدث الطلبات"
+
+#: .\apps\tickets\forms.py:122
+#, fuzzy
+#| msgid "All tickets"
+msgid "All statuses"
+msgstr "جميع الطلبات"
+
+#: .\apps\tickets\forms.py:123
+#, fuzzy
+#| msgid "All tickets"
+msgid "All priorities"
+msgstr "جميع الطلبات"
+
+#: .\apps\tickets\forms.py:124
+#, fuzzy
+#| msgid "All topics"
+msgid "All projects"
+msgstr "جميع المواضيع"
+
+#: .\apps\tickets\forms.py:125
+#, fuzzy
+#| msgid "All topics"
+msgid "All categories"
+msgstr "جميع المواضيع"
+
+#: .\apps\tickets\forms.py:126
+msgid "All SLA states"
+msgstr ""
+
+#: .\apps\tickets\forms.py:126 .\templates\portal\dashboard.html:9
+msgid "Overdue"
+msgstr "متأخرة"
+
+#: .\apps\tickets\forms.py:126
+msgid "At risk"
+msgstr ""
+
+#: .\templates\account\login.html:6
+#, fuzzy
+#| msgid "Service portal"
+msgid "Secure service portal"
+msgstr "بوابة الخدمات"
+
+#: .\templates\account\login.html:7
+msgid "Continue every insurance request with clarity"
+msgstr ""
+
+#: .\templates\account\login.html:8
+msgid ""
+"Sign in to submit requests, share documents securely, follow SLA status and "
+"collaborate with the responsible team."
+msgstr ""
+
+#: .\templates\account\login.html:10
+msgid "Your permitted tickets in one workspace"
+msgstr ""
+
+#: .\templates\account\login.html:12
+#, fuzzy
+#| msgid "English & Arabic"
+msgid "English and Arabic experience"
+msgstr "العربية والإنجليزية"
+
+#: .\templates\account\login.html:13
+msgid "Auditable conversations and attachments"
+msgstr ""
+
+#: .\templates\account\login.html:16
+#, fuzzy
+#| msgid "Privacy-aware"
+msgid "Privacy-aware access"
+msgstr "مراعاة الخصوصية"
+
+#: .\templates\account\login.html:17
+msgid "Role and group permissions protect insurance information."
+msgstr ""
+
+#: .\templates\account\login.html:23
+msgid "Welcome back"
+msgstr "مرحباً بعودتك"
+
+#: .\templates\account\login.html:24
+msgid "Sign in to the GLIS service portal"
+msgstr ""
+
+#: .\templates\account\login.html:31
 msgid "Forgot password?"
 msgstr "نسيت كلمة المرور؟"
 
+#: .\templates\account\login.html:35 .\templates\account\signup.html:24
+#: ⁨.\templates\base_public copy.html⁩:68 .\templates\base_public.html:112
+#: ⁨.\templates\cms\glis_home copy.html⁩:139 .\templates\public\home.html:231
+msgid "Sign in"
+msgstr "تسجيل الدخول"
+
+#: .\templates\account\login.html:37
+msgid "or continue with"
+msgstr ""
+
+#: .\templates\account\login.html:46
+msgid "New to GLIS?"
+msgstr ""
+
+#: .\templates\account\login.html:46
 msgid "Create an account"
 msgstr "إنشاء حساب"
 
+#: .\templates\account\login.html:47
+msgid "Development demo:"
+msgstr ""
+
+#: .\templates\account\password_reset.html:1
 msgid "Reset your password"
 msgstr "إعادة تعيين كلمة المرور"
 
-msgid "Search guides and answers…"
-msgstr "ابحث في الأدلة والإجابات…"
+#: .\templates\account\password_reset.html:1
+msgid "Enter your email and we will send password reset instructions."
+msgstr ""
 
-msgid "All topics"
-msgstr "جميع المواضيع"
+#: .\templates\account\password_reset.html:1
+msgid "Email address"
+msgstr "البريد الإلكتروني"
 
-msgid "No articles found"
-msgstr "لم يتم العثور على مقالات"
+#: .\templates\account\password_reset.html:1
+msgid "Send reset link"
+msgstr ""
 
+#: .\templates\account\profile.html:1 .\templates\account\profile.html:3
+#: .\templates\base_portal.html:71
+msgid "Profile & security"
+msgstr ""
+
+#: .\templates\account\profile.html:2
+msgid "Account"
+msgstr ""
+
+#: .\templates\account\profile.html:4
+msgid "Manage your personal information, avatar, preferences and password."
+msgstr ""
+
+#: .\templates\account\profile.html:25
+#, fuzzy
+#| msgid "Profile"
+msgid "Save profile"
+msgstr "الملف الشخصي"
+
+#: .\templates\account\profile.html:30
+#, fuzzy
+#| msgid "Forgot password?"
+msgid "Change password"
+msgstr "نسيت كلمة المرور؟"
+
+#: .\templates\account\profile.html:31
+msgid "Use a strong password that you do not reuse elsewhere."
+msgstr ""
+
+#: .\templates\account\profile.html:32
+#, fuzzy
+#| msgid "Forgot password?"
+msgid "Update password"
+msgstr "نسيت كلمة المرور؟"
+
+#: .\templates\account\signup.html:3 .\templates\account\signup.html:22
+#, fuzzy
+#| msgid "Create an account"
+msgid "Create account"
+msgstr "إنشاء حساب"
+
+#: .\templates\account\signup.html:13
+#, fuzzy
+#| msgid "Create an account"
+msgid "Create your GLIS account"
+msgstr "إنشاء حساب"
+
+#: .\templates\account\signup.html:23
+msgid "Already registered?"
+msgstr ""
+
+#: .\templates\base_portal.html:7 .\templates\base_portal.html:74
+msgid "Portal"
+msgstr "البوابة"
+
+#: .\templates\base_portal.html:17 ⁨.\templates\base_public copy.html⁩:26
+#: .\templates\base_public.html:36 ⁨.\templates\cms\glis_home copy.html⁩:39
+msgid "Skip to content"
+msgstr "انتقل إلى المحتوى"
+
+#: .\templates\base_portal.html:22
+msgid "Service portal"
+msgstr "بوابة الخدمات"
+
+#: .\templates\base_portal.html:35
+msgid "Workspace"
+msgstr "مساحة العمل"
+
+#: .\templates\base_portal.html:36 .\templates\base_portal.html:74
+#: .\templates\portal\dashboard.html:1
+msgid "Overview"
+msgstr "نظرة عامة"
+
+#: .\templates\base_portal.html:37 .\templates\base_portal.html:74
+#: .\templates\tickets\detail.html:10 .\templates\tickets\list.html:1
+#, fuzzy
+#| msgid "My tickets"
+msgid "Tickets"
+msgstr "طلباتي"
+
+#: .\templates\base_portal.html:38 .\templates\orchestrator\console.html:4
+#: .\templates\portal\dashboard.html:30
+msgid "Vanna analytics"
+msgstr ""
+
+#: .\templates\base_portal.html:41
+msgid "Need help?"
+msgstr ""
+
+#: .\templates\base_portal.html:41
+msgid "Contact platform support"
+msgstr ""
+
+#: .\templates\base_portal.html:48
+msgid "Change navigation size"
+msgstr ""
+
+#: .\templates\base_portal.html:52
+msgid "Open menu"
+msgstr ""
+
+#: .\templates\base_portal.html:53
+msgid "Search tickets, requesters, projects…"
+msgstr ""
+
+#: .\templates\base_portal.html:56
+msgid "New ticket"
+msgstr "طلب جديد"
+
+#: .\templates\base_portal.html:57 ⁨.\templates\base_public copy.html⁩:61
+#: .\templates\base_public.html:97 ⁨.\templates\cms\glis_home copy.html⁩:108
+msgid "Change theme"
+msgstr "تغيير المظهر"
+
+#: .\templates\base_portal.html:58
+msgid "Change language"
+msgstr ""
+
+#: .\templates\base_portal.html:60 .\templates\base_portal.html:62
+#: .\templates\notifications\list.html:1 .\templates\notifications\list.html:2
+msgid "Notifications"
+msgstr "الإشعارات"
+
+#: .\templates\base_portal.html:62 .\templates\notifications\list.html:2
+msgid "Mark all read"
+msgstr ""
+
+#: .\templates\base_portal.html:63 .\templates\orchestrator\console.html:96
+#: .\templates\tickets\detail.html:342
+msgid "ago"
+msgstr ""
+
+#: .\templates\base_portal.html:63
+#, fuzzy
+#| msgid "Notifications"
+msgid "No notifications"
+msgstr "الإشعارات"
+
+#: .\templates\base_portal.html:64
+#, fuzzy
+#| msgid "Status notifications"
+msgid "View all notifications"
+msgstr "إشعارات حالة الطلب"
+
+#: .\templates\base_portal.html:71
+msgid "Administration"
+msgstr "الإدارة"
+
+#: .\templates\base_portal.html:71
+msgid "Sign out"
+msgstr "تسجيل الخروج"
+
+#: ⁨.\templates\base_public copy.html⁩:29 .\templates\base_public.html:43
+#: ⁨.\templates\cms\glis_home copy.html⁩:51
+msgid "Secure insurance service coordination"
+msgstr ""
+
+#: ⁨.\templates\base_public copy.html⁩:36 .\templates\base_public.html:65
+#: ⁨.\templates\cms\glis_home copy.html⁩:76
+msgid "Primary navigation"
+msgstr ""
+
+#: ⁨.\templates\base_public copy.html⁩:46 .\templates\base_public.html:86
+#: ⁨.\templates\cms\glis_home copy.html⁩:94 .\templates\tickets\detail.html:463
+#: .\templates\tickets\detail.html:506
+msgid "Close"
+msgstr "إغلاق"
+
+#: ⁨.\templates\base_public copy.html⁩:55
+msgid "Home"
+msgstr "الرئيسية"
+
+#: ⁨.\templates\base_public copy.html⁩:57 .\templates\base_public.html:190
+#: .\templates\knowledge\detail.html:11 .\templates\knowledge\list.html:2
+msgid "Knowledge Base"
+msgstr "قاعدة المعرفة"
+
+#: ⁨.\templates\base_public copy.html⁩:67 .\templates\base_public.html:110
+#: ⁨.\templates\cms\glis_home copy.html⁩:132
+msgid "Open portal"
+msgstr "فتح البوابة"
+
+#: ⁨.\templates\base_public copy.html⁩:69 .\templates\base_public.html:115
+#: ⁨.\templates\cms\glis_home copy.html⁩:146
+msgid "Create request"
+msgstr "إنشاء طلب"
+
+#: ⁨.\templates\base_public copy.html⁩:91 .\templates\base_public.html:169
+msgid ""
+"A secure service layer connecting customers, providers, insurers and support "
+"teams across every request."
+msgstr ""
+
+#: ⁨.\templates\base_public copy.html⁩:94 .\templates\base_public.html:176
+#: ⁨.\templates\cms\glis_home copy.html⁩:528 .\templates\cms\home_content.html:68
+#, fuzzy
+#| msgid "Complaints"
+msgid "Company"
+msgstr "الشكاوى"
+
+#: ⁨.\templates\base_public copy.html⁩:94 ⁨.\templates\cms\glis_home copy.html⁩:532
+#: .\templates\cms\home_content.html:68
+msgid "About"
+msgstr "عن الشركة"
+
+#: ⁨.\templates\base_public copy.html⁩:95 ⁨.\templates\cms\glis_home copy.html⁩:536
+#: .\templates\cms\home_content.html:68
+msgid "Services"
+msgstr "الخدمات"
+
+#: ⁨.\templates\base_public copy.html⁩:95
+#, fuzzy
+#| msgid "Knowledge Base"
+msgid "Knowledge"
+msgstr "قاعدة المعرفة"
+
+#: ⁨.\templates\base_public copy.html⁩:98 .\templates\base_public.html:186
+#: ⁨.\templates\cms\glis_home copy.html⁩:548 .\templates\cms\home_content.html:68
+#: .\templates\public\home.html:214
+msgid "Support"
+msgstr "الدعم"
+
+#: ⁨.\templates\base_public copy.html⁩:99 .\templates\base_public.html:188
+#: ⁨.\templates\cms\glis_home copy.html⁩:552 .\templates\cms\home_content.html:68
+#: .\templates\public\home.html:231
+msgid "Submit a request"
+msgstr "تقديم طلب"
+
+#: ⁨.\templates\base_public copy.html⁩:99 .\templates\base_public.html:189
+#: ⁨.\templates\cms\glis_home copy.html⁩:556 .\templates\cms\home_content.html:68
+msgid "Track requests"
+msgstr "متابعة الطلبات"
+
+#: ⁨.\templates\base_public copy.html⁩:99 .\templates\base_public.html:191
+#: ⁨.\templates\cms\glis_home copy.html⁩:560 .\templates\cms\home_content.html:68
+msgid "Contact us"
+msgstr "تواصل معنا"
+
+#: ⁨.\templates\base_public copy.html⁩:102 .\templates\base_public.html:197
+#: ⁨.\templates\cms\glis_home copy.html⁩:568 .\templates\cms\home_content.html:68
+msgid "Contact"
+msgstr "اتصل بنا"
+
+#: ⁨.\templates\base_public copy.html⁩:114 .\templates\base_public.html:232
+#: ⁨.\templates\cms\glis_home copy.html⁩:605 .\templates\cms\home_content.html:68
+msgid "All rights reserved."
+msgstr "جميع الحقوق محفوظة."
+
+#: ⁨.\templates\base_public copy.html⁩:115 .\templates\base_public.html:236
+#: ⁨.\templates\cms\glis_home copy.html⁩:611 .\templates\cms\home_content.html:68
+msgid "Privacy"
+msgstr "الخصوصية"
+
+#: ⁨.\templates\base_public copy.html⁩:115 .\templates\base_public.html:237
+#: ⁨.\templates\cms\glis_home copy.html⁩:615 .\templates\cms\home_content.html:68
+msgid "Terms"
+msgstr "الشروط"
+
+#: ⁨.\templates\base_public copy.html⁩:115 .\templates\base_public.html:238
+#: ⁨.\templates\cms\glis_home copy.html⁩:619 .\templates\cms\home_content.html:68
+msgid "Accessibility"
+msgstr "إمكانية الوصول"
+
+#: .\templates\base_public.html:78
+#, fuzzy
+#| msgid "One conversation"
+msgid "Open navigation"
+msgstr "محادثة واحدة"
+
+#: .\templates\cms\glis_about.html:4
+#, fuzzy
+#| msgid "About"
+msgid "About Us"
+msgstr "عن الشركة"
+
+#: .\templates\cms\glis_about.html:13
+msgid "ABOUT US"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:15
+msgid "Your Trusted Healthcare Administration Partner"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:17
+msgid ""
+"We are committed to delivering efficient, reliable and customer-focused "
+"third-party administration services through strong processes, experienced "
+"professionals and technology-driven solutions."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:20
+msgid "Discover Our Purpose"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:21
+#, fuzzy
+#| msgid "Contact us"
+msgid "Contact Us"
+msgstr "تواصل معنا"
+
+#: .\templates\cms\glis_about.html:28
+msgid "Reliable"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:28
+#, fuzzy
+#| msgid "Insurance services"
+msgid "Trusted service"
+msgstr "خدمات التأمين"
+
+#: .\templates\cms\glis_about.html:35
+msgid "Efficient"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:35
+msgid "Fast processes"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:42 .\templates\cms\glis_about.html:273
+#, fuzzy
+#| msgid "Customer Support"
+msgid "Customer First"
+msgstr "دعم العملاء"
+
+#: .\templates\cms\glis_about.html:42
+msgid "Always focused"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:58
+msgid "Trusted Partner"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:58
+msgid "Dependable support"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:65
+#, fuzzy
+#| msgid "Customer Support"
+msgid "Dedicated Support"
+msgstr "دعم العملاء"
+
+#: .\templates\cms\glis_about.html:65
+#, fuzzy
+#| msgid "Choose your service"
+msgid "Focused on service"
+msgstr "اختر خدمتك"
+
+#: .\templates\cms\glis_about.html:84
+#, fuzzy
+#| msgid "Service portal"
+msgid "Service Support"
+msgstr "بوابة الخدمات"
+
+#: .\templates\cms\glis_about.html:85
+msgid "Reliable assistance"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:92
+#, fuzzy
+#| msgid "Customer Support"
+msgid "Customer Focus"
+msgstr "دعم العملاء"
+
+#: .\templates\cms\glis_about.html:93
+#, fuzzy
+#| msgid "Service desk live"
+msgid "Service driven"
+msgstr "مركز الخدمة متاح"
+
+#: .\templates\cms\glis_about.html:100
+#, fuzzy
+#| msgid "Secure Access"
+msgid "Secure Processes"
+msgstr "دخول آمن"
+
+#: .\templates\cms\glis_about.html:101
+msgid "Strong governance"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:108
+#, fuzzy
+#| msgid "Service"
+msgid "Fast Service"
+msgstr "الخدمة"
+
+#: .\templates\cms\glis_about.html:109
+msgid "Efficient processing"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:124
+msgid "WHO WE ARE"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:126
+msgid "Built around service, trust and efficiency"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:128
+msgid ""
+"Our organization focuses on providing high-quality third-party "
+"administration services designed to simplify processes and improve the "
+"overall customer experience."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:130
+msgid ""
+"By combining professional expertise, structured workflows and modern "
+"technology, we support customers, healthcare providers and business partners "
+"with dependable service throughout every interaction."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:135
+msgid "Customer-centric approach"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:136
+msgid "Every process is designed around customer needs."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:143
+msgid "Technology enabled"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:144
+msgid "Modern systems support faster and more accurate service."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:151
+msgid "Professional support"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:152
+msgid "Experienced teams focused on dependable delivery."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:164
+#, fuzzy
+#| msgid "Customer Support"
+msgid "Customer Focused"
+msgstr "دعم العملاء"
+
+#: .\templates\cms\glis_about.html:165
+msgid ""
+"We place customers at the center of every process and continuously work to "
+"improve their service experience."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:174
+#, fuzzy
+#| msgid "Simple Process"
+msgid "Efficient Processes"
+msgstr "إجراءات بسيطة"
+
+#: .\templates\cms\glis_about.html:175
+msgid ""
+"Structured and continuously improved workflows help us deliver faster, "
+"consistent and dependable services."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:184
+msgid "Technology Driven"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:185
+msgid ""
+"Digital platforms and automation help us improve accuracy, transparency and "
+"turnaround times."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:194
+#, fuzzy
+#| msgid "Service"
+msgid "Trusted Service"
+msgstr "الخدمة"
+
+#: .\templates\cms\glis_about.html:195
+msgid ""
+"Strong governance, responsible processes and professional service remain "
+"central to everything we do."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:213
+msgid "OUR PURPOSE"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:214
+msgid "Our Vision & Mission"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:215
+msgid ""
+"Our direction is guided by a clear ambition to provide outstanding service "
+"while continuously improving the way we support our customers and partners."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:227
+msgid "Our Vision"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:228
+msgid "Best TPA of the Sultanate"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:232
+msgid ""
+"To establish ourselves as one of the most trusted and customer-focused third-"
+"party administrators in the Sultanate by delivering efficient, reliable and "
+"technology-enabled services."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:243
+msgid "Our Mission"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:244
+msgid "Service with excellence"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:248
+msgid ""
+"To deliver consistent and professional support through customer-centric "
+"processes, skilled teams, modern technology and strong partnerships while "
+"continuously improving service quality."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:263
+msgid "OUR VALUES"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:264
+msgid "What drives us every day"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:274
+msgid "We make customer experience a priority in every decision."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:281
+msgid "Excellence"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:282
+msgid "We continuously improve our standards, processes and service quality."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:289
+#, fuzzy
+#| msgid "Conversation"
+msgid "Collaboration"
+msgstr "المحادثة"
+
+#: .\templates\cms\glis_about.html:290
+msgid "Strong partnerships and teamwork are fundamental to our success."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:297
+msgid "Integrity"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:298
+msgid "We operate responsibly, transparently and professionally."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:313
+msgid "LET'S CONNECT"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:314
+msgid "Working together for a better service experience"
+msgstr ""
+
+#: .\templates\cms\glis_about.html:315
+msgid ""
+"Connect with our team to learn more about our services and how we can "
+"support your organization."
+msgstr ""
+
+#: .\templates\cms\glis_about.html:319
+msgid "Get in Touch"
+msgstr ""
+
+#: .\templates\cms\glis_contact.html:4
+#, fuzzy
+#| msgid "Contact us"
+msgid "Contact & Support"
+msgstr "تواصل معنا"
+
+#: .\templates\cms\glis_contact.html:12
+msgid "CUSTOMER SUPPORT"
+msgstr "دعم العملاء"
+
+#: .\templates\cms\glis_contact.html:13
+msgid "We're here when you need"
+msgstr "نحن هنا عندما تحتاج إلى"
+
+#: .\templates\cms\glis_contact.html:13
+msgid "support."
+msgstr "الدعم."
+
+#: .\templates\cms\glis_contact.html:14
+msgid ""
+"Submit your request through our secure customer portal and stay informed "
+"from submission to resolution."
+msgstr ""
+"قدّم طلبك من خلال بوابة العملاء الآمنة وتابع جميع التحديثات من وقت تقديم "
+"الطلب وحتى إغلاقه."
+
+#: .\templates\cms\glis_contact.html:17
+msgid "Create / Track a Request"
+msgstr "إنشاء / متابعة طلب"
+
+#: .\templates\cms\glis_contact.html:21
+msgid "Secure customer portal"
+msgstr "بوابة عملاء آمنة"
+
+#: .\templates\cms\glis_contact.html:22
+msgid "Track every update"
+msgstr "متابعة جميع التحديثات"
+
+#: .\templates\cms\glis_contact.html:23
+msgid "Complete request history"
+msgstr "سجل كامل للطلبات"
+
+#: .\templates\cms\glis_contact.html:33
+msgid "SUPPORT PORTAL"
+msgstr "بوابة الدعم"
+
+#: .\templates\cms\glis_contact.html:34
+msgid "Your Requests"
+msgstr "طلباتك"
+
+#: .\templates\cms\glis_contact.html:41
+msgid "Service Request"
+msgstr "طلب خدمة"
+
+#: .\templates\cms\glis_contact.html:42
+msgid "In Progress"
+msgstr "قيد المعالجة"
+
+#: .\templates\cms\glis_contact.html:50
+msgid "General Enquiry"
+msgstr "استفسار عام"
+
+#: .\templates\cms\glis_contact.html:51 ⁨.\templates\cms\glis_home copy.html⁩:251
+#: .\templates\cms\home_content.html:24 .\templates\public\home.html:36
+msgid "Resolved"
+msgstr "تم الحل"
+
+#: .\templates\cms\glis_contact.html:60 .\templates\tickets\wizard\base.html:3
+msgid "Submit"
+msgstr "إرسال"
+
+#: .\templates\cms\glis_contact.html:66
+msgid "Track"
+msgstr "متابعة"
+
+#: .\templates\cms\glis_contact.html:72
+msgid "Resolve"
+msgstr "حل الطلب"
+
+#: .\templates\cms\glis_contact.html:82
+msgid "Stay Updated"
+msgstr "ابقَ على اطلاع"
+
+#: .\templates\cms\glis_contact.html:82
+msgid "Status notifications"
+msgstr "إشعارات حالة الطلب"
+
+#: .\templates\cms\glis_contact.html:89
+msgid "Secure Access"
+msgstr "دخول آمن"
+
+#: .\templates\cms\glis_contact.html:89
+msgid "Account protected"
+msgstr "حساب محمي"
+
+#: .\templates\cms\glis_contact.html:104
+msgid "One Portal"
+msgstr "بوابة واحدة"
+
+#: .\templates\cms\glis_contact.html:104
+msgid "All your requests"
+msgstr "جميع طلباتك"
+
+#: .\templates\cms\glis_contact.html:111
+msgid "Full History"
+msgstr "السجل الكامل"
+
+#: .\templates\cms\glis_contact.html:111
+msgid "Never lose an update"
+msgstr "جميع التحديثات محفوظة"
+
+#: .\templates\cms\glis_contact.html:118
+msgid "Direct Updates"
+msgstr "تحديثات مباشرة"
+
+#: .\templates\cms\glis_contact.html:118
+msgid "Communicate on tickets"
+msgstr "التواصل من خلال الطلبات"
+
+#: .\templates\cms\glis_contact.html:125
+#: .\templates\tickets\partials\comment_form.html:28
+msgid "Documents"
+msgstr "المستندات"
+
+#: .\templates\cms\glis_contact.html:125
+msgid "Upload attachments"
+msgstr "رفع المرفقات"
+
+#: .\templates\cms\glis_contact.html:136
+msgid "Simple Process"
+msgstr "إجراءات بسيطة"
+
+#: .\templates\cms\glis_contact.html:137
+msgid "Get support in four simple steps"
+msgstr "احصل على الدعم في أربع خطوات بسيطة"
+
+#: .\templates\cms\glis_contact.html:138
+msgid ""
+"Everything happens inside one secure portal, giving you visibility "
+"throughout the complete lifecycle of your request."
+msgstr ""
+"تتم جميع الإجراءات من خلال بوابة آمنة واحدة، مما يتيح لك متابعة طلبك خلال "
+"جميع مراحله."
+
+#: .\templates\cms\glis_contact.html:150
+msgid "Sign In"
+msgstr "تسجيل الدخول"
+
+#: .\templates\cms\glis_contact.html:151
+msgid ""
+"Access the portal using your username and password. If you are new, you can "
+"create an account from the login page."
+msgstr ""
+"ادخل إلى البوابة باستخدام اسم المستخدم وكلمة المرور. إذا كنت مستخدماً جديداً، "
+"يمكنك إنشاء حساب من صفحة تسجيل الدخول."
+
+#: .\templates\cms\glis_contact.html:163
+msgid "Submit Request"
+msgstr "تقديم طلب"
+
+#: .\templates\cms\glis_contact.html:164
+msgid ""
+"Describe your request, select the appropriate category and attach any "
+"supporting documents."
+msgstr "اشرح تفاصيل طلبك، واختر التصنيف المناسب، وأرفق أي مستندات داعمة."
+
+#: .\templates\cms\glis_contact.html:176
+msgid "Follow Progress"
+msgstr "متابعة الطلب"
+
+#: .\templates\cms\glis_contact.html:177
+msgid ""
+"View the current status, support comments, assignment details and every "
+"update made to your request."
+msgstr ""
+"تابع الحالة الحالية للطلب، وتعليقات فريق الدعم، وتفاصيل الإسناد، وجميع "
+"التحديثات المتعلقة بطلبك."
+
+#: .\templates\cms\glis_contact.html:189
+msgid "Resolution"
+msgstr "إغلاق الطلب"
+
+#: .\templates\cms\glis_contact.html:190
+msgid ""
+"Receive the resolution while keeping the complete request and communication "
+"history available in your account."
+msgstr ""
+"استلم نتيجة معالجة الطلب مع الاحتفاظ بكامل سجل الطلب والمراسلات داخل حسابك."
+
+#: .\templates\cms\glis_contact.html:202
+msgid "WHY USE THE PORTAL?"
+msgstr "لماذا تستخدم البوابة؟"
+
+#: .\templates\cms\glis_contact.html:203
+msgid "Your support requests, organized in one place."
+msgstr "جميع طلبات الدعم الخاصة بك في مكان واحد."
+
+#: .\templates\cms\glis_contact.html:204
+msgid ""
+"Instead of relying on disconnected emails or phone calls, the portal "
+"provides a structured and transparent way to communicate with our team."
+msgstr ""
+"بدلاً من الاعتماد على رسائل بريد إلكتروني أو مكالمات منفصلة، توفر لك البوابة "
+"طريقة منظمة وشفافة للتواصل مع فريقنا."
+
+#: .\templates\cms\glis_contact.html:212
+msgid "Easy Tracking"
+msgstr "متابعة سهلة"
+
+#: .\templates\cms\glis_contact.html:213
+msgid ""
+"Every request receives a unique reference number for quick and easy tracking."
+msgstr "يحصل كل طلب على رقم مرجعي فريد لتسهيل متابعته."
+
+#: .\templates\cms\glis_contact.html:220
+msgid "Timely Updates"
+msgstr "تحديثات مستمرة"
+
+#: .\templates\cms\glis_contact.html:221
+msgid "Stay informed when the status changes or when our team adds an update."
+msgstr "ابقَ على اطلاع عند تغيير حالة الطلب أو إضافة أي تحديث من فريقنا."
+
+#: .\templates\cms\glis_contact.html:228
+msgid "One Conversation"
+msgstr "محادثة موحدة"
+
+#: .\templates\cms\glis_contact.html:229
+msgid ""
+"Keep comments, responses and communication connected directly to the "
+"relevant request."
+msgstr "احتفظ بجميع التعليقات والردود والمراسلات مرتبطة مباشرة بالطلب المعني."
+
+#: .\templates\cms\glis_contact.html:236
+msgid "Complete History"
+msgstr "سجل متكامل"
+
+#: .\templates\cms\glis_contact.html:237
+msgid "Review previous requests and their resolutions whenever you need them."
+msgstr "يمكنك مراجعة طلباتك السابقة ونتائجها في أي وقت."
+
+#: .\templates\cms\glis_contact.html:251
+msgid "Ready to get support?"
+msgstr "هل تحتاج إلى الدعم؟"
+
+#: .\templates\cms\glis_contact.html:252
+msgid "Create a request and stay connected with our team."
+msgstr "أنشئ طلباً وابقَ على تواصل مع فريقنا."
+
+#: .\templates\cms\glis_contact.html:253
+msgid ""
+"Sign in to your portal to submit a new request or check the progress of an "
+"existing one."
+msgstr "سجّل الدخول إلى البوابة لتقديم طلب جديد أو متابعة حالة طلب قائم."
+
+#: .\templates\cms\glis_contact.html:257
+msgid "Open Support Portal"
+msgstr "فتح بوابة الدعم"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:235 .\templates\cms\home_content.html:22
+#: .\templates\public\home.html:25
+#, fuzzy
+#| msgid "Service requests"
+msgid "Sample service request status"
+msgstr "طلبات الخدمة"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:237 .\templates\cms\home_content.html:23
+#: .\templates\public\home.html:27
+msgid "Service desk live"
+msgstr "مركز الخدمة متاح"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:238 .\templates\cms\home_content.html:23
+#: .\templates\public\home.html:28
+msgid "Protected"
+msgstr "محمي"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:243 .\templates\cms\home_content.html:24
+#: .\templates\public\home.html:32
+msgid "In progress"
+msgstr "قيد التنفيذ"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:245 .\templates\cms\home_content.html:24
+#: .\templates\public\home.html:33
+#, fuzzy
+#| msgid "Document received"
+msgid "Claim document review"
+msgstr "تم استلام المستند"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:246 .\templates\cms\home_content.html:24
+#: .\templates\public\home.html:34
+#, fuzzy
+#| msgid "Claims Support"
+msgid "Claims Support · Motor"
+msgstr "دعم المطالبات"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:249 .\templates\cms\home_content.html:24
+#: .\templates\public\home.html:36
+msgid "Received"
+msgstr "تم الاستلام"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:250 .\templates\cms\home_content.html:24
+#: .\templates\public\home.html:36
+msgid "Under review"
+msgstr "قيد المراجعة"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:255 .\templates\cms\home_content.html:25
+#: .\templates\public\home.html:39
+msgid "Clear updates"
+msgstr "تحديثات واضحة"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:255 .\templates\cms\home_content.html:25
+#: .\templates\public\home.html:39
+msgid "One conversation"
+msgstr "محادثة واحدة"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:256 .\templates\cms\home_content.html:25
+#: .\templates\public\home.html:40
+msgid "SLA tracked"
+msgstr "متابعة مستوى الخدمة"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:256 .\templates\cms\home_content.html:25
+#: .\templates\public\home.html:40
+msgid "Proactive alerts"
+msgstr "تنبيهات استباقية"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:258 .\templates\cms\home_content.html:26
+#: .\templates\public\home.html:42
+msgid "Document received"
+msgstr "تم استلام المستند"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:258 .\templates\cms\home_content.html:26
+#: .\templates\public\home.html:42
+msgid "Just now"
+msgstr "الآن"
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:540 .\templates\cms\home_content.html:68
+msgid "FAQ"
+msgstr ""
+
+#: ⁨.\templates\cms\glis_home copy.html⁩:863 .\templates\cms\home_content.html:42
+#: .\templates\public\home.html:74
+msgid "Learn more"
+msgstr "اعرف المزيد"
+
+#: .\templates\cms\glis_portal_page.html:14
+#, fuzzy
+#| msgid "Portal"
+msgid "GLIS Portal"
+msgstr "البوابة"
+
+#: .\templates\cms\home_content.html:42
+msgid "No services available."
+msgstr ""
+
+#: .\templates\cms\portal_page.html:9
+#, fuzzy
+#| msgid "Skip to content"
+msgid "Portal content"
+msgstr "انتقل إلى المحتوى"
+
+#: .\templates\cms\portal_page.html:12
+#, fuzzy
+#| msgid "Review"
+msgid "Preview"
+msgstr "المراجعة"
+
+#: .\templates\errors\403.html:1
+msgid "You do not have access to this area"
+msgstr ""
+
+#: .\templates\errors\403.html:1
+msgid ""
+"Your role or group does not permit this action. If this seems wrong, contact "
+"an administrator."
+msgstr ""
+
+#: .\templates\errors\403.html:1 .\templates\errors\404.html:1
+#: .\templates\errors\500.html:1
+msgid "Return home"
+msgstr ""
+
+#: .\templates\errors\404.html:1
+msgid "We could not find that page"
+msgstr ""
+
+#: .\templates\errors\404.html:1
+msgid ""
+"The address may have changed, or the resource is outside your permitted "
+"workspace."
+msgstr ""
+
+#: .\templates\errors\500.html:1
+msgid "Something did not work as expected"
+msgstr ""
+
+#: .\templates\errors\500.html:1
+msgid ""
+"The event has been logged. Please try again or contact support if the "
+"problem continues."
+msgstr ""
+
+#: .\templates\knowledge\detail.html:18
+#, fuzzy
+#| msgid "Service"
+msgid "Service Team"
+msgstr "الخدمة"
+
+#: .\templates\knowledge\detail.html:19
+#, fuzzy
+#| msgid "Stay Updated"
+msgid "Updated"
+msgstr "ابقَ على اطلاع"
+
+#: .\templates\knowledge\detail.html:19 .\templates\public\home.html:196
+#: .\templates\public\home.html:203
+msgid "4 min read"
+msgstr ""
+
+#: .\templates\knowledge\detail.html:28
 msgid "Was this article helpful?"
 msgstr "هل كانت هذه المقالة مفيدة؟"
 
+#: .\templates\knowledge\detail.html:35
 msgid "Yes"
 msgstr "نعم"
 
+#: .\templates\knowledge\detail.html:43
 msgid "Not yet"
 msgstr "ليس بعد"
 
+#: .\templates\knowledge\feedback_thanks.html:4
 msgid "Thank you for your feedback."
 msgstr "شكراً لملاحظاتك."
+
+#: .\templates\knowledge\list.html:4
+#, fuzzy
+#| msgid "Knowledge Base"
+msgid "GLIS Knowledge"
+msgstr "قاعدة المعرفة"
+
+#: .\templates\knowledge\list.html:5
+msgid "Clear guidance for your next step"
+msgstr ""
+
+#: .\templates\knowledge\list.html:7
+msgid ""
+"Find practical answers for claims, policies, payments, providers and service "
+"requests."
+msgstr ""
+
+#: .\templates\knowledge\list.html:10
+msgid "Search guides and answers…"
+msgstr "ابحث في الأدلة والإجابات…"
+
+#: .\templates\knowledge\list.html:11 .\templates\tickets\list.html:13
+msgid "Search"
+msgstr "بحث"
+
+#: .\templates\knowledge\list.html:18
+msgid "All topics"
+msgstr "جميع المواضيع"
+
+#: .\templates\knowledge\list.html:32
+msgid " 4 min read"
+msgstr ""
+
+#: .\templates\knowledge\list.html:33
+msgid " Featured"
+msgstr ""
+
+#: .\templates\knowledge\list.html:36
+msgid "No articles found"
+msgstr "لم يتم العثور على مقالات"
+
+#: .\templates\knowledge\list.html:37
+msgid "Try a broader search or choose another topic."
+msgstr ""
+
+#: .\templates\notifications\list.html:2 .\templates\tickets\detail.html:314
+msgid "Activity"
+msgstr "النشاط"
+
+#: .\templates\notifications\list.html:2
+msgid "Assignments, approvals, SLA escalations and ticket updates."
+msgstr ""
+
+#: .\templates\notifications\list.html:2
+#, fuzzy
+#| msgid "Notifications"
+msgid "No notifications yet"
+msgstr "الإشعارات"
+
+#: .\templates\orchestrator\console.html:25
+msgid "Analysis sessions"
+msgstr ""
+
+#: .\templates\orchestrator\console.html:33
+#, fuzzy
+#| msgid "Complete request history"
+msgid "Question history"
+msgstr "سجل كامل للطلبات"
+
+#: .\templates\orchestrator\console.html:37
+msgid "Ask Vanna"
+msgstr ""
+
+#: .\templates\orchestrator\console.html:44
+#, fuzzy
+#| msgid "One conversation"
+msgid "Start a new conversation"
+msgstr "محادثة واحدة"
+
+#: .\templates\orchestrator\console.html:53
+msgid "Analytics domain"
+msgstr ""
+
+#: .\templates\orchestrator\console.html:95
+#, fuzzy
+#| msgid "Resolution"
+msgid "questions"
+msgstr "إغلاق الطلب"
+
+#: .\templates\orchestrator\console.html:113
+msgid "Your conversations will appear here."
+msgstr ""
+
+#: .\templates\orchestrator\console.html:131
+msgid "Rules, prompts & training"
+msgstr ""
+
+#: .\templates\orchestrator\console.html:180
+msgid "Governed"
+msgstr ""
+
+#: .\templates\orchestrator\console.html:194
+msgid "Local Model is selected, but SQL execution is disabled in Settings."
+msgstr ""
+
+#: .\templates\orchestrator\console.html:209
+#, fuzzy
+#| msgid "One conversation"
+msgid "Loading conversation…"
+msgstr "محادثة واحدة"
+
+#: .\templates\orchestrator\console.html:222
+#, fuzzy
+#| msgid "One conversation"
+msgid "Start a governed data conversation"
+msgstr "محادثة واحدة"
+
+#: .\templates\orchestrator\console.html:226
+msgid ""
+"Ask a business question. Vanna retrieves relevant ChromaDB context, applies "
+"access rules, runs read-only SQL and keeps every question in this session."
+msgstr ""
+
+#: .\templates\orchestrator\console.html:269
+msgid "What would you like to analyze?"
+msgstr ""
+
+#: .\templates\orchestrator\console.html:280
+#, fuzzy
+#| msgid "What can we help with?"
+msgid "How can I help with your data?"
+msgstr "كيف يمكننا مساعدتك؟"
+
+#: .\templates\orchestrator\console.html:285
+msgid "Send question"
+msgstr ""
+
+#: .\templates\orchestrator\console.html:334
+msgid "No analytics domain is available"
+msgstr ""
+
+#: .\templates\orchestrator\console.html:338
+msgid "Ask an administrator to configure a permitted AI domain."
+msgstr ""
+
+#: .\templates\portal\dashboard.html:3
+#, fuzzy
+#| msgid "Service portal"
+msgid "Service operations"
+msgstr "بوابة الخدمات"
+
+#: .\templates\portal\dashboard.html:3
+#, python-format
+msgid "Good to see you, %(name)s"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:5 .\templates\tickets\detail.html:89
+#: .\templates\tickets\partials\table.html:10
+#, fuzzy
+#| msgid "Support"
+msgid "Export"
+msgstr "الدعم"
+
+#: .\templates\portal\dashboard.html:5 .\templates\tickets\list.html:7
+#: .\templates\tickets\partials\table.html:55
+#: .\templates\tickets\wizard\base.html:1
+msgid "Create ticket"
+msgstr "إنشاء طلب"
+
+#: .\templates\portal\dashboard.html:7
+msgid "Open tickets"
+msgstr "الطلبات المفتوحة"
+
+#: .\templates\portal\dashboard.html:7
+msgid "Active workload"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:8
+msgid "Assigned to me"
+msgstr "مسندة إليّ"
+
+#: .\templates\portal\dashboard.html:8
+msgid "Direct and shared queue"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:9
+#, fuzzy
+#| msgid "Request description"
+msgid "Requires action"
+msgstr "وصف الطلب"
+
+#: .\templates\portal\dashboard.html:10
+msgid "Resolved this month"
+msgstr "تم حلها هذا الشهر"
+
+#: .\templates\portal\dashboard.html:10
+#, fuzzy
+#| msgid "See the outcome"
+msgid "Completed outcomes"
+msgstr "اطّلع على النتيجة"
+
+#: .\templates\portal\dashboard.html:11
+msgid "First response TAT"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:11 .\templates\portal\dashboard.html:12
+msgid "Average turnaround"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:12
+#, fuzzy
+#| msgid "Resolution"
+msgid "Resolution TAT"
+msgstr "إغلاق الطلب"
+
+#: .\templates\portal\dashboard.html:13
+#, fuzzy
+#| msgid "Attachments"
+msgid "SLA attainment"
+msgstr "المرفقات"
+
+#: .\templates\portal\dashboard.html:13
+#, fuzzy
+#| msgid "Resolved this month"
+msgid "Resolved within target"
+msgstr "تم حلها هذا الشهر"
+
+#: .\templates\portal\dashboard.html:16
+#, fuzzy
+#| msgid "Open tickets"
+msgid "Day-wise opened tickets"
+msgstr "الطلبات المفتوحة"
+
+#: .\templates\portal\dashboard.html:16
+msgid "New workload across the last 14 days"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:17
+#, fuzzy
+#| msgid "Status"
+msgid "Status mix"
+msgstr "الحالة"
+
+#: .\templates\portal\dashboard.html:17
+#, fuzzy
+#| msgid "Create ticket"
+msgid "Current ticket states"
+msgstr "إنشاء طلب"
+
+#: .\templates\portal\dashboard.html:20
+msgid "Priority mix"
+msgstr "توزيع الأولويات"
+
+#: .\templates\portal\dashboard.html:20
+msgid "Current urgency distribution"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:21 .\templates\tickets\detail.html:225
+#, fuzzy
+#| msgid "Assigned to me"
+msgid "Assigned to"
+msgstr "مسندة إليّ"
+
+#: .\templates\portal\dashboard.html:21
+msgid "Primary owner names"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:22
+#, fuzzy
+#| msgid "Category"
+msgid "By category"
+msgstr "الفئة"
+
+#: .\templates\portal\dashboard.html:22
+#, fuzzy
+#| msgid "Complete request history"
+msgid "Top request categories"
+msgstr "سجل كامل للطلبات"
+
+#: .\templates\portal\dashboard.html:25
+#, fuzzy
+#| msgid "Product"
+msgid "By product"
+msgstr "المنتج"
+
+#: .\templates\portal\dashboard.html:25
+msgid "Workload by product"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:26
+#, fuzzy
+#| msgid "Project"
+msgid "By project"
+msgstr "المشروع"
+
+#: .\templates\portal\dashboard.html:26
+msgid "Workload by project"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:28
+msgid "Recent tickets"
+msgstr "أحدث الطلبات"
+
+#: .\templates\portal\dashboard.html:30
+msgid "View all"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:30
+#: .\templates\tickets\partials\table.html:16
+#, fuzzy
+#| msgid "Ticket health"
+msgid "Ticket"
+msgstr "حالة الطلبات"
+
+#: .\templates\portal\dashboard.html:30 .\templates\tickets\wizard\base.html:3
+msgid "Service"
+msgstr "الخدمة"
+
+#: .\templates\portal\dashboard.html:30 .\templates\tickets\detail.html:270
+#: .\templates\tickets\detail.html:432 .\templates\tickets\edit.html:8
+#: .\templates\tickets\list.html:15 .\templates\tickets\partials\table.html:20
+#: .\templates\tickets\wizard\step4.html:23
+msgid "Priority"
+msgstr "الأولوية"
+
+#: .\templates\portal\dashboard.html:30 .\templates\tickets\detail.html:263
+#: .\templates\tickets\edit.html:8 .\templates\tickets\list.html:14
+#: .\templates\tickets\partials\comment_form.html:64
+#: .\templates\tickets\partials\table.html:21
+msgid "Status"
+msgstr "الحالة"
+
+#: .\templates\portal\dashboard.html:30 .\templates\tickets\list.html:17
+#, fuzzy
+#| msgid "SLA due"
+msgid "SLA"
+msgstr "موعد مستوى الخدمة"
+
+#: .\templates\portal\dashboard.html:30
+#, fuzzy
+#| msgid "My tickets"
+msgid "No tickets yet"
+msgstr "طلباتي"
+
+#: .\templates\portal\dashboard.html:30
+msgid "Needs attention"
+msgstr "تحتاج اهتماماً"
+
+#: .\templates\portal\dashboard.html:30
+msgid "Critical or approaching SLA"
+msgstr ""
+
+#: .\templates\portal\dashboard.html:30
+msgid "All clear"
+msgstr "كل شيء مستقر"
+
+#: .\templates\portal\dashboard.html:30
+msgid "Ask permission-aware questions about your service data."
+msgstr ""
+
+#: .\templates\portal\dashboard.html:30
+#, fuzzy
+#| msgid "Open tickets"
+msgid "Open analytics"
+msgstr "الطلبات المفتوحة"
+
+#: .\templates\public\home.html:2
+msgid "Greenline Insurance Services — Insurance service, made clear"
+msgstr ""
+
+#: .\templates\public\home.html:21
+msgid "Secure by design"
+msgstr "أمان منذ التصميم"
+
+#: .\templates\public\home.html:21
+msgid "English & Arabic"
+msgstr "العربية والإنجليزية"
+
+#: .\templates\public\home.html:22
+msgid "Track every request"
+msgstr "تتبّع كل طلب"
+
+#: .\templates\public\home.html:52
+msgid "Privacy-aware"
+msgstr "مراعاة الخصوصية"
+
+#: .\templates\public\home.html:53
+msgid "Multi-team routing"
+msgstr "توجيه متعدد الفرق"
+
+#: .\templates\public\home.html:54
+msgid "Bilingual service"
+msgstr "خدمة ثنائية اللغة"
+
+#: .\templates\public\home.html:55
+msgid "Auditable outcomes"
+msgstr "نتائج قابلة للتدقيق"
+
+#: .\templates\public\home.html:64
+#, fuzzy
+#| msgid "Insurance services"
+msgid "Connected Services"
+msgstr "خدمات التأمين"
+
+#: .\templates\public\home.html:65
+msgid "Support across the insurance journey"
+msgstr "دعم عبر رحلة التأمين"
+
+#: .\templates\public\home.html:66
+msgid ""
+"A single, structured experience for claims support, policy servicing, "
+"provider requests, payments and customer care."
+msgstr ""
+
+#: .\templates\public\home.html:81
+msgid "Insurance services"
+msgstr "خدمات التأمين"
+
+#: .\templates\public\home.html:83
+msgid ""
+"Structured requests, secure documents, transparent ownership and timely "
+"status updates."
+msgstr ""
+
+#: .\templates\public\home.html:84
+msgid "Start a request"
+msgstr "ابدأ طلباً"
+
+#: .\templates\public\home.html:94
+msgid "How we help"
+msgstr "كيف نساعدك"
+
+#: .\templates\public\home.html:95
+msgid "From question to clear outcome"
+msgstr "من السؤال إلى نتيجة واضحة"
+
+#: .\templates\public\home.html:96
+msgid ""
+"Every request moves through a visible, accountable workflow—with the right "
+"information captured at the start."
+msgstr ""
+
+#: .\templates\public\home.html:97
+#, fuzzy
+#| msgid "Guided service request"
+msgid "Create a service request"
+msgstr "طلب خدمة موجه"
+
+#: .\templates\public\home.html:103
+msgid "Choose your service"
+msgstr "اختر خدمتك"
+
+#: .\templates\public\home.html:104
+msgid "Select the relevant project, product and request category."
+msgstr ""
+
+#: .\templates\public\home.html:109
+msgid "Share the essentials"
+msgstr "شارك المعلومات الأساسية"
+
+#: .\templates\public\home.html:110
+msgid "A smart form asks only for information needed by that service."
+msgstr ""
+
+#: .\templates\public\home.html:115
+msgid "Collaborate securely"
+msgstr "تعاون بأمان"
+
+#: .\templates\public\home.html:116
+msgid "Follow updates, add documents and respond in one protected thread."
+msgstr ""
+
+#: .\templates\public\home.html:121
+msgid "See the outcome"
+msgstr "اطّلع على النتيجة"
+
+#: .\templates\public\home.html:122
+msgid "Track resolution, service commitments and a complete activity history."
+msgstr ""
+
+#: .\templates\public\home.html:136
+msgid "Built for connected insurance"
+msgstr ""
+
+#: .\templates\public\home.html:137
+msgid "One platform. Many service relationships."
+msgstr ""
+
+#: .\templates\public\home.html:138
+msgid ""
+"Customers, hospitals, brokers, insurers and internal teams each receive the "
+"access, context and workflow appropriate to them."
+msgstr ""
+
+#: .\templates\public\home.html:139 .\templates\public\home.html:200
+msgid "Claims"
+msgstr "المطالبات"
+
+#: .\templates\public\home.html:139
+msgid "Policy service"
+msgstr "خدمة الوثائق"
+
+#: .\templates\public\home.html:140
+msgid "Provider network"
+msgstr "شبكة مقدمي الخدمة"
+
+#: .\templates\public\home.html:140
+msgid "Finance"
+msgstr "المالية"
+
+#: .\templates\public\home.html:140
+msgid "Complaints"
+msgstr "الشكاوى"
+
+#: .\templates\public\home.html:140
+msgid "Compliance"
+msgstr "الامتثال"
+
+#: .\templates\public\home.html:144
+msgid "Role-aware access"
+msgstr "وصول حسب الدور"
+
+#: .\templates\public\home.html:144
+msgid "People see only what they are permitted to see."
+msgstr ""
+
+#: .\templates\public\home.html:145
+msgid "Intelligent routing"
+msgstr "توجيه ذكي"
+
+#: .\templates\public\home.html:145
+msgid "Requests reach the right responsible team."
+msgstr ""
+
+#: .\templates\public\home.html:146
+msgid "Operational visibility"
+msgstr "وضوح تشغيلي"
+
+#: .\templates\public\home.html:146
+msgid "Service health and SLAs stay visible."
+msgstr ""
+
+#: .\templates\public\home.html:161
+#, fuzzy
+#| msgid "Operational visibility"
+msgid "Request visibility"
+msgstr "وضوح تشغيلي"
+
+#: .\templates\public\home.html:164
+msgid "Languages"
+msgstr ""
+
+#: .\templates\public\home.html:167
+#, fuzzy
+#| msgid "SLA tracked"
+msgid "Activity tracked"
+msgstr "متابعة مستوى الخدمة"
+
+#: .\templates\public\home.html:170
+#, fuzzy
+#| msgid "Ticket workspace"
+msgid "Service workspace"
+msgstr "مساحة عمل الطلبات"
+
+#: .\templates\public\home.html:179
+msgid "Helpful guidance"
+msgstr "إرشادات مفيدة"
+
+#: .\templates\public\home.html:180
+msgid "Answers before you need to ask"
+msgstr ""
+
+#: .\templates\public\home.html:182
+msgid "Browse knowledge base"
+msgstr "تصفح قاعدة المعرفة"
+
+#: .\templates\public\home.html:201
+msgid "Documents to prepare for claim support"
+msgstr ""
+
+#: .\templates\public\home.html:202
+msgid "A practical checklist that helps your request move faster."
+msgstr ""
+
+#: .\templates\public\home.html:207
+#, fuzzy
+#| msgid "Policy service"
+msgid "Policies"
+msgstr "خدمة الوثائق"
+
+#: .\templates\public\home.html:208
+#, fuzzy
+#| msgid "Guided service request"
+msgid "Understanding policy service requests"
+msgstr "طلب خدمة موجه"
+
+#: .\templates\public\home.html:209
+msgid "Know which details to provide for common policy changes."
+msgstr ""
+
+#: .\templates\public\home.html:210
+msgid "5 min read"
+msgstr ""
+
+#: .\templates\public\home.html:215
+msgid "How to track a submitted request"
+msgstr ""
+
+#: .\templates\public\home.html:216
+msgid "Follow status, updates and service timelines from your portal."
+msgstr ""
+
+#: .\templates\public\home.html:217
+msgid "3 min read"
+msgstr ""
+
+#: .\templates\public\home.html:227
+msgid "Ready when you are"
+msgstr "جاهزون عندما تكون جاهزاً"
+
+#: .\templates\public\home.html:228
+msgid "Tell us what you need. We’ll make the next step clear."
+msgstr ""
+
+#: .\templates\public\home.html:229
+msgid "Start a secure request or sign in to continue an existing conversation."
+msgstr ""
+
+#: .\templates\public\page.html:5
+msgid "Staff preview — this page may not be published"
+msgstr ""
+
+#: .\templates\tickets\detail.html:32
+#: .\templates\tickets\partials\table.html:33
+msgid "Restricted"
+msgstr "مقيد"
+
+#: .\templates\tickets\detail.html:36
+msgid "Sensitive"
+msgstr "حساس"
+
+#: .\templates\tickets\detail.html:43
+#, python-format
+msgid ""
+"\n"
+"                        Logged by %(requester)s on %(date)s\n"
+"                    "
+msgstr ""
+
+#: .\templates\tickets\detail.html:50 .\templates\tickets\wizard\step2.html:1
+#: .\templates\tickets\wizard\step3.html:1
+#: .\templates\tickets\wizard\step4.html:87
+msgid "Back"
+msgstr "رجوع"
+
+#: .\templates\tickets\detail.html:62
+msgid "Take over"
+msgstr ""
+
+#: .\templates\tickets\detail.html:67
+#, fuzzy
+#| msgid "Unassigned"
+msgid "Reassign"
+msgstr "غير مسند"
+
+#: .\templates\tickets\detail.html:71
+#, fuzzy
+#| msgid "Service Request"
+msgid "Approval Request"
+msgstr "طلب خدمة"
+
+#: .\templates\tickets\detail.html:75 .\templates\tickets\edit.html:1
+#: .\templates\tickets\edit.html:3
+msgid "Edit"
+msgstr ""
+
+#: .\templates\tickets\detail.html:86
+msgid "Share"
+msgstr ""
+
+#: .\templates\tickets\detail.html:104
+msgid "Conversation"
+msgstr "المحادثة"
+
+#: .\templates\tickets\detail.html:105
+#, fuzzy
+#| msgid "Clear updates"
+msgid "updates"
+msgstr "تحديثات واضحة"
+
+#: .\templates\tickets\detail.html:108 .\templates\tickets\detail.html:324
+#: .\templates\tickets\partials\comment_form.html:40
+#, fuzzy
+#| msgid "Profile"
+msgid "files"
+msgstr "الملف الشخصي"
+
+#: .\templates\tickets\detail.html:119 .\templates\tickets\detail.html:409
+#: .\templates\tickets\partials\table.html:18
+msgid "Requester"
+msgstr "مقدم الطلب"
+
+#: .\templates\tickets\detail.html:158
+#, fuzzy
+#| msgid "One conversation"
+msgid "No conversation yet"
+msgstr "محادثة واحدة"
+
+#: .\templates\tickets\detail.html:159
+msgid "Add the first update below."
+msgstr ""
+
+#: .\templates\tickets\detail.html:177
+#, fuzzy
+#| msgid "Requester"
+msgid "Request Details"
+msgstr "مقدم الطلب"
+
+#: .\templates\tickets\detail.html:191 .\templates\tickets\list.html:16
+#: .\templates\tickets\wizard\step1.html:1
+#: .\templates\tickets\wizard\step4.html:63
+msgid "Project"
+msgstr "المشروع"
+
+#: .\templates\tickets\detail.html:196 .\templates\tickets\wizard\step1.html:1
+#: .\templates\tickets\wizard\step4.html:67
+msgid "Product"
+msgstr "المنتج"
+
+#: .\templates\tickets\detail.html:201 .\templates\tickets\wizard\step1.html:1
+#: .\templates\tickets\wizard\step4.html:43
+#: .\templates\tickets\wizard\step4.html:71
+msgid "Category"
+msgstr "الفئة"
+
+#: .\templates\tickets\detail.html:210
+msgid "Assignment"
+msgstr "الإسناد"
+
+#: .\templates\tickets\detail.html:217
+msgid "Manage"
+msgstr ""
+
+#: .\templates\tickets\detail.html:230 .\templates\tickets\detail.html:241
+msgid "Unassigned"
+msgstr "غير مسند"
+
+#: .\templates\tickets\detail.html:236 .\templates\tickets\detail.html:437
+msgid "Group"
+msgstr ""
+
+#: .\templates\tickets\detail.html:247 .\templates\tickets\detail.html:302
+msgid "Resolution due"
+msgstr "موعد الحل"
+
+#: .\templates\tickets\detail.html:254
+#, fuzzy
+#| msgid "Request information"
+msgid "Ticket Information"
+msgstr "معلومات الطلب"
+
+#: .\templates\tickets\detail.html:258
+#, fuzzy
+#| msgid "Create ticket"
+msgid "Created"
+msgstr "إنشاء طلب"
+
+#: .\templates\tickets\detail.html:275
+msgid "Messages"
+msgstr ""
+
+#: .\templates\tickets\detail.html:280
+msgid "Files"
+msgstr ""
+
+#: .\templates\tickets\detail.html:288
+msgid "SLA Time Left"
+msgstr ""
+
+#: .\templates\tickets\detail.html:297
+msgid "First response"
+msgstr ""
+
+#: .\templates\tickets\detail.html:307
+#, fuzzy
+#| msgid "Policy service"
+msgid "Policy"
+msgstr "خدمة الوثائق"
+
+#: .\templates\tickets\detail.html:319
+msgid "messages"
+msgstr ""
+
+#: .\templates\tickets\detail.html:347
+msgid "No additional activity."
+msgstr ""
+
+#: .\templates\tickets\detail.html:352
+msgid "Team"
+msgstr ""
+
+#: .\templates\tickets\detail.html:360
+#, fuzzy
+#| msgid "Unassigned"
+msgid "No team assigned"
+msgstr "غير مسند"
+
+#: .\templates\tickets\detail.html:369
+#, fuzzy
+#| msgid "Assigned to me"
+msgid "Assigned staff"
+msgstr "مسندة إليّ"
+
+#: .\templates\tickets\detail.html:378
+msgid "Approvals"
+msgstr ""
+
+#: .\templates\tickets\detail.html:402
+msgid "Record decision"
+msgstr ""
+
+#: .\templates\tickets\detail.html:423
+#, fuzzy
+#| msgid "AI insights"
+msgid "AI Insights"
+msgstr "رؤى الذكاء الاصطناعي"
+
+#: .\templates\tickets\detail.html:442 .\templates\tickets\wizard\step4.html:51
+msgid "Confidence"
+msgstr ""
+
+#: .\templates\tickets\detail.html:462
+msgid "Assign groups and staff"
+msgstr ""
+
+#: .\templates\tickets\detail.html:467
+msgid "A ticket may have multiple groups and multiple staff members."
+msgstr ""
+
+#: .\templates\tickets\detail.html:471
+msgid "Staff members"
+msgstr ""
+
+#: .\templates\tickets\detail.html:476
+#, fuzzy
+#| msgid "Support"
+msgid "Support groups"
+msgstr "الدعم"
+
+#: .\templates\tickets\detail.html:483
+msgid "Replace current assignment"
+msgstr ""
+
+#: .\templates\tickets\detail.html:488 .\templates\tickets\edit.html:13
+#, fuzzy
+#| msgid "Compliance"
+msgid "Cancel"
+msgstr "الامتثال"
+
+#: .\templates\tickets\detail.html:489
+#, fuzzy
+#| msgid "Assignment"
+msgid "Save assignment"
+msgstr "الإسناد"
+
+#: .\templates\tickets\detail.html:505
+#, fuzzy
+#| msgid "Collaborate securely"
+msgid "Share securely"
+msgstr "تعاون بأمان"
+
+#: .\templates\tickets\detail.html:510
+msgid "Only the selected signed-in recipient can open this expiring link."
+msgstr ""
+
+#: .\templates\tickets\detail.html:513
+msgid "Recipient"
+msgstr ""
+
+#: .\templates\tickets\detail.html:518
+msgid "Expires in days"
+msgstr ""
+
+#: .\templates\tickets\detail.html:524
+#, fuzzy
+#| msgid "Collaborate securely"
+msgid "Create secure link"
+msgstr "تعاون بأمان"
+
+#: .\templates\tickets\edit.html:4
+msgid "Permission controlled"
+msgstr ""
+
+#: .\templates\tickets\edit.html:4
+#, fuzzy
+#| msgid "View tickets"
+msgid "Edit ticket"
+msgstr "عرض الطلبات"
+
+#: .\templates\tickets\edit.html:4
+msgid "Update core details and administrator-defined fields."
+msgstr ""
+
+#: .\templates\tickets\edit.html:7 .\templates\tickets\wizard\step4.html:16
+msgid "Subject"
+msgstr "الموضوع"
+
+#: .\templates\tickets\edit.html:13
+msgid "Save changes"
+msgstr ""
+
+#: .\templates\tickets\list.html:4
+msgid "Ticket workspace"
+msgstr "مساحة عمل الطلبات"
+
+#: .\templates\tickets\list.html:5
+msgid "Service requests"
+msgstr "طلبات الخدمة"
+
+#: .\templates\tickets\list.html:6
+msgid "Search, filter and act on tickets you are permitted to access."
+msgstr ""
+
+#: .\templates\tickets\list.html:18
+msgid "Apply filters"
+msgstr ""
+
+#: .\templates\tickets\list.html:20
+msgid "Updating…"
+msgstr ""
+
+#: .\templates\tickets\partials\comment.html:12
+#, fuzzy
+#| msgid "Internal note"
+msgid "Internal"
+msgstr "ملاحظة داخلية"
+
+#: .\templates\tickets\partials\comment.html:40
+msgid "Sent"
+msgstr ""
+
+#: .\templates\tickets\partials\comment_form.html:13
+msgid "Message"
+msgstr ""
+
+#: .\templates\tickets\partials\comment_form.html:20
+msgid "Internal note"
+msgstr "ملاحظة داخلية"
+
+#: .\templates\tickets\partials\comment_form.html:21
+msgid "Internal notes are visible only to authorized staff."
+msgstr ""
+
+#: .\templates\tickets\partials\comment_form.html:33
+msgid "Drag & drop documents here"
+msgstr ""
+
+#: .\templates\tickets\partials\comment_form.html:35
+msgid "or click to select documents"
+msgstr ""
+
+#: .\templates\tickets\partials\comment_form.html:38
+#: .\templates\tickets\partials\comment_form.html:40
+msgid "Maximum"
+msgstr ""
+
+#: .\templates\tickets\partials\comment_form.html:38
+#, fuzzy
+#| msgid "Profile"
+msgid "per file"
+msgstr "الملف الشخصي"
+
+#: .\templates\tickets\partials\comment_form.html:42
+msgid "Allowed"
+msgstr ""
+
+#: .\templates\tickets\partials\comment_form.html:56
+msgid "File upload is disabled for this category."
+msgstr ""
+
+#: .\templates\tickets\partials\comment_form.html:73
+msgid "Post Comment"
+msgstr ""
+
+#: .\templates\tickets\partials\comment_form.html:146
+msgid "Remove document"
+msgstr ""
+
+#: .\templates\tickets\partials\search_results.html:1
+#, fuzzy
+#| msgid "No articles found"
+msgid "No permitted tickets found."
+msgstr "لم يتم العثور على مقالات"
+
+#: .\templates\tickets\partials\table.html:5
+#, fuzzy, python-format
+#| msgid "Recent tickets"
+msgid "%(count)s ticket"
+msgid_plural "%(count)s tickets"
+msgstr[0] "أحدث الطلبات"
+msgstr[1] "أحدث الطلبات"
+msgstr[2] "أحدث الطلبات"
+msgstr[3] "أحدث الطلبات"
+msgstr[4] "أحدث الطلبات"
+msgstr[5] "أحدث الطلبات"
+
+#: .\templates\tickets\partials\table.html:6
+msgid "Results respect your role, project and group access."
+msgstr ""
+
+#: .\templates\tickets\partials\table.html:9
+msgid "Permission filtered"
+msgstr ""
+
+#: .\templates\tickets\partials\table.html:17
+msgid "Project / category"
+msgstr ""
+
+#: .\templates\tickets\partials\table.html:19
+msgid "Assigned users / groups"
+msgstr ""
+
+#: .\templates\tickets\partials\table.html:22
+msgid "SLA due"
+msgstr "موعد مستوى الخدمة"
+
+#: .\templates\tickets\partials\table.html:23
+msgid "Actions"
+msgstr "الإجراءات"
+
+#: .\templates\tickets\partials\table.html:42
+msgid "No staff"
+msgstr ""
+
+#: .\templates\tickets\partials\table.html:43
+msgid "No group"
+msgstr ""
+
+#: .\templates\tickets\partials\table.html:50
+#, fuzzy
+#| msgid "Open tickets"
+msgid "Open ticket"
+msgstr "الطلبات المفتوحة"
+
+#: .\templates\tickets\partials\table.html:53
+#, fuzzy
+#| msgid "Communicate on tickets"
+msgid "No matching tickets"
+msgstr "التواصل من خلال الطلبات"
+
+#: .\templates\tickets\partials\table.html:54
+msgid "Adjust the filters or create a new service request."
+msgstr ""
+
+#: .\templates\tickets\partials\table.html:62
+#, python-format
+msgid "Page %(current)s of %(total)s"
+msgstr ""
+
+#: .\templates\tickets\partials\table.html:66
+msgid "Previous"
+msgstr ""
+
+#: .\templates\tickets\partials\table.html:67
+msgid "Next"
+msgstr ""
+
+#: .\templates\tickets\wizard\base.html:2
+msgid "Guided service request"
+msgstr "طلب خدمة موجه"
+
+#: .\templates\tickets\wizard\base.html:2
+msgid "Create a ticket"
+msgstr "إنشاء طلب"
+
+#: .\templates\tickets\wizard\base.html:2
+msgid "Four clear steps help the responsible team receive a complete request."
+msgstr ""
+
+#: .\templates\tickets\wizard\base.html:2
+msgid "Exit"
+msgstr ""
+
+#: .\templates\tickets\wizard\base.html:3
+msgid "Ticket creation progress"
+msgstr ""
+
+#: .\templates\tickets\wizard\base.html:3
+msgid "Choose context"
+msgstr ""
+
+#: .\templates\tickets\wizard\base.html:3
+msgid "Details"
+msgstr "التفاصيل"
+
+#: .\templates\tickets\wizard\base.html:3
+msgid "Dynamic form"
+msgstr ""
+
+#: .\templates\tickets\wizard\base.html:3
+msgid "Clarify"
+msgstr "التوضيح"
+
+#: .\templates\tickets\wizard\base.html:3
+#, fuzzy
+#| msgid "Continue to questions"
+msgid "4 questions"
+msgstr "المتابعة إلى الأسئلة"
+
+#: .\templates\tickets\wizard\base.html:3
+msgid "Review"
+msgstr "المراجعة"
+
+#: .\templates\tickets\wizard\step1.html:1
+msgid "Step 1 of 4"
+msgstr "الخطوة 1 من 4"
+
+#: .\templates\tickets\wizard\step1.html:1
+msgid "What can we help with?"
+msgstr "كيف يمكننا مساعدتك؟"
+
+#: .\templates\tickets\wizard\step1.html:1
+msgid ""
+"Choose the service context so we can load the right questions, workflow and "
+"SLA."
+msgstr ""
+
+#: .\templates\tickets\wizard\step1.html:1
+msgid "The service workspace responsible for this request."
+msgstr ""
+
+#: .\templates\tickets\wizard\step1.html:1
+msgid "The insurance product or service area."
+msgstr ""
+
+#: .\templates\tickets\wizard\step1.html:1
+msgid "The specific outcome or assistance required."
+msgstr ""
+
+#: .\templates\tickets\wizard\step1.html:1
+msgid "Why this matters"
+msgstr ""
+
+#: .\templates\tickets\wizard\step1.html:1
+msgid ""
+"Your selections control routing, dynamic fields, support group and service "
+"targets."
+msgstr ""
+
+#: .\templates\tickets\wizard\step1.html:1
+msgid "Continue to details"
+msgstr "المتابعة إلى التفاصيل"
+
+#: .\templates\tickets\wizard\step2.html:1
+msgid "Step 2 of 4"
+msgstr "الخطوة 2 من 4"
+
+#: .\templates\tickets\wizard\step2.html:1
+msgid "Tell us about the request"
+msgstr "أخبرنا عن الطلب"
+
+#: .\templates\tickets\wizard\step2.html:1
+#, python-format
+msgid ""
+"Fields below are configured for %(category)s and validated securely on the "
+"server."
+msgstr ""
+
+#: .\templates\tickets\wizard\step2.html:1
+msgid ""
+"This category has no additional dynamic fields. Continue to the "
+"clarification questions."
+msgstr ""
+
+#: .\templates\tickets\wizard\step2.html:1
+#, fuzzy
+#| msgid "Account protected"
+msgid "Your information is protected"
+msgstr "حساب محمي"
+
+#: .\templates\tickets\wizard\step2.html:1
+msgid ""
+"Sensitive fields are marked and shown only to people with explicit "
+"permission."
+msgstr ""
+
+#: .\templates\tickets\wizard\step2.html:1
+msgid "Continue to questions"
+msgstr "المتابعة إلى الأسئلة"
+
+#: .\templates\tickets\wizard\step3.html:1
+msgid "Step 3 of 4"
+msgstr "الخطوة 3 من 4"
+
+#: .\templates\tickets\wizard\step3.html:1
+msgid "Four quick clarifications"
+msgstr "أربعة أسئلة توضيحية سريعة"
+
+#: .\templates\tickets\wizard\step3.html:1
+msgid ""
+"Your answers help create a clearer summary and routing recommendation. AI "
+"suggestions remain subject to human review."
+msgstr ""
+
+#: .\templates\tickets\wizard\step3.html:1
+#, python-format
+msgid "Question %(number)s of 4"
+msgstr ""
+
+#: .\templates\tickets\wizard\step3.html:1
+msgid "What happens next"
+msgstr ""
+
+#: .\templates\tickets\wizard\step3.html:1
+msgid ""
+"The mock AI provider builds a summary, category, priority and group "
+"recommendation without making an automatic decision."
+msgstr ""
+
+#: .\templates\tickets\wizard\step3.html:1
+msgid "Generate review"
+msgstr "إنشاء المراجعة"
+
+#: .\templates\tickets\wizard\step4.html:3
+msgid "Step 4 of 4"
+msgstr "الخطوة 4 من 4"
+
+#: .\templates\tickets\wizard\step4.html:4
+msgid "Review and submit"
+msgstr "راجع وقدّم"
+
+#: .\templates\tickets\wizard\step4.html:13
+msgid "Final request"
+msgstr "الطلب النهائي"
+
+#: .\templates\tickets\wizard\step4.html:26
+msgid "Supporting documents"
+msgstr "المستندات الداعمة"
+
+#: .\templates\tickets\wizard\step4.html:38
+msgid "AI recommendation"
+msgstr "توصية الذكاء الاصطناعي"
+
+#: .\templates\tickets\wizard\step4.html:47
+msgid "Suggested group"
+msgstr ""
+
+#: .\templates\tickets\wizard\step4.html:60
+msgid "Request summary"
+msgstr "ملخص الطلب"
+
+#: .\templates\tickets\wizard\step4.html:75
+#, fuzzy
+#| msgid "Notifications"
+msgid "Clarifications"
+msgstr "الإشعارات"
+
+#: .\templates\tickets\wizard\step4.html:88
+msgid "Submit request"
+msgstr "تقديم الطلب"
+
+#~ msgid "About GLIS"
+#~ msgstr "عن جرين لاين"
+
+#~ msgid "Insurance Solutions"
+#~ msgstr "حلول التأمين"
+
+#~ msgid "Group tickets"
+#~ msgstr "طلبات المجموعة"
+
+#~ msgid "Resources"
+#~ msgstr "المصادر"
+
+#~ msgid "AI assistant"
+#~ msgstr "مساعد الذكاء الاصطناعي"
+
+#~ msgid "Platform admin"
+#~ msgstr "إدارة المنصة"
+
+#~ msgid "CMS & public site"
+#~ msgstr "المحتوى والموقع العام"
+
+#~ msgid "Audit logs"
+#~ msgstr "سجلات التدقيق"
+
+#~ msgid "Public reply"
+#~ msgstr "رد عام"
+
+#~ msgid "Post update"
+#~ msgstr "نشر التحديث"
+
+#~ msgid "SLA health"
+#~ msgstr "حالة مستوى الخدمة"
+
+#~ msgid "Human review required"
+#~ msgstr "تتطلب مراجعة بشرية"

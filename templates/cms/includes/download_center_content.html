@@ -1,0 +1,142 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+
+
+<section class="py-5">
+    <div class="container">
+<div class="card">
+      <div class="card-body">
+          <div class="row g-3 mb-2">
+                    <div class="col-lg-8">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-body border-end-0 rounded-start-pill ps-4"><i class="bi bi-search text-body-secondary"></i></span>
+                            <input type="search" id="downloadSearch" class="form-control border-start-0 rounded-end-pill" placeholder="{% translate 'Search documents, forms or policies...' %}">
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <select id="downloadCategory" class="form-select form-select-lg rounded-pill px-4">
+                            <option value="">{% translate "All Categories" %}</option>
+                            {% for category in categories %}
+                                <option value="{{ category.pk }}">{% if LANGUAGE_CODE == "ar" and category.name_ar %}{{ category.name_ar }}{% else %}{{ category.name_en }}{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+
+        <div class="row g-4" id="downloadGrid">
+
+            {% for document in documents %}
+
+                <div class="col-md-6 col-xl-4 download-item" data-category="{{ document.category_id }}" data-search="{{ document.title_en|lower }} {{ document.title_ar|lower }} {{ document.description_en|lower }} {{ document.description_ar|lower }} {{ document.reference|lower }}">
+
+                    <div class="card download-card h-100 border rounded-4 overflow-hidden">
+
+                        <div class="card-body p-4">
+
+                            <div class="d-flex align-items-start gap-3">
+
+                                <div class="download-file-icon rounded-4 flex-shrink-0 file-{{ document.extension }}">
+                                    {% if document.extension == "pdf" %}
+                                        <i class="bi bi-file-earmark-pdf-fill"></i>
+                                    {% elif document.extension == "doc" or document.extension == "docx" %}
+                                        <i class="bi bi-file-earmark-word-fill"></i>
+                                    {% elif document.extension == "xls" or document.extension == "xlsx" %}
+                                        <i class="bi bi-file-earmark-excel-fill"></i>
+                                    {% elif document.extension == "ppt" or document.extension == "pptx" %}
+                                        <i class="bi bi-file-earmark-ppt-fill"></i>
+                                    {% elif document.extension == "zip" or document.extension == "rar" %}
+                                        <i class="bi bi-file-earmark-zip-fill"></i>
+                                    {% else %}
+                                        <i class="bi bi-file-earmark-fill"></i>
+                                    {% endif %}
+                                </div>
+
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <h5 class="fw-bold mb-1 text-truncate">{% if LANGUAGE_CODE == "ar" and document.title_ar %}{{ document.title_ar }}{% else %}{{ document.title_en }}{% endif %}</h5>
+                                    <div class="small text-body-secondary">{% if LANGUAGE_CODE == "ar" and document.category.name_ar %}{{ document.category.name_ar }}{% else %}{{ document.category.name_en }}{% endif %}</div>
+
+                                    {% if document.description_en or document.description_ar %}
+                                        <p class="text-body-secondary small mt-3 mb-0">{% if LANGUAGE_CODE == "ar" and document.description_ar %}{{ document.description_ar|truncatechars:110 }}{% else %}{{ document.description_en|truncatechars:110 }}{% endif %}</p>
+                                    {% endif %}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="card-footer bg-body border-top px-4 py-3">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <div class="d-flex flex-wrap gap-3 text-body-secondary small">
+                                    <span><i class="bi bi-calendar3 me-1"></i>{{ document.updated_at|date:"d-M-Y" }}</span>
+                                    <span><i class="bi bi-file-earmark me-1"></i>{{ document.extension|upper }}</span>
+                                    <span><i class="bi bi-hdd me-1"></i>{{ document.file_size_display }}</span>
+                                </div>
+
+                                <a href="{% url 'download_document' document.pk %}" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-download me-1"></i>{% translate "Download" %}</a>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% empty %}
+
+                <div class="col-12">
+                    <div class="alert alert-warning rounded-4">{% translate "No documents available." %}</div>
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+        <div id="downloadNoResults" class="text-center py-5 d-none">
+            <div class="mb-3"><i class="bi bi-search display-4 text-body-secondary"></i></div>
+            <h4 class="fw-bold">{% translate "No matching documents" %}</h4>
+            <p class="text-body-secondary">{% translate "Try another search term or category." %}</p>
+        </div>
+
+      </div>
+    </div>
+    </div>
+</section>
+
+<style>
+.download-card{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;}
+.download-card:hover{transform:translateY(-4px);box-shadow:0 .75rem 2rem rgba(0,0,0,.08);border-color:rgba(var(--bs-primary-rgb),.25)!important;}
+.download-file-icon{width:58px;height:58px;display:flex;align-items:center;justify-content:center;font-size:1.9rem;background:var(--bs-tertiary-bg);}
+.file-pdf{background:#fee2e2;color:#dc3545;}
+.file-doc,.file-docx{background:#e0e7ff;color:#4f46e5;}
+.file-xls,.file-xlsx{background:#dcfce7;color:#198754;}
+.file-ppt,.file-pptx{background:#ffedd5;color:#ea580c;}
+.file-zip,.file-rar{background:#f3e8ff;color:#9333ea;}
+</style>
+
+<script>
+(function(){
+    const search=document.getElementById("downloadSearch");
+    const category=document.getElementById("downloadCategory");
+    const items=[...document.querySelectorAll(".download-item")];
+    const count=document.getElementById("documentCount");
+    const noResults=document.getElementById("downloadNoResults");
+
+    function filterDocuments(){
+        const q=(search.value||"").trim().toLowerCase();
+        const c=category.value;
+        let visible=0;
+
+        items.forEach(function(item){
+            const show=(!q||(item.dataset.search||"").includes(q))&&(!c||item.dataset.category===c);
+            item.classList.toggle("d-none",!show);
+            if(show) visible++;
+        });
+
+        count.textContent=visible;
+        noResults.classList.toggle("d-none",visible>0);
+    }
+
+    search.addEventListener("input",filterDocuments);
+    category.addEventListener("change",filterDocuments);
+})();
+</script>

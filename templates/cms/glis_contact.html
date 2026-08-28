@@ -1,0 +1,283 @@
+{% extends "base_public.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Contact & Support" %}{% endblock %}
+
+{% block content %}
+
+<section class="support-hero position-relative overflow-hidden">
+    <div class="container position-relative py-5 py-lg-6">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-7">
+                <div class="d-inline-flex align-items-center gap-2 bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-semibold small mb-4"><i class="bi bi-headset"></i><span>{% translate "CUSTOMER SUPPORT" %}</span></div>
+                <h1 class="display-3 fw-bold lh-sm mb-4">{% translate "We're here when you need" %} <span class="text-primary">{% translate "support." %}</span></h1>
+                <p class="lead text-body-secondary lh-lg mb-4">{% translate "Submit your request through our secure customer portal and stay informed from submission to resolution." %}</p>
+
+                <div class="d-flex flex-wrap gap-3 mb-5">
+                    <a href="{% url 'account_login' %}?next=/portal/tickets/create/" class="btn btn-primary btn-lg rounded-pill px-4 py-3 fw-semibold shadow-sm"><i class="bi bi-ticket-perforated me-2"></i>{% translate "Create / Track a Request" %}<i class="bi bi-arrow-right ms-2"></i></a>
+                </div>
+
+                <div class="d-flex flex-wrap gap-4 text-body-secondary small">
+                    <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i><span>{% translate "Secure customer portal" %}</span></div>
+                    <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i><span>{% translate "Track every update" %}</span></div>
+                    <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill text-success"></i><span>{% translate "Complete request history" %}</span></div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="support-visual position-relative">
+                    <div class="card border-0 shadow-lg rounded-5 overflow-hidden">
+                        <div class="card-body p-4 p-lg-5">
+                            <div class="d-flex align-items-center justify-content-between mb-4">
+                                <div>
+                                    <span class="text-body-secondary small">{% translate "SUPPORT PORTAL" %}</span>
+                                    <h4 class="fw-bold mb-0 mt-1">{% translate "Your Requests" %}</h4>
+                                </div>
+                                <div class="support-main-icon bg-primary-subtle text-primary rounded-4"><i class="bi bi-ticket-detailed fs-3"></i></div>
+                            </div>
+
+                            <div class="support-ticket bg-body-tertiary border rounded-4 p-3 mb-3">
+                                <div class="d-flex justify-content-between gap-3 mb-2">
+                                    <div class="fw-semibold">{% translate "Service Request" %}</div>
+                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis">{% translate "In Progress" %}</span>
+                                </div>
+                                <div class="small text-body-secondary mb-3">REQ-2026-00128</div>
+                                <div class="progress rounded-pill" style="height:6px;"><div class="progress-bar" style="width:65%;"></div></div>
+                            </div>
+
+                            <div class="support-ticket bg-body-tertiary border rounded-4 p-3 mb-4">
+                                <div class="d-flex justify-content-between gap-3 mb-2">
+                                    <div class="fw-semibold">{% translate "General Enquiry" %}</div>
+                                    <span class="badge rounded-pill bg-success-subtle text-success">{% translate "Resolved" %}</span>
+                                </div>
+                                <div class="small text-body-secondary">REQ-2026-00117</div>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-4">
+                                    <div class="text-center p-3 rounded-4 bg-primary-subtle">
+                                        <i class="bi bi-plus-circle text-primary fs-4"></i>
+                                        <small class="d-block fw-semibold mt-2">{% translate "Submit" %}</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-3 rounded-4 bg-info-subtle">
+                                        <i class="bi bi-eye text-info fs-4"></i>
+                                        <small class="d-block fw-semibold mt-2">{% translate "Track" %}</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-3 rounded-4 bg-success-subtle">
+                                        <i class="bi bi-check2-circle text-success fs-4"></i>
+                                        <small class="d-block fw-semibold mt-2">{% translate "Resolve" %}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="support-floating support-floating-top bg-body border shadow-sm rounded-4 p-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="support-floating-icon bg-success-subtle text-success rounded-circle"><i class="bi bi-bell-fill"></i></div>
+                            <div><div class="fw-semibold small">{% translate "Stay Updated" %}</div><small class="text-body-secondary">{% translate "Status notifications" %}</small></div>
+                        </div>
+                    </div>
+
+                    <div class="support-floating support-floating-bottom bg-body border shadow-sm rounded-4 p-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="support-floating-icon bg-primary-subtle text-primary rounded-circle"><i class="bi bi-shield-check"></i></div>
+                            <div><div class="fw-semibold small">{% translate "Secure Access" %}</div><small class="text-body-secondary">{% translate "Account protected" %}</small></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 border-top border-bottom">
+    <div class="container py-lg-3">
+        <div class="row g-4 justify-content-center">
+            <div class="col-sm-6 col-lg-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="support-benefit-icon bg-primary-subtle text-primary rounded-4"><i class="bi bi-ticket-perforated fs-4"></i></div>
+                    <div><div class="fw-bold">{% translate "One Portal" %}</div><small class="text-body-secondary">{% translate "All your requests" %}</small></div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="support-benefit-icon bg-success-subtle text-success rounded-4"><i class="bi bi-clock-history fs-4"></i></div>
+                    <div><div class="fw-bold">{% translate "Full History" %}</div><small class="text-body-secondary">{% translate "Never lose an update" %}</small></div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="support-benefit-icon bg-info-subtle text-info rounded-4"><i class="bi bi-chat-left-text fs-4"></i></div>
+                    <div><div class="fw-bold">{% translate "Direct Updates" %}</div><small class="text-body-secondary">{% translate "Communicate on tickets" %}</small></div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="support-benefit-icon bg-warning-subtle text-warning-emphasis rounded-4"><i class="bi bi-paperclip fs-4"></i></div>
+                    <div><div class="fw-bold">{% translate "Documents" %}</div><small class="text-body-secondary">{% translate "Upload attachments" %}</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-body-tertiary">
+    <div class="container py-lg-5">
+        <div class="row align-items-end mb-5">
+            <div class="col-lg-7">
+                <span class="text-primary fw-bold small text-uppercase">{% translate "Simple Process" %}</span>
+                <h2 class="display-6 fw-bold mt-2 mb-3">{% translate "Get support in four simple steps" %}</h2>
+                <p class="lead text-body-secondary mb-0">{% translate "Everything happens inside one secure portal, giving you visibility throughout the complete lifecycle of your request." %}</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-xl-3">
+                <div class="card h-100 border-0 rounded-4 shadow-sm support-step-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div class="support-step-icon bg-primary-subtle text-primary rounded-4"><i class="bi bi-person-lock fs-3"></i></div>
+                            <span class="support-step-number">01</span>
+                        </div>
+                        <h4 class="fw-bold">{% translate "Sign In" %}</h4>
+                        <p class="text-body-secondary mb-0">{% translate "Access the portal using your username and password. If you are new, you can create an account from the login page." %}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card h-100 border-0 rounded-4 shadow-sm support-step-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div class="support-step-icon bg-info-subtle text-info rounded-4"><i class="bi bi-file-earmark-plus fs-3"></i></div>
+                            <span class="support-step-number">02</span>
+                        </div>
+                        <h4 class="fw-bold">{% translate "Submit Request" %}</h4>
+                        <p class="text-body-secondary mb-0">{% translate "Describe your request, select the appropriate category and attach any supporting documents." %}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card h-100 border-0 rounded-4 shadow-sm support-step-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div class="support-step-icon bg-warning-subtle text-warning-emphasis rounded-4"><i class="bi bi-activity fs-3"></i></div>
+                            <span class="support-step-number">03</span>
+                        </div>
+                        <h4 class="fw-bold">{% translate "Follow Progress" %}</h4>
+                        <p class="text-body-secondary mb-0">{% translate "View the current status, support comments, assignment details and every update made to your request." %}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card h-100 border-0 rounded-4 shadow-sm support-step-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div class="support-step-icon bg-success-subtle text-success rounded-4"><i class="bi bi-check2-circle fs-3"></i></div>
+                            <span class="support-step-number">04</span>
+                        </div>
+                        <h4 class="fw-bold">{% translate "Resolution" %}</h4>
+                        <p class="text-body-secondary mb-0">{% translate "Receive the resolution while keeping the complete request and communication history available in your account." %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container py-lg-4">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5">
+                <span class="badge rounded-pill bg-primary-subtle text-primary px-3 py-2 mb-3">{% translate "WHY USE THE PORTAL?" %}</span>
+                <h2 class="display-6 fw-bold mb-3">{% translate "Your support requests, organized in one place." %}</h2>
+                <p class="text-body-secondary fs-5 lh-lg mb-0">{% translate "Instead of relying on disconnected emails or phone calls, the portal provides a structured and transparent way to communicate with our team." %}</p>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-4 border rounded-4 h-100 bg-body support-feature">
+                            <div class="support-feature-icon bg-primary-subtle text-primary rounded-circle mb-3"><i class="bi bi-search fs-4"></i></div>
+                            <h5 class="fw-bold">{% translate "Easy Tracking" %}</h5>
+                            <p class="text-body-secondary small mb-0">{% translate "Every request receives a unique reference number for quick and easy tracking." %}</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-4 border rounded-4 h-100 bg-body support-feature">
+                            <div class="support-feature-icon bg-success-subtle text-success rounded-circle mb-3"><i class="bi bi-bell fs-4"></i></div>
+                            <h5 class="fw-bold">{% translate "Timely Updates" %}</h5>
+                            <p class="text-body-secondary small mb-0">{% translate "Stay informed when the status changes or when our team adds an update." %}</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-4 border rounded-4 h-100 bg-body support-feature">
+                            <div class="support-feature-icon bg-info-subtle text-info rounded-circle mb-3"><i class="bi bi-chat-square-text fs-4"></i></div>
+                            <h5 class="fw-bold">{% translate "One Conversation" %}</h5>
+                            <p class="text-body-secondary small mb-0">{% translate "Keep comments, responses and communication connected directly to the relevant request." %}</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-4 border rounded-4 h-100 bg-body support-feature">
+                            <div class="support-feature-icon bg-warning-subtle text-warning-emphasis rounded-circle mb-3"><i class="bi bi-clock-history fs-4"></i></div>
+                            <h5 class="fw-bold">{% translate "Complete History" %}</h5>
+                            <p class="text-body-secondary small mb-0">{% translate "Review previous requests and their resolutions whenever you need them." %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pb-5">
+    <div class="container pb-lg-5">
+        <div class="support-cta rounded-5 p-4 p-lg-5 text-white shadow">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-2 mb-3"><i class="bi bi-headset fs-4"></i><span class="fw-semibold text-uppercase small">{% translate "Ready to get support?" %}</span></div>
+                    <h2 class="display-6 fw-bold mb-3">{% translate "Create a request and stay connected with our team." %}</h2>
+                    <p class="fs-5 text-white-50 mb-0">{% translate "Sign in to your portal to submit a new request or check the progress of an existing one." %}</p>
+                </div>
+
+                <div class="col-lg-4 text-lg-end">
+                    <a href="{% url 'account_login' %}?next=/portal/tickets/create/" class="btn btn-light btn-lg rounded-pill px-4 py-3 fw-semibold"><i class="bi bi-box-arrow-in-right me-2"></i>{% translate "Open Support Portal" %}</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.support-hero{background:linear-gradient(135deg,var(--bs-body-bg) 0%,var(--bs-tertiary-bg) 58%,rgba(var(--bs-primary-rgb),.09) 100%);}
+.support-main-icon{width:62px;height:62px;display:flex;align-items:center;justify-content:center;}
+.support-visual{padding:2rem;}
+.support-floating{position:absolute;z-index:3;min-width:190px;}
+.support-floating-top{right:-15px;top:5px;}
+.support-floating-bottom{left:-15px;bottom:20px;}
+.support-floating-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;}
+.support-benefit-icon{width:54px;height:54px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.support-step-icon{width:64px;height:64px;display:flex;align-items:center;justify-content:center;}
+.support-step-number{font-size:2rem;font-weight:800;color:var(--bs-tertiary-color);line-height:1;}
+.support-feature-icon{width:52px;height:52px;display:flex;align-items:center;justify-content:center;}
+.support-step-card,.support-feature{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;}
+.support-step-card:hover,.support-feature:hover{transform:translateY(-5px);box-shadow:0 1rem 2.5rem rgba(0,0,0,.08)!important;border-color:rgba(var(--bs-primary-rgb),.3)!important;}
+.support-cta{background:linear-gradient(135deg,var(--bs-primary),#164e63);}
+@media(max-width:1199.98px){.support-floating-top{right:0;}.support-floating-bottom{left:0;}}
+@media(max-width:991.98px){.support-visual{padding:1rem 0;}.support-floating{display:none;}}
+</style>
+
+{% endblock %}

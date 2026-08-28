@@ -8,6 +8,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+
   <title>{% block title %}{% page_attribute "page_title" %}{% endblock %}</title>
 
   <meta name="description" content="{% block description %}{% page_attribute "meta_description" %}{% endblock %}">
@@ -145,6 +146,7 @@
   {% endif %}
 
   <main id="main-content">
+    {% placeholder "content" %}
     {% block content %}{% endblock %}
   </main>
 

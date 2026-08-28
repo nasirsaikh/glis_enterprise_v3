@@ -555,7 +555,15 @@ def create_ticket(request, step=1):
         assignment_users = list(ticket.assignees.all())
         for group in ticket.groups.all():
             assignment_users.extend(group.members.all())
-        notify_users(assignment_users, ticket=ticket, kind="assignment", title=f"New ticket assigned: {ticket.reference}", body=ticket.subject, send_email_message=category.send_initial_email)
+        #notify_users(assignment_users, ticket=ticket, kind="assignment", title=f"New ticket assigned: {ticket.reference}", body=ticket.subject, send_email_message=category.send_initial_email)
+        notify_users(
+            assignment_users,
+            ticket=ticket,
+            kind="assignment",
+            title=f"New ticket assigned: {ticket.reference}",
+            body=ticket.subject,
+            send_email_message=category.send_initial_email,
+        )        
         AuditLog.record(request=request, action="ticket.create", instance=ticket, summary=f"Created {ticket.reference}")
         request.session.pop("ticket_wizard", None)
         messages.success(request, f"{ticket.reference} was submitted successfully.")

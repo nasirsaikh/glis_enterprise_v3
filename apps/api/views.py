@@ -12,6 +12,8 @@ from rest_framework.decorators import (api_view,permission_classes,parser_classe
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from django.views.decorators.http import require_GET
+from django.shortcuts import render
 
 from apps.tickets.models import (Project,Product,Category,SupportGroup,DynamicForm,Ticket,TicketComment,TicketAttachment,TicketEvent,Notification,SLAPolicy,)
 from apps.core.models import HeroSection, HomeSection,Service, Feature, Statistic, ProcessStep, Testimonial, Partner,FAQ
@@ -103,17 +105,13 @@ def hero_image_api(request):
     return FileResponse(obj.hero_image.open("rb"),content_type="image/jpeg",)
 
 
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def home_content_api(request):
-    lang = request.GET.get("lang", "en")
+def build_home_content(request):
+    lang = request.GET.get("lang", getattr(request, "LANGUAGE_CODE", "en"))
     ar = lang == "ar"
-
     site = SiteSettings.load()
     hero = HeroSection.load()
 
     sections = {}
-
     for item in HomeSection.objects.filter(is_active=True):
         sections[item.section] = {
             "eyebrow": item.eyebrow_ar if ar else item.eyebrow_en,
@@ -125,7 +123,6 @@ def home_content_api(request):
         }
 
     services = []
-
     for item in Service.objects.filter(is_active=True).select_related("category"):
         services.append({
             "id": item.pk,
@@ -185,9 +182,9 @@ def home_content_api(request):
         "website": item.website,
     } for item in Partner.objects.filter(is_active=True)]
 
-    return Response({
+    return {
         "success": True,
-
+        "language": lang,
         "site": {
             "name": site.site_name_ar if ar else site.site_name_en,
             "short_name": site.short_name,
@@ -200,18 +197,15 @@ def home_content_api(request):
             "organization_details": site.organization_details,
             "social_links": site.social_links,
         },
-
         "hero": {
             "eyebrow": hero.eyebrow_ar if ar else hero.eyebrow_en,
             "title": hero.title_ar if ar else hero.title_en,
             "subtitle": hero.subtitle_ar if ar else hero.subtitle_en,
             "primary_cta": hero.primary_cta_ar if ar else hero.primary_cta_en,
-            #"primary_cta_url": hero.primary_cta_url,
             "secondary_cta": hero.secondary_cta_ar if ar else hero.secondary_cta_en,
             "secondary_cta_url": hero.secondary_cta_url,
             "image": absolute_file_url(request, hero.hero_image),
         },
-
         "sections": sections,
         "services": services,
         "features": features,
@@ -220,7 +214,19 @@ def home_content_api(request):
         "testimonials": testimonials,
         "faqs": faqs,
         "partners": partners,
-    })
+    }
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def home_content_api(request):
+    return Response(build_home_content(request))
+
+
+@require_GET
+def home_content_html(request):
+    context = build_home_content(request)
+    return render(request, "cms/home_content.html", context)
 
 # ============================================================
 # HELPERS
@@ -2810,3 +2816,18 @@ def dashboard(request):
             ],
         },
     })
+
+
+from django.db.models import F
+from django.shortcuts import get_object_or_404, render
+from apps.cms_plugins.models import DownloadCategory, DownloadDocument
+
+def download_document(request, pk):
+    document = get_object_or_404(DownloadDocument, pk=pk, is_active=True)
+    DownloadDocument.objects.filter(pk=pk).update(download_count=F("download_count") + 1)
+    return FileResponse(document.file.open("rb"), as_attachment=True, filename=document.filename)
+
+def download_center_content(request):
+    categories = DownloadCategory.objects.filter(is_active=True).order_by("order", "name_en")
+    documents = DownloadDocument.objects.filter(is_active=True, category__is_active=True).select_related("category").order_by("order", "-updated_at")
+    return render(request, "cms/includes/download_center_content.html", {"categories": categories, "documents": documents})

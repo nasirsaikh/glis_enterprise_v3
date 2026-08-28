@@ -1,5 +1,6 @@
 from django.urls import path
 from . import api_views
+from . import views
 
 urlpatterns = [
     path("tickets/", api_views.tickets_api, name="tickets"),

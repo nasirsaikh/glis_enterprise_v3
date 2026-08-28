@@ -65,6 +65,8 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_spectacular",
 
+    "django_summernote",
+
     "apps.core",
     "apps.accounts",
     "apps.tickets",
@@ -76,10 +78,11 @@ INSTALLED_APPS = [
     "django_ckeditor_5",
     "location_field",
     "django_visitor_tracker",
+    "apps.job_center.apps.JobCenterConfig",
+    "apps.cms_plugins.apps.CmsPluginsConfig",
 ]
 
 MIDDLEWARE = [
-    "django.middleware.cache.UpdateCacheMiddleware",
     "cms.middleware.utils.ApphookReloadMiddleware",
 
     "django.middleware.security.SecurityMiddleware",
@@ -87,6 +90,7 @@ MIDDLEWARE = [
 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
+
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -96,16 +100,14 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django.middleware.locale.LocaleMiddleware",
-    # django CMS
-    "cms.middleware.language.LanguageCookieMiddleware",
+
     "cms.middleware.user.CurrentUserMiddleware",
     "cms.middleware.page.CurrentPageMiddleware",
     "cms.middleware.toolbar.ToolbarMiddleware",
+    "cms.middleware.language.LanguageCookieMiddleware",
 
     "django_htmx.middleware.HtmxMiddleware",
     "csp.middleware.CSPMiddleware",
-    "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 
 ROOT_URLCONF = "glis.urls"
@@ -209,45 +211,41 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_ID = 1
 
 CMS_TEMPLATES = [
-    ("cms/glis_page.html", "GLIS content page"),
-    ("cms/glis_home.html", "GLIS home page"),
-    ("cms/glis_about.html", "GLIS about page"),
-    ("cms/glis_portal_page.html", "GLIS portal page"),
+    ("cms/glis_page.html", "GLIS content Page"),
+    ("cms/glis_home.html", "GLIS home Page"),
+    ("cms/glis_about.html", "GLIS about Page"),
+    ("cms/glis_contact.html", "GLIS Contact Page"),
+    ("cms/glis_download.html", "GLIS Download Page"),
+    ("cms/glis_portal_page.html", "GLIS portal Page"),
 ]
+
+CMS_PLACEHOLDER_CONF = {
+    "hero_content": {"plugins": ["HomeHeroCMSPlugin"]}, 
+    "hero_image": {"plugins": ["HomeImageCMSPlugin"]}, 
+    "partners": {"plugins": ["HomePartnerCMSPlugin"]}, 
+    "about_image": {"plugins": ["HomeImageCMSPlugin"]}, 
+    "about_content": {"plugins": ["HomeContentCMSPlugin"]}, "services_header": {"plugins": ["HomeSectionHeaderCMSPlugin"]}, "services": {"plugins": ["HomeServiceCMSPlugin"]}, "features_header": {"plugins": ["HomeSectionHeaderCMSPlugin"]}, "features": {"plugins": ["HomeFeatureCMSPlugin"]}, "process_header": {"plugins": ["HomeSectionHeaderCMSPlugin"]}, "process": {"plugins": ["HomeProcessCMSPlugin"]}, "statistics": {"plugins": ["HomeStatisticCMSPlugin"]}, "testimonials_header": {"plugins": ["HomeSectionHeaderCMSPlugin"]}, "testimonials": {"plugins": ["HomeTestimonialCMSPlugin"]}, "faq_header": {"plugins": ["HomeSectionHeaderCMSPlugin"]}, "faq": {"plugins": ["HomeFAQCMSPlugin"]}, "call_to_action": {"plugins": ["HomeCTACMSPlugin"]}}
 
 CMS_PERMISSION = True
 CMS_TREE_BACKEND = "mptree"
 CMS_PAGE_CACHE = not DEBUG
 CMS_PLACEHOLDER_CACHE = not DEBUG
 CMS_PLUGIN_CACHE = not DEBUG
-# CMS_LANGUAGES = {
-#     1: [
-#         {"code": "en", "name": "English", "fallbacks": ["ar"], "public": True},
-#         {"code": "ar", "name": "العربية", "fallbacks": ["en"], "public": True},
-#     ],
-#     "default": {"fallbacks": ["en"], "redirect_on_fallback": True, "public": True},
-# }
-
 CMS_LANGUAGES = {
     1: [
-        {
-            "code": "en",
-            "name": "English",
-            "fallbacks": ["ar"],
-            "public": True,
-            "hide_untranslated": False,
-            "redirect_on_fallback": False,
-        },
-        {
-            "code": "ar",
-            "name": "العربية",
-            "fallbacks": ["en"],
-            "public": True,
-            "hide_untranslated": False,
-            "redirect_on_fallback": False,
-        },
+        {"code": "en", "name": "English", "fallbacks": ["ar"], "public": True},
+        {"code": "ar", "name": "العربية", "fallbacks": ["en"], "public": True},
     ],
+    "default": {"fallbacks": ["en"], "redirect_on_fallback": True, "public": True},
 }
+
+
+CSP_FORM_ACTION = (
+    "'self'",
+    "http://127.0.0.1:8000",
+    "https://google.com",
+)
+
 
 LOGIN_URL = "account_login"
 LOGIN_REDIRECT_URL = "portal:dashboard"
@@ -259,11 +257,44 @@ ACCOUNT_UNIQUE_EMAIL = True
 AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend", "allauth.account.auth_backends.AuthenticationBackend"]
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_ADAPTER = "apps.accounts.adapters.GLISSocialAccountAdapter"
-SOCIALACCOUNT_PROVIDERS = {}
-if env("GOOGLE_CLIENT_ID", default=""):
-    SOCIALACCOUNT_PROVIDERS["google"] = {"APP": {"client_id": env("GOOGLE_CLIENT_ID"), "secret": env("GOOGLE_CLIENT_SECRET", default=""), "key": ""}, "SCOPE": ["profile", "email"], "AUTH_PARAMS": {"access_type": "online"}}
-if env("MICROSOFT_CLIENT_ID", default=""):
-    SOCIALACCOUNT_PROVIDERS["microsoft"] = {"APP": {"client_id": env("MICROSOFT_CLIENT_ID"), "secret": env("MICROSOFT_CLIENT_SECRET", default=""), "key": ""}, "TENANT": env("MICROSOFT_TENANT", default="common")}
+# SOCIALACCOUNT_PROVIDERS = {
+#     "google": {
+#         "SCOPE" : ["profile","email"],
+#         "AUTH_PARAMS" : {"access_type" : "online"}
+#     }
+# }
+# if env("GOOGLE_CLIENT_ID", default=""):
+#     SOCIALACCOUNT_PROVIDERS["google"] = {"APP": {"client_id": env("GOOGLE_CLIENT_ID"), "secret": env("GOOGLE_CLIENT_SECRET", default=""), "key": ""}, "SCOPE": ["profile", "email"], "AUTH_PARAMS": {"access_type": "online"}}
+# if env("MICROSOFT_CLIENT_ID", default=""):
+#     SOCIALACCOUNT_PROVIDERS["microsoft"] = {"APP": {"client_id": env("MICROSOFT_CLIENT_ID"), "secret": env("MICROSOFT_CLIENT_SECRET", default=""), "key": ""}, "TENANT": env("MICROSOFT_TENANT", default="common")}
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        "OAUTH_PKCE_ENABLED": True,
+    },
+    "microsoft": {
+        "SCOPE": ["User.Read", "email", "profile"],
+        "APPS": [
+            {
+                "client_id": env("MICROSOFT_CLIENT_ID", default=""), # Optional if using Admin panel, but good fallback
+                "secret": env("MICROSOFT_CLIENT_SECRET", default=""),
+                "key": "",
+            }
+        ],
+        "APP": {
+            "client_id": env("MICROSOFT_CLIENT_ID", default=""),
+            "secret": env("MICROSOFT_CLIENT_SECRET", default=""),
+            "key": "",
+        },
+        "SETTINGS": {
+            # Change "common" to your specific Tenant ID string if you use a single-tenant Azure app, 
+            # or leave as "common" / "organizations" for multi-tenant
+            "tenant": env("MICROSOFT_TENANT", default="common"), 
+        }
+    },
+}
 
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
 SESSION_COOKIE_SECURE = not DEBUG
@@ -276,6 +307,30 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 # django CMS frontend editing uses same-origin frames/sideframes.
 X_FRAME_OPTIONS = "SAMEORIGIN"
 SECURE_REFERRER_POLICY = "same-origin"
+
+# CONTENT_SECURITY_POLICY = {
+#     "DIRECTIVES": {
+#         "default-src": ["'self'"],
+#         "script-src": [
+#             "'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net",
+#             "https://unpkg.com", "https://cdn.plot.ly",
+#         ],
+#         "worker-src": ["'self'", "blob:"],
+#         "style-src": [
+#             "'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net",
+#             "https://fonts.googleapis.com",
+#         ],
+#         "font-src": [
+#             "'self'", "data:", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com",
+#         ],
+#         "img-src": ["'self'", "data:", "blob:"],
+#         "connect-src": ["'self'", "https://cdn.jsdelivr.net"],
+#         "frame-src": ["'self'"],
+#         "frame-ancestors": ["'self'"],
+#         "base-uri": ["'self'"],
+#         "form-action": ["'self'"],
+#     }
+# }
 
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
@@ -293,11 +348,12 @@ CONTENT_SECURITY_POLICY = {
             "'self'", "data:", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com",
         ],
         "img-src": ["'self'", "data:", "blob:"],
-        "connect-src": ["'self'", "https://cdn.jsdelivr.net"],
-        "frame-src": ["'self'"],
+        "connect-src": ["'self'", "https://cdn.jsdelivr.net", "https://accounts.google.com"],
+        "frame-src": ["'self'", "https://accounts.google.com"],
         "frame-ancestors": ["'self'"],
         "base-uri": ["'self'"],
-        "form-action": ["'self'"],
+        # UPDATE THIS LINE:
+        "form-action": ["'self'", "http://127.0.0.1:8000", "https://accounts.google.com"],
     }
 }
 
@@ -365,3 +421,8 @@ SPECTACULAR_SETTINGS = {
     "SECURITY": [{"jwtAuth": []}],
 }
 
+
+JOB_CENTER_ENABLED = True
+JOB_CENTER_MAX_WORKERS = 10
+JOB_CENTER_LOCK_TTL_SECONDS = 90
+JOB_CENTER_HEARTBEAT_SECONDS = 30

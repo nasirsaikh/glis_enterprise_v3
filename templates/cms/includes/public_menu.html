@@ -1,6 +1,5 @@
 {% load menu_tags %}
 
-<img style="height:40px; width:80px;" src="/api/v1/site-logo/" alt="Company Logo">
 {% for child in children %}
 <li class="nav-item {% if child.children %}dropdown{% endif %}">
     {% if child.children %}

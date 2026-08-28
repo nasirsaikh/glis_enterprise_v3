@@ -222,11 +222,59 @@ def build_home_content(request):
 def home_content_api(request):
     return Response(build_home_content(request))
 
-
 @require_GET
 def home_content_html(request):
-    context = build_home_content(request)
-    return render(request, "cms/home_content.html", context)
+    context = {
+        "hero": HeroSection.load(),
+        "services": (
+            Service.objects
+            .filter(is_active=True)
+            .select_related("category")
+            .order_by("id")
+        ),
+
+        "statistics": (
+            Statistic.objects
+            .filter(is_active=True)
+            .order_by("id")
+        ),
+
+        "features": (
+            Feature.objects
+            .filter(is_active=True)
+            .order_by("id")
+        ),
+
+        "process_steps": (
+            ProcessStep.objects
+            .filter(is_active=True)
+            .order_by("step_number")
+        ),
+
+        "testimonials": (
+            Testimonial.objects
+            .filter(is_active=True)
+            .order_by("id")
+        ),
+
+        "partners": (
+            Partner.objects
+            .filter(is_active=True)
+            .order_by("id")
+        ),
+
+        "faqs": (
+            FAQ.objects
+            .filter(is_active=True)
+            .order_by("id")
+        ),
+    }
+
+    return render(
+        request,
+        "public/home_content.html",
+        context,
+    )
 
 # ============================================================
 # HELPERS
@@ -2818,16 +2866,15 @@ def dashboard(request):
     })
 
 
-from django.db.models import F
-from django.shortcuts import get_object_or_404, render
-from apps.cms_plugins.models import DownloadCategory, DownloadDocument
+# from django.db.models import F
+# from django.shortcuts import get_object_or_404, render
 
-def download_document(request, pk):
-    document = get_object_or_404(DownloadDocument, pk=pk, is_active=True)
-    DownloadDocument.objects.filter(pk=pk).update(download_count=F("download_count") + 1)
-    return FileResponse(document.file.open("rb"), as_attachment=True, filename=document.filename)
+# def download_document(request, pk):
+#     document = get_object_or_404(DownloadDocument, pk=pk, is_active=True)
+#     DownloadDocument.objects.filter(pk=pk).update(download_count=F("download_count") + 1)
+#     return FileResponse(document.file.open("rb"), as_attachment=True, filename=document.filename)
 
-def download_center_content(request):
-    categories = DownloadCategory.objects.filter(is_active=True).order_by("order", "name_en")
-    documents = DownloadDocument.objects.filter(is_active=True, category__is_active=True).select_related("category").order_by("order", "-updated_at")
-    return render(request, "cms/includes/download_center_content.html", {"categories": categories, "documents": documents})
+# def download_center_content(request):
+#     categories = DownloadCategory.objects.filter(is_active=True).order_by("order", "name_en")
+#     documents = DownloadDocument.objects.filter(is_active=True, category__is_active=True).select_related("category").order_by("order", "-updated_at")
+#     return render(request, "cms/includes/download_center_content.html", {"categories": categories, "documents": documents})

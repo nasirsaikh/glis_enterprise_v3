@@ -27,11 +27,21 @@ INSTALLED_APPS = [
     "menus",
     "treebeard",
     "sekizai",
+    "parler",
+    "taggit",
+
 
     "filer",
     "easy_thumbnails",
     "djangocms_text",
+    "djangocms_text_ckeditor5",
     "djangocms_link",
+    "djangocms_picture",
+    "djangocms_file",
+    "djangocms_video",
+    "djangocms_audio",
+    "djangocms_snippet",    
+    "djangocms_icon",
     "djangocms_frontend",
     "djangocms_frontend.contrib.accordion",
     "djangocms_frontend.contrib.alert",
@@ -50,6 +60,10 @@ INSTALLED_APPS = [
     "djangocms_frontend.contrib.utilities",
     "djangocms_versioning",
     "djangocms_alias",
+    "djangocms_moderation",
+    "djangocms_history",
+    #"djangocms_attribute_fields",
+    "djangocms_transfer",
 
     "allauth",
     "allauth.account",
@@ -79,7 +93,6 @@ INSTALLED_APPS = [
     "location_field",
     "django_visitor_tracker",
     "apps.job_center.apps.JobCenterConfig",
-    "apps.cms_plugins.apps.CmsPluginsConfig",
 ]
 
 MIDDLEWARE = [
@@ -167,7 +180,14 @@ else:
 #     }
 
 
-
+THUMBNAIL_PROCESSORS = [
+    'easy_thumbnails.processors.scale_and_crop',
+    'easy_thumbnails.processors.autocrop',
+    'easy_thumbnails.processors.colorspace',
+    'easy_thumbnails.processors.filters',
+    #'filer.thumbnail_processors.scale_and_crop_with_image_subject',
+    "filer.thumbnail_processors.scale_and_crop_with_subject_location",
+]
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -219,119 +239,6 @@ CMS_TEMPLATES = [
     ("cms/glis_portal_page.html", "GLIS portal Page"),
 ]
 
-CMS_PLACEHOLDER_CONF = {
-    "content": {
-        "plugins": [
-            "TextPlugin",
-            "ImagePlugin",
-            "CustomWebSectionPlugin",
-        ],
-    },
-
-    "hero_content": {
-        "plugins": [
-            "HomeHeroCMSPlugin",
-        ],
-    },
-
-    "hero_image": {
-        "plugins": [
-            "HomeImageCMSPlugin",
-        ],
-    },
-
-    "partners": {
-        "plugins": [
-            "HomePartnerCMSPlugin",
-        ],
-    },
-
-    "about_image": {
-        "plugins": [
-            "HomeImageCMSPlugin",
-        ],
-    },
-
-    "about_content": {
-        "plugins": [
-            "HomeContentCMSPlugin",
-        ],
-    },
-
-    "services_header": {
-        "plugins": [
-            "HomeSectionHeaderCMSPlugin",
-        ],
-    },
-
-    "services": {
-        "plugins": [
-            "HomeServiceCMSPlugin",
-        ],
-    },
-
-    "features_header": {
-        "plugins": [
-            "HomeSectionHeaderCMSPlugin",
-        ],
-    },
-
-    "features": {
-        "plugins": [
-            "HomeFeatureCMSPlugin",
-        ],
-    },
-
-    "process_header": {
-        "plugins": [
-            "HomeSectionHeaderCMSPlugin",
-        ],
-    },
-
-    "process": {
-        "plugins": [
-            "HomeProcessCMSPlugin",
-        ],
-    },
-
-    "statistics": {
-        "plugins": [
-            "HomeStatisticCMSPlugin",
-        ],
-    },
-
-    "testimonials_header": {
-        "plugins": [
-            "HomeSectionHeaderCMSPlugin",
-        ],
-    },
-
-    "testimonials": {
-        "plugins": [
-            "HomeTestimonialCMSPlugin",
-        ],
-    },
-
-    "faq_header": {
-        "plugins": [
-            "HomeSectionHeaderCMSPlugin",
-        ],
-    },
-
-    "faq": {
-        "plugins": [
-            "HomeFAQCMSPlugin",
-        ],
-    },
-
-    "call_to_action": {
-        "plugins": [
-            "HomeCTACMSPlugin",
-            "CustomWebSectionPlugin",
-        ],
-    },
-}
-
 CMS_PERMISSION = True
 CMS_TREE_BACKEND = "mptree"
 CMS_PAGE_CACHE = not DEBUG
@@ -377,28 +284,29 @@ SOCIALACCOUNT_ADAPTER = "apps.accounts.adapters.GLISSocialAccountAdapter"
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
         "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {"access_type": "online"},
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
         "OAUTH_PKCE_ENABLED": True,
     },
+
     "microsoft": {
-        "SCOPE": ["User.Read", "email", "profile"],
-        "APPS": [
-            {
-                "client_id": env("MICROSOFT_CLIENT_ID", default=""), # Optional if using Admin panel, but good fallback
-                "secret": env("MICROSOFT_CLIENT_SECRET", default=""),
-                "key": "",
-            }
-        ],
         "APP": {
             "client_id": env("MICROSOFT_CLIENT_ID", default=""),
             "secret": env("MICROSOFT_CLIENT_SECRET", default=""),
             "key": "",
         },
+        "SCOPE": [
+            "User.Read",
+            "email",
+            "profile",
+        ],
         "SETTINGS": {
-            # Change "common" to your specific Tenant ID string if you use a single-tenant Azure app, 
-            # or leave as "common" / "organizations" for multi-tenant
-            "tenant": env("MICROSOFT_TENANT", default="common"), 
-        }
+            "tenant": env(
+                "MICROSOFT_TENANT",
+                default="common",
+            ),
+        },
     },
 }
 
@@ -532,63 +440,3 @@ JOB_CENTER_ENABLED = True
 JOB_CENTER_MAX_WORKERS = 10
 JOB_CENTER_LOCK_TTL_SECONDS = 90
 JOB_CENTER_HEARTBEAT_SECONDS = 30
-
-SUMMERNOTE_THEME = "lite"
-
-SUMMERNOTE_CONFIG = {
-    "iframe": True,
-
-    "summernote": {
-        "width": "100%",
-        "height": "450px",
-
-        "toolbar": [
-            ["style", ["style"]],
-
-            [
-                "font",
-                [
-                    "bold",
-                    "italic",
-                    "underline",
-                    "strikethrough",
-                    "clear",
-                ],
-            ],
-
-            ["fontname", ["fontname"]],
-            ["fontsize", ["fontsize"]],
-            ["color", ["color"]],
-
-            [
-                "para",
-                [
-                    "ul",
-                    "ol",
-                    "paragraph",
-                ],
-            ],
-
-            ["height", ["height"]],
-            ["table", ["table"]],
-
-            [
-                "insert",
-                [
-                    "link",
-                    "picture",
-                    "video",
-                ],
-            ],
-
-            [
-                "view",
-                [
-                    "fullscreen",
-                    "codeview",
-                    "help",
-                ],
-            ],
-        ],
-    },
-}

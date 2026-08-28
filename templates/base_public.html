@@ -61,71 +61,168 @@
     </div>
   </div>
 
-  <header class="site-header sticky-top">
+<header class="site-header sticky-top">
 
     <nav class="navbar navbar-expand-xl" aria-label="{% translate 'Primary navigation' %}">
-      <div class="container">
 
-        <!-- <a class="navbar-brand brand-lockup" href="/">
+        <div class="container">
 
-          {% if glis_site.logo %}
-          <img style="height:40px;width:80px;object-fit:contain;" src="{{ glis_site.logo.url }}" alt="{{ glis_site.short_name|default:'GLIS' }}">
-          {% else %}
-          <strong>{{ glis_site.short_name|default:'GLIS' }}</strong>
-          {% endif %}
+            <!-- =========================================================
+                 LOGO
+            ========================================================== -->
 
-        </a> -->
+            <a class="navbar-brand brand-lockup me-3" href="/">
+                <img style="height:50px; width:100px;" src="/api/v1/site-logo/" alt="Company Logo">              
+            </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#publicNav" aria-controls="publicNav" aria-label="{% translate 'Open navigation' %}">
-          <span class="navbar-toggler-icon"></span>
-        </button>
 
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="publicNav" aria-labelledby="publicNavLabel">
+            <!-- =========================================================
+                 MOBILE / CMS SMALL-VIEW TOGGLER
+            ========================================================== -->
 
-          <div class="offcanvas-header">
-            <h2 class="offcanvas-title h5" id="publicNavLabel">{{ glis_site.short_name|default:'GLIS' }}</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="{% translate 'Close' %}"></button>
-          </div>
+            <button
+                class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#publicNav"
+                aria-controls="publicNav"
+                aria-expanded="false"
+                aria-label="{% translate 'Toggle navigation' %}"
+            >
 
-          <div class="offcanvas-body align-items-center">
-            <ul class="navbar-nav mx-auto gap-xl-1">
-              {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
-            </ul>
+                <span class="navbar-toggler-icon"></span>
 
-            <div class="navbar-actions d-flex align-items-center gap-2 mt-3 mt-xl-0">
+            </button>
 
-              {% if glis_site.public_theme_switcher_enabled or not glis_site %}
-              <button class="btn btn-icon" type="button" x-on:click="toggleTheme" aria-label="{% translate 'Change theme' %}">
-                <i class="bi" x-bind:class="themeIcon"></i>
-              </button>
-              {% endif %}
 
-              <form action="{% url 'switch_language' %}" method="post" class="d-inline">
-                {% csrf_token %}
-                <input name="next" type="hidden" value="{{ request.get_full_path }}">
-                <input name="language" type="hidden" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
-                <button class="btn btn-language" type="submit">{% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}</button>
-              </form>
+            <!-- =========================================================
+                 COLLAPSIBLE NAVIGATION
+                 
+                 IMPORTANT:
+                 This is now Bootstrap "collapse", NOT "offcanvas".
+            ========================================================== -->
 
-              {% if user.is_authenticated %}
-              <a class="btn btn-outline-primary" href="{% url 'portal:dashboard' %}">{% translate "Open portal" %}</a>
-              {% else %}
-              <a class="btn btn-link text-body text-decoration-none" href="{% url 'account_login' %}">{% translate "Sign in" %}</a>
-              {% endif %}
+            <div
+                class="collapse navbar-collapse"
+                id="publicNav"
+            >
 
-              <a class="btn btn-primary" href="{% url 'portal:create_ticket' 1 %}">{% translate "Create request" %}</a>
+                <!-- CMS MENU -->
+
+                <ul class="navbar-nav mx-auto gap-xl-1">
+
+                    {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
+
+                </ul>
+
+
+                <!-- =====================================================
+                     RIGHT SIDE ACTIONS
+                ====================================================== -->
+
+                <div class="navbar-actions d-flex flex-column flex-xl-row align-items-xl-center gap-2 mt-3 mt-xl-0">
+
+
+                    <!-- THEME -->
+
+                    {% if glis_site.public_theme_switcher_enabled or not glis_site %}
+
+                    <button
+                        class="btn btn-icon"
+                        type="button"
+                        x-on:click="toggleTheme"
+                        aria-label="{% translate 'Change theme' %}"
+                    >
+
+                        <i
+                            class="bi"
+                            x-bind:class="themeIcon"
+                        ></i>
+
+                    </button>
+
+                    {% endif %}
+
+
+                    <!-- LANGUAGE -->
+
+                    <form
+                        action="{% url 'switch_language' %}"
+                        method="post"
+                        class="d-inline"
+                    >
+
+                        {% csrf_token %}
+
+                        <input
+                            name="next"
+                            type="hidden"
+                            value="{{ request.get_full_path }}"
+                        >
+
+                        <input
+                            name="language"
+                            type="hidden"
+                            value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}"
+                        >
+
+                        <button
+                            class="btn btn-language"
+                            type="submit"
+                        >
+
+                            {% if LANGUAGE_CODE == 'ar' %}
+                                English
+                            {% else %}
+                                العربية
+                            {% endif %}
+
+                        </button>
+
+                    </form>
+
+
+                    <!-- USER -->
+
+                    {% if user.is_authenticated %}
+
+                        <a
+                            class="btn btn-outline-primary"
+                            href="{% url 'portal:dashboard' %}"
+                        >
+                            {% translate "Open portal" %}
+                        </a>
+
+                    {% else %}
+
+                        <a
+                            class="btn btn-link text-body text-decoration-none"
+                            href="{% url 'account_login' %}"
+                        >
+                            {% translate "Sign in" %}
+                        </a>
+
+                    {% endif %}
+
+
+                    <!-- CREATE REQUEST -->
+
+                    <a
+                        class="btn btn-primary"
+                        href="{% url 'portal:create_ticket' 1 %}"
+                    >
+                        {% translate "Create request" %}
+                    </a>
+
+                </div>
 
             </div>
 
-          </div>
-
         </div>
 
-      </div>
     </nav>
 
-  </header>
-
+</header>
   {% if messages %}
   <div class="toast-container position-fixed top-0 end-0 p-3">
 
@@ -146,7 +243,6 @@
   {% endif %}
 
   <main id="main-content">
-    {% placeholder "content" %}
     {% block content %}{% endblock %}
   </main>
 
@@ -156,15 +252,8 @@
       <div class="row g-5">
 
         <div class="col-lg-5">
-
           <div class="brand-lockup footer-brand">
-
-            {% if glis_site.logo %}
-            <img style="height:50px;width:100px;object-fit:contain;" src="{{ glis_site.logo.url }}" alt="{{ glis_site.short_name|default:'GLIS' }}">
-            {% else %}
-            <strong>{{ glis_site.short_name|default:'GLIS' }}</strong>
-            {% endif %}
-
+            <img style="height:40px; width:80px;" src="/api/v1/site-logo/" alt="Company Logo">
           </div>
 
           <p class="mt-3 footer-summary">

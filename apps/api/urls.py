@@ -39,6 +39,6 @@ urlpatterns = [
     path("home-content-html/", views.home_content_html, name="home_content_html"),    
     path("site-favicon/", views.site_favicon_api, name="site_favicon_api"),
     path("hero-image/", views.hero_image_api, name="hero_image_api"),  
-    path("download-center/", views.download_center_content, name="download_center_content"),  
-    path("downloads/file/<int:pk>/", views.download_document, name="download_document"),
+    #path("download-center/", views.download_center_content, name="download_center_content"),  
+    #path("downloads/file/<int:pk>/", views.download_document, name="download_document"),
 ]

@@ -1,81 +1,18 @@
 {% extends "base_public.html" %}
-{% load i18n cms_tags %}
-
-{% block title %}{% page_attribute "page_title" %}{% endblock %}
-
+{% load i18n %}
+{% block title %}
+    {% translate "Greenline Insurance Services — Insurance service, made clear" %}
+{% endblock %}
 {% block content %}
-
-{% placeholder "content" %}
-
-<section id="hero" class="home-hero-section py-5">
-    <div class="container">
-        <div class="row g-5 align-items-center">
-            <div class="col-lg-7">{% placeholder "hero_content" %}</div>
-            <div class="col-lg-5">{% placeholder "hero_image" %}</div>
-        </div>
-    </div>
-</section>
-
-<section id="partners" class="home-partners-section py-4 border-top border-bottom">
-    <div class="container">{% placeholder "partners" %}</div>
-</section>
-
-<section id="about" class="home-about-section py-5">
-    <div class="container">
-        <div class="row g-5 align-items-center">
-            <div class="col-lg-6">{% placeholder "about_image" %}</div>
-            <div class="col-lg-6">{% placeholder "about_content" %}</div>
-        </div>
-    </div>
-</section>
-
-<section id="services" class="home-services-section py-5 bg-body-tertiary">
-    <div class="container">
-        <div class="text-center mb-5">{% placeholder "services_header" %}</div>
-        <div class="row g-4">{% placeholder "services" %}</div>
-    </div>
-</section>
-
-<section id="features" class="home-features-section py-5">
-    <div class="container">
-        <div class="text-center mb-5">{% placeholder "features_header" %}</div>
-        <div class="row g-4">{% placeholder "features" %}</div>
-    </div>
-</section>
-
-<section id="process" class="home-process-section py-5 bg-body-tertiary">
-    <div class="container">
-        <div class="text-center mb-5">{% placeholder "process_header" %}</div>
-        <div class="row g-4">{% placeholder "process" %}</div>
-    </div>
-</section>
-
-<section id="statistics" class="home-statistics-section py-5">
-    <div class="container">
-        <div class="row g-4">{% placeholder "statistics" %}</div>
-    </div>
-</section>
-
-<section id="testimonials" class="home-testimonials-section py-5 bg-body-tertiary">
-    <div class="container">
-        <div class="text-center mb-5">{% placeholder "testimonials_header" %}</div>
-        <div class="row g-4">{% placeholder "testimonials" %}</div>
-    </div>
-</section>
-
-<section id="faq" class="home-faq-section py-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-9">
-                <div class="text-center mb-5">{% placeholder "faq_header" %}</div>
-                <div class="accordion" id="homeFaqAccordion">{% placeholder "faq" %}</div>
+<div id="home-content" hx-get="{% url 'home_content_html' %}" hx-trigger="load" hx-swap="innerHTML">
+    <div class="container py-5">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">
+                    {% translate "Loading..." %}
+                </span>
             </div>
         </div>
     </div>
-</section>
-
-<section id="cta" class="home-cta-section py-5">
-    <div class="container">{% placeholder "call_to_action" %}</div>
-</section>
-
+</div>
 {% endblock %}

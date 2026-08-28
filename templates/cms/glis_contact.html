@@ -1,7 +1,7 @@
 {% extends "base_public.html" %}
-{% load i18n %}
-
+{% load cms_tags i18n sekizai_tags %}
 {% block title %}{% translate "Contact & Support" %}{% endblock %}
+{% get_current_language as LANGUAGE_CODE %}
 
 {% block content %}
 
@@ -260,6 +260,8 @@
         </div>
     </div>
 </section>
+
+<div class="container">{% placeholder "partners" %}</div>
 
 <style>
 .support-hero{background:linear-gradient(135deg,var(--bs-body-bg) 0%,var(--bs-tertiary-bg) 58%,rgba(var(--bs-primary-rgb),.09) 100%);}

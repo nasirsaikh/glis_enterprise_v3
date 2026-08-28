@@ -1,0 +1,235 @@
+{% extends 'base_public.html' %}{% load i18n %}{% get_current_language as LANGUAGE_CODE %}
+{% block title %}{% translate "Greenline Insurance Services — Insurance service, made clear" %}{% endblock %}
+{% block content %}
+<section class="hero-section overflow-hidden">
+  <div class="container position-relative">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-7 hero-copy" data-reveal>
+        <div class="eyebrow" style="font-size:30px;">
+          <span class="eyebrow-dot"></span>
+          {% if LANGUAGE_CODE == 'ar' %}
+          {{ hero.eyebrow_ar|default:hero.eyebrow_en }}{% else %}{{ hero.eyebrow_en }}{% endif %}
+        </div>
+        <h2 style="font-size:50px;">{% if LANGUAGE_CODE == 'ar' %}{{ hero.title_ar|default:hero.title_en }}{% else %}{{ hero.title_en }}{% endif %}</h2>
+        <p class="hero-lead">{% if LANGUAGE_CODE == 'ar' %}{{ hero.subtitle_ar|default:hero.subtitle_en }}{% else %}
+          {{ hero.subtitle_en }}{% endif %}</p>
+        <div class="d-flex flex-wrap gap-3 mt-4"><a class="btn btn-primary btn-lg"
+            href="{% url 'portal:create_ticket' 1 %}">{% if LANGUAGE_CODE == 'ar' %}{{hero.primary_cta_ar|default:hero.primary_cta_en }}{% else %}{{ hero.primary_cta_en }}{% endif %}<i
+              class="bi bi-arrow-up-right ms-2"></i></a><a class="btn btn-soft btn-lg" href="#services">
+                {% if LANGUAGE_CODE == 'ar' %}
+                {{ hero.secondary_cta_ar|default:hero.secondary_cta_en }}{% else %}{{ hero.secondary_cta_en }}{% endif %}</a></div>
+        <div class="hero-proof"><span><i class="bi bi-patch-check-fill"></i>{% translate "Secure by design" %}</span><span><i class="bi bi-globe2"></i>{% translate "English & Arabic" %}</span><span><i
+              class="bi bi-clock-history"></i>{% translate "Track every request" %}</span></div>
+      </div>
+      <div class="col-lg-5" data-reveal>
+        <div class="hero-console" aria-label="{% translate 'Sample service request status' %}">
+          <div class="console-top">
+            <div><span class="status-dot"></span>{% translate "Service desk live" %}</div><span class="secure-chip"><i
+                class="bi bi-lock-fill"></i>{% translate "Protected" %}</span>
+          </div>
+          <div class="request-card">
+            <div class="d-flex justify-content-between"><span class="request-ref">GLIS-2026-00124</span><span
+                class="status-chip status-open">{% translate "In progress" %}</span></div>
+            <h2 class="h5 mt-3">{% translate "Claim document review" %}</h2>
+            <p>{% translate "Claims Support · Motor" %}</p>
+            <div class="progress-track"><span></span></div>
+            <div class="d-flex justify-content-between small"><span>{% translate "Received" %}</span><strong>{% translate "Under review" %}</strong><span>{% translate "Resolved" %}</span></div>
+          </div>
+          <div class="console-grid">
+            <div><i class="bi bi-chat-square-text"></i><span><strong>{% translate "Clear updates" %}</strong><small>{% translate "One conversation" %}</small></span></div>
+            <div><i class="bi bi-stopwatch"></i><span><strong>{% translate "SLA tracked" %}</strong><small>{% translate "Proactive alerts" %}</small></span></div>
+          </div>
+          <div class="floating-card"><i class="bi bi-check2-circle"></i><span><strong>{% translate "Document received" %}</strong><small>{% translate "Just now" %}</small></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="trust-strip">
+  <div class="container">
+    <div class="row g-0 text-center">
+      <div class="col-6 col-lg-3"><i class="bi bi-shield-lock"></i><span>{% translate "Privacy-aware" %}</span></div>
+      <div class="col-6 col-lg-3"><i class="bi bi-diagram-3"></i><span>{% translate "Multi-team routing" %}</span></div>
+      <div class="col-6 col-lg-3"><i class="bi bi-translate"></i><span>{% translate "Bilingual service" %}</span></div>
+      <div class="col-6 col-lg-3"><i class="bi bi-clipboard-data"></i><span>{% translate "Auditable outcomes" %}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-space" id="services">
+  <div class="container">
+    <div class="section-heading row align-items-end g-4">
+      <div class="col-lg-12"><span class="section-kicker">{% translate "Connected Services" %}</span>
+        <h2>{% translate "Support across the insurance journey" %}</h2>
+        <p>{% translate "A single, structured experience for claims support, policy servicing, provider requests, payments and customer care." %}</p>
+      </div>
+    </div>
+    <div class="row g-4 mt-2">
+      {% for service in services %}<div class="col-md-6 col-lg-4" data-reveal>
+        <article class="service-card h-100">
+          <div class="service-icon"><i class="bi {{ service.icon }}"></i></div><span class="service-category">{% if LANGUAGE_CODE == 'ar' %}{{ service.category.name_ar|default:service.category.name_en }}{% else %}{{ service.category.name_en }}{% endif %}</span>
+          <h3>{% if LANGUAGE_CODE == 'ar' %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en}}{% endif %}</h3>
+          <p>{% if LANGUAGE_CODE == 'ar' %}{{ service.summary_ar|default:service.summary_en }}{% else %}{{service.summary_en }}{% endif %}</p><a href="{{ service.link|default:'#' }}">{% translate "Learn more" %}<i class="bi bi-arrow-right"></i></a>
+        </article>
+      </div>{% empty %}
+      {% for item in "123456"|make_list %}<div class="col-md-6 col-lg-4">
+        <article class="service-card h-100">
+          <div class="service-icon"><i
+              class="bi {% cycle 'bi-heart-pulse' 'bi-car-front' 'bi-file-earmark-medical' 'bi-hospital' 'bi-cash-coin' 'bi-headset' %}"></i>
+          </div><span class="service-category">{% translate "Insurance services" %}</span>
+          <h3>{% cycle 'Claims coordination' 'Policy servicing' 'Member support' 'Provider services' 'Payment inquiries' 'Customer care' %}</h3>
+          <p>{% translate "Structured requests, secure documents, transparent ownership and timely status updates." %}
+          </p><a href="{% url 'portal:create_ticket' 1 %}">{% translate "Start a request" %}<i class="bi bi-arrow-right"></i></a>
+        </article>
+      </div>{% endfor %}{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section-space process-section" id="about">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5"><span class="section-kicker">{% translate "How we help" %}</span>
+        <h2>{% translate "From question to clear outcome" %}</h2>
+        <p class="section-lead">{% translate "Every request moves through a visible, accountable workflow—with the right information captured at the start." %}</p><a class="btn btn-outline-primary mt-3"
+          href="{% url 'portal:create_ticket' 1 %}">{% translate "Create a service request" %}</a>
+      </div>
+      <div class="col-lg-7">
+        <ol class="process-list">
+          <li><span>01</span>
+            <div>
+              <h3>{% translate "Choose your service" %}</h3>
+              <p>{% translate "Select the relevant project, product and request category." %}</p>
+            </div>
+          </li>
+          <li><span>02</span>
+            <div>
+              <h3>{% translate "Share the essentials" %}</h3>
+              <p>{% translate "A smart form asks only for information needed by that service." %}</p>
+            </div>
+          </li>
+          <li><span>03</span>
+            <div>
+              <h3>{% translate "Collaborate securely" %}</h3>
+              <p>{% translate "Follow updates, add documents and respond in one protected thread." %}</p>
+            </div>
+          </li>
+          <li><span>04</span>
+            <div>
+              <h3>{% translate "See the outcome" %}</h3>
+              <p>{% translate "Track resolution, service commitments and a complete activity history." %}</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section-space solutions-section" id="solutions">
+  <div class="container">
+    <div class="solution-panel">
+      <div class="row g-5 align-items-center">
+        <div class="col-lg-7"><span class="section-kicker light">{% translate "Built for connected insurance" %}</span>
+          <h2>{% translate "One platform. Many service relationships." %}</h2>
+          <p>{% translate "Customers, hospitals, brokers, insurers and internal teams each receive the access, context and workflow appropriate to them." %}</p>
+          <div class="solution-tags"><span>{% translate "Claims" %}</span><span>{% translate "Policy service" %}</span>
+            <span>{% translate "Provider network" %}</span><span>{% translate "Finance" %}</span><span>{% translate "Complaints" %}</span><span>{% translate "Compliance" %}</span></div>
+        </div>
+        <div class="col-lg-5">
+          <div class="capability-card">
+            <div><i class="bi bi-person-check"></i><span><strong>{% translate "Role-aware access" %}</strong><small>{% translate "People see only what they are permitted to see." %}</small></span></div>
+            <div><i class="bi bi-signpost-split"></i><span><strong>{% translate "Intelligent routing" %}</strong><small>{% translate "Requests reach the right responsible team." %}</small></span></div>
+            <div><i class="bi bi-activity"></i><span><strong>{% translate "Operational visibility" %}</strong><small>{% translate "Service health and SLAs stay visible." %}</small></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-space stats-section">
+  <div class="container">
+    <div class="row g-4">
+      {% for stat in statistics %}<div class="col-6 col-lg-3">
+        <div class="stat-card"><strong data-counter="{{ stat.value }}">{{ stat.value }}{{ stat.suffix }}</strong>
+          <span>{% if LANGUAGE_CODE == 'ar' %}{{ stat.label_ar|default:stat.label_en }}{% else %}{{ stat.label_en }}{% endif %}</span></div>
+      </div>{% empty %}<div class="col-6 col-lg-3">
+        <div class="stat-card"><strong>24/7</strong><span>{% translate "Request visibility" %}</span></div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card"><strong>2</strong><span>{% translate "Languages" %}</span></div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card"><strong>100%</strong><span>{% translate "Activity tracked" %}</span></div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card"><strong>1</strong><span>{% translate "Service workspace" %}</span></div>
+      </div>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section-space knowledge-section">
+  <div class="container">
+    <div class="section-heading d-flex flex-wrap align-items-end justify-content-between gap-3">
+      <div><span class="section-kicker">{% translate "Helpful guidance" %}</span>
+        <h2>{% translate "Answers before you need to ask" %}</h2>
+      </div>
+      <a href="{% url 'knowledge:list' %}" class="text-link">{% translate "Browse knowledge base" %}<i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-4 mt-2">
+      {% for article in featured_articles %}<div class="col-md-4">
+        <article class="article-card"><span>{{ article.category.name_en }}</span>
+          <h3>
+            <a href="{{ article.get_absolute_url }}">
+            {% if LANGUAGE_CODE == 'ar' %}
+              {{ article.title_ar|default:article.title_en }}
+            {% else %}
+              {{ article.title_en }}
+            {% endif %}
+          </a>
+        </h3>
+          <p>{% if LANGUAGE_CODE == 'ar' %}{{ article.summary_ar|default:article.summary_en }}{% else %}{{ article.summary_en }}{% endif %}</p><small><i class="bi bi-clock me-1"></i>{% translate "4 min read" %}</small>
+        </article>
+      </div>{% empty %}
+      <div class="col-md-4">
+        <article class="article-card"><span>{% translate "Claims" %}</span>
+          <h3>{% translate "Documents to prepare for claim support" %}</h3>
+          <p>{% translate "A practical checklist that helps your request move faster." %}</p><small><i
+              class="bi bi-clock me-1"></i>{% translate "4 min read" %}</small>
+        </article>
+      </div>
+      <div class="col-md-4">
+        <article class="article-card"><span>{% translate "Policies" %}</span>
+          <h3>{% translate "Understanding policy service requests" %}</h3>
+          <p>{% translate "Know which details to provide for common policy changes." %}</p><small><i
+              class="bi bi-clock me-1"></i>{% translate "5 min read" %}</small>
+        </article>
+      </div>
+      <div class="col-md-4">
+        <article class="article-card"><span>{% translate "Support" %}</span>
+          <h3>{% translate "How to track a submitted request" %}</h3>
+          <p>{% translate "Follow status, updates and service timelines from your portal." %}</p><small><i
+              class="bi bi-clock me-1"></i>{% translate "3 min read" %}</small>
+        </article>
+      </div>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-panel">
+      <div><span class="section-kicker">{% translate "Ready when you are" %}</span>
+        <h2>{% translate "Tell us what you need. We’ll make the next step clear." %}</h2>
+        <p>{% translate "Start a secure request or sign in to continue an existing conversation." %}</p>
+      </div>
+      <div class="d-flex flex-wrap gap-3"><a class="btn btn-light btn-lg" href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}</a><a class="btn btn-outline-light btn-lg" href="{% url 'account_login' %}">{% translate "Sign in" %}</a></div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -220,11 +220,117 @@ CMS_TEMPLATES = [
 ]
 
 CMS_PLACEHOLDER_CONF = {
-    "hero_content": {"plugins": ["HomeHeroCMSPlugin"]}, 
-    "hero_image": {"plugins": ["HomeImageCMSPlugin"]}, 
-    "partners": {"plugins": ["HomePartnerCMSPlugin"]}, 
-    "about_image": {"plugins": ["HomeImageCMSPlugin"]}, 
-    "about_content": {"plugins": ["HomeContentCMSPlugin"]}, "services_header": {"plugins": ["HomeSectionHeaderCMSPlugin"]}, "services": {"plugins": ["HomeServiceCMSPlugin"]}, "features_header": {"plugins": ["HomeSectionHeaderCMSPlugin"]}, "features": {"plugins": ["HomeFeatureCMSPlugin"]}, "process_header": {"plugins": ["HomeSectionHeaderCMSPlugin"]}, "process": {"plugins": ["HomeProcessCMSPlugin"]}, "statistics": {"plugins": ["HomeStatisticCMSPlugin"]}, "testimonials_header": {"plugins": ["HomeSectionHeaderCMSPlugin"]}, "testimonials": {"plugins": ["HomeTestimonialCMSPlugin"]}, "faq_header": {"plugins": ["HomeSectionHeaderCMSPlugin"]}, "faq": {"plugins": ["HomeFAQCMSPlugin"]}, "call_to_action": {"plugins": ["HomeCTACMSPlugin"]}}
+    "content": {
+        "plugins": [
+            "TextPlugin",
+            "ImagePlugin",
+            "CustomWebSectionPlugin",
+        ],
+    },
+
+    "hero_content": {
+        "plugins": [
+            "HomeHeroCMSPlugin",
+        ],
+    },
+
+    "hero_image": {
+        "plugins": [
+            "HomeImageCMSPlugin",
+        ],
+    },
+
+    "partners": {
+        "plugins": [
+            "HomePartnerCMSPlugin",
+        ],
+    },
+
+    "about_image": {
+        "plugins": [
+            "HomeImageCMSPlugin",
+        ],
+    },
+
+    "about_content": {
+        "plugins": [
+            "HomeContentCMSPlugin",
+        ],
+    },
+
+    "services_header": {
+        "plugins": [
+            "HomeSectionHeaderCMSPlugin",
+        ],
+    },
+
+    "services": {
+        "plugins": [
+            "HomeServiceCMSPlugin",
+        ],
+    },
+
+    "features_header": {
+        "plugins": [
+            "HomeSectionHeaderCMSPlugin",
+        ],
+    },
+
+    "features": {
+        "plugins": [
+            "HomeFeatureCMSPlugin",
+        ],
+    },
+
+    "process_header": {
+        "plugins": [
+            "HomeSectionHeaderCMSPlugin",
+        ],
+    },
+
+    "process": {
+        "plugins": [
+            "HomeProcessCMSPlugin",
+        ],
+    },
+
+    "statistics": {
+        "plugins": [
+            "HomeStatisticCMSPlugin",
+        ],
+    },
+
+    "testimonials_header": {
+        "plugins": [
+            "HomeSectionHeaderCMSPlugin",
+        ],
+    },
+
+    "testimonials": {
+        "plugins": [
+            "HomeTestimonialCMSPlugin",
+        ],
+    },
+
+    "faq_header": {
+        "plugins": [
+            "HomeSectionHeaderCMSPlugin",
+        ],
+    },
+
+    "faq": {
+        "plugins": [
+            "HomeFAQCMSPlugin",
+        ],
+    },
+
+    "call_to_action": {
+        "plugins": [
+            "HomeCTACMSPlugin",
+            "CustomWebSectionPlugin",
+        ],
+    },
+}
 
 CMS_PERMISSION = True
 CMS_TREE_BACKEND = "mptree"
@@ -426,3 +532,25 @@ JOB_CENTER_ENABLED = True
 JOB_CENTER_MAX_WORKERS = 10
 JOB_CENTER_LOCK_TTL_SECONDS = 90
 JOB_CENTER_HEARTBEAT_SECONDS = 30
+
+SUMMERNOTE_THEME = "bs5"
+
+SUMMERNOTE_CONFIG = {
+    "iframe": False,
+
+    "summernote": {
+        "width": "100%",
+        "height": "500px",
+
+        "toolbar": [
+            ["style", ["style"]],
+            ["font", ["bold", "underline", "clear"]],
+            ["fontname", ["fontname"]],
+            ["color", ["color"]],
+            ["para", ["ul", "ol", "paragraph"]],
+            ["table", ["table"]],
+            ["insert", ["link", "picture", "video"]],
+            ["view", ["fullscreen", "codeview", "help"]],
+        ],
+    },
+}

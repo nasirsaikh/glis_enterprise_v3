@@ -99,15 +99,28 @@ class HomeCTACMSPlugin(CMSPluginBase):
     render_template = "cms/plugins/home/cta.html"
     cache = False
 
-
 @plugin_pool.register_plugin
 class CustomWebSectionPlugin(CMSPluginBase):
+
     model = CustomWebSection
     name = "Custom Web Section"
     module = "GLIS Content"
     form = CustomWebSectionForm
     render_template = "cms/plugins/custom_web_section.html"
     cache = False
+
+    class Media:
+        css = {
+            "all": (
+                "summernote/summernote-bs5.min.css",
+            )
+        }
+
+        js = (
+            "summernote/jquery-3.4.1.slim.min.js",
+            "summernote/summernote-bs5.min.js",
+        )
+
     fieldsets = (
         (
             "General",
@@ -118,7 +131,6 @@ class CustomWebSectionPlugin(CMSPluginBase):
                 )
             },
         ),
-
         (
             "Content - WYSIWYG / HTML",
             {
@@ -127,27 +139,23 @@ class CustomWebSectionPlugin(CMSPluginBase):
                 )
             },
         ),
-
         (
             "Custom CSS",
             {
                 "fields": (
                     "css_content",
                 ),
-
                 "classes": (
                     "collapse",
                 ),
             },
         ),
-
         (
             "Custom JavaScript",
             {
                 "fields": (
                     "javascript_content",
                 ),
-
                 "classes": (
                     "collapse",
                 ),

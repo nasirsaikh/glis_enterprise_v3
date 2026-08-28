@@ -1,11 +1,13 @@
 from django import forms
-from django_summernote.widgets import SummernoteWidget
+from django_summernote.widgets import SummernoteInplaceWidget
 
 from .models import CustomWebSection
+
 
 class CustomWebSectionForm(forms.ModelForm):
     class Meta:
         model = CustomWebSection
+
         fields = [
             "title",
             "html_content",
@@ -15,11 +17,11 @@ class CustomWebSectionForm(forms.ModelForm):
         ]
 
         widgets = {
-            "html_content": SummernoteWidget(
+            "html_content": SummernoteInplaceWidget(
                 attrs={
                     "summernote": {
                         "width": "100%",
-                        "height": "500px",
+                        "height": "450px",
                     }
                 }
             ),

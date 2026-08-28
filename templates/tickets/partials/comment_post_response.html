@@ -1,9 +1,47 @@
-{% load i18n %}
+{% include "tickets/partials/comment.html" %}
 
-{% include "tickets/partials/comment_form.html" %}
 
-<div id="comment-list" hx-swap-oob="beforeend">
-    {% include "tickets/partials/comment.html" %}
+<!-- HEADER STATUS -->
+<span id="ticket-status-header"
+      class="status-chip status-{{ ticket.status }}"
+      hx-swap-oob="outerHTML">
+    {{ ticket.get_status_display }}
+</span>
+
+
+<!-- HEADER SLA -->
+<span id="ticket-sla-header"
+      class="sla-chip sla-{{ ticket.sla_state }}"
+      hx-swap-oob="outerHTML">
+    {{ ticket.sla_state|title }}
+</span>
+
+
+<!-- SIDEBAR STATUS -->
+<span id="ticket-status-sidebar"
+      class="status-chip status-{{ ticket.status }}"
+      hx-swap-oob="outerHTML">
+    {{ ticket.get_status_display }}
+</span>
+
+
+<!-- SIDEBAR SLA -->
+<span id="ticket-sla-sidebar"
+      class="sla-chip sla-{{ ticket.sla_state }}"
+      hx-swap-oob="outerHTML">
+    {{ ticket.sla_state|title }} - {{ ticket.elapsed_time }}
+</span>
+
+
+<!-- COMMENT FORM -->
+<div id="comment-composer" hx-swap-oob="outerHTML">
+
+    {% if ticket.status != "closed" %}
+
+    <div class="border-top p-3 p-lg-4">
+        {% include "tickets/partials/comment_form.html" %}
+    </div>
+
+    {% endif %}
+
 </div>
-
-<div id="no-comments" hx-swap-oob="delete"></div>

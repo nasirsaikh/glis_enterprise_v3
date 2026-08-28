@@ -1,0 +1,26 @@
+{% get_current_language as LANGUAGE_CODE %}
+
+<form action="{% url 'switch_language' %}"
+      method="post"
+      class="d-inline">
+
+    {% csrf_token %}
+
+    <input type="hidden"
+           name="next"
+           value="{{ request.get_full_path }}">
+
+    <input type="hidden"
+           name="language"
+           value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
+
+    <button type="submit"
+            class="btn btn-language">
+        {% if LANGUAGE_CODE == 'ar' %}
+            English
+        {% else %}
+            العربية
+        {% endif %}
+    </button>
+
+</form>

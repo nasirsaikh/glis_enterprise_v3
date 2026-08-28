@@ -1,0 +1,20 @@
+{% load menu_tags %}
+
+<img style="height:40px; width:80px;" src="/api/v1/site-logo/" alt="Company Logo">
+
+{% for child in children %}
+<li class="nav-item {% if child.children %}dropdown{% endif %}">
+  {% if child.children %}
+  <a class="nav-link dropdown-toggle {% if child.selected or child.ancestor %}active{% endif %}" href="{{ child.get_absolute_url }}" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    {{ child.get_menu_title }}
+  </a>
+  <ul class="dropdown-menu">
+    {% show_menu from_level to_level extra_inactive extra_active "cms/includes/public_menu_dropdown.html" %}
+  </ul>
+  {% else %}
+  <a class="nav-link {% if child.selected %}active{% endif %}" href="{{ child.get_absolute_url }}">
+    {{ child.get_menu_title }}
+  </a>
+  {% endif %}
+</li>
+{% endfor %}

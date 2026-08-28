@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
 from django.utils import timezone
-from .models import AuditLog, ConfigurationVersion, ModuleRegistry
+from .models import *
 
 
 @admin.register(ModuleRegistry)
@@ -54,3 +54,86 @@ class AuditLogAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(SiteSettings)
+class SiteSettingsAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ("Company Information", {"fields": ("site_name_en", "site_name_ar", "short_name", "tagline_en", "tagline_ar", "organization_details")}),
+        ("Registration Details", {"fields": ("commercial_registration_no", "vat_registration_no", "license_no", "established_year")}),
+        ("Contact Information", {"fields": ("contact_email", "support_email", "contact_phone", "secondary_phone", "whatsapp_number", "website")}),
+        ("Address", {"fields": ("address_en", "address_ar", "city", "governorate", "country", "po_box", "postal_code")}),
+        ("Map Location", {"fields": ("latitude", "longitude", "map_zoom")}),
+        ("Branding", {"fields": ("logo", "favicon")}),
+        ("Working Hours", {"fields": ("working_hours_en", "working_hours_ar")}),
+        ("Social Links", {"fields": ("social_links",)}),
+        ("Public Website Settings", {"fields": ("public_registration_enabled", "public_theme_switcher_enabled")}),
+    )
+
+    def has_add_permission(self, request):
+        return not SiteSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ServiceCategory)
+class ServiceCategoryAdmin(admin.ModelAdmin):
+    list_display = ("name_en", "name_ar", "order", "is_active")
+    list_editable = ("order", "is_active")
+    search_fields = ("name_en", "name_ar")
+
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ("title_en", "category", "is_featured", "order", "is_active")
+    list_filter = ("category", "is_featured", "is_active")
+    list_editable = ("is_featured", "order", "is_active")
+    search_fields = ("title_en", "title_ar", "summary_en", "summary_ar")
+
+
+@admin.register(Feature)
+class FeatureAdmin(admin.ModelAdmin):
+    list_display = ("title_en", "order", "is_active")
+    list_editable = ("order", "is_active")
+    search_fields = ("title_en", "title_ar")
+
+
+@admin.register(Statistic)
+class StatisticAdmin(admin.ModelAdmin):
+    list_display = ("value", "suffix", "label_en", "order", "is_active")
+    list_editable = ("order", "is_active")
+
+
+@admin.register(ProcessStep)
+class ProcessStepAdmin(admin.ModelAdmin):
+    list_display = ("step_number", "title_en", "order", "is_active")
+    list_editable = ("order", "is_active")
+
+
+@admin.register(Testimonial)
+class TestimonialAdmin(admin.ModelAdmin):
+    list_display = ("name", "role_en", "rating", "order", "is_active")
+    list_editable = ("order", "is_active")
+
+
+@admin.register(FAQ)
+class FAQAdmin(admin.ModelAdmin):
+    list_display = ("question_en", "order", "is_active")
+    list_editable = ("order", "is_active")
+    search_fields = ("question_en", "question_ar")
+
+
+@admin.register(Partner)
+class PartnerAdmin(admin.ModelAdmin):
+    list_display = ("name", "order", "is_active")
+    list_editable = ("order", "is_active")
+
+
+@admin.register(HomeSection)
+class HomeSectionAdmin(admin.ModelAdmin):
+    list_display = ("section", "title_en", "is_active")
+    list_editable = ("is_active",)
+
+
+admin.site.register(HeroSection)

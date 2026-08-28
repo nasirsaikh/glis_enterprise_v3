@@ -36,6 +36,7 @@
         {% endif %}
 
         <div class="text-end mt-2">
+            <small class="text-muted">{{ comment.get_status_display }}</small>
             <small class="text-muted">{% translate "Sent" %} {{ comment.created_at|date:"h:i A" }}</small>
         </div>
     </div>

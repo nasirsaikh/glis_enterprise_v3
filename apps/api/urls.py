@@ -15,7 +15,6 @@ urlpatterns = [
     path("products/", views.products, name="api-products"),
     path("categories/", views.categories, name="api-categories"),
     path("support-groups/", views.support_groups, name="api-support-groups"),
-    path("cms/hero-sections/", views.hero_sections, name="api-hero-sections"),
     path("forms/", views.dynamic_forms, name="api-forms"),
     path("forms/<str:form_key>/schema/", views.dynamic_form_schema, name="api-form-schema"),
     path("forms/<str:form_key>/validate/", views.dynamic_form_validate, name="api-form-validate"),
@@ -34,5 +33,9 @@ urlpatterns = [
     path("schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path("docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="swagger-ui"),
     path("redoc/", SpectacularRedocView.as_view(url_name="api-schema"), name="redoc"),
-    path("hero-image/<int:pk>/",views.hero_image,name="hero_image",),
+    path("site-settings/", views.site_settings_api, name="site_settings_api"),
+    path("site-logo/", views.site_logo_api, name="site_logo_api"),
+    path("home-content/", views.home_content_api, name="home_content_api"),
+    path("site-favicon/", views.site_favicon_api, name="site_favicon_api"),
+    path("hero-image/", views.hero_image_api, name="hero_image_api"),    
 ]

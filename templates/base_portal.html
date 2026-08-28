@@ -9,14 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   {% if LANGUAGE_CODE == 'ar' %}<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css" rel="stylesheet">{% else %}<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">{% endif %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="{% url 'public:theme_css' %}" rel="stylesheet"><link href="{% static 'css/glis.css' %}" rel="stylesheet">
+  
+  <link href="{% static 'css/glis.css' %}" rel="stylesheet">
   {% block extra_head %}{% endblock %}
 </head>
 <body class="portal-shell sidebar-mode-{{ user.profile.sidebar_mode|default:'mini' }}" x-data="siteShell" data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}" data-sidebar-preference-url="{% url 'accounts:sidebar_preference' %}">
 <a class="skip-link" href="#portal-main">{% translate "Skip to content" %}</a>
 <aside class="portal-sidebar d-none d-lg-flex" id="portal-sidebar">
   <a class="brand-lockup portal-brand" href="{% url 'portal:dashboard' %}" title="GLIS">
-    <img style="height:25px; width:50px;"src="/api/v1/hero-image/1/"alt="">
+    <img style="height:30px; width:60px;"src="/api/v1/site-logo/"alt="Company Logo">
     <!-- <span class="brand-mark"><span></span></span><span class="sidebar-label"><strong>GLIS</strong>
       <small>{% translate "Service portal" %}</small>
     </span> -->

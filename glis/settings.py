@@ -14,9 +14,6 @@ ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 INSTALLED_APPS = [
-    # django CMS admin styling must be before django.contrib.admin.
-    #"djangocms_simple_admin_style",
-
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -25,13 +22,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",
 
-    # django CMS core.
+    # django CMS
     "cms",
     "menus",
     "treebeard",
     "sekizai",
 
-    # django CMS content/file components.
     "filer",
     "easy_thumbnails",
     "djangocms_text",
@@ -64,17 +60,13 @@ INSTALLED_APPS = [
     "django_htmx",
     "widget_tweaks",
 
-    # REST API.
     "rest_framework",
     "rest_framework_simplejwt",
     "django_filters",
     "drf_spectacular",
 
-    # GLIS applications. The old apps.cms application has been replaced by
-    # apps.app_settings; the `cms` name above now belongs to django CMS.
     "apps.core",
     "apps.accounts",
-    "apps.app_settings.apps.AppSettingsConfig",
     "apps.tickets",
     "apps.knowledge",
     "apps.ai",
@@ -82,88 +74,95 @@ INSTALLED_APPS = [
 
     "django_json_widget",
     "django_ckeditor_5",
+    "location_field",
+    "django_visitor_tracker",
 ]
 
 MIDDLEWARE = [
+    "django.middleware.cache.UpdateCacheMiddleware",
     "cms.middleware.utils.ApphookReloadMiddleware",
+
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+
+    "django_visitor_tracker.middleware.RequestLoggingMiddleware",
+
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
+    # django CMS
+    "cms.middleware.language.LanguageCookieMiddleware",
     "cms.middleware.user.CurrentUserMiddleware",
     "cms.middleware.page.CurrentPageMiddleware",
     "cms.middleware.toolbar.ToolbarMiddleware",
-    "cms.middleware.language.LanguageCookieMiddleware",
+
     "django_htmx.middleware.HtmxMiddleware",
     "csp.middleware.CSPMiddleware",
+    "django.middleware.cache.FetchFromCacheMiddleware",
 ]
 
 ROOT_URLCONF = "glis.urls"
 TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates",
-    #"DIRS": [BASE_DIR / "templates"],
-    "DIRS": [],
+    "DIRS": [BASE_DIR / "templates"],
     "APP_DIRS": True,
-    "OPTIONS": {"context_processors": [
-        "django.template.context_processors.request",
-        "django.template.context_processors.i18n",
-        "django.contrib.auth.context_processors.auth",
-        "django.contrib.messages.context_processors.messages",
-        "sekizai.context_processors.sekizai",
-        "cms.context_processors.cms_settings",
-        "apps.app_settings.context_processors.site_context",
-        "apps.accounts.context_processors.auth_provider_context",
-        "apps.tickets.context_processors.notification_context",
-    ]},
+    "OPTIONS": {
+        "context_processors": [
+            "django.template.context_processors.request",
+            "django.template.context_processors.i18n",
+            "django.contrib.auth.context_processors.auth",
+            "django.contrib.messages.context_processors.messages",
+            "sekizai.context_processors.sekizai",
+            "cms.context_processors.cms_settings",
+            "apps.accounts.context_processors.auth_provider_context",
+            "apps.tickets.context_processors.notification_context",
+        ],
+    },
 }]
 
 WSGI_APPLICATION = "glis.wsgi.application"
 ASGI_APPLICATION = "glis.asgi.application"
 
-# db_engine = env("DATABASE_ENGINE", default="sqlite").lower()
-# if db_engine == "mssql":
-#     DATABASES = {"default": {
-#         "ENGINE": "mssql", "NAME": env("DATABASE_NAME"), "HOST": env("DATABASE_HOST"),
-#         "PORT": env("DATABASE_PORT", default="1433"), "USER": env("DATABASE_USER"),
-#         "PASSWORD": env("DATABASE_PASSWORD"),
-#         "OPTIONS": {
-#             "driver": env("DATABASE_DRIVER", default="ODBC Driver 18 for SQL Server"),
-#             "extra_params": env("DATABASE_EXTRA_PARAMS", default="TrustServerCertificate=yes"),
-#         },
-#     }}
-# else:
-#     DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / env("DATABASE_NAME", default="db.sqlite3")}}
-
-
-#DATABASE_URL="postgresql://postgres.rrbytxusjypzaqviqcrr:mHIIS7Iy1tLmlI48@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
-# Connect to Postgres via the shared transaction-mode pooler (IPv4-only)
-#DATABASE_URL="postgresql://postgres.djqaqvcsjfgauraibflk:Takaful@Oman@1@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
-# Connect to Postgres via the shared transaction-mode pooler (IPv4-only)
-DATABASE_URL="postgresql://postgres.djqaqvcsjfgauraibflk:Takaful%40Oman%401@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
-# Connect to Postgres via the shared session-mode pooler (used for migrations)
-#DIRECT_URL="postgresql://postgres.djqaqvcsjfgauraibflk:[YOUR-PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
-db_engine = "postgresql"
-if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
+db_engine = env("DATABASE_ENGINE", default="sqlite").lower()
+if db_engine == "mssql":
+    DATABASES = {"default": {
+        "ENGINE": "mssql", "NAME": env("DATABASE_NAME"), "HOST": env("DATABASE_HOST"),
+        "PORT": env("DATABASE_PORT", default="1433"), "USER": env("DATABASE_USER"),
+        "PASSWORD": env("DATABASE_PASSWORD"),
+        "OPTIONS": {
+            "driver": env("DATABASE_DRIVER", default="ODBC Driver 18 for SQL Server"),
+            "extra_params": env("DATABASE_EXTRA_PARAMS", default="TrustServerCertificate=yes"),
+        },
+    }}
 else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / env("DATABASE_NAME", default="db.sqlite3")}}
+
+
+
+# DATABASE_URL="postgresql://postgres.djqaqvcsjfgauraibflk:Takaful%40Oman%401@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
+# db_engine = "postgresql"
+# if DATABASE_URL:
+#     DATABASES = {
+#         "default": dj_database_url.parse(
+#             DATABASE_URL,
+#             conn_max_age=600,
+#             conn_health_checks=True,
+#         )
+#     }
+# else:
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.sqlite3",
+#             "NAME": BASE_DIR / "db.sqlite3",
+#         }
+#     }
 
 
 
@@ -181,6 +180,12 @@ LOCALE_PATHS = [BASE_DIR / "locale"]
 TIME_ZONE = "Asia/Muscat"
 USE_I18N = True
 USE_TZ = True
+LANGUAGE_COOKIE_NAME = "django_language"
+LANGUAGE_COOKIE_AGE = 365 * 24 * 60 * 60
+LANGUAGE_COOKIE_PATH = "/"
+LANGUAGE_COOKIE_SAMESITE = "Lax"
+LANGUAGE_COOKIE_SECURE = not DEBUG
+LANGUAGE_COOKIE_HTTPONLY = False
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -203,25 +208,45 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SITE_ID = 1
 
-# django CMS page templates. Existing GLIS Bootstrap templates remain the shell;
-# editors control the page body through django CMS placeholders/plugins.
-
 CMS_TEMPLATES = [
     ("cms/glis_page.html", "GLIS content page"),
     ("cms/glis_home.html", "GLIS home page"),
+    ("cms/glis_about.html", "GLIS about page"),
     ("cms/glis_portal_page.html", "GLIS portal page"),
 ]
+
 CMS_PERMISSION = True
 CMS_TREE_BACKEND = "mptree"
 CMS_PAGE_CACHE = not DEBUG
 CMS_PLACEHOLDER_CACHE = not DEBUG
 CMS_PLUGIN_CACHE = not DEBUG
+# CMS_LANGUAGES = {
+#     1: [
+#         {"code": "en", "name": "English", "fallbacks": ["ar"], "public": True},
+#         {"code": "ar", "name": "العربية", "fallbacks": ["en"], "public": True},
+#     ],
+#     "default": {"fallbacks": ["en"], "redirect_on_fallback": True, "public": True},
+# }
+
 CMS_LANGUAGES = {
     1: [
-        {"code": "en", "name": "English", "fallbacks": ["ar"], "public": True},
-        {"code": "ar", "name": "العربية", "fallbacks": ["en"], "public": True},
+        {
+            "code": "en",
+            "name": "English",
+            "fallbacks": ["ar"],
+            "public": True,
+            "hide_untranslated": False,
+            "redirect_on_fallback": False,
+        },
+        {
+            "code": "ar",
+            "name": "العربية",
+            "fallbacks": ["en"],
+            "public": True,
+            "hide_untranslated": False,
+            "redirect_on_fallback": False,
+        },
     ],
-    "default": {"fallbacks": ["en"], "redirect_on_fallback": True, "public": True},
 }
 
 LOGIN_URL = "account_login"

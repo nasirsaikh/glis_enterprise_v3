@@ -1,18 +1,1111 @@
-{% extends "base_public.html" %}
-{% load cms_tags i18n %}
+{% load static i18n cms_tags menu_tags sekizai_tags %}
+{% get_current_language as LANGUAGE_CODE %}
 
-{% block title %}{% page_attribute "page_title" %}{% endblock %}
-{% block description %}{% page_attribute "meta_description" %}{% endblock %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title id="site-title">Greenline Insurance Services</title>
+    <meta id="site-description"  content="A secure bilingual insurance service platform for customers, providers and teams.">
+    <link rel="icon" href="/api/v1/site-favicon/">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
+          rel="stylesheet">
 
-{% block content %}
-{% placeholder "hero" %}
-<section class="py-5">
-  <div class="container">
-    {% placeholder "main_content" %}
-  </div>
-</section>
-{% placeholder "services" %}
-{% placeholder "statistics" %}
-{% placeholder "testimonials" %}
-{% placeholder "call_to_action" %}
-{% endblock %}
+    {% if LANGUAGE_CODE == 'ar' %}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css"
+              rel="stylesheet">
+    {% else %}
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+              rel="stylesheet">
+    {% endif %}
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+          rel="stylesheet">
+
+    <link href="{% static 'css/glis.css' %}" rel="stylesheet">
+
+    {% render_block "css" %}
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="public-shell" x-data="siteShell">
+
+{% cms_toolbar %}
+
+<a class="skip-link" href="#main-content">
+    {% translate "Skip to content" %}
+</a>
+
+<!-- =========================================================
+     UTILITY BAR
+========================================================= -->
+
+<div class="utility-bar d-none d-lg-block">
+    <div class="container d-flex justify-content-between align-items-center">
+
+        <span>
+            <i class="bi bi-shield-check me-2"></i>
+            {% translate "Secure insurance service coordination" %}
+        </span>
+
+        <div class="d-flex gap-4">
+
+            <a id="utility-email-link" href="#">
+                <i class="bi bi-envelope me-1"></i>
+                <span id="utility-email"></span>
+            </a>
+
+            <span>
+                <i class="bi bi-telephone me-1"></i>
+                <span id="utility-phone"></span>
+            </span>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<header class="site-header sticky-top">
+    <nav class="navbar navbar-expand-xl" aria-label="{% translate 'Primary navigation' %}">
+        <div class="container">
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="offcanvas"
+                    data-bs-target="#publicNav"
+                    aria-controls="publicNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="offcanvas offcanvas-end" tabindex="-1" id="publicNav" aria-labelledby="publicNavLabel">
+                <div class="offcanvas-header">
+                    <h2 class="offcanvas-title h5" id="publicNavLabel">
+                        <span id="nav-short-name">GLIS</span>
+                    </h2>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="offcanvas"
+                            aria-label="{% translate 'Close' %}">
+                    </button>
+                </div>
+
+                <div class="offcanvas-body align-items-center">
+
+                    <ul class="navbar-nav mx-auto gap-xl-1">
+                        {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
+                    </ul>
+
+                    <div class="navbar-actions d-flex align-items-center gap-2 mt-3 mt-xl-0">
+                        <button class="btn btn-icon"
+                                type="button"
+                                x-on:click="toggleTheme"
+                                aria-label="{% translate 'Change theme' %}">
+                            <i class="bi" x-bind:class="themeIcon"></i>
+                        </button>
+
+{% get_current_language as LANGUAGE_CODE %}
+
+{% if LANGUAGE_CODE == "ar" %}
+    <a href="{% page_language_url 'en' %}"
+       class="btn btn-language">
+        English
+    </a>
+{% else %}
+    <a href="{% page_language_url 'ar' %}"
+       class="btn btn-language">
+        العربية
+    </a>
+{% endif %}
+
+<div style="position:fixed;top:0;left:0;z-index:99999;background:#000;color:#fff;padding:10px">
+    URL language: {{ request.LANGUAGE_CODE }}
+    <br>
+    Current language: {% get_current_language as DEBUG_LANGUAGE %}{{ DEBUG_LANGUAGE }}
+</div>
+
+{% get_current_language as CURRENT_LANGUAGE %}
+
+<div>
+    request.LANGUAGE_CODE = {{ request.LANGUAGE_CODE }}<br>
+    get_current_language = {{ CURRENT_LANGUAGE }}
+</div>
+
+                        {% if user.is_authenticated %}
+
+                            <a class="btn btn-outline-primary"
+                               href="{% url 'portal:dashboard' %}">
+                                {% translate "Open portal" %}
+                            </a>
+
+                        {% else %}
+
+                            <a class="btn btn-link text-body text-decoration-none"
+                               href="{% url 'account_login' %}">
+                                {% translate "Sign in" %}
+                            </a>
+
+                        {% endif %}
+
+                        <a class="btn btn-primary"
+                           href="{% url 'portal:create_ticket' 1 %}">
+                            {% translate "Create request" %}
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+</header>
+
+<!-- =========================================================
+     MESSAGES
+========================================================= -->
+
+{% if messages %}
+
+<div class="toast-container position-fixed top-0 end-0 p-3">
+
+    {% for message in messages %}
+
+        <div class="toast show border-0 shadow" role="status">
+
+            <div class="toast-body d-flex align-items-center gap-2">
+
+                <i class="bi bi-check-circle-fill text-success"></i>
+
+                {{ message }}
+
+                <button type="button"
+                        class="btn-close ms-auto"
+                        data-bs-dismiss="toast">
+                </button>
+
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+</div>
+
+{% endif %}
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<main id="main-content">
+
+    <!-- =====================================================
+         HERO
+    ===================================================== -->
+
+    <section id="hero">
+
+        <div class="container py-lg-5">
+
+            <div class="row align-items-center g-5">
+
+                <div class="col-lg-7">
+
+                    <span class="page-eyebrow" id="hero-eyebrow"></span>
+
+                    <h1 class="display-4 fw-bold mt-3" id="hero-title"></h1>
+
+                    <p class="lead mt-4" id="hero-subtitle"></p>
+
+                    <div class="d-flex flex-wrap gap-3 mt-4">
+
+                        <a id="hero-primary-button"
+                           class="btn btn-primary btn-lg"
+                           href="#">
+                        </a>
+
+                        <a id="hero-secondary-button"
+                           class="btn btn-outline-primary btn-lg"
+                           href="#">
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-5" data-reveal>
+                    <div class="hero-console" aria-label="{% translate 'Sample service request status' %}">
+                        <div class="console-top">
+                            <div><span class="status-dot"></span>{% translate "Service desk live" %}</div>
+                            <span class="secure-chip"><i class="bi bi-lock-fill"></i>{% translate "Protected" %}</span>
+                        </div>
+                        <div class="request-card">
+                            <div class="d-flex justify-content-between">
+                                <span class="request-ref">GLIS-2026-00124</span>
+                                <span class="status-chip status-open">{% translate "In progress" %}</span>
+                            </div>
+                            <h2 class="h5 mt-3">{% translate "Claim document review" %}</h2>
+                            <p>{% translate "Claims Support · Motor" %}</p>
+                            <div class="progress-track"><span></span></div>
+                            <div class="d-flex justify-content-between small">
+                                <span>{% translate "Received" %}</span>
+                                <strong>{% translate "Under review" %}</strong>
+                                <span>{% translate "Resolved" %}</span>
+                            </div>
+                        </div>
+                        <div class="console-grid">
+                            <div><i class="bi bi-chat-square-text"></i><span><strong>{% translate "Clear updates" %}</strong><small>{% translate "One conversation" %}</small></span></div>
+                            <div><i class="bi bi-stopwatch"></i><span><strong>{% translate "SLA tracked" %}</strong><small>{% translate "Proactive alerts" %}</small></span></div>
+                        </div>
+                        <div class="floating-card"><i class="bi bi-check2-circle"></i><span><strong>{% translate "Document received" %}</strong><small>{% translate "Just now" %}</small></span></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         PARTNERS
+    ===================================================== -->
+
+    <section id="partners" class="py-4 border-top border-bottom">
+
+        <div class="container">
+
+            <div id="partners-container"
+                 class="row align-items-center justify-content-center g-4">
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         ABOUT
+    ===================================================== -->
+
+    <section id="about" class="py-5">
+
+        <div class="container py-lg-4">
+
+            <div class="row align-items-center g-5">
+
+                <div class="col-lg-6">
+
+                    <img id="about-image"
+                         class="img-fluid rounded-4 shadow d-none"
+                         alt="">
+
+                </div>
+
+                <div class="col-lg-6">
+
+                    <span class="page-eyebrow" id="about-eyebrow"></span>
+
+                    <h2 class="display-6 fw-bold mt-2" id="about-title"></h2>
+
+                    <div class="mt-3" id="about-content"></div>
+
+                    <a id="about-button"
+                       class="btn btn-primary mt-3 d-none"
+                       href="#">
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         SERVICES
+    ===================================================== -->
+
+    <section id="services" class="py-5 bg-body-tertiary">
+
+        <div class="container py-lg-4">
+
+            <div class="text-center mb-5">
+
+                <span class="page-eyebrow" id="services-eyebrow"></span>
+
+                <h2 class="display-6 fw-bold" id="services-title"></h2>
+
+                <p class="text-body-secondary" id="services-content">
+                </p>
+
+            </div>
+
+            <div class="row g-4" id="services-container"></div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         WHY CHOOSE US / FEATURES
+    ===================================================== -->
+
+    <section id="features" class="py-5">
+
+        <div class="container py-lg-4">
+
+            <div class="text-center mb-5">
+
+                <span class="page-eyebrow" id="features-eyebrow"></span>
+
+                <h2 class="display-6 fw-bold" id="features-title">
+                </h2>
+
+                <p class="text-body-secondary" id="features-content">
+                </p>
+
+            </div>
+
+            <div class="row g-4" id="features-container">
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         PROCESS
+    ===================================================== -->
+
+    <section id="process" class="py-5 bg-body-tertiary">
+
+        <div class="container py-lg-4">
+
+            <div class="text-center mb-5">
+
+                <span class="page-eyebrow" id="process-eyebrow"></span>
+
+                <h2 class="display-6 fw-bold" id="process-title">
+                </h2>
+
+                <p class="text-body-secondary" id="process-content">
+                </p>
+
+            </div>
+
+            <div class="row g-4" id="process-container">
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         STATISTICS
+    ===================================================== -->
+
+    <section id="statistics" class="py-5">
+
+        <div class="container">
+
+            <div class="row g-4" id="statistics-container">
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         TESTIMONIALS
+    ===================================================== -->
+
+    <section id="testimonials" class="py-5 bg-body-tertiary">
+
+        <div class="container py-lg-4">
+
+            <div class="text-center mb-5">
+
+                <span class="page-eyebrow" id="testimonials-eyebrow"></span>
+
+                <h2 class="display-6 fw-bold" id="testimonials-title">
+                </h2>
+
+                <p class="text-body-secondary" id="testimonials-content">
+                </p>
+
+            </div>
+
+            <div class="row g-4" id="testimonials-container">
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         FAQ
+    ===================================================== -->
+
+    <section id="faq" class="py-5">
+
+        <div class="container py-lg-4">
+
+            <div class="row justify-content-center">
+
+                <div class="col-lg-9">
+
+                    <div class="text-center mb-5">
+
+                        <span class="page-eyebrow" id="faq-eyebrow"></span>
+
+                        <h2 class="display-6 fw-bold" id="faq-title">
+                        </h2>
+
+                        <p class="text-body-secondary" id="faq-content">
+                        </p>
+
+                    </div>
+
+                    <div class="accordion" id="faqAccordion">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         CTA
+    ===================================================== -->
+
+    <section id="cta" class="py-5">
+
+        <div class="container">
+
+            <div class="card border-0 shadow-lg rounded-4">
+
+                <div class="card-body p-4 p-lg-5 text-center">
+
+                    <span class="page-eyebrow" id="cta-eyebrow">
+                    </span>
+
+                    <h2 class="display-6 fw-bold mt-2" id="cta-title">
+                    </h2>
+
+                    <p class="lead" id="cta-content">
+                    </p>
+
+                    <a id="cta-button"
+                       href="#"
+                       class="btn btn-primary btn-lg mt-2 d-none">
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer class="site-footer" id="contact">
+
+    <div class="container py-5">
+
+        <div class="row g-5">
+
+            <div class="col-lg-5">
+
+                <div class="brand-lockup footer-brand">
+
+                    <img style="height:50px; width:100px; object-fit:contain;"
+                         src="/api/v1/site-logo/"
+                         alt="GLIS">
+
+                </div>
+
+                <p class="mt-3 footer-summary" id="footer-summary">
+                </p>
+
+            </div>
+
+            <div class="col-6 col-lg-2">
+
+                <h2 class="footer-title">
+                    {% translate "Company" %}
+                </h2>
+
+                <a href="#about">
+                    {% translate "About" %}
+                </a>
+
+                <a href="#services">
+                    {% translate "Services" %}
+                </a>
+
+                <a href="#faq">
+                    {% translate "FAQ" %}
+                </a>
+
+            </div>
+
+            <div class="col-6 col-lg-2">
+
+                <h2 class="footer-title">
+                    {% translate "Support" %}
+                </h2>
+
+                <a href="{% url 'portal:create_ticket' 1 %}">
+                    {% translate "Submit a request" %}
+                </a>
+
+                <a href="{% url 'portal:ticket_list' %}">
+                    {% translate "Track requests" %}
+                </a>
+
+                <a href="#contact">
+                    {% translate "Contact us" %}
+                </a>
+
+            </div>
+
+            <div class="col-lg-3">
+
+                <h2 class="footer-title">
+                    {% translate "Contact" %}
+                </h2>
+
+                <p>
+                    <i class="bi bi-geo-alt me-2"></i>
+                    <span id="footer-address"></span>
+                </p>
+
+                <p>
+                    <i class="bi bi-envelope me-2"></i>
+
+                    <a id="footer-email-link" href="#">
+                        <span id="footer-email"></span>
+                    </a>
+                </p>
+
+                <p>
+                    <i class="bi bi-telephone me-2"></i>
+
+                    <a id="footer-phone-link" href="#">
+                        <span id="footer-phone"></span>
+                    </a>
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+
+        <div class="container d-flex flex-wrap justify-content-between gap-3">
+
+            <span>
+                © {% now "Y" %}
+                <span id="footer-short-name">GLIS</span>.
+                {% translate "All rights reserved." %}
+            </span>
+
+            <span>
+
+                <a href="#">
+                    {% translate "Privacy" %}
+                </a>
+
+                <a href="#">
+                    {% translate "Terms" %}
+                </a>
+
+                <a href="#">
+                    {% translate "Accessibility" %}
+                </a>
+
+            </span>
+
+        </div>
+
+    </div>
+
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        defer></script>
+<script src="https://unpkg.com/htmx.org@2.0.8"
+        defer></script>
+<script src="{% static 'js/app.js' %}"
+        defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.15.8/dist/cdn.min.js"
+        defer></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async function () {
+
+    const language = "{{ LANGUAGE_CODE|default:'en' }}";
+    const apiUrl = `/api/v1/home-content/?lang=${language}`;
+
+    function setText(id, value) {
+        const element = document.getElementById(id);
+
+        if (element) {
+            element.textContent = value || "";
+        }
+    }
+
+    function setHtml(id, value) {
+        const element = document.getElementById(id);
+
+        if (element) {
+            element.innerHTML = value || "";
+        }
+    }
+
+    function setLink(id, text, url) {
+        const element = document.getElementById(id);
+
+        if (!element) {
+            return;
+        }
+
+        if (!text) {
+            element.classList.add("d-none");
+            return;
+        }
+
+        element.textContent = text;
+        element.href = url || "#";
+        element.classList.remove("d-none");
+    }
+
+    function loadSection(name) {
+
+        const section = data.sections?.[name];
+
+        if (!section) {
+            return;
+        }
+
+        setText(`${name}-eyebrow`, section.eyebrow);
+        setText(`${name}-title`, section.title);
+        setText(`${name}-content`, section.content);
+
+        setLink(
+            `${name}-button`,
+            section.button_text,
+            section.button_url
+        );
+
+        if (section.image) {
+
+            const image = document.getElementById(`${name}-image`);
+
+            if (image) {
+                image.src = section.image;
+                image.classList.remove("d-none");
+            }
+        }
+    }
+
+    let data;
+
+    try {
+
+        const response = await fetch(apiUrl, {
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error("API returned unsuccessful response.");
+        }
+
+        data = result;
+
+    } catch (error) {
+
+        console.error("Unable to load home content:", error);
+        return;
+    }
+
+    /* =====================================================
+       SITE
+    ===================================================== */
+
+    const site = data.site || {};
+
+    setText("site-title", site.name);
+    setText("nav-short-name", site.short_name);
+
+    setText("utility-email", site.email);
+    setText("utility-phone", site.phone);
+
+    setText("footer-address", site.address);
+    setText("footer-email", site.email);
+    setText("footer-phone", site.phone);
+    setText("footer-short-name", site.short_name);
+    setText("footer-summary", site.organization_details);
+
+    const utilityEmail = document.getElementById("utility-email-link");
+
+    if (utilityEmail && site.email) {
+        utilityEmail.href = `mailto:${site.email}`;
+    }
+
+    const footerEmail = document.getElementById("footer-email-link");
+
+    if (footerEmail && site.email) {
+        footerEmail.href = `mailto:${site.email}`;
+    }
+
+    const footerPhone = document.getElementById("footer-phone-link");
+
+    if (footerPhone && site.phone) {
+        footerPhone.href = `tel:${site.phone}`;
+    }
+
+    /* =====================================================
+       HERO
+    ===================================================== */
+
+    const hero = data.hero || {};
+
+    setText("hero-eyebrow", hero.eyebrow);
+    setText("hero-title", hero.title);
+    setText("hero-subtitle", hero.subtitle);
+
+    setLink(
+        "hero-primary-button",
+        hero.primary_cta,
+        hero.primary_cta_url
+    );
+
+    setLink(
+        "hero-secondary-button",
+        hero.secondary_cta,
+        hero.secondary_cta_url
+    );
+
+    /* =====================================================
+       HOME SECTION HEADINGS
+    ===================================================== */
+
+    [
+        "about",
+        "services",
+        "features",
+        "process",
+        "testimonials",
+        "faq",
+        "cta"
+    ].forEach(loadSection);
+
+    /* =====================================================
+       PARTNERS
+    ===================================================== */
+
+    const partnersContainer = document.getElementById("partners-container");
+
+    (data.partners || []).forEach(partner => {
+
+        const column = document.createElement("div");
+        column.className = "col-4 col-md-3 col-lg-2 text-center";
+
+        const link = partner.website
+            ? `<a href="${partner.website}" target="_blank" rel="noopener">`
+            : "";
+        const closingLink = partner.website ? "</a>" : "";
+
+        column.innerHTML = `
+            ${link}
+                <img src="${partner.logo}" alt="${partner.name}" class="img-fluid" style="max-height:60px; object-fit:contain;">
+            ${closingLink}
+        `;
+
+        partnersContainer?.appendChild(column);
+    });
+
+    /* =====================================================
+       SERVICES
+    ===================================================== */
+
+    const servicesContainer = document.getElementById("services-container");
+
+    (data.services || []).forEach(service => {
+
+        const column = document.createElement("div");
+        column.className = "col-md-6 col-xl-4";
+
+        column.innerHTML = `
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+
+                    <div class="mb-3 fs-2 text-primary">
+                        <i class="bi ${service.icon || "bi-shield-check"}"></i>
+                    </div>
+
+                    <h3 class="h5 fw-bold">
+                        ${service.title || ""}
+                    </h3>
+
+                    <p class="text-body-secondary">
+                        ${service.summary || ""}
+                    </p>
+
+                    ${
+                        service.link
+                        ? `
+                            <a href="${service.link}" class="btn btn-link px-0 text-decoration-none">
+                                ${service.button_text || "{% translate 'Learn more' %}"}
+                                <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                        `
+                        : ""
+                    }
+
+                </div>
+            </div>
+        `;
+
+        servicesContainer?.appendChild(column);
+    });
+
+    /* =====================================================
+       FEATURES
+    ===================================================== */
+
+    const featuresContainer = document.getElementById("features-container");
+
+    (data.features || []).forEach(feature => {
+
+        const column = document.createElement("div");
+        column.className = "col-md-6 col-lg-4";
+
+        column.innerHTML = `
+            <div class="card h-100 border-0">
+                <div class="card-body p-4">
+
+                    <div class="fs-2 text-primary mb-3">
+                        <i class="bi ${feature.icon || "bi-check-circle"}"></i>
+                    </div>
+
+                    <h3 class="h5 fw-bold">
+                        ${feature.title || ""}
+                    </h3>
+
+                    <p class="text-body-secondary mb-0">
+                        ${feature.description || ""}
+                    </p>
+
+                </div>
+            </div>
+        `;
+
+        featuresContainer?.appendChild(column);
+    });
+
+    /* =====================================================
+       PROCESS
+    ===================================================== */
+
+    const processContainer = document.getElementById("process-container");
+
+    (data.process || []).forEach(item => {
+
+        const column = document.createElement("div");
+        column.className = "col-md-6 col-lg-3";
+
+        column.innerHTML = `
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+
+                    <div class="d-flex align-items-center gap-3 mb-3">
+
+                        <span class="badge rounded-pill text-bg-primary">
+                            ${item.step}
+                        </span>
+
+                        <i class="bi ${item.icon || "bi-check2-circle"} fs-4"></i>
+
+                    </div>
+
+                    <h3 class="h5 fw-bold">
+                        ${item.title || ""}
+                    </h3>
+
+                    <p class="text-body-secondary mb-0">
+                        ${item.description || ""}
+                    </p>
+
+                </div>
+            </div>
+        `;
+
+        processContainer?.appendChild(column);
+    });
+
+    /* =====================================================
+       STATISTICS
+    ===================================================== */
+
+    const statisticsContainer = document.getElementById("statistics-container");
+
+    (data.statistics || []).forEach(item => {
+
+        const column = document.createElement("div");
+        column.className = "col-6 col-lg-3 text-center";
+
+        column.innerHTML = `
+            <div class="p-4">
+
+                ${
+                    item.icon
+                    ? `
+                        <i class="bi ${item.icon} fs-2 text-primary"></i>
+                    `
+                    : ""
+                }
+
+                <div class="display-5 fw-bold mt-2">
+                    ${item.value || ""}${item.suffix || ""}
+                </div>
+
+                <div class="text-body-secondary">
+                    ${item.label || ""}
+                </div>
+
+            </div>
+        `;
+
+        statisticsContainer?.appendChild(column);
+    });
+
+    /* =====================================================
+       TESTIMONIALS
+    ===================================================== */
+
+    const testimonialsContainer = document.getElementById("testimonials-container");
+
+    (data.testimonials || []).forEach(item => {
+
+        const column = document.createElement("div");
+        column.className = "col-md-6 col-lg-4";
+
+        const stars = "★".repeat(Math.min(item.rating || 0, 5));
+
+        column.innerHTML = `
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+
+                    <div class="mb-3">
+                        ${stars}
+                    </div>
+
+                    <blockquote class="mb-4">
+                        ${item.quote || ""}
+                    </blockquote>
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        ${
+                            item.photo
+                            ? `
+                                <img src="${item.photo}" alt="${item.name}" class="rounded-circle" width="48" height="48" style="object-fit:cover;">
+                            `
+                            : ""
+                        }
+
+                        <div>
+
+                            <strong>
+                                ${item.name || ""}
+                            </strong>
+
+                            <div class="small text-body-secondary">
+                                ${item.role || ""}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        `;
+
+        testimonialsContainer?.appendChild(column);
+    });
+
+    /* =====================================================
+       FAQ
+    ===================================================== */
+
+    const faqAccordion = document.getElementById("faqAccordion");
+
+    (data.faqs || []).forEach((item, index) => {
+
+        const faqItem = document.createElement("div");
+        faqItem.className = "accordion-item";
+
+        faqItem.innerHTML = `
+            <h2 class="accordion-header">
+
+                <button class="accordion-button ${index ? "collapsed" : ""}"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#faq-${index}">
+                    ${item.question || ""}
+                </button>
+
+            </h2>
+
+            <div id="faq-${index}"
+                 class="accordion-collapse collapse ${index === 0 ? "show" : ""}"
+                 data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    ${item.answer || ""}
+                </div>
+            </div>
+        `;
+
+        faqAccordion?.appendChild(faqItem);
+    });
+
+});
+</script>
+
+{% render_block "js" %}
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

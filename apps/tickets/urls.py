@@ -1,6 +1,5 @@
 from django.urls import path
 from . import views
-from apps.cms import views as cms_views
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
@@ -24,5 +23,4 @@ urlpatterns = [
     path("notifications/", views.notifications, name="notifications"),
     path("notifications/feed/", views.notification_feed, name="notification_feed"),
     path("notifications/read/", views.mark_notifications_read, name="mark_notifications_read"),
-    path("pages/<slug:slug>/", cms_views.portal_page_detail, name="managed_page"),
 ]

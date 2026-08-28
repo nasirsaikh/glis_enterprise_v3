@@ -420,7 +420,8 @@ class TicketComment(TimeStampedModel):
     body = models.TextField()
     is_internal = models.BooleanField(default=False)
     mentioned_user_ids = models.JSONField(default=list, blank=True)
-
+    status = models.CharField(max_length=24,choices=Ticket.Status.choices,null=True,blank=True,)
+    
     class Meta:
         ordering = ["created_at"]
 

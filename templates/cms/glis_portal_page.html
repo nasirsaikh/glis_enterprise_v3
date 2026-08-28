@@ -1,16 +1,64 @@
-{% extends "base_portal.html" %}
-{% load cms_tags i18n sekizai_tags %}
+{% extends "base_public.html" %}
+{% load i18n cms_tags %}
 
-{% block title %}
-    {% page_attribute "page_title" %}
-{% endblock %}
+{% block title %}{% page_attribute "page_title" %}{% endblock %}
+
+{% block description %}{% page_attribute "meta_description" %}{% endblock %}
 
 {% block content %}
 
-<div class="container-fluid py-3">
+<section class="page-heading-section py-4">
+  <div class="container">
 
-    {% placeholder "portal_content" %}
+    <span class="page-eyebrow">
+      {% translate "GLIS Portal" %}
+    </span>
 
-</div>
+    <h1 class="h2 fw-bold mb-2">
+      {% page_attribute "page_title" %}
+    </h1>
+
+    <div class="text-body-secondary">
+      {% placeholder "page_intro" %}
+    </div>
+
+  </div>
+</section>
+
+<section class="pb-5">
+  <div class="container">
+
+    <div class="row g-4">
+
+      <div class="col-lg-8">
+
+        <div class="public-content-card h-100">
+          {% placeholder "main_content" %}
+        </div>
+
+      </div>
+
+      <div class="col-lg-4">
+
+        <div class="public-content-card mb-4">
+          {% placeholder "sidebar" %}
+        </div>
+
+        <div>
+          {% placeholder "sidebar_actions" %}
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<section class="pb-5">
+  <div class="container">
+    {% placeholder "additional_content" %}
+  </div>
+</section>
 
 {% endblock %}

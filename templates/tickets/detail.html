@@ -9,6 +9,7 @@
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li>
         <li class="breadcrumb-item active" aria-current="page">{{ ticket.reference }}</li>
+        <li class="breadcrumb-item active" aria-current="page">{{ ticket.category }}</li>
     </ol>
 </nav>
 
@@ -24,8 +25,8 @@
                     {% endif %}
 
                     <span class="priority-chip priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span>
-                    <span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
-                    <span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span>
+                    <span id="ticket-status-header" class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                    <span id="ticket-sla-header" class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span>
 
                     {% if ticket.visibility == 'restricted' %}
                         <span class="restricted-label"><i class="bi bi-lock-fill"></i> {% translate "Restricted" %}</span>
@@ -140,7 +141,9 @@
                             {% endfor %}
                         </div>
 
-                        <div class="text-end mt-2"><small class="text-muted">{{ ticket.created_at|date:"h:i A" }}</small></div>
+                        <div class="text-end mt-2">
+                            <small class="text-muted">{{ ticket.created_at|date:"h:i A" }}</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -157,11 +160,13 @@
                     </div>
                 {% endfor %}
             </div>
-            {% if ticket.get_status_display != "Closed" %}
+            <div id="comment-composer">
+                {% if ticket.status != "closed" %}
                 <div class="border-top p-3 p-lg-4">
-                {% include "tickets/partials/comment_form.html" %}
+                    {% include "tickets/partials/comment_form.html" %}
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
         </section>
 
     </div>
@@ -256,7 +261,9 @@
 
                 <div>
                     <dt>{% translate "Status" %}</dt>
-                    <dd><span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></dd>
+                    <dd>
+                        <span id="ticket-status-header" class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                    </dd>
                 </div>
 
                 <div>
@@ -279,7 +286,7 @@
         <section class="panel side-panel mb-3">
             <div class="d-flex justify-content-between align-items-center gap-2">
                 <h2 class="d-flex align-items-center gap-2 mb-0"><i class="bi bi-hourglass-split"></i>{% translate "SLA Time Left" %}</h2>
-                <span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }} - {{ ticket.elapsed_time }}</span>
+                <span id="ticket-sla-sidebar" class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }} - {{ ticket.elapsed_time }}</span>
                 
             </div>
 

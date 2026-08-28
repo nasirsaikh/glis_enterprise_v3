@@ -49,8 +49,7 @@ class TicketReviewForm(forms.Form):
 class TicketCommentForm(forms.ModelForm):
     class Meta:
         model = TicketComment
-        fields = ["body", "is_internal"]
-
+        fields = ["body","status", "is_internal"]
         widgets = {
             "body": forms.Textarea(
                 attrs={
@@ -59,11 +58,17 @@ class TicketCommentForm(forms.ModelForm):
                     "placeholder": "Write an update…",
                 }
             ),
+            "status": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),            
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["body"].required = False
         self.fields["body"].widget.attrs.pop("required", None)
+        self.fields["status"].required = True        
 
 class TicketEditForm(forms.ModelForm):
     class Meta:

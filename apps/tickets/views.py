@@ -34,8 +34,6 @@ from .models import (
     TicketEvent, TicketShare,
 )
 
-from apps.cms.models import HeroSection
-
 
 RICH_TEXT_TAGS = ["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "blockquote", "a", "img", "h2", "h3", "code"]
 RICH_TEXT_ATTRIBUTES = {"a": ["href", "title", "target", "rel"], "img": ["src", "alt", "title"]}
@@ -119,7 +117,7 @@ def dashboard(request):
         row["label"] = row["label"] or "Unassigned"
     daily_open = list(qs.filter(created_at__gte=now - timedelta(days=13)).annotate(day=TruncDate("created_at")).values("day").annotate(total=Count("id")).order_by("day"))
     chart_data = {"status": by_status, "priority": by_priority, "category": by_category, "product": by_product, "project": by_project, "assignee": by_assignee, "daily_open": daily_open}
-    return render(request, "portal/dashboard.html", {"hero": HeroSection.load(), "metrics": metrics, "chart_data": chart_data, "recent_tickets": qs[:7], "attention": qs.filter(Q(priority="critical") | Q(resolution_due_at__lt=now + timedelta(hours=2)))[:6]})
+    return render(request, "portal/dashboard.html", {"metrics": metrics, "chart_data": chart_data, "recent_tickets": qs[:7], "attention": qs.filter(Q(priority="critical") | Q(resolution_due_at__lt=now + timedelta(hours=2)))[:6]})
 
 
 @login_required
@@ -131,7 +129,10 @@ def ticket_list(request):
         qs = qs.filter(groups__members=request.user).distinct()
     form = TicketFilterForm(request.GET)
     if form.is_valid():
-        qs = _apply_ticket_filters(qs, form.cleaned_data)
+        data = form.cleaned_data        
+        if not data.get("status"):
+            qs = qs.exclude(status="closed")
+        qs = _apply_ticket_filters(qs, data)        
     allowed_sorts = {"created_at", "-created_at", "priority", "-priority", "status", "resolution_due_at", "-resolution_due_at"}
     qs = qs.order_by(request.GET.get("sort") if request.GET.get("sort") in allowed_sorts else "-created_at")
     page = Paginator(qs, min(int(request.GET.get("page_size", 20)), 100)).get_page(request.GET.get("page"))
@@ -293,14 +294,9 @@ def _validate_comment_attachments(ticket, uploads):
 @require_POST
 @transaction.atomic
 def add_comment(request, reference):
-    ticket = get_object_or_404(
-        TicketAccessPolicy.visible_queryset(request.user),
-        reference=reference,
-    )
-
+    ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user),reference=reference,)
     form = TicketCommentForm(request.POST)
     uploads = list(request.FILES.getlist("attachments"))
-
     def htmx_error_response():
         response = render(
             request,
@@ -322,87 +318,54 @@ def add_comment(request, reference):
     if not form.is_valid():
         if request.headers.get("HX-Request"):
             return htmx_error_response()
+        return redirect("portal:ticket_detail",reference=ticket.reference,)
 
-        return redirect(
-            "portal:ticket_detail",
-            reference=ticket.reference,
-        )
-
-    # ---------------------------------------------------------
-    # Blank rich text validation
-    # ---------------------------------------------------------
     body = form.cleaned_data.get("body", "")
-
     if _rich_text_is_blank(body):
-        form.add_error(
-            "body",
-            "Please enter a message before posting.",
-        )
-
+        form.add_error("body","Please enter a message before posting.",)
         if request.headers.get("HX-Request"):
             return htmx_error_response()
+        messages.error(request,"Please enter a message before posting.",)
+        return redirect("portal:ticket_detail",reference=ticket.reference,)
+    is_internal = bool(form.cleaned_data.get("is_internal"))
+    selected_status = form.cleaned_data.get("status")
 
-        messages.error(
-            request,
-            "Please enter a message before posting.",
-        )
+    if (is_internal and not TicketAccessPolicy.can_view_internal_notes(request.user,ticket,)):
+        return HttpResponse("Internal notes are restricted.",status=403,)
 
-        return redirect(
-            "portal:ticket_detail",
-            reference=ticket.reference,
-        )
-
-    # ---------------------------------------------------------
-    # Internal note authorization
-    # ---------------------------------------------------------
-    is_internal = bool(
-        form.cleaned_data.get("is_internal")
-    )
-
-    if (
-        is_internal
-        and not TicketAccessPolicy.can_view_internal_notes(
-            request.user,
-            ticket,
-        )
-    ):
-        return HttpResponse(
-            "Internal notes are restricted.",
-            status=403,
-        )
-
-    # ---------------------------------------------------------
-    # Authoritative server attachment validation
-    # ---------------------------------------------------------
-    attachment_errors = _validate_comment_attachments(
-        ticket,
-        uploads,
-    )
-
+    attachment_errors = _validate_comment_attachments(ticket,uploads,)
     if attachment_errors:
         for error in attachment_errors:
             form.add_error(None, error)
-
         if request.headers.get("HX-Request"):
             return htmx_error_response()
-
         for error in attachment_errors:
             messages.error(request, error)
-
-        return redirect(
-            "portal:ticket_detail",
-            reference=ticket.reference,
-        )
-
-    # ---------------------------------------------------------
-    # Create comment
-    # ---------------------------------------------------------
+        return redirect("portal:ticket_detail",reference=ticket.reference,)
     comment = form.save(commit=False)
     comment.ticket = ticket
     comment.author = request.user
     comment.body = sanitize_rich_text(comment.body)
+    if selected_status:
+        comment.status = selected_status
     comment.save()
 
+    status_changed = False
+    if selected_status and selected_status != ticket.status:
+        status_changed = True
+        ticket.status = selected_status
+        if selected_status == Ticket.Status.RESOLVED:
+            ticket.resolved_at = timezone.now()
+            ticket.closed_at = None
+        elif selected_status == Ticket.Status.CLOSED:
+            ticket.closed_at = timezone.now()
+            if not ticket.resolved_at:
+                ticket.resolved_at = timezone.now()
+
+        else:
+            ticket.resolved_at = None
+            ticket.closed_at = None
+        ticket.save()
     # ---------------------------------------------------------
     # Comment-specific attachments
     # ---------------------------------------------------------
@@ -413,50 +376,21 @@ def add_comment(request, reference):
             uploaded_by=request.user,
             file=upload,
             original_name=upload.name,
-            content_type=getattr(
-                upload,
-                "content_type",
-                "application/octet-stream",
-            ),
+            content_type=getattr(upload,"content_type","application/octet-stream",),
             size=upload.size,
             is_restricted=comment.is_internal,
             source_field="comment",
         )
-
         attachment.full_clean()
         attachment.save()
 
-    # ---------------------------------------------------------
-    # First response
-    # ---------------------------------------------------------
-    if (
-        request.user.pk != ticket.requester_id
-        and not ticket.first_responded_at
-    ):
+    if (request.user.pk != ticket.requester_id and not ticket.first_responded_at):
         ticket.first_responded_at = timezone.now()
+        ticket.save(update_fields=["first_responded_at","updated_at",])
 
-        ticket.save(
-            update_fields=[
-                "first_responded_at",
-                "updated_at",
-            ]
-        )
+    summary = ("Internal note added" if comment.is_internal else "Comment added")
 
-    # ---------------------------------------------------------
-    # Event
-    # ---------------------------------------------------------
-    summary = (
-        "Internal note added"
-        if comment.is_internal
-        else "Comment added"
-    )
-
-    if uploads:
-        summary += (
-            f" with {len(uploads)} attachment"
-            f"{'s' if len(uploads) != 1 else ''}"
-        )
-
+    if uploads: summary += (f" with {len(uploads)} attachment {'s' if len(uploads) != 1 else ''}")
     TicketEvent.objects.create(
         ticket=ticket,
         actor=request.user,
@@ -503,20 +437,8 @@ def add_comment(request, reference):
     # ---------------------------------------------------------
     # Audit
     # ---------------------------------------------------------
-    AuditLog.record(
-        request=request,
-        action="ticket.comment",
-        instance=ticket,
-        summary=summary,
-    )
+    AuditLog.record(request=request,action="ticket.comment",instance=ticket,summary=summary,)
 
-    # ---------------------------------------------------------
-    # HTMX
-    #
-    # DO NOT replace comment form.
-    # Only append new message.
-    # This preserves WYSIWYG initialization.
-    # ---------------------------------------------------------
     if request.headers.get("HX-Request"):
         comment = (
             TicketComment.objects
@@ -524,7 +446,6 @@ def add_comment(request, reference):
             .prefetch_related("attachments")
             .get(pk=comment.pk)
         )
-
         response = render(
             request,
             "tickets/partials/comment.html",
@@ -536,10 +457,9 @@ def add_comment(request, reference):
 
         response["HX-Retarget"] = "#comment-list"
         response["HX-Reswap"] = "beforeend"
-
-        # Browser-side UX cleanup only.
         response["HX-Trigger"] = "ticketCommentPosted"
-
+        if status_changed:
+            response["HX-Refresh"] = "true"        
         return response
 
     return redirect(

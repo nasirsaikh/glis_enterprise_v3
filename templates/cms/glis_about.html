@@ -1,0 +1,213 @@
+{% extends "base_public.html" %}
+{% load i18n cms_tags %}
+
+{% block title %}{% page_attribute "page_title" %}{% endblock %}
+
+{% block content %}
+
+<section class="about-page-section py-5">
+  <div class="container">
+
+    <div class="text-center mb-5">
+
+      <span class="about-eyebrow">{% translate "ABOUT" %}</span>
+
+      <h1 class="about-title mt-3">
+        {% translate "Find more about us below" %}
+        <span>{% page_attribute "page_title" %}</span>
+      </h1>
+
+      <div class="about-intro mx-auto">
+        {% placeholder "about_intro" %}
+      </div>
+
+    </div>
+
+    <div class="row g-5 align-items-center">
+
+      <div class="col-lg-6">
+
+        <div class="about-image-wrapper">
+          {% placeholder "about_image" %}
+        </div>
+
+      </div>
+
+      <div class="col-lg-6">
+
+        <div class="about-content">
+
+          <h2 class="about-section-title">
+            {% translate "Vision and Mission" %}
+          </h2>
+
+          <div class="about-values-list">
+
+            <div class="about-value-item">
+              <div class="about-value-icon">
+                <i class="bi bi-globe2"></i>
+              </div>
+
+              <div>
+                <h3>{% translate "Best TPA of the Sultanate" %}</h3>
+                <div class="about-value-text">
+                  {% placeholder "vision_item_1" %}
+                </div>
+              </div>
+            </div>
+
+            <div class="about-value-item">
+              <div class="about-value-icon">
+                <i class="bi bi-headset"></i>
+              </div>
+
+              <div>
+                <h3>{% translate "Process and Support" %}</h3>
+                <div class="about-value-text">
+                  {% placeholder "vision_item_2" %}
+                </div>
+              </div>
+            </div>
+
+            <div class="about-value-item">
+              <div class="about-value-icon">
+                <i class="bi bi-people-fill"></i>
+              </div>
+
+              <div>
+                <h3>{% translate "Customer Focused" %}</h3>
+                <div class="about-value-text">
+                  {% placeholder "vision_item_3" %}
+                </div>
+              </div>
+            </div>
+
+            <div class="about-value-item">
+              <div class="about-value-icon">
+                <i class="bi bi-shield-fill-check"></i>
+              </div>
+
+              <div>
+                <h3>{% translate "Mission" %}</h3>
+                <div class="about-value-text">
+                  {% placeholder "vision_item_4" %}
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+<style>
+    .about-page-section {
+  background: linear-gradient(180deg, var(--bs-tertiary-bg), var(--bs-body-bg));
+}
+
+.about-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .45rem 1rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+  color: var(--bs-primary);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.about-title {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+
+.about-title span {
+  color: var(--bs-primary);
+}
+
+.about-intro {
+  max-width: 820px;
+  margin-top: 1.25rem;
+  color: var(--bs-secondary-color);
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.about-image-wrapper {
+  position: relative;
+  padding: 1rem;
+}
+
+.about-image-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.about-section-title {
+  margin-bottom: 2rem;
+  font-size: clamp(1.75rem, 3vw, 2.4rem);
+  font-weight: 800;
+}
+
+.about-values-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.about-value-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.15rem;
+}
+
+.about-value-icon {
+  width: 68px;
+  height: 68px;
+  flex: 0 0 68px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--bs-body-bg);
+  color: var(--bs-primary);
+  font-size: 1.5rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .08);
+  border: 1px solid var(--bs-border-color);
+}
+
+.about-value-item h3 {
+  margin-bottom: .35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.about-value-text {
+  color: var(--bs-secondary-color);
+  line-height: 1.65;
+}
+
+@media (max-width: 991.98px) {
+  .about-content {
+    margin-top: 1rem;
+  }
+
+  .about-value-icon {
+    width: 58px;
+    height: 58px;
+    flex-basis: 58px;
+  }
+}
+</style>

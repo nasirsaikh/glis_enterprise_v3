@@ -13,28 +13,214 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-
-from apps.cms.models import HeroSection
-
-from apps.tickets.models import (
-    Project,
-    Product,
-    Category,
-    SupportGroup,
-    DynamicForm,
-    Ticket,
-    TicketComment,
-    TicketAttachment,
-    TicketEvent,
-    Notification,
-    SLAPolicy,
-)
+from apps.tickets.models import (Project,Product,Category,SupportGroup,DynamicForm,Ticket,TicketComment,TicketAttachment,TicketEvent,Notification,SLAPolicy,)
+from apps.core.models import HeroSection, HomeSection,Service, Feature, Statistic, ProcessStep, Testimonial, Partner,FAQ
 
 from .permissions import visible_tickets_for_user
 
 
 User = get_user_model()
 
+
+from apps.core.models import SiteSettings
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def site_settings_api(request):
+    settings_obj = SiteSettings.load()
+    data = {
+        "site_name_en": settings_obj.site_name_en,
+        "site_name_ar": settings_obj.site_name_ar,
+        "short_name": settings_obj.short_name,
+        "tagline_en": settings_obj.tagline_en,
+        "tagline_ar": settings_obj.tagline_ar,
+
+        "contact_email": settings_obj.contact_email,
+        "support_email": settings_obj.support_email,
+        "contact_phone": settings_obj.contact_phone,
+        "secondary_phone": settings_obj.secondary_phone,
+        "whatsapp_number": settings_obj.whatsapp_number,
+
+        "address_en": settings_obj.address_en,
+        "address_ar": settings_obj.address_ar,
+        "city": settings_obj.city,
+        "governorate": settings_obj.governorate,
+        "country": settings_obj.country,
+        "po_box": settings_obj.po_box,
+        "postal_code": settings_obj.postal_code,
+
+        "latitude": settings_obj.latitude,
+        "longitude": settings_obj.longitude,
+        "map_zoom": settings_obj.map_zoom,
+
+        "commercial_registration_no": settings_obj.commercial_registration_no,
+        "vat_registration_no": settings_obj.vat_registration_no,
+        "license_no": settings_obj.license_no,
+        "established_year": settings_obj.established_year,
+
+        "website": settings_obj.website,
+        "working_hours_en": settings_obj.working_hours_en,
+        "working_hours_ar": settings_obj.working_hours_ar,
+
+        "logo": request.build_absolute_uri(settings_obj.logo.url) if settings_obj.logo else "",
+        "favicon": request.build_absolute_uri(settings_obj.favicon.url) if settings_obj.favicon else "",
+
+        "organization_details": settings_obj.organization_details,
+        "social_links": settings_obj.social_links,
+
+        "public_registration_enabled": settings_obj.public_registration_enabled,
+        "public_theme_switcher_enabled": settings_obj.public_theme_switcher_enabled,
+    }
+
+    return Response({
+        "success": True,
+        "data": data,
+    })
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def site_logo_api(request):
+    obj = SiteSettings.load()
+    if not obj.logo:
+        raise Http404("Site logo not found.")
+    return FileResponse(obj.logo.open("rb"),content_type="image/png",)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def site_favicon_api(request):
+    obj = SiteSettings.load()
+    if not obj.favicon:
+        raise Http404("Site favicon not found.")
+    return FileResponse(obj.favicon.open("rb"),content_type="image/png",)
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def hero_image_api(request):
+    obj = HeroSection.load()
+    if not obj.hero_image:
+        raise Http404("Hero image not found.")
+    return FileResponse(obj.hero_image.open("rb"),content_type="image/jpeg",)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def home_content_api(request):
+    lang = request.GET.get("lang", "en")
+    ar = lang == "ar"
+
+    site = SiteSettings.load()
+    hero = HeroSection.load()
+
+    sections = {}
+
+    for item in HomeSection.objects.filter(is_active=True):
+        sections[item.section] = {
+            "eyebrow": item.eyebrow_ar if ar else item.eyebrow_en,
+            "title": item.title_ar if ar else item.title_en,
+            "content": item.content_ar if ar else item.content_en,
+            "image": absolute_file_url(request, item.image),
+            "button_text": item.button_text_ar if ar else item.button_text_en,
+            "button_url": item.button_url,
+        }
+
+    services = []
+
+    for item in Service.objects.filter(is_active=True).select_related("category"):
+        services.append({
+            "id": item.pk,
+            "category": (item.category.name_ar if ar else item.category.name_en) if item.category else "",
+            "title": item.title_ar if ar else item.title_en,
+            "summary": item.summary_ar if ar else item.summary_en,
+            "icon": item.icon,
+            "image": absolute_file_url(request, item.image),
+            "link": item.link,
+            "button_text": item.button_text_ar if ar else item.button_text_en,
+            "featured": item.is_featured,
+        })
+
+    features = [{
+        "id": item.pk,
+        "title": item.title_ar if ar else item.title_en,
+        "description": item.description_ar if ar else item.description_en,
+        "icon": item.icon,
+        "image": absolute_file_url(request, item.image),
+    } for item in Feature.objects.filter(is_active=True)]
+
+    statistics = [{
+        "id": item.pk,
+        "value": item.value,
+        "suffix": item.suffix,
+        "label": item.label_ar if ar else item.label_en,
+        "icon": item.icon,
+    } for item in Statistic.objects.filter(is_active=True)]
+
+    process = [{
+        "id": item.pk,
+        "step": item.step_number,
+        "title": item.title_ar if ar else item.title_en,
+        "description": item.description_ar if ar else item.description_en,
+        "icon": item.icon,
+    } for item in ProcessStep.objects.filter(is_active=True)]
+
+    testimonials = [{
+        "id": item.pk,
+        "name": item.name,
+        "role": item.role_ar if ar else item.role_en,
+        "quote": item.quote_ar if ar else item.quote_en,
+        "photo": absolute_file_url(request, item.photo),
+        "rating": item.rating,
+    } for item in Testimonial.objects.filter(is_active=True)]
+
+    faqs = [{
+        "id": item.pk,
+        "question": item.question_ar if ar else item.question_en,
+        "answer": item.answer_ar if ar else item.answer_en,
+    } for item in FAQ.objects.filter(is_active=True)]
+
+    partners = [{
+        "id": item.pk,
+        "name": item.name,
+        "logo": absolute_file_url(request, item.logo),
+        "website": item.website,
+    } for item in Partner.objects.filter(is_active=True)]
+
+    return Response({
+        "success": True,
+
+        "site": {
+            "name": site.site_name_ar if ar else site.site_name_en,
+            "short_name": site.short_name,
+            "tagline": site.tagline_ar if ar else site.tagline_en,
+            "email": site.contact_email,
+            "phone": site.contact_phone,
+            "address": site.address_ar if ar else site.address_en,
+            "logo": absolute_file_url(request, site.logo),
+            "favicon": absolute_file_url(request, site.favicon),
+            "organization_details": site.organization_details,
+            "social_links": site.social_links,
+        },
+
+        "hero": {
+            "eyebrow": hero.eyebrow_ar if ar else hero.eyebrow_en,
+            "title": hero.title_ar if ar else hero.title_en,
+            "subtitle": hero.subtitle_ar if ar else hero.subtitle_en,
+            "primary_cta": hero.primary_cta_ar if ar else hero.primary_cta_en,
+            #"primary_cta_url": hero.primary_cta_url,
+            "secondary_cta": hero.secondary_cta_ar if ar else hero.secondary_cta_en,
+            "secondary_cta_url": hero.secondary_cta_url,
+            "image": absolute_file_url(request, hero.hero_image),
+        },
+
+        "sections": sections,
+        "services": services,
+        "features": features,
+        "statistics": statistics,
+        "process": process,
+        "testimonials": testimonials,
+        "faqs": faqs,
+        "partners": partners,
+    })
 
 # ============================================================
 # HELPERS
@@ -992,42 +1178,7 @@ def support_groups(request):
 # HERO SECTION
 # ============================================================
 
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def hero_sections(request):
-    queryset = HeroSection.objects.all()
-    if hasattr(HeroSection,"is_active",):
-        queryset = queryset.filter(is_active=True)
-    data = []
-    for hero in queryset:
-        data.append({
-            "id": hero.pk,
-            "hero_image": absolute_file_url(
-                request,
-                getattr(
-                    hero,
-                    "hero_image",
-                    None,
-                ),
-            ),
-        })
 
-    return Response({
-        "success": True,
-        "data": data,
-    })
-
-
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def hero_image(request, pk):
-    try:
-        hero = HeroSection.objects.get(pk=pk)
-    except HeroSection.DoesNotExist:
-        raise Http404("Hero section not found")
-    if not hero.hero_image:
-        raise Http404("Hero image not found")
-    return FileResponse(hero.hero_image.open("rb"),content_type="image/jpeg",)
 
 # ============================================================
 # DYNAMIC FORMS
@@ -1039,11 +1190,7 @@ def dynamic_forms(request):
 
     queryset = DynamicForm.objects.all()
 
-    if hasattr(
-        DynamicForm,
-        "active_version",
-    ):
-
+    if hasattr(DynamicForm,"active_version",):
         queryset = queryset.select_related(
             "active_version"
         )

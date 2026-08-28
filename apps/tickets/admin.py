@@ -227,53 +227,6 @@ class CategoryAdmin(JSONModelAdmin):
         "default_groups",
     )
 
-    fieldsets = (
-        (
-            "Identity",
-            {
-                "fields": (
-                    "product",
-                    "parent",
-                    "code",
-                    "name_en",
-                    "name_ar",
-                    "is_active",
-                )
-            },
-        ),
-        (
-            "Routing defaults",
-            {
-                "fields": (
-                    "default_priority",
-                    "default_group",
-                    "default_groups",
-                    "default_user",
-                )
-            },
-        ),
-        (
-            "Documents and approvals",
-            {
-                "fields": (
-                    "required_documents",
-                    "approval_workflow",
-                )
-            },
-        ),
-        (
-            "Lifecycle and communications",
-            {
-                "fields": (
-                    "auto_close_days",
-                    "reopen_allowed_days",
-                    "send_initial_email",
-                    "send_update_email",
-                    "ai_enabled",
-                )
-            },
-        ),
-    )
 
 
 # ============================================================

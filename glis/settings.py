@@ -283,7 +283,10 @@ SOCIALACCOUNT_ADAPTER = "apps.accounts.adapters.GLISSocialAccountAdapter"
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
-        "SCOPE": ["profile", "email"],
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
         "AUTH_PARAMS": {
             "access_type": "online",
         },
@@ -291,15 +294,11 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 
     "microsoft": {
-        "APP": {
-            "client_id": env("MICROSOFT_CLIENT_ID", default=""),
-            "secret": env("MICROSOFT_CLIENT_SECRET", default=""),
-            "key": "",
-        },
         "SCOPE": [
-            "User.Read",
-            "email",
+            "openid",
             "profile",
+            "email",
+            "User.Read",
         ],
         "SETTINGS": {
             "tenant": env(
@@ -349,25 +348,67 @@ SECURE_REFERRER_POLICY = "same-origin"
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
         "default-src": ["'self'"],
+
         "script-src": [
-            "'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net",
-            "https://unpkg.com", "https://cdn.plot.ly",
+            "'self'",
+            "'unsafe-inline'",
+            "https://cdn.jsdelivr.net",
+            "https://unpkg.com",
+            "https://cdn.plot.ly",
         ],
-        "worker-src": ["'self'", "blob:"],
+
+        "worker-src": [
+            "'self'",
+            "blob:",
+        ],
+
         "style-src": [
-            "'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net",
+            "'self'",
+            "'unsafe-inline'",
+            "https://cdn.jsdelivr.net",
             "https://fonts.googleapis.com",
         ],
+
         "font-src": [
-            "'self'", "data:", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com",
+            "'self'",
+            "data:",
+            "https://cdn.jsdelivr.net",
+            "https://fonts.gstatic.com",
         ],
-        "img-src": ["'self'", "data:", "blob:"],
-        "connect-src": ["'self'", "https://cdn.jsdelivr.net", "https://accounts.google.com"],
-        "frame-src": ["'self'", "https://accounts.google.com"],
-        "frame-ancestors": ["'self'"],
-        "base-uri": ["'self'"],
-        # UPDATE THIS LINE:
-        "form-action": ["'self'", "http://127.0.0.1:8000", "https://accounts.google.com"],
+
+        "img-src": [
+            "'self'",
+            "data:",
+            "blob:",
+        ],
+
+        "connect-src": [
+            "'self'",
+            "https://cdn.jsdelivr.net",
+            "https://accounts.google.com",
+            "https://login.microsoftonline.com",
+            "https://graph.microsoft.com",
+        ],
+
+        "frame-src": [
+            "'self'",
+            "https://accounts.google.com",
+            "https://login.microsoftonline.com",
+        ],
+
+        "frame-ancestors": [
+            "'self'",
+        ],
+
+        "base-uri": [
+            "'self'",
+        ],
+
+        "form-action": [
+            "'self'",
+            "https://accounts.google.com",
+            "https://login.microsoftonline.com",
+        ],
     }
 }
 

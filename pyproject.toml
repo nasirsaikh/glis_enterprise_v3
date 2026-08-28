@@ -1,4 +1,4 @@
 [project]
 name = "glis_enterprise_v3"
 version = "0.1.0"
-requires-python = ">=3.13"
+requires-python = "==3.12.*"  # Forces Vercel to stay on Python 3.12

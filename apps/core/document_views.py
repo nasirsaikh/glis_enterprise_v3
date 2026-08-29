@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
@@ -10,7 +10,10 @@ from .mayan import MayanError, mayan
 @login_required
 def document_center(request):
     query = request.GET.get("q", "").strip()
-    page = max(int(request.GET.get("page", 1) or 1), 1)
+    try:
+        page = max(int(request.GET.get("page", 1) or 1), 1)
+    except (TypeError, ValueError):
+        page = 1
     payload = {"results": [], "count": 0}
     error = ""
     if mayan.enabled:
@@ -52,8 +55,9 @@ def mayan_document_open(request, document_id):
 
 
 @login_required
-@permission_required("core.open_mayan_edms", raise_exception=True)
 def mayan_admin(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return HttpResponse("Mayan EDMS administration is restricted to staff users.", status=403)
     return redirect(mayan.admin_url)
 
 

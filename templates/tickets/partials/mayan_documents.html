@@ -1,21 +1,2 @@
 {% load i18n %}
-<div id="mayan-ticket-documents">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div><h3 class="h6 mb-1"><i class="bi bi-folder2-open me-2"></i>{% translate "Managed documents" %}</h3><small class="text-muted">{% translate "Stored and controlled by Mayan EDMS" %}</small></div>
-  </div>
-  {% if mayan_error %}<div class="alert alert-warning py-2">{{ mayan_error }}</div>{% endif %}
-  <form class="mb-3" method="post" enctype="multipart/form-data" hx-post="{% url 'portal:ticket_document_upload' ticket.reference %}" hx-target="#mayan-ticket-documents" hx-swap="outerHTML">
-    {% csrf_token %}
-    <div class="input-group"><input class="form-control" type="file" name="documents" multiple required><button class="btn btn-primary" type="submit"><i class="bi bi-cloud-arrow-up me-1"></i>{% translate "Upload" %}</button></div>
-  </form>
-  <div class="list-group list-group-flush">
-    {% for document in mayan_documents %}
-      <div class="list-group-item px-0 d-flex align-items-center gap-3">
-        <i class="bi bi-file-earmark-text fs-4"></i>
-        <div class="flex-grow-1 overflow-hidden"><strong class="d-block text-truncate">{{ document.label|default:document.description|default:"Document" }}</strong><small class="text-muted">Mayan #{{ document.id }}</small></div>
-        <a class="btn btn-sm btn-outline-primary" href="{% url 'portal:ticket_document_download' ticket.reference document.id %}"><i class="bi bi-download"></i></a>
-        <a class="btn btn-sm btn-outline-secondary" href="{% url 'documents:open' document.id %}" target="_blank"><i class="bi bi-box-arrow-up-right"></i></a>
-      </div>
-    {% empty %}<div class="text-muted small py-3">{% translate "No managed documents found for this ticket." %}</div>{% endfor %}
-  </div>
-</div>
+<div id="mayan-ticket-documents"><div class="d-flex justify-content-between align-items-center mb-3"><div><h3 class="h6 mb-1"><i class="bi bi-folder2-open me-2"></i>{% translate "Managed documents" %}</h3><small class="text-muted">{% translate "Stored and controlled by Mayan EDMS" %}</small></div></div>{% if mayan_error %}<div class="alert alert-warning py-2">{{ mayan_error }}</div>{% endif %}<form class="mb-3" method="post" enctype="multipart/form-data" hx-post="{% url 'portal:ticket_document_upload' ticket.reference %}" hx-target="#mayan-ticket-documents" hx-swap="outerHTML">{% csrf_token %}<div class="input-group"><input class="form-control" type="file" name="documents" multiple required><button class="btn btn-primary" type="submit"><i class="bi bi-cloud-arrow-up me-1"></i>{% translate "Upload" %}</button></div></form><div class="list-group list-group-flush">{% for document in mayan_documents %}<div class="list-group-item px-0 d-flex align-items-center gap-3"><i class="bi bi-file-earmark-text fs-4"></i><div class="flex-grow-1 overflow-hidden"><strong class="d-block text-truncate">{{ document.label|default:document.description|default:"Document" }}</strong><small class="text-muted">Mayan #{{ document.id }}</small></div><a class="btn btn-sm btn-outline-primary" href="{% url 'portal:ticket_document_download' ticket.reference document.id %}"><i class="bi bi-download"></i></a>{% if request.user.is_staff or request.user.is_superuser %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'documents:open' document.id %}" target="_blank"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}</div>{% empty %}<div class="text-muted small py-3">{% translate "No managed documents found for this ticket." %}</div>{% endfor %}</div></div>

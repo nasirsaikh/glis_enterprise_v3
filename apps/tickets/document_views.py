@@ -13,13 +13,17 @@ def _ticket(request, reference):
     return get_object_or_404(TicketAccessPolicy.visible_queryset(request.user), reference=reference)
 
 
+def _documents_for_ticket(ticket):
+    payload = mayan.search_documents(query=ticket.reference, page=1, page_size=100)
+    return payload.get("results", payload if isinstance(payload, list) else [])
+
+
 @login_required
 def ticket_documents(request, reference):
     ticket = _ticket(request, reference)
     documents, error = [], ""
     try:
-        payload = mayan.search_documents(query=ticket.reference, page=1, page_size=100)
-        documents = payload.get("results", payload if isinstance(payload, list) else [])
+        documents = _documents_for_ticket(ticket)
     except MayanError as exc:
         error = str(exc)
     return render(request, "tickets/partials/mayan_documents.html", {"ticket": ticket, "mayan_documents": documents, "mayan_error": error})
@@ -38,13 +42,9 @@ def ticket_document_upload(request, reference):
     for upload in uploads:
         try:
             mayan.upload_document(upload, label=f"{ticket.reference} - {upload.name}", metadata={
-                "glis_object_type": "ticket",
-                "glis_object_id": ticket.pk,
-                "glis_reference": ticket.reference,
-                "glis_project": ticket.project.code,
-                "glis_product": ticket.product.code,
-                "glis_category": ticket.category.code,
-                "uploaded_by": request.user.email,
+                "glis_object_type": "ticket", "glis_object_id": ticket.pk, "glis_reference": ticket.reference,
+                "glis_project": ticket.project.code, "glis_product": ticket.product.code,
+                "glis_category": ticket.category.code, "uploaded_by": request.user.email,
             })
         except MayanError as exc:
             errors.append(f"{upload.name}: {exc}")
@@ -59,8 +59,11 @@ def ticket_document_upload(request, reference):
 
 @login_required
 def ticket_document_download(request, reference, document_id):
-    _ticket(request, reference)
+    ticket = _ticket(request, reference)
     try:
+        allowed_ids = {int(item["id"]) for item in _documents_for_ticket(ticket) if item.get("id") is not None}
+        if int(document_id) not in allowed_ids:
+            return HttpResponse("This document is not linked to the requested ticket.", status=403)
         response = mayan.download_document(document_id)
     except MayanError as exc:
         return HttpResponse(f"Document service unavailable: {exc}", status=502)

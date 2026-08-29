@@ -1,11 +1,137 @@
 services:
+
   web:
     build: .
-    command: gunicorn glis.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 90
-    env_file: .env
-    ports:
-      - "8000:8000"
+    container_name: glis_web
+    restart: unless-stopped
+
+    command: >
+      gunicorn glis_enterprise_v4.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 3
+      --timeout 180
+      --access-logfile -
+      --error-logfile -
+
+    env_file:
+      - .env
+
     volumes:
-      - media_data:/app/media
+      - ./data:/app/data
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    expose:
+      - "8000"
+
+    networks:
+      - glis_network
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: glis_redis
+    restart: unless-stopped
+
+    command: redis-server --appendonly yes
+
+    volumes:
+      - redis_data:/data
+
+    networks:
+      - glis_network
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  worker:
+    build: .
+    container_name: glis_worker
+    restart: unless-stopped
+
+    command: celery -A glis_enterprise_v4 worker -l info
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./data:/app/data
+      - ./media:/app/media
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    networks:
+      - glis_network
+
+
+  scheduler:
+    build: .
+    container_name: glis_scheduler
+    restart: unless-stopped
+
+    command: python manage.py run_scheduler
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./data:/app/data
+      - ./media:/app/media
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    networks:
+      - glis_network
+
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: glis_caddy
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./staticfiles:/srv/static
+      - ./media:/srv/media
+
+    depends_on:
+      web:
+        condition: service_healthy
+
+    networks:
+      - glis_network
+
+
+networks:
+  glis_network:
+
+
 volumes:
-  media_data:
+  redis_data:
+  caddy_data:
+  caddy_config:

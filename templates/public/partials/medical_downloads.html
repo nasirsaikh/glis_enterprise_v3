@@ -1,0 +1,28 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="container">
+    <div class="text-center mb-5 glis-reveal">
+        <span class="glis-eyebrow mb-3"><i class="bi bi-download"></i>{% translate "Resources" %}</span>
+        <h2 class="glis-title display-5">{% translate "Forms &" %} <span class="glis-gradient-text">{% translate "downloads" %}</span></h2>
+        <p class="glis-copy fs-5 mx-auto mb-0" style="max-width:760px">{% translate "Access claim forms, reimbursement documents, provider network files and member guides." %}</p>
+    </div>
+    <div class="row g-4">
+        {% for item in medical_downloads %}
+        <div class="col-md-6 col-lg-4 glis-reveal">
+            <article class="glis-card p-4">
+                <div class="d-flex gap-3">
+                    <div class="glis-icon flex-shrink-0"><i class="bi bi-file-earmark-arrow-down"></i></div>
+                    <div>
+                        <span class="badge rounded-pill text-bg-success mb-2">{{ item.get_document_type_display }}</span>
+                        <h3 class="h5 glis-title">{% if LANGUAGE_CODE == "ar" %}{{ item.title_ar|default:item.title_en }}{% else %}{{ item.title_en }}{% endif %}</h3>
+                        <p class="glis-copy small">{% if LANGUAGE_CODE == "ar" %}{{ item.description_ar|default:item.description_en }}{% else %}{{ item.description_en }}{% endif %}</p>
+                        <a href="{{ item.file.url }}" class="glis-link" download>{% translate "Download" %}<i class="bi bi-download ms-2"></i></a>
+                    </div>
+                </div>
+            </article>
+        </div>
+        {% empty %}
+        <div class="col-12"><div class="glis-card p-4 text-center glis-copy">{% translate "No downloads configured." %}</div></div>
+        {% endfor %}
+    </div>
+</div>

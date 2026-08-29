@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 #from apps.core.models import LocalizedModelMixin, TimeStampedModel
 from django.utils.translation import get_language
+from django.core.validators import MinValueValidator, MaxValueValidator
+
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -327,3 +329,820 @@ class AuditLog(models.Model):
             ip_address=(request.META.get("REMOTE_ADDR") if request else None),
             user_agent=(request.META.get("HTTP_USER_AGENT", "")[:255] if request else ""),
         )
+
+
+
+
+# ============================================================
+# MANAGEMENT / LEADERSHIP
+# ============================================================
+
+class ManagementMember(models.Model):
+    name_en = models.CharField(max_length=150)
+    name_ar = models.CharField(max_length=150, blank=True)
+
+    designation_en = models.CharField(max_length=150)
+    designation_ar = models.CharField(max_length=150, blank=True)
+
+    department_en = models.CharField(max_length=150, blank=True)
+    department_ar = models.CharField(max_length=150, blank=True)
+
+    profile_en = models.TextField(blank=True)
+    profile_ar = models.TextField(blank=True)
+
+    qualification_en = models.CharField(max_length=255, blank=True)
+    qualification_ar = models.CharField(max_length=255, blank=True)
+
+    experience_years = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    image = models.ImageField(
+        upload_to="management/",
+        blank=True,
+        null=True
+    )
+
+    linkedin_url = models.URLField(blank=True)
+
+    email = models.EmailField(blank=True)
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+        verbose_name = "Management Member"
+        verbose_name_plural = "Management Team"
+
+    def __str__(self):
+        return self.name_en
+
+
+# ============================================================
+# HEALTH INSURANCE PARTNERS
+# ============================================================
+
+class InsurancePartner(models.Model):
+    name_en = models.CharField(max_length=200)
+    name_ar = models.CharField(max_length=200, blank=True)
+
+    short_name = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    logo = models.ImageField(
+        upload_to="insurance_partners/",
+        blank=True,
+        null=True
+    )
+
+    website_url = models.URLField(blank=True)
+
+    description_en = models.TextField(blank=True)
+    description_ar = models.TextField(blank=True)
+
+    contact_phone = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    contact_email = models.EmailField(blank=True)
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    is_featured = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["sort_order", "name_en"]
+        verbose_name = "Health Insurance Partner"
+        verbose_name_plural = "Health Insurance Partners"
+
+    def __str__(self):
+        return self.name_en
+
+
+# ============================================================
+# NETWORK PROVIDER TYPES
+# ============================================================
+
+class ProviderType(models.Model):
+    name_en = models.CharField(max_length=100)
+    name_ar = models.CharField(max_length=100, blank=True)
+
+    icon = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Example: bi bi-hospital"
+    )
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "name_en"]
+
+    def __str__(self):
+        return self.name_en
+
+
+# ============================================================
+# LOCATION / GOVERNORATE
+# ============================================================
+
+class Governorate(models.Model):
+    name_en = models.CharField(max_length=100)
+    name_ar = models.CharField(max_length=100, blank=True)
+
+    code = models.CharField(
+        max_length=20,
+        blank=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["name_en"]
+
+    def __str__(self):
+        return self.name_en
+
+
+class City(models.Model):
+    governorate = models.ForeignKey(
+        Governorate,
+        on_delete=models.PROTECT,
+        related_name="cities"
+    )
+
+    name_en = models.CharField(max_length=100)
+    name_ar = models.CharField(max_length=100, blank=True)
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["name_en"]
+
+    def __str__(self):
+        return self.name_en
+
+
+# ============================================================
+# MEDICAL SPECIALTIES
+# ============================================================
+
+class MedicalSpecialty(models.Model):
+    name_en = models.CharField(max_length=150)
+    name_ar = models.CharField(max_length=150, blank=True)
+
+    icon = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    description_en = models.TextField(blank=True)
+    description_ar = models.TextField(blank=True)
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "name_en"]
+        verbose_name_plural = "Medical Specialties"
+
+    def __str__(self):
+        return self.name_en
+
+
+# ============================================================
+# NETWORK PROVIDERS
+# ============================================================
+
+class NetworkProvider(models.Model):
+
+    NETWORK_LEVEL_CHOICES = [
+        ("VIP", "VIP"),
+        ("A", "Network A"),
+        ("B", "Network B"),
+        ("C", "Network C"),
+        ("BASIC", "Basic"),
+    ]
+
+    provider_code = models.CharField(
+        max_length=50,
+        unique=True
+    )
+
+    name_en = models.CharField(max_length=200)
+    name_ar = models.CharField(max_length=200, blank=True)
+
+    provider_type = models.ForeignKey(
+        ProviderType,
+        on_delete=models.PROTECT,
+        related_name="providers"
+    )
+
+    specialties = models.ManyToManyField(
+        MedicalSpecialty,
+        blank=True,
+        related_name="providers"
+    )
+
+    insurance_partners = models.ManyToManyField(
+        InsurancePartner,
+        blank=True,
+        related_name="network_providers"
+    )
+
+    network_level = models.CharField(
+        max_length=20,
+        choices=NETWORK_LEVEL_CHOICES,
+        blank=True
+    )
+
+    address_en = models.TextField()
+    address_ar = models.TextField(blank=True)
+
+    governorate = models.ForeignKey(
+        Governorate,
+        on_delete=models.PROTECT,
+        related_name="providers",
+        null=True,
+        blank=True
+    )
+
+    city = models.ForeignKey(
+        City,
+        on_delete=models.PROTECT,
+        related_name="providers",
+        null=True,
+        blank=True
+    )
+
+    area_en = models.CharField(
+        max_length=150,
+        blank=True
+    )
+
+    area_ar = models.CharField(
+        max_length=150,
+        blank=True
+    )
+
+    postal_code = models.CharField(
+        max_length=20,
+        blank=True
+    )
+
+    phone = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    emergency_phone = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    email = models.EmailField(blank=True)
+
+    website_url = models.URLField(blank=True)
+
+    # --------------------------------------------------------
+    # MAP LOCATION
+    # --------------------------------------------------------
+
+    latitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(-90),
+            MaxValueValidator(90)
+        ]
+    )
+
+    longitude = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(-180),
+            MaxValueValidator(180)
+        ]
+    )
+
+    google_maps_url = models.URLField(
+        blank=True,
+        help_text="Optional external map link"
+    )
+
+    # --------------------------------------------------------
+
+    logo = models.ImageField(
+        upload_to="network_providers/",
+        blank=True,
+        null=True
+    )
+
+    working_hours_en = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    working_hours_ar = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    is_24_hours = models.BooleanField(default=False)
+
+    has_emergency = models.BooleanField(default=False)
+
+    has_pharmacy = models.BooleanField(default=False)
+
+    has_dental = models.BooleanField(default=False)
+
+    has_optical = models.BooleanField(default=False)
+
+    is_featured = models.BooleanField(default=False)
+
+    is_active = models.BooleanField(default=True)
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = [
+            "sort_order",
+            "name_en"
+        ]
+
+        indexes = [
+            models.Index(fields=["provider_code"]),
+            models.Index(fields=["name_en"]),
+            models.Index(fields=["city"]),
+            models.Index(fields=["provider_type"]),
+            models.Index(fields=["is_active"]),
+            models.Index(fields=["latitude", "longitude"]),
+        ]
+
+    def __str__(self):
+        return f"{self.provider_code} - {self.name_en}"
+
+
+# ============================================================
+# TPA / MEDICAL SERVICES
+# ============================================================
+
+class TPAService(models.Model):
+    title_en = models.CharField(max_length=150)
+    title_ar = models.CharField(max_length=150, blank=True)
+
+    short_description_en = models.TextField(blank=True)
+    short_description_ar = models.TextField(blank=True)
+
+    description_en = models.TextField(blank=True)
+    description_ar = models.TextField(blank=True)
+
+    icon = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    image = models.ImageField(
+        upload_to="tpa_services/",
+        blank=True,
+        null=True
+    )
+
+    url = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    is_featured = models.BooleanField(default=False)
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return self.title_en
+
+
+# ============================================================
+# CLAIM / PRE-AUTH PROCESS
+# ============================================================
+
+class MedicalProcessStep(models.Model):
+
+    PROCESS_TYPES = [
+        ("CLAIM", "Medical Claim"),
+        ("PREAUTH", "Pre-Authorization"),
+        ("REIMBURSEMENT", "Reimbursement"),
+        ("NETWORK", "Network Access"),
+        ("EMERGENCY", "Emergency"),
+    ]
+
+    process_type = models.CharField(
+        max_length=30,
+        choices=PROCESS_TYPES
+    )
+
+    step_number = models.PositiveIntegerField()
+
+    title_en = models.CharField(max_length=150)
+    title_ar = models.CharField(max_length=150, blank=True)
+
+    description_en = models.TextField(blank=True)
+    description_ar = models.TextField(blank=True)
+
+    icon = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = [
+            "process_type",
+            "step_number"
+        ]
+
+        unique_together = (
+            "process_type",
+            "step_number"
+        )
+
+    def __str__(self):
+        return f"{self.process_type} - {self.step_number} - {self.title_en}"
+
+
+# ============================================================
+# EMERGENCY / IMPORTANT CONTACTS
+# ============================================================
+
+class MedicalContact(models.Model):
+
+    CONTACT_TYPES = [
+        ("CUSTOMER", "Customer Service"),
+        ("EMERGENCY", "Emergency"),
+        ("PREAUTH", "Pre-Authorization"),
+        ("CLAIM", "Claims"),
+        ("PROVIDER", "Provider Relations"),
+        ("INSURER", "Insurance Partner"),
+        ("OTHER", "Other"),
+    ]
+
+    contact_type = models.CharField(
+        max_length=30,
+        choices=CONTACT_TYPES
+    )
+
+    title_en = models.CharField(max_length=150)
+    title_ar = models.CharField(max_length=150, blank=True)
+
+    phone = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    whatsapp = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    email = models.EmailField(blank=True)
+
+    description_en = models.TextField(blank=True)
+    description_ar = models.TextField(blank=True)
+
+    icon = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    is_24_hours = models.BooleanField(default=False)
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return self.title_en
+
+
+# ============================================================
+# DOWNLOADS
+# ============================================================
+
+class MedicalDownload(models.Model):
+
+    DOCUMENT_TYPES = [
+        ("CLAIM_FORM", "Claim Form"),
+        ("REIMBURSEMENT", "Reimbursement Form"),
+        ("NETWORK_LIST", "Network Provider List"),
+        ("PREAUTH", "Pre-Authorization Form"),
+        ("GUIDE", "Member Guide"),
+        ("OTHER", "Other"),
+    ]
+
+    document_type = models.CharField(
+        max_length=30,
+        choices=DOCUMENT_TYPES
+    )
+
+    title_en = models.CharField(max_length=200)
+    title_ar = models.CharField(max_length=200, blank=True)
+
+    description_en = models.TextField(blank=True)
+    description_ar = models.TextField(blank=True)
+
+    file = models.FileField(
+        upload_to="medical_downloads/"
+    )
+
+    sort_order = models.PositiveIntegerField(default=0)
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return self.title_en
+
+
+import os
+from django.core.validators import FileExtensionValidator
+
+class DownloadCategory(models.Model):
+    name_en = models.CharField(
+        max_length=150
+    )
+
+    name_ar = models.CharField(
+        max_length=150,
+        blank=True
+    )
+
+    description_en = models.TextField(
+        blank=True
+    )
+
+    description_ar = models.TextField(
+        blank=True
+    )
+
+    icon = models.CharField(
+        max_length=100,
+        blank=True,
+        default="bi-folder",
+        help_text="Bootstrap Icon class, e.g. bi-folder"
+    )
+
+    order = models.PositiveIntegerField(
+        default=0
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = [
+            "order",
+            "name_en",
+        ]
+
+        verbose_name = "Download Category"
+        verbose_name_plural = "Download Categories"
+
+    def __str__(self):
+        return self.name_en
+
+
+# ============================================================
+# DOWNLOAD CENTER DOCUMENT
+# ============================================================
+
+class DownloadDocument(models.Model):
+
+    category = models.ForeignKey(
+        DownloadCategory,
+        on_delete=models.PROTECT,
+        related_name="documents"
+    )
+
+    title_en = models.CharField(
+        max_length=200
+    )
+
+    title_ar = models.CharField(
+        max_length=200,
+        blank=True
+    )
+
+    description_en = models.TextField(
+        blank=True
+    )
+
+    description_ar = models.TextField(
+        blank=True
+    )
+
+    reference = models.CharField(
+        max_length=100,
+        blank=True,
+        db_index=True,
+        help_text="Optional document/reference number"
+    )
+
+    file = models.FileField(
+        upload_to="downloads/%Y/%m/",
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=[
+                    "pdf",
+                    "doc",
+                    "docx",
+                    "xls",
+                    "xlsx",
+                    "ppt",
+                    "pptx",
+                    "zip",
+                    "rar",
+                    "jpg",
+                    "jpeg",
+                    "png",
+                    "csv",
+                    "txt",
+                ]
+            )
+        ]
+    )
+
+    version = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    publication_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    expiry_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    download_count = models.PositiveIntegerField(
+        default=0,
+        editable=False
+    )
+
+    order = models.PositiveIntegerField(
+        default=0
+    )
+
+    is_featured = models.BooleanField(
+        default=False
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        ordering = [
+            "order",
+            "-updated_at",
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["category", "is_active"]
+            ),
+            models.Index(
+                fields=["reference"]
+            ),
+            models.Index(
+                fields=["is_featured"]
+            ),
+        ]
+
+        verbose_name = "Download Document"
+        verbose_name_plural = "Download Documents"
+
+    def __str__(self):
+        return self.title_en
+
+    @property
+    def filename(self):
+        """
+        Returns only the file name.
+        Example:
+        medical_claim_form.pdf
+        """
+        if not self.file:
+            return ""
+
+        return os.path.basename(
+            self.file.name
+        )
+
+    @property
+    def extension(self):
+        """
+        Returns lowercase extension without dot.
+        Example:
+        pdf
+        xlsx
+        docx
+        """
+        if not self.file:
+            return ""
+
+        filename = self.filename
+
+        if "." not in filename:
+            return ""
+
+        return filename.rsplit(
+            ".",
+            1
+        )[-1].lower()
+
+    @property
+    def file_size(self):
+        """
+        Raw file size in bytes.
+        """
+        if not self.file:
+            return 0
+        try:
+            return self.file.size
+        except (OSError, ValueError, FileNotFoundError):
+            return 0
+    @property
+    def file_size_display(self):
+        size = self.file_size
+        if not size:
+            return "0 KB"
+        units = [ "B", "KB", "MB", "GB", "TB", ]
+        value = float(size)
+        unit = units[0]
+        for unit in units:
+            if value < 1024:
+                break
+            if unit != units[-1]:
+                value /= 1024
+        if unit == "B":
+            return f"{int(value)} {unit}"
+        return f"{value:.1f} {unit}"

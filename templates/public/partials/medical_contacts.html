@@ -1,0 +1,35 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="container">
+    <div class="glis-card p-4 p-lg-5">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-4 glis-reveal">
+                <span class="glis-eyebrow mb-3"><i class="bi bi-headset"></i>{% translate "Need Assistance?" %}</span>
+                <h2 class="glis-title display-6">{% translate "We're here to help" %}</h2>
+                <p class="glis-copy mb-0">{% translate "Contact the appropriate team for claims, approvals, provider support or emergencies." %}</p>
+            </div>
+            <div class="col-lg-8">
+                <div class="row g-3">
+                    {% for contact in medical_contacts %}
+                    <div class="col-md-6 glis-reveal">
+                        <div class="glis-contact-card p-3 h-100">
+                            <div class="d-flex gap-3">
+                                <div class="glis-icon flex-shrink-0"><i class="bi {{ contact.icon|default:'bi-headset' }}"></i></div>
+                                <div>
+                                    <strong class="glis-title d-block">{% if LANGUAGE_CODE == "ar" %}{{ contact.title_ar|default:contact.title_en }}{% else %}{{ contact.title_en }}{% endif %}</strong>
+                                    {% if contact.phone %}<a href="tel:{{ contact.phone }}" class="glis-link d-block mt-2">{{ contact.phone }}</a>{% endif %}
+                                    {% if contact.whatsapp %}<a href="https://wa.me/{{ contact.whatsapp }}" target="_blank" rel="noopener" class="glis-link d-block mt-1"><i class="bi bi-whatsapp me-1"></i>{{ contact.whatsapp }}</a>{% endif %}
+                                    {% if contact.email %}<a href="mailto:{{ contact.email }}" class="glis-copy small d-block mt-1">{{ contact.email }}</a>{% endif %}
+                                    {% if contact.is_24_hours %}<div class="mt-2"><span class="badge text-bg-success">24/7</span></div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12"><div class="glis-contact-card p-4 text-center glis-copy">{% translate "No medical contacts configured." %}</div></div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

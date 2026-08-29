@@ -14,9 +14,31 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.views.decorators.http import require_GET
 from django.shortcuts import render
+from django.http import JsonResponse
 
 from apps.tickets.models import (Project,Product,Category,SupportGroup,DynamicForm,Ticket,TicketComment,TicketAttachment,TicketEvent,Notification,SLAPolicy,)
-from apps.core.models import HeroSection, HomeSection,Service, Feature, Statistic, ProcessStep, Testimonial, Partner,FAQ
+from apps.core.models import (
+    HeroSection,
+    Service,
+    Statistic,
+    Feature,
+    ProcessStep,
+    Testimonial,
+    Partner,
+    FAQ,
+
+    ManagementMember,
+    InsurancePartner,
+    ProviderType,
+    NetworkProvider,
+    MedicalSpecialty,
+    TPAService,
+    MedicalProcessStep,
+    MedicalContact,
+    MedicalDownload,
+    Governorate,
+    City,
+)
 
 from .permissions import visible_tickets_for_user
 
@@ -87,7 +109,6 @@ def site_logo_api(request):
         raise Http404("Site logo not found.")
     return FileResponse(obj.logo.open("rb"),content_type="image/png",)
 
-
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def site_favicon_api(request):
@@ -105,127 +126,12 @@ def hero_image_api(request):
     return FileResponse(obj.hero_image.open("rb"),content_type="image/jpeg",)
 
 
-def build_home_content(request):
-    lang = request.GET.get("lang", getattr(request, "LANGUAGE_CODE", "en"))
-    ar = lang == "ar"
-    site = SiteSettings.load()
-    hero = HeroSection.load()
-
-    sections = {}
-    for item in HomeSection.objects.filter(is_active=True):
-        sections[item.section] = {
-            "eyebrow": item.eyebrow_ar if ar else item.eyebrow_en,
-            "title": item.title_ar if ar else item.title_en,
-            "content": item.content_ar if ar else item.content_en,
-            "image": absolute_file_url(request, item.image),
-            "button_text": item.button_text_ar if ar else item.button_text_en,
-            "button_url": item.button_url,
-        }
-
-    services = []
-    for item in Service.objects.filter(is_active=True).select_related("category"):
-        services.append({
-            "id": item.pk,
-            "category": (item.category.name_ar if ar else item.category.name_en) if item.category else "",
-            "title": item.title_ar if ar else item.title_en,
-            "summary": item.summary_ar if ar else item.summary_en,
-            "icon": item.icon,
-            "image": absolute_file_url(request, item.image),
-            "link": item.link,
-            "button_text": item.button_text_ar if ar else item.button_text_en,
-            "featured": item.is_featured,
-        })
-
-    features = [{
-        "id": item.pk,
-        "title": item.title_ar if ar else item.title_en,
-        "description": item.description_ar if ar else item.description_en,
-        "icon": item.icon,
-        "image": absolute_file_url(request, item.image),
-    } for item in Feature.objects.filter(is_active=True)]
-
-    statistics = [{
-        "id": item.pk,
-        "value": item.value,
-        "suffix": item.suffix,
-        "label": item.label_ar if ar else item.label_en,
-        "icon": item.icon,
-    } for item in Statistic.objects.filter(is_active=True)]
-
-    process = [{
-        "id": item.pk,
-        "step": item.step_number,
-        "title": item.title_ar if ar else item.title_en,
-        "description": item.description_ar if ar else item.description_en,
-        "icon": item.icon,
-    } for item in ProcessStep.objects.filter(is_active=True)]
-
-    testimonials = [{
-        "id": item.pk,
-        "name": item.name,
-        "role": item.role_ar if ar else item.role_en,
-        "quote": item.quote_ar if ar else item.quote_en,
-        "photo": absolute_file_url(request, item.photo),
-        "rating": item.rating,
-    } for item in Testimonial.objects.filter(is_active=True)]
-
-    faqs = [{
-        "id": item.pk,
-        "question": item.question_ar if ar else item.question_en,
-        "answer": item.answer_ar if ar else item.answer_en,
-    } for item in FAQ.objects.filter(is_active=True)]
-
-    partners = [{
-        "id": item.pk,
-        "name": item.name,
-        "logo": absolute_file_url(request, item.logo),
-        "website": item.website,
-    } for item in Partner.objects.filter(is_active=True)]
-
-    return {
-        "success": True,
-        "language": lang,
-        "site": {
-            "name": site.site_name_ar if ar else site.site_name_en,
-            "short_name": site.short_name,
-            "tagline": site.tagline_ar if ar else site.tagline_en,
-            "email": site.contact_email,
-            "phone": site.contact_phone,
-            "address": site.address_ar if ar else site.address_en,
-            "logo": absolute_file_url(request, site.logo),
-            "favicon": absolute_file_url(request, site.favicon),
-            "organization_details": site.organization_details,
-            "social_links": site.social_links,
-        },
-        "hero": {
-            "eyebrow": hero.eyebrow_ar if ar else hero.eyebrow_en,
-            "title": hero.title_ar if ar else hero.title_en,
-            "subtitle": hero.subtitle_ar if ar else hero.subtitle_en,
-            "primary_cta": hero.primary_cta_ar if ar else hero.primary_cta_en,
-            "secondary_cta": hero.secondary_cta_ar if ar else hero.secondary_cta_en,
-            "secondary_cta_url": hero.secondary_cta_url,
-            "image": absolute_file_url(request, hero.hero_image),
-        },
-        "sections": sections,
-        "services": services,
-        "features": features,
-        "statistics": statistics,
-        "process": process,
-        "testimonials": testimonials,
-        "faqs": faqs,
-        "partners": partners,
-    }
-
-
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def home_content_api(request):
-    return Response(build_home_content(request))
-
 @require_GET
 def home_content_html(request):
+
     context = {
         "hero": HeroSection.load(),
+
         "services": (
             Service.objects
             .filter(is_active=True)
@@ -268,6 +174,12 @@ def home_content_html(request):
             .filter(is_active=True)
             .order_by("id")
         ),
+
+        "tpa_services": (
+            TPAService.objects
+            .filter(is_active=True)
+            .order_by("sort_order", "id")
+        ),
     }
 
     return render(
@@ -276,6 +188,256 @@ def home_content_html(request):
         context,
     )
 
+
+@require_GET
+def home_network_providers(request):
+
+    providers = (
+        NetworkProvider.objects
+        .filter(is_active=True)
+        .select_related(
+            "provider_type",
+            "governorate",
+            "city",
+        )
+        .prefetch_related(
+            "specialties",
+            "insurance_partners",
+        )
+    )
+
+    search = request.GET.get("search", "").strip()
+    provider_type = request.GET.get("provider_type", "").strip()
+    governorate = request.GET.get("governorate", "").strip()
+    city = request.GET.get("city", "").strip()
+    insurer = request.GET.get("insurer", "").strip()
+    specialty = request.GET.get("specialty", "").strip()
+
+    if search:
+        providers = providers.filter(
+            Q(name_en__icontains=search)
+            | Q(name_ar__icontains=search)
+            | Q(address_en__icontains=search)
+            | Q(address_ar__icontains=search)
+            | Q(area_en__icontains=search)
+            | Q(area_ar__icontains=search)
+            | Q(provider_code__icontains=search)
+        )
+
+    if provider_type:
+        providers = providers.filter(
+            provider_type_id=provider_type
+        )
+
+    if governorate:
+        providers = providers.filter(
+            governorate_id=governorate
+        )
+
+    if city:
+        providers = providers.filter(
+            city_id=city
+        )
+
+    if insurer:
+        providers = providers.filter(
+            insurance_partners__id=insurer
+        )
+
+    if specialty:
+        providers = providers.filter(
+            specialties__id=specialty
+        )
+
+    providers = (
+        providers
+        .distinct()
+        .order_by(
+            "sort_order",
+            "name_en",
+        )[:100]
+    )
+
+    # IMPORTANT:
+    # THIS MUST BE A PYTHON LIST.
+    # DO NOT json.dumps() IT.
+    provider_map_data = []
+    for provider in providers:
+        if provider.latitude is None or provider.longitude is None:
+            continue
+        provider_map_data.append({
+            "id": provider.pk,
+            "name": provider.name_en,
+            "latitude": float(provider.latitude),
+            "longitude": float(provider.longitude),
+            "address": provider.address_en or "",
+            "phone": provider.phone or "",
+            "provider_type": (
+                provider.provider_type.name_en
+                if provider.provider_type
+                else ""
+            ),
+        })
+    context = {
+        "providers": providers,
+        "provider_map_data": provider_map_data,
+        "provider_types": (
+            ProviderType.objects
+            .filter(is_active=True)
+            .order_by(
+                "sort_order",
+                "name_en"
+            )
+        ),
+
+        "governorates": (
+            Governorate.objects
+            .filter(is_active=True)
+            .order_by("name_en")
+        ),
+
+        "cities": (
+            City.objects
+            .filter(is_active=True)
+            .select_related("governorate")
+            .order_by("name_en")
+        ),
+
+        "insurance_partners": (
+            InsurancePartner.objects
+            .filter(is_active=True)
+            .order_by(
+                "sort_order",
+                "name_en"
+            )
+        ),
+
+        "specialties": (
+            MedicalSpecialty.objects
+            .filter(is_active=True)
+            .order_by(
+                "sort_order",
+                "name_en"
+            )
+        ),
+    }
+
+    return render(
+        request,
+        "public/partials/network_providers.html",
+        context,
+    )
+# ==========================================================
+# MANAGEMENT
+# ==========================================================
+
+@require_GET
+def home_management(request):
+
+    context = {
+        "management_members": (
+            ManagementMember.objects
+            .filter(is_active=True)
+            .order_by("sort_order", "id")
+        )
+    }
+
+    return render(
+        request,
+        "public/partials/management.html",
+        context,
+    )
+
+
+# ==========================================================
+# INSURANCE PARTNERS
+# ==========================================================
+
+@require_GET
+def home_insurance_partners(request):
+
+    context = {
+        "insurance_partners": (
+            InsurancePartner.objects
+            .filter(is_active=True)
+            .order_by("sort_order", "name_en")
+        )
+    }
+
+    return render(
+        request,
+        "public/partials/insurance_partners.html",
+        context,
+    )
+
+
+# ==========================================================
+# MEDICAL PROCESS
+# ==========================================================
+
+@require_GET
+def home_medical_process(request):
+
+    context = {
+        "medical_process_steps": (
+            MedicalProcessStep.objects
+            .filter(is_active=True)
+            .order_by(
+                "process_type",
+                "step_number",
+            )
+        )
+    }
+
+    return render(
+        request,
+        "public/partials/medical_process.html",
+        context,
+    )
+
+
+# ==========================================================
+# MEDICAL CONTACTS
+# ==========================================================
+
+@require_GET
+def home_medical_contacts(request):
+
+    context = {
+        "medical_contacts": (
+            MedicalContact.objects
+            .filter(is_active=True)
+            .order_by("sort_order", "id")
+        )
+    }
+
+    return render(
+        request,
+        "public/partials/medical_contacts.html",
+        context,
+    )
+
+
+# ==========================================================
+# DOWNLOADS
+# ==========================================================
+
+@require_GET
+def home_medical_downloads(request):
+
+    context = {
+        "medical_downloads": (
+            MedicalDownload.objects
+            .filter(is_active=True)
+            .order_by("sort_order", "id")
+        )
+    }
+
+    return render(
+        request,
+        "public/partials/medical_downloads.html",
+        context,
+    )
 # ============================================================
 # HELPERS
 # ============================================================
@@ -2866,15 +3028,17 @@ def dashboard(request):
     })
 
 
-# from django.db.models import F
-# from django.shortcuts import get_object_or_404, render
+from django.db.models import F
+from django.shortcuts import get_object_or_404, render
 
-# def download_document(request, pk):
-#     document = get_object_or_404(DownloadDocument, pk=pk, is_active=True)
-#     DownloadDocument.objects.filter(pk=pk).update(download_count=F("download_count") + 1)
-#     return FileResponse(document.file.open("rb"), as_attachment=True, filename=document.filename)
+from apps.core.models import DownloadDocument,DownloadCategory
 
-# def download_center_content(request):
-#     categories = DownloadCategory.objects.filter(is_active=True).order_by("order", "name_en")
-#     documents = DownloadDocument.objects.filter(is_active=True, category__is_active=True).select_related("category").order_by("order", "-updated_at")
-#     return render(request, "cms/includes/download_center_content.html", {"categories": categories, "documents": documents})
+def download_document(request, pk):
+    document = get_object_or_404(DownloadDocument, pk=pk, is_active=True)
+    DownloadDocument.objects.filter(pk=pk).update(download_count=F("download_count") + 1)
+    return FileResponse(document.file.open("rb"), as_attachment=True, filename=document.filename)
+
+def download_center_content(request):
+    categories = DownloadCategory.objects.filter(is_active=True).order_by("order", "name_en")
+    documents = DownloadDocument.objects.filter(is_active=True, category__is_active=True).select_related("category").order_by("order", "-updated_at")
+    return render(request, "cms/includes/download_center_content.html", {"categories": categories, "documents": documents})

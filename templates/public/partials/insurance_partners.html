@@ -1,0 +1,22 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="container">
+    <div class="text-center mb-5 glis-reveal">
+        <span class="glis-eyebrow mb-3"><i class="bi bi-shield-check"></i>{% translate "Our Health Insurance Partners" %}</span>
+        <h2 class="glis-title display-5 mt-3">{% translate "Trusted by leading" %} <span class="glis-gradient-text">{% translate "insurance partners" %}</span></h2>
+        <p class="glis-copy fs-5 mx-auto mb-0" style="max-width:760px">{% translate "We collaborate with insurers to deliver connected healthcare administration and reliable member support." %}</p>
+    </div>
+    <div class="row align-items-center justify-content-center g-3">
+        {% for partner in insurance_partners %}
+        <div class="col-6 col-md-4 col-lg-3 glis-reveal">
+            <div class="glis-partner">
+                {% if partner.website_url %}<a href="{{ partner.website_url }}" target="_blank" rel="noopener" class="text-decoration-none d-flex align-items-center justify-content-center w-100">{% endif %}
+                {% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name_en }}" class="img-fluid">{% else %}<strong class="glis-title text-center">{% if LANGUAGE_CODE == "ar" %}{{ partner.name_ar|default:partner.name_en }}{% else %}{{ partner.name_en }}{% endif %}</strong>{% endif %}
+                {% if partner.website_url %}</a>{% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12"><div class="glis-card p-4 text-center glis-copy">{% translate "No insurance partners configured." %}</div></div>
+        {% endfor %}
+    </div>
+</div>

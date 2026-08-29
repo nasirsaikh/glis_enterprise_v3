@@ -35,10 +35,17 @@ urlpatterns = [
     path("redoc/", SpectacularRedocView.as_view(url_name="api-schema"), name="redoc"),
     path("site-settings/", views.site_settings_api, name="site_settings_api"),
     path("site-logo/", views.site_logo_api, name="site_logo_api"),
-    path("home-content/", views.home_content_api, name="home_content_api"),
-    path("home-content-html/", views.home_content_html, name="home_content_html"),    
     path("site-favicon/", views.site_favicon_api, name="site_favicon_api"),
     path("hero-image/", views.hero_image_api, name="hero_image_api"),  
-    #path("download-center/", views.download_center_content, name="download_center_content"),  
-    #path("downloads/file/<int:pk>/", views.download_document, name="download_document"),
+
+    path("home-content/", views.home_content_html, name="home_content_html"),
+    path("home/partials/network-providers/", views.home_network_providers, name="home_network_providers"),
+    path("home/partials/management/", views.home_management, name="home_management"),
+    path("home/partials/insurance-partners/", views.home_insurance_partners, name="home_insurance_partners"),
+    path("home/partials/medical-process/", views.home_medical_process, name="home_medical_process"),
+    path("home/partials/medical-contacts/", views.home_medical_contacts, name="home_medical_contacts"),
+    path("home/partials/medical-downloads/", views.home_medical_downloads, name="home_medical_downloads"),
+
+    path("download-center/", views.download_center_content, name="download_center_content"),  
+    path("downloads/file/<int:pk>/", views.download_document, name="download_document"),
 ]

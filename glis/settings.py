@@ -380,6 +380,8 @@ CONTENT_SECURITY_POLICY = {
             "'self'",
             "data:",
             "blob:",
+            "https://tile.openstreetmap.org",
+            "https://*.tile.openstreetmap.org",                
         ],
 
         "connect-src": [

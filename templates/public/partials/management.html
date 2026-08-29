@@ -1,0 +1,26 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="container">
+    <div class="text-center mx-auto mb-5 glis-reveal glis-section-heading">
+        <span class="glis-eyebrow mb-3"><i class="bi bi-people"></i>{% translate "Leadership" %}</span>
+        <h2 class="glis-title display-5">{% translate "Meet our" %} <span class="glis-gradient-text">{% translate "management team" %}</span></h2>
+        <p class="glis-copy fs-5 mb-0">{% translate "Experienced leadership focused on healthcare quality, operational excellence and member service." %}</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+        {% for member in management_members %}
+        <div class="col-sm-6 col-lg-3 glis-reveal">
+            <article class="glis-card text-center">
+                {% if member.image %}<img src="{{ member.image.url }}" alt="{{ member.name_en }}" class="w-100" style="height:280px;object-fit:cover">{% else %}<div class="d-flex align-items-center justify-content-center" style="height:220px;background:var(--glis-surface-2)"><i class="bi bi-person-circle display-2 text-success opacity-50"></i></div>{% endif %}
+                <div class="p-4">
+                    <h3 class="h5 glis-title mb-1">{% if LANGUAGE_CODE == "ar" %}{{ member.name_ar|default:member.name_en }}{% else %}{{ member.name_en }}{% endif %}</h3>
+                    <p class="glis-copy mb-2">{% if LANGUAGE_CODE == "ar" %}{{ member.designation_ar|default:member.designation_en }}{% else %}{{ member.designation_en }}{% endif %}</p>
+                    {% if member.department_en %}<small class="glis-copy d-block">{% if LANGUAGE_CODE == "ar" %}{{ member.department_ar|default:member.department_en }}{% else %}{{ member.department_en }}{% endif %}</small>{% endif %}
+                    {% if member.linkedin_url %}<a href="{{ member.linkedin_url }}" target="_blank" rel="noopener" class="glis-link d-inline-block mt-3"><i class="bi bi-linkedin me-1"></i>LinkedIn</a>{% endif %}
+                </div>
+            </article>
+        </div>
+        {% empty %}
+        <div class="col-12"><div class="glis-card p-4 text-center glis-copy">{% translate "No management members configured." %}</div></div>
+        {% endfor %}
+    </div>
+</div>

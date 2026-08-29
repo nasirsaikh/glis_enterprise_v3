@@ -1,0 +1,37 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="container">
+    <div class="row g-5 align-items-start">
+        <div class="col-lg-4 glis-reveal">
+            <span class="glis-eyebrow mb-3"><i class="bi bi-diagram-3"></i>{% translate "How It Works" %}</span>
+            <h2 class="glis-title display-5 mb-3">{% translate "A clear medical" %} <span class="glis-gradient-text">{% translate "service journey" %}</span></h2>
+            <p class="glis-copy fs-5 mb-4">{% translate "From eligibility verification and pre-authorization to treatment and claim settlement, each step is structured and transparent." %}</p>
+            <div class="glis-card p-4">
+                <div class="d-flex gap-3">
+                    <div class="glis-icon flex-shrink-0"><i class="bi bi-shield-check"></i></div>
+                    <div><h3 class="h5 glis-title mb-2">{% translate "Member-first process" %}</h3><p class="glis-copy mb-0">{% translate "Designed to reduce administrative friction for members, providers and insurers." %}</p></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8 glis-reveal">
+            <div class="glis-process-line">
+                {% for item in medical_process_steps %}
+                <div class="glis-process-step">
+                    <div class="glis-step-no">{{ item.step_number|stringformat:"02d" }}</div>
+                    <div class="glis-step-body">
+                        <div class="d-flex justify-content-between gap-3 align-items-start">
+                            <div>
+                                <h3 class="h5 glis-title mb-2">{% if LANGUAGE_CODE == "ar" %}{{ item.title_ar|default:item.title_en }}{% else %}{{ item.title_en }}{% endif %}</h3>
+                                <p class="glis-copy mb-0">{% if LANGUAGE_CODE == "ar" %}{{ item.description_ar|default:item.description_en }}{% else %}{{ item.description_en }}{% endif %}</p>
+                            </div>
+                            <span class="badge rounded-pill text-bg-success">{{ item.get_process_type_display }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="glis-card p-4 text-center glis-copy">{% translate "No medical process steps configured." %}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>

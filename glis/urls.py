@@ -23,11 +23,12 @@ urlpatterns += i18n_patterns(
     path("accounts/", include(("apps.accounts.urls", "accounts"), namespace="accounts")),
     path("accounts/", include("allauth.urls")),
     path("portal/", include(("apps.tickets.urls", "portal"), namespace="portal")),
+    path("documents/", include(("apps.core.document_urls", "documents"), namespace="documents")),
     path("knowledge/", include(("apps.knowledge.urls", "knowledge"), namespace="knowledge")),
     path("analytics/", include(("apps.orchestrator.urls", "orchestrator"), namespace="orchestrator")),
     path("api/v1/", include("apps.api.urls")),
     path("job-center/", include("apps.job_center.urls")),
-    path("summernote/",include("django_summernote.urls"),),    
+    path("summernote/",include("django_summernote.urls"),),
     path("", include("cms.urls")),
     prefix_default_language=False,
 )

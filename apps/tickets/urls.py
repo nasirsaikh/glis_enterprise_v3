@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import document_views
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
@@ -14,6 +15,9 @@ urlpatterns = [
     path("tickets/<str:reference>/share/", views.share_ticket, name="share_ticket"),
     path("tickets/<str:reference>/approvals/<int:approval_id>/decide/", views.decide_ticket_approval, name="decide_ticket_approval"),
     path("tickets/<str:reference>/attachments/upload/", views.upload_attachments, name="upload_attachments"),
+    path("tickets/<str:reference>/documents/", document_views.ticket_documents, name="ticket_documents"),
+    path("tickets/<str:reference>/documents/upload/", document_views.ticket_document_upload, name="ticket_document_upload"),
+    path("tickets/<str:reference>/documents/<int:document_id>/download/", document_views.ticket_document_download, name="ticket_document_download"),
     path("tickets/<str:reference>/comments/", views.add_comment, name="add_comment"),
     path("attachments/<int:pk>/download/", views.download_attachment, name="download_attachment"),
     path("lookups/products/", views.product_options, name="product_options"),

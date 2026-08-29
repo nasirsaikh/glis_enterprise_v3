@@ -8,4 +8,5 @@ urlpatterns = [
     path("<slug:slug>/feedback/", views.article_feedback, name="feedback"),
     path("<slug:slug>/documents/", document_views.article_documents, name="documents"),
     path("<slug:slug>/documents/upload/", document_views.article_document_upload, name="document_upload"),
+    path("<slug:slug>/documents/<int:document_id>/download/", document_views.article_document_download, name="document_download"),
 ]

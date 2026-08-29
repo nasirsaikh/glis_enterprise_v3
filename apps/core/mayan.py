@@ -1,8 +1,9 @@
+import json
 import logging
+import os
 from urllib.parse import urljoin
 
 import requests
-from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -11,35 +12,42 @@ class MayanError(RuntimeError):
     pass
 
 
-class MayanClient:
-    """Small, isolated client for the Mayan EDMS REST API.
+def _env_bool(name, default=False):
+    return os.getenv(name, str(default)).lower() in {"1", "true", "yes", "on"}
 
-    GLIS remains the user-facing application. Endpoint paths are configurable so
-    Mayan upgrades do not require business-view changes.
+
+class MayanClient:
+    """Mayan EDMS gateway used by GLIS views.
+
+    Configuration is environment driven so Mayan stays external while every
+    business screen remains inside the existing GLIS Django project.
     """
 
     def __init__(self):
-        self.base_url = settings.MAYAN_BASE_URL.rstrip("/") + "/"
-        self.timeout = settings.MAYAN_TIMEOUT
-        self.verify_ssl = settings.MAYAN_VERIFY_SSL
+        self.base_url = os.getenv("MAYAN_BASE_URL", "http://127.0.0.1:8090").rstrip("/") + "/"
+        self.timeout = int(os.getenv("MAYAN_TIMEOUT", "45"))
+        self.verify_ssl = _env_bool("MAYAN_VERIFY_SSL", True)
+        self.enabled = _env_bool("MAYAN_ENABLED", False)
+        self.upload_path = os.getenv("MAYAN_UPLOAD_PATH", "")
+        self.search_path = os.getenv("MAYAN_SEARCH_PATH", "/api/v4/search/search_models/documents.Document/")
+        self.download_path = os.getenv("MAYAN_DOWNLOAD_PATH", "/api/v4/documents/{document_id}/files/1/download/")
+        self.document_ui_path = os.getenv("MAYAN_DOCUMENT_UI_PATH", "/#/documents/{document_id}/")
         self.session = requests.Session()
-        token = settings.MAYAN_API_TOKEN.strip()
+        token = os.getenv("MAYAN_API_TOKEN", "").strip()
+        username = os.getenv("MAYAN_API_USERNAME", "").strip()
+        password = os.getenv("MAYAN_API_PASSWORD", "")
         if token:
             self.session.headers.update({"Authorization": f"Token {token}"})
-        elif settings.MAYAN_API_USERNAME:
-            self.session.auth = (settings.MAYAN_API_USERNAME, settings.MAYAN_API_PASSWORD)
+        elif username:
+            self.session.auth = (username, password)
         self.session.headers.update({"Accept": "application/json"})
-
-    @property
-    def enabled(self):
-        return bool(settings.MAYAN_ENABLED and self.base_url.strip("/"))
 
     def _url(self, path):
         return urljoin(self.base_url, path.lstrip("/"))
 
     def _request(self, method, path, **kwargs):
         if not self.enabled:
-            raise MayanError("Mayan EDMS integration is not enabled.")
+            raise MayanError("Mayan EDMS integration is disabled. Set MAYAN_ENABLED=True.")
         try:
             response = self.session.request(method, self._url(path), timeout=self.timeout, verify=self.verify_ssl, **kwargs)
             response.raise_for_status()
@@ -50,7 +58,7 @@ class MayanClient:
 
     def health(self):
         try:
-            response = self._request("GET", settings.MAYAN_HEALTH_PATH)
+            response = self._request("GET", "/api/v4/")
             return {"ok": True, "status_code": response.status_code}
         except MayanError as exc:
             return {"ok": False, "error": str(exc)}
@@ -62,24 +70,17 @@ class MayanClient:
         params = {"page": page, "page_size": page_size}
         if query:
             params["q"] = query
-        response = self._request("GET", settings.MAYAN_SEARCH_PATH, params=params)
-        return response.json()
+        return self._request("GET", self.search_path, params=params).json()
 
     def upload_document(self, uploaded_file, *, label="", metadata=None):
-        """Upload through the configured Mayan Source action execute endpoint.
-
-        Set MAYAN_UPLOAD_PATH to the Source action execute URL for the Mayan
-        source created for GLIS. This avoids hard-coding a source/action ID.
-        """
-        if not settings.MAYAN_UPLOAD_PATH:
-            raise MayanError("MAYAN_UPLOAD_PATH is not configured.")
+        if not self.upload_path:
+            raise MayanError("MAYAN_UPLOAD_PATH is not configured with the GLIS Source action execute endpoint.")
         uploaded_file.seek(0)
         files = {"file": (uploaded_file.name, uploaded_file, getattr(uploaded_file, "content_type", "application/octet-stream"))}
         data = {"label": label or uploaded_file.name}
         if metadata:
-            import json
             data["metadata"] = json.dumps(metadata)
-        response = self._request("POST", settings.MAYAN_UPLOAD_PATH, files=files, data=data)
+        response = self._request("POST", self.upload_path, files=files, data=data)
         payload = response.json() if response.content else {}
         document_id = payload.get("id") or payload.get("document_id")
         if not document_id and isinstance(payload.get("document"), dict):
@@ -87,15 +88,17 @@ class MayanClient:
         return payload, document_id
 
     def download_document(self, document_id):
-        path = settings.MAYAN_DOWNLOAD_PATH.format(document_id=document_id)
-        return self._request("GET", path, stream=True)
+        return self._request("GET", self.download_path.format(document_id=document_id), stream=True)
 
     def delete_document(self, document_id):
         return self._request("DELETE", f"/api/v4/documents/{document_id}/")
 
     def document_url(self, document_id):
-        template = settings.MAYAN_DOCUMENT_UI_PATH
-        return self._url(template.format(document_id=document_id))
+        return self._url(self.document_ui_path.format(document_id=document_id))
+
+    @property
+    def admin_url(self):
+        return self.base_url
 
 
 mayan = MayanClient()

@@ -1,0 +1,21 @@
+{% extends "base_portal.html" %}
+{% load i18n %}
+{% block title %}{% translate "Document Center" %}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+  <div><span class="text-uppercase small text-muted">{% translate "Enterprise document management" %}</span><h1 class="h3 mb-1">{% translate "Document Center" %}</h1><p class="text-muted mb-0">{% translate "Search, upload and access documents governed by Mayan EDMS without leaving GLIS." %}</p></div>
+  {% if can_open_mayan %}<a class="btn btn-outline-secondary" href="{{ mayan_admin_url }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-2"></i>{% translate "Open Mayan EDMS" %}</a>{% endif %}
+</div>
+{% if mayan_error %}<div class="alert alert-warning"><strong>{% translate "Document service:" %}</strong> {{ mayan_error }}</div>{% endif %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <section class="panel p-3 p-lg-4">
+      <form hx-get="{% url 'documents:center' %}" hx-target="#document-results" hx-push-url="true" class="input-group mb-4"><span class="input-group-text"><i class="bi bi-search"></i></span><input class="form-control" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search document name, metadata, claim, policy, ticket or case reference' %}"><button class="btn btn-primary">{% translate "Search" %}</button></form>
+      <div id="document-results">{% include "documents/partials/results.html" %}</div>
+    </section>
+  </div>
+  <div class="col-lg-4">
+    <section class="panel p-3 p-lg-4"><h2 class="h6"><i class="bi bi-cloud-arrow-up me-2"></i>{% translate "Upload document" %}</h2><form method="post" enctype="multipart/form-data" action="{% url 'documents:upload' %}">{% csrf_token %}<div class="mb-3"><label class="form-label">{% translate "Title" %}</label><input class="form-control" name="title"></div><div class="mb-3"><label class="form-label">{% translate "Category" %}</label><select class="form-select" name="category"><option value="general">General</option><option value="ticket">Ticket</option><option value="claim">Claim</option><option value="policy">Policy</option><option value="legal">Legal</option><option value="knowledge">Knowledge</option></select></div><div class="mb-3"><label class="form-label">{% translate "File" %}</label><input class="form-control" type="file" name="file" required></div><button class="btn btn-primary w-100"><i class="bi bi-upload me-2"></i>{% translate "Upload to EDMS" %}</button></form></section>
+  </div>
+</div>
+{% endblock %}

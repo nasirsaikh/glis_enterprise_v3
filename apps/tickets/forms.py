@@ -3,21 +3,108 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from apps.ai.models import default_questions
 from .models import Category, Product, Project, SupportGroup, Ticket, TicketComment
+from .services.access import accessible_categories,accessible_products,accessible_projects
+
+# class TicketCreateStep1Form(forms.Form):
+#     project = forms.ModelChoiceField(queryset=Project.objects.none(), widget=forms.Select(attrs={"class": "form-select", "hx-get": "/portal/lookups/products/", "hx-target": "#id_product", "hx-trigger": "change"}))
+#     product = forms.ModelChoiceField(queryset=Product.objects.none(), widget=forms.Select(attrs={"class": "form-select", "hx-get": "/portal/lookups/categories/", "hx-target": "#id_category", "hx-trigger": "change"}))
+#     category = forms.ModelChoiceField(queryset=Category.objects.none(), widget=forms.Select(attrs={"class": "form-select"}))
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.fields["project"].queryset = Project.objects.filter(is_active=True)
+#         project_id = self.data.get("project") or self.initial.get("project")
+#         product_id = self.data.get("product") or self.initial.get("product")
+#         self.fields["product"].queryset = Product.objects.filter(is_active=True, project_id=project_id) if project_id else Product.objects.none()
+#         self.fields["category"].queryset = Category.objects.filter(is_active=True, product_id=product_id) if product_id else Category.objects.none()
 
 
 class TicketCreateStep1Form(forms.Form):
-    project = forms.ModelChoiceField(queryset=Project.objects.none(), widget=forms.Select(attrs={"class": "form-select", "hx-get": "/portal/lookups/products/", "hx-target": "#id_product", "hx-trigger": "change"}))
-    product = forms.ModelChoiceField(queryset=Product.objects.none(), widget=forms.Select(attrs={"class": "form-select", "hx-get": "/portal/lookups/categories/", "hx-target": "#id_category", "hx-trigger": "change"}))
-    category = forms.ModelChoiceField(queryset=Category.objects.none(), widget=forms.Select(attrs={"class": "form-select"}))
 
-    def __init__(self, *args, **kwargs):
+    project = forms.ModelChoiceField(
+        queryset=Project.objects.none(),
+        widget=forms.Select(
+            attrs={
+                "class": "form-select",
+                "hx-get": "/portal/lookups/products/",
+                "hx-target": "#id_product",
+                "hx-trigger": "change",
+            }
+        ),
+    )
+
+    product = forms.ModelChoiceField(
+        queryset=Product.objects.none(),
+        widget=forms.Select(
+            attrs={
+                "class": "form-select",
+                "hx-get": "/portal/lookups/categories/",
+                "hx-target": "#id_category",
+                "hx-trigger": "change",
+            }
+        ),
+    )
+
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.none(),
+        widget=forms.Select(
+            attrs={
+                "class": "form-select",
+            }
+        ),
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["project"].queryset = Project.objects.filter(is_active=True)
-        project_id = self.data.get("project") or self.initial.get("project")
-        product_id = self.data.get("product") or self.initial.get("product")
-        self.fields["product"].queryset = Product.objects.filter(is_active=True, project_id=project_id) if project_id else Product.objects.none()
-        self.fields["category"].queryset = Category.objects.filter(is_active=True, product_id=product_id) if product_id else Category.objects.none()
 
+        self.user = user
+
+        if not user or not user.is_authenticated:
+            return
+
+        # --------------------------------
+        # Projects user can access
+        # --------------------------------
+        self.fields["project"].queryset = (
+            accessible_projects(user)
+            .order_by("name_en")
+        )
+
+        project_id = (
+            self.data.get("project")
+            or self.initial.get("project")
+        )
+
+        product_id = (
+            self.data.get("product")
+            or self.initial.get("product")
+        )
+
+        # --------------------------------
+        # Products user can access
+        # under selected project
+        # --------------------------------
+        if project_id:
+            self.fields["product"].queryset = (
+                accessible_products(user)
+                .filter(project_id=project_id)
+                .order_by("name_en")
+            )
+        else:
+            self.fields["product"].queryset = Product.objects.none()
+
+        # --------------------------------
+        # Categories user can access
+        # under selected product
+        # --------------------------------
+        if product_id:
+            self.fields["category"].queryset = (
+                accessible_categories(user)
+                .filter(product_id=product_id)
+                .order_by("name_en")
+            )
+        else:
+            self.fields["category"].queryset = Category.objects.none()
 
 class TicketIntakeForm(forms.Form):
     def __init__(self, *args, questions=None, **kwargs):

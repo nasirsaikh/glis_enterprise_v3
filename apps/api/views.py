@@ -18,7 +18,7 @@ from django.http import JsonResponse
 
 from apps.tickets.models import (Project,Product,Category,SupportGroup,DynamicForm,Ticket,TicketComment,TicketAttachment,TicketEvent,Notification,SLAPolicy,)
 from apps.core.models import (
-    HeroSection,
+    SiteSettings,
     Service,
     Statistic,
     Feature,
@@ -33,7 +33,6 @@ from apps.core.models import (
     NetworkProvider,
     MedicalSpecialty,
     TPAService,
-    MedicalProcessStep,
     MedicalContact,
     MedicalDownload,
     Governorate,
@@ -45,13 +44,11 @@ from .permissions import visible_tickets_for_user
 
 User = get_user_model()
 
-
-from apps.core.models import SiteSettings
-
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def site_settings_api(request):
     settings_obj = SiteSettings.load()
+
     data = {
         "site_name_en": settings_obj.site_name_en,
         "site_name_ar": settings_obj.site_name_ar,
@@ -73,8 +70,8 @@ def site_settings_api(request):
         "po_box": settings_obj.po_box,
         "postal_code": settings_obj.postal_code,
 
-        "latitude": settings_obj.latitude,
-        "longitude": settings_obj.longitude,
+        "latitude": float(settings_obj.latitude) if settings_obj.latitude is not None else None,
+        "longitude": float(settings_obj.longitude) if settings_obj.longitude is not None else None,
         "map_zoom": settings_obj.map_zoom,
 
         "commercial_registration_no": settings_obj.commercial_registration_no,
@@ -86,14 +83,31 @@ def site_settings_api(request):
         "working_hours_en": settings_obj.working_hours_en,
         "working_hours_ar": settings_obj.working_hours_ar,
 
-        "logo": request.build_absolute_uri(settings_obj.logo.url) if settings_obj.logo else "",
-        "favicon": request.build_absolute_uri(settings_obj.favicon.url) if settings_obj.favicon else "",
+        "logo": absolute_file_url(request, settings_obj.logo),
+        "favicon": absolute_file_url(request, settings_obj.favicon),
 
         "organization_details": settings_obj.organization_details,
         "social_links": settings_obj.social_links,
 
         "public_registration_enabled": settings_obj.public_registration_enabled,
         "public_theme_switcher_enabled": settings_obj.public_theme_switcher_enabled,
+
+        # HeroSection merged into SiteSettings
+        "hero": {
+            "eyebrow_en": settings_obj.hero_eyebrow_en,
+            "eyebrow_ar": settings_obj.hero_eyebrow_ar,
+            "title_en": settings_obj.hero_title_en,
+            "title_ar": settings_obj.hero_title_ar,
+            "subtitle_en": settings_obj.hero_subtitle_en,
+            "subtitle_ar": settings_obj.hero_subtitle_ar,
+            "primary_cta_en": settings_obj.hero_primary_cta_en,
+            "primary_cta_ar": settings_obj.hero_primary_cta_ar,
+            "primary_cta_url": settings_obj.hero_primary_cta_url,
+            "secondary_cta_en": settings_obj.hero_secondary_cta_en,
+            "secondary_cta_ar": settings_obj.hero_secondary_cta_ar,
+            "secondary_cta_url": settings_obj.hero_secondary_cta_url,
+            "hero_image": absolute_file_url(request, settings_obj.hero_image),
+        },
     }
 
     return Response({
@@ -120,7 +134,7 @@ def site_favicon_api(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def hero_image_api(request):
-    obj = HeroSection.load()
+    obj = SiteSettings.load()
     if not obj.hero_image:
         raise Http404("Hero image not found.")
     return FileResponse(obj.hero_image.open("rb"),content_type="image/jpeg",)
@@ -128,53 +142,46 @@ def hero_image_api(request):
 
 @require_GET
 def home_content_html(request):
+    settings_obj = SiteSettings.load()
 
     context = {
-        "hero": HeroSection.load(),
-
+        "hero": settings_obj,
         "services": (
-            Service.objects
+            settings_obj.services
             .filter(is_active=True)
             .select_related("category")
-            .order_by("id")
+            .order_by("order", "title_en")
         ),
-
         "statistics": (
-            Statistic.objects
+            settings_obj.statistics
             .filter(is_active=True)
-            .order_by("id")
+            .order_by("order")
         ),
-
         "features": (
-            Feature.objects
+            settings_obj.features
             .filter(is_active=True)
-            .order_by("id")
+            .order_by("order")
         ),
-
         "process_steps": (
-            ProcessStep.objects
-            .filter(is_active=True)
-            .order_by("step_number")
+            settings_obj.process_steps
+            .filter(is_active=True, process_type="GENERAL")
+            .order_by("order", "step_number")
         ),
-
         "testimonials": (
-            Testimonial.objects
+            settings_obj.testimonials
             .filter(is_active=True)
-            .order_by("id")
+            .order_by("order")
         ),
-
         "partners": (
-            Partner.objects
+            settings_obj.partners
             .filter(is_active=True)
-            .order_by("id")
+            .order_by("order")
         ),
-
         "faqs": (
-            FAQ.objects
+            settings_obj.faqs
             .filter(is_active=True)
-            .order_by("id")
+            .order_by("order")
         ),
-
         "tpa_services": (
             TPAService.objects
             .filter(is_active=True)
@@ -191,10 +198,14 @@ def home_content_html(request):
 
 @require_GET
 def home_network_providers(request):
+    settings_obj = SiteSettings.load()
 
     providers = (
         NetworkProvider.objects
-        .filter(is_active=True)
+        .filter(
+            is_active=True,
+            provider_type__site_settings=settings_obj,
+        )
         .select_related(
             "provider_type",
             "governorate",
@@ -241,7 +252,8 @@ def home_network_providers(request):
 
     if insurer:
         providers = providers.filter(
-            insurance_partners__id=insurer
+            insurance_partners__id=insurer,
+            insurance_partners__site_settings=settings_obj,
         )
 
     if specialty:
@@ -282,7 +294,7 @@ def home_network_providers(request):
         "providers": providers,
         "provider_map_data": provider_map_data,
         "provider_types": (
-            ProviderType.objects
+            settings_obj.provider_types
             .filter(is_active=True)
             .order_by(
                 "sort_order",
@@ -304,7 +316,7 @@ def home_network_providers(request):
         ),
 
         "insurance_partners": (
-            InsurancePartner.objects
+            settings_obj.insurance_partners
             .filter(is_active=True)
             .order_by(
                 "sort_order",
@@ -333,10 +345,11 @@ def home_network_providers(request):
 
 @require_GET
 def home_management(request):
+    settings_obj = SiteSettings.load()
 
     context = {
         "management_members": (
-            ManagementMember.objects
+            settings_obj.management_members
             .filter(is_active=True)
             .order_by("sort_order", "id")
         )
@@ -355,10 +368,11 @@ def home_management(request):
 
 @require_GET
 def home_insurance_partners(request):
+    settings_obj = SiteSettings.load()
 
     context = {
         "insurance_partners": (
-            InsurancePartner.objects
+            settings_obj.insurance_partners
             .filter(is_active=True)
             .order_by("sort_order", "name_en")
         )
@@ -377,13 +391,16 @@ def home_insurance_partners(request):
 
 @require_GET
 def home_medical_process(request):
+    settings_obj = SiteSettings.load()
 
     context = {
         "medical_process_steps": (
-            MedicalProcessStep.objects
+            settings_obj.process_steps
             .filter(is_active=True)
+            .exclude(process_type="GENERAL")
             .order_by(
                 "process_type",
+                "order",
                 "step_number",
             )
         )

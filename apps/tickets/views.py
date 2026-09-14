@@ -34,7 +34,6 @@ from .models import (
     TicketEvent, TicketShare,
 )
 
-
 RICH_TEXT_TAGS = ["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "blockquote", "a", "img", "h2", "h3", "code"]
 RICH_TEXT_ATTRIBUTES = {"a": ["href", "title", "target", "rel"], "img": ["src", "alt", "title"]}
 
@@ -168,55 +167,6 @@ def ticket_detail(request, reference):
         "attachment_specs": _attachment_specs_for(ticket),
     })
 
-
-# @login_required
-# @require_POST
-# @transaction.atomic
-# def add_comment(request, reference):
-#     ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user), reference=reference)
-#     form = TicketCommentForm(request.POST)
-#     if form.is_valid():
-#         if form.cleaned_data.get("is_internal") and not TicketAccessPolicy.can_view_internal_notes(request.user, ticket):
-#             return HttpResponse("Internal notes are restricted.", status=403)
-#         comment = form.save(commit=False)
-#         comment.ticket, comment.author = ticket, request.user
-#         comment.body = sanitize_rich_text(comment.body)
-#         comment.save()
-#         if request.user.pk != ticket.requester_id and not ticket.first_responded_at:
-#             ticket.first_responded_at = timezone.now()
-#             ticket.save(update_fields=["first_responded_at", "updated_at"])
-#         TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type="comment", summary="Internal note added" if comment.is_internal else "Comment added")
-#         if not comment.is_internal:
-#             recipients = [ticket.requester] if request.user.pk != ticket.requester_id else list(ticket.assignees.all())
-#             notify_users(recipients, ticket=ticket, kind="update", title=f"New update on {ticket.reference}", body=bleach.clean(comment.body, tags=[], strip=True), send_email_message=ticket.category.send_update_email)
-#         AuditLog.record(request=request, action="ticket.comment", instance=ticket, summary="Added an internal note" if comment.is_internal else "Added a public comment")
-#         return render(request, "tickets/partials/comment.html", {"comment": comment})
-#     return render(request, "tickets/partials/comment_form.html", {"ticket": ticket, "comment_form": form}, status=422)
-
-import html
-import re
-from pathlib import Path
-
-import bleach
-
-from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
-from django.views.decorators.http import require_POST
-
-from apps.core.models import AuditLog
-
-from services.access import TicketAccessPolicy
-from services.ticket_workflow import notify_users
-
-from .forms import TicketCommentForm
-from .models import (
-    Ticket,
-    TicketAttachment,
-    TicketEvent,
-)
 
 
 def _rich_text_is_blank(value):
@@ -474,14 +424,16 @@ def create_ticket(request, step=1):
     wizard = request.session.setdefault("ticket_wizard", {})
     if step > 1 and not wizard.get("selection"):
         return redirect("portal:create_ticket", step=1)
+
     if step == 1:
         initial = wizard.get("selection", {})
-        form = TicketCreateStep1Form(request.POST or None, initial=initial)
+        form = TicketCreateStep1Form(request.POST or None,initial=initial,user=request.user,)
         if request.method == "POST" and form.is_valid():
             wizard["selection"] = {key: form.cleaned_data[key].pk for key in ("project", "product", "category")}
             request.session.modified = True
-            return redirect("portal:create_ticket", step=2)
-        return render(request, "tickets/wizard/step1.html", {"form": form, "step": 1})
+            return redirect("portal:create_ticket",step=2,)
+        return render(
+            request,"tickets/wizard/step1.html",{"form": form,"step": 1,},)
 
     category = get_object_or_404(Category, pk=wizard["selection"]["category"])
     dynamic_form = DynamicForm.objects.filter(category=category, is_active=True, active_version__isnull=False).select_related("active_version").first()
@@ -571,19 +523,69 @@ def create_ticket(request, step=1):
     return render(request, "tickets/wizard/step4.html", {"form": form, "step": 4, "wizard": wizard, "analysis": analysis, "category": category, "attachment_specs": attachment_specs})
 
 
+# @login_required
+# @require_GET
+# def product_options(request):
+#     products = Product.objects.filter(project_id=request.GET.get("project"), is_active=True)
+#     return render(request, "tickets/partials/options.html", {"objects": products, "placeholder": "Select a product"})
+
+from .services.access import (accessible_categories,accessible_products,)
+
 @login_required
 @require_GET
 def product_options(request):
-    products = Product.objects.filter(project_id=request.GET.get("project"), is_active=True)
-    return render(request, "tickets/partials/options.html", {"objects": products, "placeholder": "Select a product"})
+
+    project_id = request.GET.get("project")
+
+    products = Product.objects.none()
+
+    if project_id:
+        products = (
+            accessible_products(request.user)
+            .filter(project_id=project_id)
+            .order_by("name_en")
+        )
+
+    return render(
+        request,
+        "tickets/partials/options.html",
+        {
+            "objects": products,
+            "placeholder": "Select a product",
+        },
+    )
+
+
+# @login_required
+# @require_GET
+# def category_options(request):
+#     categories = Category.objects.filter(product_id=request.GET.get("product"), is_active=True)
+#     return render(request, "tickets/partials/options.html", {"objects": categories, "placeholder": "Select a category"})
 
 
 @login_required
 @require_GET
 def category_options(request):
-    categories = Category.objects.filter(product_id=request.GET.get("product"), is_active=True)
-    return render(request, "tickets/partials/options.html", {"objects": categories, "placeholder": "Select a category"})
 
+    product_id = request.GET.get("product")
+
+    categories = Category.objects.none()
+
+    if product_id:
+        categories = (
+            accessible_categories(request.user)
+            .filter(product_id=product_id)
+            .order_by("name_en")
+        )
+
+    return render(
+        request,
+        "tickets/partials/options.html",
+        {
+            "objects": categories,
+            "placeholder": "Select a category",
+        },
+    )
 
 @login_required
 @require_GET

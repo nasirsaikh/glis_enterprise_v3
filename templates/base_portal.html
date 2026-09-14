@@ -48,7 +48,7 @@
         title="{% translate 'Change navigation size' %}">
         <i class="bi bi-layout-sidebar-inset"></i>
       </button>
-
+      <a class="btn btn-primary d-none d-sm-inline-flex" href="/"><i class="bi bi-house me-2"></i>Public</a>
       <button class="btn btn-icon d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#mobilePortalNav" aria-label="{% translate 'Open menu' %}"><i class="bi bi-list fs-4"></i></button>
       <div class="global-search position-relative d-none d-md-block"><i class="bi bi-search"></i><input class="form-control" type="search" name="q" placeholder="{% translate 'Search tickets, requesters, projects…' %}" hx-get="{% url 'portal:global_search' %}" hx-trigger="input changed delay:300ms" hx-target="#global-search-results" autocomplete="off"><div id="global-search-results" class="search-results"></div></div>
     </div>

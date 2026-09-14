@@ -15,36 +15,25 @@
      data-session-detail-template="{{ session_detail_template }}"
      data-session-list-url="{% url 'orchestrator:session_list' %}"
      data-domain-id="{{ selected_domain.pk }}">
-
   <div class="row g-0 vh-100">
-
-    <!-- LEFT SIDEBAR -->
-    <div class="col-12 col-lg-3 border-end bg-body-tertiary">
-
-      <aside class="ai-session-rail h-100 d-flex flex-column"
-             aria-label="{% translate 'Analysis sessions' %}">
-
+    <div class="col-12 col-lg-2 border-end bg-body-tertiary">
+      <aside class="ai-session-rail h-100 d-flex flex-column" aria-label="{% translate 'Analysis sessions' %}">
         <div class="p-3 border-bottom">
-
           <div class="d-flex justify-content-between align-items-center mb-3">
-
             <div>
               <span class="page-eyebrow">
                 {% translate "Question history" %}
               </span>
-
               <h4 class="mb-0">
                 {% translate "Ask Vanna" %}
               </h4>
             </div>
-
             <button class="btn btn-primary btn-sm rounded-circle"
                     id="vanna-new-session"
                     type="button"
                     title="{% translate 'Start a new conversation' %}">
               <i class="bi bi-plus-lg"></i>
             </button>
-
           </div>
 
           <form class="ai-domain-switch" method="get">
@@ -142,7 +131,7 @@
 
 
     <!-- CHAT AREA -->
-    <div class="col-12 col-lg-9">
+    <div class="col-12 col-lg-10">
 
       <section class="d-flex flex-column vh-100">
 
@@ -159,10 +148,6 @@
                 <strong class="d-block">
                   {{ selected_domain.name }}
                 </strong>
-
-                <small class="text-muted">
-                  {{ vanna_settings.get_provider_display }}
-                </small>
               </div>
 
             </div>

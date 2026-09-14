@@ -73,11 +73,27 @@ class SiteSettings(SingletonModel, TimeStampedModel):
     organization_details = models.TextField(blank=True)
     social_links = models.JSONField(default=dict, blank=True)
 
+    # HeroSection merged into SiteSettings
+    hero_eyebrow_en = models.CharField(max_length=120, default="Insurance service orchestration")
+    hero_eyebrow_ar = models.CharField(max_length=120, default="تنسيق خدمات التأمين")
+    hero_title_en = models.CharField(max_length=220, default="One clear path through every insurance request")
+    hero_title_ar = models.CharField(max_length=220, default="مسار واضح لكل طلب تأميني")
+    hero_subtitle_en = models.TextField(default="Submit, track and resolve service requests with secure collaboration across customers, providers and insurance teams.")
+    hero_subtitle_ar = models.TextField(default="قدّم طلبات الخدمة وتابعها وأنجزها بتعاون آمن بين العملاء ومقدمي الخدمة وفرق التأمين.")
+    hero_primary_cta_en = models.CharField(max_length=60, default="Submit a request")
+    hero_primary_cta_ar = models.CharField(max_length=60, default="تقديم طلب")
+    hero_primary_cta_url = models.CharField(max_length=255, default="/portal/tickets/create/1/")
+    hero_secondary_cta_en = models.CharField(max_length=60, default="Explore services")
+    hero_secondary_cta_ar = models.CharField(max_length=60, default="استكشف الخدمات")
+    hero_secondary_cta_url = models.CharField(max_length=255, default="#services")
+    hero_image = models.ImageField(upload_to="cms/hero/", blank=True)
+
     class Meta:
-        verbose_name_plural = "Site settings"
+        verbose_name = "Site Setting"
+        verbose_name_plural = "Site Settings"
 
     def __str__(self):
-        return self.site_name_en        
+        return self.site_name_en
 
 
 class ServiceCategory(TimeStampedModel):
@@ -96,6 +112,12 @@ class ServiceCategory(TimeStampedModel):
 
 
 class Service(TimeStampedModel):
+    site_settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="services",
+        default=1,
+    )
     category = models.ForeignKey(ServiceCategory, related_name="services", on_delete=models.CASCADE, null=True, blank=True)
     title_en = models.CharField(max_length=160)
     title_ar = models.CharField(max_length=160, blank=True)
@@ -118,6 +140,12 @@ class Service(TimeStampedModel):
 
 
 class Feature(TimeStampedModel):
+    site_settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="features",
+        default=1,
+    )
     title_en = models.CharField(max_length=160)
     title_ar = models.CharField(max_length=160, blank=True)
     description_en = models.TextField(blank=True)
@@ -135,6 +163,12 @@ class Feature(TimeStampedModel):
 
 
 class Statistic(TimeStampedModel):
+    site_settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="statistics",
+        default=1,
+    )
     value = models.CharField(max_length=50)
     suffix = models.CharField(max_length=20, blank=True)
     label_en = models.CharField(max_length=120)
@@ -151,6 +185,22 @@ class Statistic(TimeStampedModel):
 
 
 class ProcessStep(TimeStampedModel):
+    PROCESS_TYPES = [
+        ("GENERAL", "General Process"),
+        ("CLAIM", "Medical Claim"),
+        ("PREAUTH", "Pre-Authorization"),
+        ("REIMBURSEMENT", "Reimbursement"),
+        ("NETWORK", "Network Access"),
+        ("EMERGENCY", "Emergency"),
+    ]
+
+    site_settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="process_steps",
+        default=1,
+    )
+    process_type = models.CharField(max_length=30, choices=PROCESS_TYPES, default="GENERAL")
     step_number = models.PositiveSmallIntegerField(default=1)
     title_en = models.CharField(max_length=160)
     title_ar = models.CharField(max_length=160, blank=True)
@@ -161,13 +211,25 @@ class ProcessStep(TimeStampedModel):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ["order", "step_number"]
+        ordering = ["process_type", "order", "step_number"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["site_settings", "process_type", "step_number"],
+                name="unique_site_process_step",
+            )
+        ]
 
     def __str__(self):
-        return self.title_en
+        return f"{self.get_process_type_display()} - {self.step_number} - {self.title_en}"
 
 
 class Testimonial(TimeStampedModel):
+    site_settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="testimonials",
+        default=1,
+    )
     name = models.CharField(max_length=120)
     role_en = models.CharField(max_length=120, blank=True)
     role_ar = models.CharField(max_length=120, blank=True)
@@ -186,6 +248,12 @@ class Testimonial(TimeStampedModel):
 
 
 class FAQ(TimeStampedModel):
+    site_settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="faqs",
+        default=1,
+    )
     question_en = models.CharField(max_length=255)
     question_ar = models.CharField(max_length=255, blank=True)
     answer_en = models.TextField()
@@ -201,6 +269,12 @@ class FAQ(TimeStampedModel):
 
 
 class Partner(TimeStampedModel):
+    site_settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="partners",
+        default=1,
+    )
     name = models.CharField(max_length=160)
     logo = models.ImageField(upload_to="cms/partners/")
     website = models.URLField(blank=True)
@@ -212,93 +286,6 @@ class Partner(TimeStampedModel):
 
     def __str__(self):
         return self.name
-
-
-class HomeSection(TimeStampedModel):
-    SECTION_CHOICES = [
-        ("about", "About"),
-        ("services", "Services"),
-        ("why_us", "Why Choose Us"),
-        ("process", "Process"),
-        ("statistics", "Statistics"),
-        ("features", "Features"),
-        ("testimonials", "Testimonials"),
-        ("faq", "FAQ"),
-        ("contact", "Contact"),
-        ("cta", "Call To Action"),
-    ]
-
-    section = models.CharField(max_length=30, choices=SECTION_CHOICES, unique=True)
-    eyebrow_en = models.CharField(max_length=120, blank=True)
-    eyebrow_ar = models.CharField(max_length=120, blank=True)
-    title_en = models.CharField(max_length=200, blank=True)
-    title_ar = models.CharField(max_length=200, blank=True)
-    content_en = models.TextField(blank=True)
-    content_ar = models.TextField(blank=True)
-    image = models.ImageField(upload_to="cms/sections/", blank=True)
-    button_text_en = models.CharField(max_length=80, blank=True)
-    button_text_ar = models.CharField(max_length=80, blank=True)
-    button_url = models.CharField(max_length=255, blank=True)
-    is_active = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.get_section_display()
-
-
-class HeroSection(SingletonModel, TimeStampedModel, LocalizedModelMixin):
-    eyebrow_en = models.CharField(max_length=120, default="Insurance service orchestration")
-    eyebrow_ar = models.CharField(max_length=120, default="تنسيق خدمات التأمين")
-    title_en = models.CharField(max_length=220, default="One clear path through every insurance request")
-    title_ar = models.CharField(max_length=220, default="مسار واضح لكل طلب تأميني")
-    subtitle_en = models.TextField(default="Submit, track and resolve service requests with secure collaboration across customers, providers and insurance teams.")
-    subtitle_ar = models.TextField(default="قدّم طلبات الخدمة وتابعها وأنجزها بتعاون آمن بين العملاء ومقدمي الخدمة وفرق التأمين.")
-    primary_cta_en = models.CharField(max_length=60, default="Submit a request")
-    primary_cta_ar = models.CharField(max_length=60, default="تقديم طلب")
-    primary_ctta_url = models.CharField(max_length=255, default="/portal/tickets/create/1/")
-    secondary_cta_en = models.CharField(max_length=60, default="Explore services")
-    secondary_cta_ar = models.CharField(max_length=60, default="استكشف الخدمات")
-    secondary_cta_url = models.CharField(max_length=255, default="#services")
-    hero_image = models.ImageField(upload_to="cms/hero/", blank=True)
-
-
-
-
-class ModuleRegistry(TimeStampedModel, LocalizedModelMixin):
-    key = models.SlugField(unique=True)
-    name_en = models.CharField(max_length=120)
-    name_ar = models.CharField(max_length=120, blank=True)
-    description_en = models.TextField(blank=True)
-    description_ar = models.TextField(blank=True)
-    icon = models.CharField(max_length=50, default="bi-grid")
-    route_name = models.CharField(max_length=120, blank=True)
-    is_enabled = models.BooleanField(default=True)
-    show_in_navigation = models.BooleanField(default=True)
-    order = models.PositiveSmallIntegerField(default=0)
-    required_permission = models.CharField(max_length=150, blank=True)
-    metadata = models.JSONField(default=dict, blank=True)
-
-    class Meta:
-        ordering = ["order", "name_en"]
-        permissions = [("manage_modules", "Can manage module registry")]
-
-    def __str__(self):
-        return self.name_en
-
-
-class ConfigurationVersion(TimeStampedModel):
-    key = models.CharField(max_length=120)
-    version = models.PositiveIntegerField()
-    state = models.CharField(max_length=20, choices=[("draft", "Draft"), ("published", "Published"), ("archived", "Archived")])
-    payload = models.JSONField(default=dict)
-    validation_errors = models.JSONField(default=list, blank=True)
-    change_note = models.CharField(max_length=255, blank=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
-    published_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        ordering = ["-version"]
-        constraints = [models.UniqueConstraint(fields=["key", "version"], name="unique_configuration_version")]
-        permissions = [("manage_json_config", "Can manage JSON configuration")]
 
 
 class AuditLog(models.Model):
@@ -338,6 +325,12 @@ class AuditLog(models.Model):
 # ============================================================
 
 class ManagementMember(models.Model):
+    site_settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="management_members",
+        default=1,
+    )
     name_en = models.CharField(max_length=150)
     name_ar = models.CharField(max_length=150, blank=True)
 
@@ -389,6 +382,12 @@ class ManagementMember(models.Model):
 # ============================================================
 
 class InsurancePartner(models.Model):
+    site_settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="insurance_partners",
+        default=1,
+    )
     name_en = models.CharField(max_length=200)
     name_ar = models.CharField(max_length=200, blank=True)
 
@@ -437,6 +436,12 @@ class InsurancePartner(models.Model):
 # ============================================================
 
 class ProviderType(models.Model):
+    site_settings = models.ForeignKey(
+        SiteSettings,
+        on_delete=models.CASCADE,
+        related_name="provider_types",
+        default=1,
+    )
     name_en = models.CharField(max_length=100)
     name_ar = models.CharField(max_length=100, blank=True)
 
@@ -751,55 +756,6 @@ class TPAService(models.Model):
 
     def __str__(self):
         return self.title_en
-
-
-# ============================================================
-# CLAIM / PRE-AUTH PROCESS
-# ============================================================
-
-class MedicalProcessStep(models.Model):
-
-    PROCESS_TYPES = [
-        ("CLAIM", "Medical Claim"),
-        ("PREAUTH", "Pre-Authorization"),
-        ("REIMBURSEMENT", "Reimbursement"),
-        ("NETWORK", "Network Access"),
-        ("EMERGENCY", "Emergency"),
-    ]
-
-    process_type = models.CharField(
-        max_length=30,
-        choices=PROCESS_TYPES
-    )
-
-    step_number = models.PositiveIntegerField()
-
-    title_en = models.CharField(max_length=150)
-    title_ar = models.CharField(max_length=150, blank=True)
-
-    description_en = models.TextField(blank=True)
-    description_ar = models.TextField(blank=True)
-
-    icon = models.CharField(
-        max_length=100,
-        blank=True
-    )
-
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        ordering = [
-            "process_type",
-            "step_number"
-        ]
-
-        unique_together = (
-            "process_type",
-            "step_number"
-        )
-
-    def __str__(self):
-        return f"{self.process_type} - {self.step_number} - {self.title_en}"
 
 
 # ============================================================

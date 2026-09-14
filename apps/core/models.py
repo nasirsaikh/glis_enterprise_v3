@@ -74,8 +74,8 @@ class SiteSettings(SingletonModel, TimeStampedModel):
     social_links = models.JSONField(default=dict, blank=True)
 
     # HeroSection merged into SiteSettings
-    hero_eyebrow_en = models.CharField(max_length=120, default="Insurance service orchestration")
-    hero_eyebrow_ar = models.CharField(max_length=120, default="تنسيق خدمات التأمين")
+    hero_eyebrow_en = models.CharField(max_length=120, default="Insurance service orchestration", blank=True,null=True)
+    hero_eyebrow_ar = models.CharField(max_length=120, default="تنسيق خدمات التأمين", blank=True,null=True)
     hero_title_en = models.CharField(max_length=220, default="One clear path through every insurance request")
     hero_title_ar = models.CharField(max_length=220, default="مسار واضح لكل طلب تأميني")
     hero_subtitle_en = models.TextField(default="Submit, track and resolve service requests with secure collaboration across customers, providers and insurance teams.")

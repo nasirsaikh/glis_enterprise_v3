@@ -53,6 +53,17 @@ class TaskForm(forms.ModelForm):
                 projects = accessible_projects(user)
                 products = accessible_products(user)
                 categories = accessible_categories(user)
+
+                # A task owner may have received an admin-created task for a
+                # category outside their normal request-creation catalogue.
+                # Keep the task's current hierarchy selectable so an allowed
+                # owner can edit the occurrence without broadening access to
+                # unrelated projects/products/categories.
+                if self.instance.pk:
+                    projects = (projects | Project.objects.filter(pk=self.instance.project_id)).distinct()
+                    products = (products | Product.objects.filter(pk=self.instance.product_id)).distinct()
+                    categories = (categories | Category.objects.filter(pk=self.instance.category_id)).distinct()
+
             self.fields["project"].queryset = projects.order_by("name_en")
 
             project_id = self.data.get("project") or getattr(self.instance, "project_id", None)

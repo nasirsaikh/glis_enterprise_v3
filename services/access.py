@@ -14,7 +14,10 @@ class TicketAccessPolicy:
             return qs
         profile = getattr(user, "profile", None)
         if profile and profile.role == UserProfile.Role.GUEST:
-            return qs.filter(requester=user)
+            return qs.filter(
+                Q(requester=user)
+                | Q(task_item__tagged_users=user, task_item__is_deleted=False)
+            ).distinct()
         group_ids = user.support_groups.values_list("pk", flat=True)
         project_ids = user.ticket_projects.values_list("pk", flat=True)
         return qs.filter(

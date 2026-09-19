@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -7,7 +9,7 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 
-from apps.tickets.models import Ticket, TicketEvent
+from apps.tickets.models import SLAPolicy, Ticket, TicketEvent
 from services.ticket_workflow import notify_users
 
 from .forms import TaskForm
@@ -32,6 +34,63 @@ def _can_manage(user, task=None):
     if task is None:
         return True
     return task.owner_id == user.pk or task.created_by_id == user.pk
+
+
+def _sync_ticket_from_task(task, ticket, status):
+    hierarchy_changed = (
+        ticket.category_id != task.category_id
+        or ticket.priority != task.priority
+    )
+    ticket.subject = task.title
+    ticket.description = task.description or f"Task due {task.due_date:%d-%b-%Y}"
+    ticket.project = task.project
+    ticket.product = task.product
+    ticket.category = task.category
+    ticket.priority = task.priority
+    ticket.assignee = task.owner
+
+    if hierarchy_changed:
+        sla = (
+            SLAPolicy.objects.filter(
+                category=task.category,
+                priority=task.priority,
+                is_active=True,
+            )
+            .order_by("pk")
+            .first()
+        )
+        ticket.sla_policy = sla
+        base_time = ticket.created_at or timezone.now()
+        ticket.first_response_due_at = (
+            base_time + timedelta(minutes=sla.first_response_minutes)
+            if sla
+            else None
+        )
+        ticket.resolution_due_at = (
+            base_time + timedelta(minutes=sla.resolution_minutes)
+            if sla
+            else None
+        )
+
+    if status == Ticket.Status.RESOLVED:
+        if ticket.status != Ticket.Status.RESOLVED or not ticket.resolved_at:
+            ticket.resolved_at = timezone.now()
+        ticket.closed_at = None
+    elif status == Ticket.Status.CLOSED:
+        if ticket.status != Ticket.Status.CLOSED or not ticket.closed_at:
+            ticket.closed_at = timezone.now()
+    else:
+        ticket.resolved_at = None
+        ticket.closed_at = None
+
+    ticket.status = status
+    ticket.save()
+    ticket.assignees.set([task.owner])
+
+    default_groups = list(task.category.default_groups.filter(is_active=True))
+    if task.category.default_group and task.category.default_group not in default_groups:
+        default_groups.append(task.category.default_group)
+    ticket.groups.set(default_groups)
 
 
 def _apply_filters(request, queryset):
@@ -88,7 +147,8 @@ def task_create(request):
         task.updated_by = request.user
         task.save()
         form.save_m2m()
-        create_ticket_for_task(task, actor=request.user)
+        ticket = create_ticket_for_task(task, actor=request.user)
+        _sync_ticket_from_task(task, ticket, form.cleaned_data["status"])
         messages.success(request, f"Task created and linked to {task.ticket.reference}.")
         return render(request, "tasks/partials/mutation_success.html", _task_context(request))
     return render(request, "tasks/partials/form.html", {"form": form, "task": None})
@@ -110,24 +170,7 @@ def task_edit(request, pk):
         form.save_m2m()
         ticket = create_ticket_for_task(updated, actor=request.user)
 
-        ticket.subject = updated.title
-        ticket.description = updated.description or ticket.description
-        ticket.project = updated.project
-        ticket.product = updated.product
-        ticket.category = updated.category
-        ticket.priority = updated.priority
-        ticket.assignee = updated.owner
-        new_status = form.cleaned_data["status"]
-        if new_status == Ticket.Status.RESOLVED and ticket.status != Ticket.Status.RESOLVED:
-            ticket.resolved_at = timezone.now()
-        elif new_status == Ticket.Status.CLOSED and ticket.status != Ticket.Status.CLOSED:
-            ticket.closed_at = timezone.now()
-        elif new_status not in {Ticket.Status.RESOLVED, Ticket.Status.CLOSED}:
-            ticket.resolved_at = None
-            ticket.closed_at = None
-        ticket.status = new_status
-        ticket.save()
-        ticket.assignees.set([updated.owner])
+        _sync_ticket_from_task(updated, ticket, form.cleaned_data["status"])
 
         TicketEvent.objects.create(
             ticket=ticket,

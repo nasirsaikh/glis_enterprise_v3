@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.tickets",
+    "apps.tasks.apps.TasksConfig",
     "apps.knowledge",
     "apps.ai",
     "apps.orchestrator",

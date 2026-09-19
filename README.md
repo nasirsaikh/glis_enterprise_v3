@@ -461,6 +461,26 @@ Implemented/configured:
 
 Add reverse-proxy or application throttling for login, password reset and public submission. Adopt centralized logging, SIEM alerts, dependency scanning, backups, disaster-recovery testing and privacy impact assessment before handling real insurance data.
 
+## Task management and recurring task generation
+
+GLIS includes a ticket-integrated task workspace modeled on the CoreApp recurring-task pattern.
+
+- Administrators define **Recurring Tasks** in Django Admin with project/product/category, priority, owner, tagged users, first due date, recurrence frequency, and **create days before**.
+- Example: a monthly task due on the 1st with `create_days_before = 15` generates the next occurrence and its GLIS ticket 15 calendar days before the due date.
+- Each generated occurrence is stored as a separate **Task** and linked one-to-one with a normal GLIS **Ticket**. The task owner becomes the ticket owner/assignee while tagged users receive assignment and status-change notifications.
+- Generation is idempotent through a unique recurring-template/occurrence constraint, so repeated scheduler runs cannot duplicate the same occurrence.
+- The portal exposes `/portal/tasks/` for HTMX task CRUD and the ticket workspace has separate **Service tickets** and **Task tickets** tabs.
+- The migration seeds a Job Center Python schedule named **Recurring task generator** using handler `tasks.generate_due` and cron `5 0 * * *` (00:05 Asia/Muscat daily).
+- For diagnostics or a manual run, use `python manage.py generate_recurring_tasks`. An optional date can be supplied with `--as-of YYYY-MM-DD`.
+
+After pulling this feature, run:
+
+```bash
+python manage.py migrate
+python manage.py check
+python manage.py test apps.tasks
+```
+
 ## Testing and quality checks
 
 ```bash

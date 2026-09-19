@@ -20,6 +20,7 @@ class TicketAccessPolicy:
         return qs.filter(
             Q(requester=user) | Q(assignee=user) | Q(assignees=user) | Q(groups__in=group_ids) |
             Q(project_id__in=project_ids) | Q(approvals__approver=user) |
+            Q(task_item__tagged_users=user, task_item__is_deleted=False) |
             Q(shares__recipient=user, shares__is_active=True, shares__expires_at__gt=timezone.now())
         ).distinct()
 

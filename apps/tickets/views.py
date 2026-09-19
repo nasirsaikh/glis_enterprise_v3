@@ -122,21 +122,41 @@ def dashboard(request):
 @login_required
 def ticket_list(request):
     qs = TicketAccessPolicy.visible_queryset(request.user)
+    ticket_tab = request.GET.get("tab", "tickets")
+    if ticket_tab == "tasks":
+        qs = qs.filter(task_item__is_deleted=False).select_related("task_item")
+    else:
+        ticket_tab = "tickets"
+        qs = qs.filter(task_item__isnull=True)
+
     if request.GET.get("owner") == "me":
         qs = qs.filter(requester=request.user)
     if request.GET.get("scope") == "group":
         qs = qs.filter(groups__members=request.user).distinct()
+
     form = TicketFilterForm(request.GET)
     if form.is_valid():
-        data = form.cleaned_data        
+        data = form.cleaned_data
         if not data.get("status"):
             qs = qs.exclude(status="closed")
-        qs = _apply_ticket_filters(qs, data)        
+        qs = _apply_ticket_filters(qs, data)
+
     allowed_sorts = {"created_at", "-created_at", "priority", "-priority", "status", "resolution_due_at", "-resolution_due_at"}
     qs = qs.order_by(request.GET.get("sort") if request.GET.get("sort") in allowed_sorts else "-created_at")
     page = Paginator(qs, min(int(request.GET.get("page_size", 20)), 100)).get_page(request.GET.get("page"))
+    pagination_query = request.GET.copy()
+    pagination_query.pop("page", None)
     template = "tickets/partials/table.html" if request.htmx else "tickets/list.html"
-    return render(request, template, {"filter_form": form, "page_obj": page})
+    return render(
+        request,
+        template,
+        {
+            "filter_form": form,
+            "page_obj": page,
+            "ticket_tab": ticket_tab,
+            "pagination_query": pagination_query.urlencode(),
+        },
+    )
 
 
 @login_required
@@ -608,6 +628,11 @@ def download_attachment(request, pk):
 @login_required
 def export_tickets(request):
     qs = TicketAccessPolicy.visible_queryset(request.user)
+    ticket_tab = request.GET.get("tab")
+    if ticket_tab == "tasks":
+        qs = qs.filter(task_item__is_deleted=False)
+    elif ticket_tab == "tickets":
+        qs = qs.filter(task_item__isnull=True)
     if request.GET.get("owner") == "me":
         qs = qs.filter(requester=request.user)
     if request.GET.get("scope") == "group":

@@ -4,6 +4,7 @@ from types import MethodType
 MODEL_ORDER = {
     "orchestrator": ["DataSource", "AIDomain", "BusinessRule", "TablePolicy", "ColumnPolicy", "ColumnRolePolicy", "RowAccessPolicy", "SuggestedPrompt", "TrainingPrompt", "TrainingCandidate", "AnalysisSession", "QueryAudit", "VannaSettings"],
     "tickets": ["Project", "Product", "Category", "SupportGroup", "ApprovalWorkflow", "ApprovalStep", "SLAPolicy", "SLAEscalationRule", "DynamicForm", "DynamicFormVersion", "DynamicFieldSchema", "FormDataSource", "Ticket", "TicketApproval", "TicketEscalation", "TicketAttachment", "TicketComment", "TicketEvent", "TicketShare", "Notification", "TicketDynamicData", "RelatedTicket", "SavedTicketView"],
+    "tasks": ["RecurringTask", "Task"],
     "accounts": ["UserProfile", "AccountPolicy"],
     "ai": ["AISettings", "AIInteraction"],
     "core": ["ModuleRegistry", "ConfigurationVersion", "AuditLog"],

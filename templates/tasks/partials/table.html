@@ -1,0 +1,91 @@
+{% load i18n %}
+<section class="panel table-panel">
+  <div class="panel-heading">
+    <div>
+      <h2>{% blocktranslate count count=tasks|length %}{{ count }} task{% plural %}{{ count }} tasks{% endblocktranslate %}</h2>
+      <p>{% translate "Recurring occurrences and manually created tasks in one workspace." %}</p>
+    </div>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'portal:ticket_list' %}?tab=tasks">
+      <i class="bi bi-ticket-perforated me-1"></i>{% translate "Task tickets" %}
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table portal-table table-hover table-sm align-middle">
+      <thead>
+        <tr>
+          <th>{% translate "Task" %}</th>
+          <th>{% translate "Owner / watchers" %}</th>
+          <th>{% translate "Due" %}</th>
+          <th>{% translate "Source" %}</th>
+          <th>{% translate "Priority" %}</th>
+          <th>{% translate "Status" %}</th>
+          <th>{% translate "Ticket" %}</th>
+          <th><span class="visually-hidden">{% translate "Actions" %}</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for task in tasks %}
+        <tr>
+          <td>
+            <strong>{{ task.title }}</strong>
+            <small class="d-block text-muted">{{ task.project.name_en }} · {{ task.category.name_en }}</small>
+          </td>
+          <td>
+            <span>{{ task.owner.get_full_name|default:task.owner.email }}</span>
+            <small class="d-block text-muted">
+              {% for watcher in task.tagged_users.all %}
+                {{ watcher.get_full_name|default:watcher.email }}{% if not forloop.last %}, {% endif %}
+              {% empty %}{% translate "No tagged users" %}{% endfor %}
+            </small>
+          </td>
+          <td>
+            <span{% if task.due_date < today and task.status != "resolved" and task.status != "closed" %} class="text-danger fw-semibold"{% endif %}>{{ task.due_date|date:"d M Y" }}</span>
+          </td>
+          <td>
+            {% if task.recurring_task_id %}
+              <span class="badge text-bg-light"><i class="bi bi-arrow-repeat me-1"></i>{% translate "Recurring" %}</span>
+            {% else %}
+              <span class="badge text-bg-light">{% translate "Manual" %}</span>
+            {% endif %}
+          </td>
+          <td><span class="priority-chip priority-{{ task.priority }}">{{ task.get_priority_display }}</span></td>
+          <td><span class="status-chip status-{{ task.status }}">{{ task.status_display }}</span></td>
+          <td>
+            {% if task.ticket_id %}
+              <a href="{% url 'portal:ticket_detail' task.ticket.reference %}">{{ task.ticket.reference }}</a>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            <div class="d-flex justify-content-end gap-1">
+              <button class="btn btn-icon btn-sm" type="button"
+                      hx-get="{% url 'tasks:edit' task.pk %}"
+                      hx-target="#task-form-shell"
+                      hx-swap="innerHTML"
+                      aria-label="{% translate 'Edit task' %}">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-icon btn-sm text-danger" type="button"
+                      hx-post="{% url 'tasks:delete' task.pk %}"
+                      hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                      hx-confirm="{% translate 'Remove this task from the active list and close its linked ticket?' %}"
+                      hx-target="#task-table"
+                      hx-swap="innerHTML"
+                      aria-label="{% translate 'Delete task' %}">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">
+          <div class="empty-state">
+            <span class="empty-icon"><i class="bi bi-list-task"></i></span>
+            <strong>{% translate "No matching tasks" %}</strong>
+            <p>{% translate "Adjust the filters or create a new task." %}</p>
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

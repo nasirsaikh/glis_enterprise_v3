@@ -1,0 +1,58 @@
+{% extends "base_portal.html" %}{% load i18n %}
+{% block title %}{% translate "Tasks" %}{% endblock %}
+{% block content %}
+<div class="page-heading d-flex flex-wrap justify-content-between align-items-end gap-3">
+  <div>
+    <span class="page-eyebrow">{% translate "Task workspace" %}</span>
+    <h1>{% translate "Tasks" %}</h1>
+    <p>{% translate "Manage manual and recurring task occurrences. Every task is linked to a GLIS ticket." %}</p>
+  </div>
+  <button class="btn btn-primary" type="button"
+          hx-get="{% url 'tasks:create' %}"
+          hx-target="#task-form-shell"
+          hx-swap="innerHTML">
+    <i class="bi bi-plus-lg me-2"></i>{% translate "New task" %}
+  </button>
+</div>
+
+<section class="panel filter-panel">
+  <form method="get"
+        hx-get="{% url 'tasks:list' %}"
+        hx-target="#task-table"
+        hx-trigger="change delay:150ms, submit"
+        hx-push-url="true">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label" for="task-q">{% translate "Search" %}</label>
+        <input id="task-q" class="form-control" type="search" name="q" value="{{ query }}"
+               placeholder="{% translate 'Task, ticket reference or owner' %}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="task-status">{% translate "Status" %}</label>
+        <select id="task-status" class="form-select" name="status">
+          <option value="">{% translate "All statuses" %}</option>
+          {% for value,label in status_choices %}
+            <option value="{{ value }}"{% if current_status == value %} selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="task-source">{% translate "Source" %}</label>
+        <select id="task-source" class="form-select" name="source">
+          <option value="">{% translate "All tasks" %}</option>
+          <option value="recurring"{% if current_source == "recurring" %} selected{% endif %}>{% translate "Recurring" %}</option>
+          <option value="manual"{% if current_source == "manual" %} selected{% endif %}>{% translate "Manual" %}</option>
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button class="btn btn-soft w-100" type="submit" aria-label="{% translate 'Apply filters' %}">
+          <i class="bi bi-funnel"></i>
+        </button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<div id="task-form-shell"></div>
+<div id="task-table">{% include "tasks/partials/table.html" %}</div>
+{% endblock %}

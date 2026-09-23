@@ -67,7 +67,7 @@ linear-gradient(90deg,rgba(82,229,143,.05) 1px,transparent 1px);background-size:
 .glis-x3d-progress{position:fixed;left:24px;top:50%;transform:translateY(-50%);z-index:40;display:flex;flex-direction:column;gap:10px;opacity:0;transition:opacity .3s ease}
 .glis-x3d-progress.visible{opacity:1}
 [dir="rtl"] .glis-x3d-progress{left:auto;right:24px}
-.glis-x3d-dot{display:flex;align-items:center;gap:10px;color:var(--x-muted);font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;cursor:pointer}
+.glis-x3d-dot{display:flex;align-items:center;gap:10px;color:var(--x-muted);font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;background:none;border:0;padding:4px 0;text-align:left}
 .glis-x3d-dot:before{content:"";width:7px;height:7px;border-radius:50%;border:1px solid currentColor;background:transparent;transition:.3s}
 .glis-x3d-dot span{opacity:0;transform:translateX(-5px);transition:.3s}
 .glis-x3d-dot.active{color:var(--x-green)}
@@ -505,10 +505,9 @@ linear-gradient(90deg,rgba(82,229,143,.05) 1px,transparent 1px);background-size:
 
   function initMotion(){
     if(reduced)return;
-    return Promise.all([
-      loadScript("https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js",function(){return !!window.gsap}),
-      loadScript("https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js",function(){return !!window.ScrollTrigger})
-    ]).then(function(){
+    return loadScript("https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js",function(){return !!window.gsap})
+    .then(function(){return loadScript("https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js",function(){return !!window.ScrollTrigger})})
+    .then(function(){
       if(!window.gsap||!window.ScrollTrigger)return;
       window.gsap.registerPlugin(window.ScrollTrigger);
       document.querySelectorAll(".glis-scene-copy").forEach(function(copy){

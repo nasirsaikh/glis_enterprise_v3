@@ -42,7 +42,7 @@ class TaskForm(forms.ModelForm):
         User = get_user_model()
         self.fields["owner"].queryset = User.objects.filter(is_active=True).order_by("first_name", "last_name", "email")
         self.fields["tagged_users"].queryset = self.fields["owner"].queryset
-        self.fields["status"].widget.attrs["class"] = "form-select"
+        self.fields["status"].widget.attrs["class"] = "tw:d-select tw:d-select-bordered tw:w-full"
 
         if user and user.is_authenticated:
             if user.is_staff or user.is_superuser:

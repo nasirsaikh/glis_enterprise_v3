@@ -114,13 +114,13 @@
         <article class="tw:d-card glis-tilt glis-glass tw:group tw:min-h-[20rem] tw:border tw:border-base-300 tw:bg-base-100/75 tw:shadow-xl tw:transition" data-tilt data-reveal>
           <div class="tw:d-card-body tw:relative tw:p-7">
             <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
-              <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-primary/12 tw:text-2xl tw:text-primary tw:transition group-tw:hover:-rotate-6 group-tw:hover:scale-110"><i class="bi {{ service.icon|default:'bi-stars' }}"></i></span>
+              <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-primary/12 tw:text-2xl tw:text-primary tw:transition tw:group-hover:-rotate-6 tw:group-hover:scale-110"><i class="bi {{ service.icon|default:'bi-stars' }}"></i></span>
               {% if service.category %}<span class="tw:d-badge tw:d-badge-outline">{% if LANGUAGE_CODE == "ar" %}{{ service.category.name_ar|default:service.category.name_en }}{% else %}{{ service.category.name_en }}{% endif %}</span>{% endif %}
             </div>
             <h3 class="tw:d-card-title tw:mt-6 tw:text-2xl tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3>
             <p class="tw:mt-2 tw:leading-7 tw:text-base-content/60">{% if LANGUAGE_CODE == "ar" %}{{ service.summary_ar|default:service.summary_en }}{% else %}{{ service.summary_en }}{% endif %}</p>
             <div class="tw:d-card-actions tw:mt-auto tw:pt-6">
-              <a href="{{ service.link|default:'#' }}" class="tw:d-btn tw:d-btn-ghost tw:rounded-full tw:px-0 tw:text-primary tw:hover:bg-transparent">{% translate "Explore service" %}<i class="bi bi-arrow-right tw:transition group-tw:hover:translate-x-1"></i></a>
+              <a href="{{ service.link|default:'#' }}" class="tw:d-btn tw:d-btn-ghost tw:rounded-full tw:px-0 tw:text-primary tw:hover:bg-transparent">{% translate "Explore service" %}<i class="bi bi-arrow-right tw:transition tw:group-hover:translate-x-1"></i></a>
             </div>
           </div>
         </article>
@@ -165,7 +165,7 @@
       <div class="glis-hover-gallery tw:mt-12 tw:flex tw:flex-col tw:gap-4 tw:md:min-h-[31rem] tw:md:flex-row">
         {% for feature in features %}
         <article class="tw:group tw:relative tw:min-h-[18rem] tw:overflow-hidden tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-gradient-to-br tw:from-primary/12 tw:via-base-100 tw:to-secondary/10 tw:p-7 tw:shadow-xl" data-reveal>
-          <div class="tw:absolute tw:-end-10 tw:-top-10 tw:h-36 tw:w-36 tw:rounded-full tw:bg-primary/15 tw:blur-3xl tw:transition group-tw:hover:scale-150"></div>
+          <div class="tw:absolute tw:-end-10 tw:-top-10 tw:h-36 tw:w-36 tw:rounded-full tw:bg-primary/15 tw:blur-3xl tw:transition tw:group-hover:scale-150"></div>
           <div class="tw:relative tw:flex tw:h-full tw:flex-col">
             <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-base-100 tw:text-2xl tw:text-primary tw:shadow-lg"><i class="bi {{ feature.icon|default:'bi-stars' }}"></i></span>
             <div class="tw:mt-auto">

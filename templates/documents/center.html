@@ -1,21 +1,17 @@
-{% extends "base_portal.html" %}
-{% load i18n %}
-{% block title %}{% translate "Document Center" %}{% endblock %}
+{% extends "base_portal.html" %}{% load i18n %}{% block title %}{% translate "Document Center" %}{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-  <div><span class="text-uppercase small text-muted">{% translate "Enterprise document management" %}</span><h1 class="h3 mb-1">{% translate "Document Center" %}</h1><p class="text-muted mb-0">{% translate "Search, upload and access documents governed by Mayan EDMS without leaving GLIS." %}</p></div>
-  {% if can_open_mayan %}<a class="btn btn-outline-secondary" href="{{ mayan_admin_url }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-2"></i>{% translate "Open Mayan EDMS" %}</a>{% endif %}
-</div>
-{% if mayan_error %}<div class="alert alert-warning"><strong>{% translate "Document service:" %}</strong> {{ mayan_error }}</div>{% endif %}
-<div class="row g-3">
-  <div class="col-lg-8">
-    <section class="panel p-3 p-lg-4">
-      <form hx-get="{% url 'documents:center' %}" hx-target="#document-results" hx-push-url="true" class="input-group mb-4"><span class="input-group-text"><i class="bi bi-search"></i></span><input class="form-control" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search document name, metadata, claim, policy, ticket or case reference' %}"><button class="btn btn-primary">{% translate "Search" %}</button></form>
+<div class="tw:space-y-5">
+  <section class="glis-aura tw:flex tw:flex-col tw:gap-5 tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-base-100 tw:p-6 tw:shadow-xl tw:lg:flex-row tw:lg:items-end tw:lg:justify-between" data-aura data-reveal>
+    <div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-3"><i class="bi bi-folder2-open tw:me-1"></i>{% translate "Enterprise document management" %}</span><h1 class="tw:text-3xl tw:font-black tw:tracking-[-.04em] tw:sm:text-4xl">{% translate "Document Center" %}</h1><p class="tw:mt-2 tw:text-base-content/55">{% translate "Search, upload and access documents governed by Mayan EDMS without leaving GLIS." %}</p></div>
+    {% if can_open_mayan %}<a class="tw:d-btn tw:d-btn-outline tw:rounded-full" href="{{ mayan_admin_url }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i>{% translate "Open Mayan EDMS" %}</a>{% endif %}
+  </section>
+  {% if mayan_error %}<div class="tw:d-alert tw:d-alert-warning"><i class="bi bi-exclamation-triangle"></i><span><strong>{% translate "Document service:" %}</strong> {{ mayan_error }}</span></div>{% endif %}
+  <div class="tw:grid tw:gap-5 tw:xl:grid-cols-[1.45fr_.55fr]">
+    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" data-reveal><div class="tw:d-card-body tw:p-5 tw:sm:p-6">
+      <form hx-get="{% url 'documents:center' %}" hx-target="#document-results" hx-push-url="true" class="tw:d-join tw:mb-5 tw:w-full"><label class="tw:d-input tw:d-input-bordered tw:d-join-item tw:flex tw:flex-1 tw:items-center tw:gap-2"><i class="bi bi-search tw:text-base-content/35"></i><input class="tw:grow" type="search" name="q" value="{{ query }}" placeholder="{% translate 'Search document name, metadata, claim, policy, ticket or case reference' %}"></label><button class="tw:d-btn tw:d-btn-primary tw:d-join-item">{% translate "Search" %}</button></form>
       <div id="document-results">{% include "documents/partials/results.html" %}</div>
-    </section>
-  </div>
-  <div class="col-lg-4">
-    <section class="panel p-3 p-lg-4"><h2 class="h6"><i class="bi bi-cloud-arrow-up me-2"></i>{% translate "Upload document" %}</h2><form method="post" enctype="multipart/form-data" action="{% url 'documents:upload' %}">{% csrf_token %}<div class="mb-3"><label class="form-label">{% translate "Title" %}</label><input class="form-control" name="title"></div><div class="mb-3"><label class="form-label">{% translate "Category" %}</label><select class="form-select" name="category"><option value="general">General</option><option value="ticket">Ticket</option><option value="claim">Claim</option><option value="policy">Policy</option><option value="legal">Legal</option><option value="knowledge">Knowledge</option></select></div><div class="mb-3"><label class="form-label">{% translate "File" %}</label><input class="form-control" type="file" name="file" required></div><button class="btn btn-primary w-100"><i class="bi bi-upload me-2"></i>{% translate "Upload to EDMS" %}</button></form></section>
+    </div></section>
+    <section class="tw:d-card glis-tilt tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl" data-tilt data-reveal><div class="tw:d-card-body tw:p-5 tw:sm:p-6"><span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-primary/12 tw:text-primary"><i class="bi bi-cloud-arrow-up tw:text-xl"></i></span><h2 class="tw:d-card-title tw:mt-3">{% translate "Upload document" %}</h2><form class="tw:mt-3 tw:space-y-4" method="post" enctype="multipart/form-data" action="{% url 'documents:upload' %}">{% csrf_token %}<label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Title" %}</span><input class="tw:d-input tw:d-input-bordered tw:w-full" name="title"></label><label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Category" %}</span><select class="tw:d-select tw:d-select-bordered tw:w-full" name="category"><option value="general">General</option><option value="ticket">Ticket</option><option value="claim">Claim</option><option value="policy">Policy</option><option value="legal">Legal</option><option value="knowledge">Knowledge</option></select></label><label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "File" %}</span><input class="tw:d-file-input tw:d-file-input-bordered tw:w-full" type="file" name="file" required></label><button class="tw:d-btn tw:d-btn-primary tw:w-full tw:rounded-full"><i class="bi bi-upload"></i>{% translate "Upload to EDMS" %}</button></form></div></section>
   </div>
 </div>
 {% endblock %}

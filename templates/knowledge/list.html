@@ -1,42 +1,12 @@
 {% extends 'base_public.html' %}{% load i18n %}{% get_current_language as LANGUAGE_CODE %}
-{% block title %}{% translate "Knowledge Base" %} · GLIS{% endblock %}{% block content %}<header class="knowledge-hero">
-    <div class="container text-center">
-        <span class="section-kicker">{% translate "GLIS Knowledge" %}</span>
-        <h3 style="font-size: 50px;" class="section-kicker text-center">{% translate "Clear guidance for your next step" %}</h3>
-        <h3 style="font-size: 20px;" class="section-kicker text-center">
-            {% translate "Find practical answers for claims, policies, payments, providers and service requests." %}
-        </h3>
-        <form class="knowledge-search" method="get"><i class="bi bi-search"></i><input class="form-control" name="q"
-                value="{{ term }}" placeholder="{% translate 'Search guides and answers…' %}"><button
-                class="btn btn-primary">{% translate "Search" %}</button>
-        </form>
-    </div>
-</header>
-<section class="section-space">
-    <div class="container">
-        <div class="category-pills"><a class="{% if not request.GET.category %}active{% endif %}"
-                href="{% url 'knowledge:list' %}">{% translate "All topics" %}</a>{% for category in categories %}<a
-                class="{% if request.GET.category == category.slug %}active{% endif %}"
-                href="?category={{ category.slug }}"><i class="bi {{ category.icon }}"></i>
-                {% if LANGUAGE_CODE == 'ar' %}{{ category.name_ar|default:category.name_en }}{% else %}
-                {{ category.name_en }}{% endif %}</a>{% endfor %}</div>
-        <div class="row g-4 mt-3">{% for article in articles %}<div class="col-md-6 col-lg-4">
-                <article class="article-card h-100"><span>{% if LANGUAGE_CODE == 'ar' %}
-                    {{ article.category.name_ar|default:article.category.name_en }}{% else %}
-                    {{ article.category.name_en }}{% endif %}</span>
-                    <h2><a href="{{ article.get_absolute_url }}">{% if LANGUAGE_CODE == 'ar' %}
-                        {{article.title_ar|default:article.title_en }}{% else %}{{ article.title_en }}{% endif %}</a>
-                    </h2>
-                    <p>{% if LANGUAGE_CODE == 'ar' %}{{ article.summary_ar|default:article.summary_en }}{% else %}
-                        {{ article.summary_en }}{% endif %}</p>
-                    <div class="article-meta"><small><i class="bi bi-clock"></i>{% translate " 4 min read" %}</small>
-                        {% if article.is_featured %}<small><i class="bi bi-star-fill text-warning"></i>{% translate " Featured" %}</small>{% endif %}</div>
-                </article>
-            </div>{% empty %}<div class="col-12">
-                <div class="empty-state"><span class="empty-icon"><i class="bi bi-journal-x"></i></span><strong>{% translate "No articles found" %}</strong>
-                    <p>{% translate "Try a broader search or choose another topic." %}</p>
-                </div>
-            </div>{% endfor %}</div>
-    </div>
+{% block title %}{% translate "Knowledge Base" %} · GLIS{% endblock %}
+{% block content %}
+<section class="glis-aura tw:relative tw:border-b tw:border-base-300 tw:py-24" data-aura>
+  <div class="tw:mx-auto tw:max-w-5xl tw:px-6 tw:text-center" data-reveal><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-journal-richtext tw:me-1"></i>{% translate "GLIS Knowledge" %}</span><h1 class="tw:text-5xl tw:font-black tw:tracking-[-.05em] tw:sm:text-6xl">{% translate "Clear guidance for your next step" %}</h1><p class="tw:mx-auto tw:mt-5 tw:max-w-2xl tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Find practical answers for claims, policies, payments, providers and service requests." %}</p>
+  <form class="tw:d-join tw:mx-auto tw:mt-8 tw:w-full tw:max-w-2xl" method="get"><label class="tw:d-input tw:d-input-bordered tw:d-input-lg tw:d-join-item tw:flex tw:flex-1 tw:items-center tw:gap-2 tw:bg-base-100"><i class="bi bi-search tw:text-base-content/35"></i><input class="tw:grow" name="q" value="{{ term }}" placeholder="{% translate 'Search guides and answers…' %}"></label><button class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:d-join-item">{% translate "Search" %}</button></form></div>
 </section>
+<section class="tw:py-20"><div class="tw:mx-auto tw:max-w-7xl tw:px-6">
+  <div class="tw:flex tw:flex-wrap tw:justify-center tw:gap-2" data-reveal><a class="tw:d-btn tw:d-btn-sm tw:rounded-full {% if not request.GET.category %}tw:d-btn-primary{% else %}tw:d-btn-ghost{% endif %}" href="{% url 'knowledge:list' %}">{% translate "All topics" %}</a>{% for category in categories %}<a class="tw:d-btn tw:d-btn-sm tw:rounded-full {% if request.GET.category == category.slug %}tw:d-btn-primary{% else %}tw:d-btn-ghost{% endif %}" href="?category={{ category.slug }}"><i class="bi {{ category.icon }}"></i>{% if LANGUAGE_CODE == 'ar' %}{{ category.name_ar|default:category.name_en }}{% else %}{{ category.name_en }}{% endif %}</a>{% endfor %}</div>
+  <div class="tw:mt-10 tw:grid tw:gap-5 tw:md:grid-cols-2 tw:xl:grid-cols-3">{% for article in articles %}<a class="tw:d-hover-3d tw:no-underline" href="{{ article.get_absolute_url }}" data-reveal><article class="tw:d-card tw:h-full tw:min-h-72 tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl"><div class="tw:d-card-body tw:p-7"><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:w-fit">{% if LANGUAGE_CODE == 'ar' %}{{ article.category.name_ar|default:article.category.name_en }}{% else %}{{ article.category.name_en }}{% endif %}</span><h2 class="tw:d-card-title tw:mt-4 tw:text-2xl tw:font-black tw:text-base-content">{% if LANGUAGE_CODE == 'ar' %}{{ article.title_ar|default:article.title_en }}{% else %}{{ article.title_en }}{% endif %}</h2><p class="tw:leading-7 tw:text-base-content/55">{% if LANGUAGE_CODE == 'ar' %}{{ article.summary_ar|default:article.summary_en }}{% else %}{{ article.summary_en }}{% endif %}</p><div class="tw:mt-auto tw:flex tw:items-center tw:gap-3 tw:pt-5 tw:text-xs tw:text-base-content/45"><span><i class="bi bi-clock tw:me-1"></i>{% translate "4 min read" %}</span>{% if article.is_featured %}<span class="tw:text-warning"><i class="bi bi-star-fill"></i> {% translate "Featured" %}</span>{% endif %}</div></div></article><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></a>{% empty %}<div class="tw:md:col-span-2 tw:xl:col-span-3 tw:flex tw:flex-col tw:items-center tw:gap-3 tw:py-16 tw:text-base-content/45"><i class="bi bi-journal-x tw:text-4xl"></i><strong class="tw:text-base-content">{% translate "No articles found" %}</strong><p>{% translate "Try a broader search or choose another topic." %}</p></div>{% endfor %}</div>
+</div></section>
 {% endblock %}

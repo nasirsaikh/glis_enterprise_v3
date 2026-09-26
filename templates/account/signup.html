@@ -1,80 +1,19 @@
-{% extends 'base_public.html' %}
-{% load i18n socialaccount %}
-
+{% extends 'base_public.html' %}{% load i18n socialaccount %}
 {% block title %}{% translate "Create account" %} · GLIS{% endblock %}
-
 {% block content %}
-<section class="auth-section simple">
-    <div class="container">
-        <div class="auth-card mx-auto">
-
-            <div class="d-flex justify-content-center align-items-center hero-wrapper">
-                <img src="/api/v1/hero-image/1/" alt="GLIS" style="height:50px;width:100px;object-fit:contain;">
-            </div>
-
-            <div class="auth-card-heading text-center">
-                <div class="mt-2">
-                    <h1 class="h2">{% translate "Create your GLIS account" %}</h1>
-                    <p class="text-body-secondary mb-0">{% translate "Create an account to submit and track your requests." %}</p>
-                </div>
-            </div>
-
-            <div class="d-grid gap-2 mt-4">
-                <form method="post" action="/accounts/microsoft/login/">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-secondary btn-lg w-100 d-flex align-items-center justify-content-center gap-2">
-                        <i class="bi bi-microsoft"></i>
-                        <span>{% translate "Continue with Microsoft" %}</span>
-                    </button>
-                </form>
-
-                <form method="post" action="/accounts/google/login/">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-secondary btn-lg w-100 d-flex align-items-center justify-content-center gap-2">
-                        <i class="bi bi-google"></i>
-                        <span>{% translate "Continue with Google" %}</span>
-                    </button>
-                </form>
-            </div>
-
-            <div class="d-flex align-items-center gap-3 my-4">
-                <hr class="flex-grow-1 m-0">
-                <span class="text-body-secondary small">{% translate "OR" %}</span>
-                <hr class="flex-grow-1 m-0">
-            </div>
-
-            <form method="post" action="{% url 'account_signup' %}">
-                {% csrf_token %}
-
-                {{ form.non_field_errors }}
-
-                {% for field in form %}
-                <div class="mb-3">
-                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-
-                    <input class="form-control form-control-lg{% if field.errors %} is-invalid{% endif %}" id="{{ field.id_for_label }}" name="{{ field.html_name }}" type="{{ field.field.widget.input_type|default:'text' }}" value="{% if field.value and 'password' not in field.name %}{{ field.value }}{% endif %}" {% if field.field.required %}required{% endif %}>
-
-                    {% if field.help_text %}
-                    <small class="form-hint text-body-secondary">{{ field.help_text|safe }}</small>
-                    {% endif %}
-
-                    {% if field.errors %}
-                    <div class="invalid-feedback d-block">{{ field.errors|striptags }}</div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-
-                <button type="submit" class="btn btn-primary btn-lg w-100">
-                    <i class="bi bi-person-plus me-2"></i>{% translate "Create account" %}
-                </button>
-            </form>
-
-            <p class="auth-footer text-center mt-4 mb-0">
-                {% translate "Already registered?" %}
-                <a href="{% url 'account_login' %}" class="fw-semibold">{% translate "Sign in" %}</a>
-            </p>
-
-        </div>
-    </div>
+<section class="glis-aura tw:py-16 tw:sm:py-20" data-aura>
+  <div class="tw:mx-auto tw:max-w-xl tw:px-6">
+    <div class="tw:d-card glis-glass tw:border tw:border-base-300 tw:shadow-2xl" data-reveal><div class="tw:d-card-body tw:p-7 tw:sm:p-9">
+      <div class="tw:text-center"><span class="tw:mx-auto tw:grid tw:h-16 tw:w-32 tw:place-items-center tw:rounded-2xl tw:bg-base-100 tw:shadow-sm"><img class="tw:max-h-11 tw:max-w-28 tw:object-contain" src="/api/v1/site-logo/" alt="GLIS"></span><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mt-5">{% translate "Secure registration" %}</span><h1 class="tw:mt-3 tw:text-3xl tw:font-black tw:tracking-[-.04em]">{% translate "Create your GLIS account" %}</h1><p class="tw:mt-2 tw:text-base-content/50">{% translate "Create an account to submit and track your requests." %}</p></div>
+      <div class="tw:mt-6 tw:grid tw:gap-2"><form method="post" action="/accounts/microsoft/login/">{% csrf_token %}<button type="submit" class="tw:d-btn tw:d-btn-outline tw:d-btn-lg tw:w-full"><i class="bi bi-microsoft"></i>{% translate "Continue with Microsoft" %}</button></form><form method="post" action="/accounts/google/login/">{% csrf_token %}<button type="submit" class="tw:d-btn tw:d-btn-outline tw:d-btn-lg tw:w-full"><i class="bi bi-google"></i>{% translate "Continue with Google" %}</button></form></div>
+      <div class="tw:d-divider tw:my-6">{% translate "OR" %}</div>
+      <form class="tw:space-y-4" method="post" action="{% url 'account_signup' %}">{% csrf_token %}
+        {% if form.non_field_errors %}<div class="tw:d-alert tw:d-alert-error">{{ form.non_field_errors }}</div>{% endif %}
+        {% for field in form %}<label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{{ field.label }}</span><input class="tw:d-input tw:d-input-bordered tw:w-full {% if field.errors %}tw:d-input-error{% endif %}" id="{{ field.id_for_label }}" name="{{ field.html_name }}" type="{{ field.field.widget.input_type|default:'text' }}" value="{% if field.value and 'password' not in field.name %}{{ field.value }}{% endif %}" {% if field.field.required %}required{% endif %}>{% if field.help_text %}<span class="tw:d-label tw:text-xs tw:text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}{% if field.errors %}<span class="tw:text-xs tw:text-error">{{ field.errors|striptags }}</span>{% endif %}</label>{% endfor %}
+        <button type="submit" class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:w-full tw:rounded-full"><i class="bi bi-person-plus"></i>{% translate "Create account" %}</button>
+      </form>
+      <p class="tw:mt-6 tw:text-center tw:text-sm tw:text-base-content/50">{% translate "Already registered?" %} <a href="{% url 'account_login' %}" class="tw:link tw:link-primary tw:font-bold">{% translate "Sign in" %}</a></p>
+    </div></div>
+  </div>
 </section>
 {% endblock %}

@@ -1,315 +1,142 @@
 {% load i18n %}
-
 <div id="comment-form-container">
+  <div id="comment-form-errors">{% include "tickets/partials/comment_errors.html" %}</div>
+  <form id="ticket-comment-form" class="tw:space-y-4" method="post" enctype="multipart/form-data"
+        hx-post="{% url 'portal:add_comment' ticket.reference %}" hx-encoding="multipart/form-data"
+        hx-target="#comment-list" hx-swap="beforeend" hx-disabled-elt="#comment-submit-button"
+        hx-indicator="#comment-submit-spinner">
+    {% csrf_token %}
+    <label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Message" %} *</span>{{ comment_form.body }}</label>
 
-    <div id="comment-form-errors">
-        {% include "tickets/partials/comment_errors.html" %}
+    {% if comment_form.is_internal %}
+    <label class="tw:flex tw:items-start tw:gap-3 tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-200/45 tw:p-4">
+      {{ comment_form.is_internal }}
+      <span><strong class="tw:block tw:text-sm">{% translate "Internal note" %}</strong><small class="tw:text-base-content/45">{% translate "Internal notes are visible only to authorized staff." %}</small></span>
+    </label>
+    {% endif %}
+
+    {% if ticket.category.comment_attachment_required %}
+    <div>
+      <span class="tw:mb-2 tw:block tw:text-sm tw:font-semibold"><i class="bi bi-paperclip tw:me-1"></i>{% translate "Documents" %} *</span>
+      <div id="comment-dropzone" data-dropzone class="tw:cursor-pointer tw:rounded-[1.4rem] tw:border tw:border-dashed tw:border-base-300 tw:bg-base-200/35 tw:p-6 tw:text-center tw:transition tw:hover:border-primary tw:hover:bg-primary/5" role="button" tabindex="0">
+        <i class="bi bi-cloud-arrow-up tw:mb-2 tw:block tw:text-3xl tw:text-primary"></i>
+        <strong class="tw:block">{% translate "Drag & drop documents here" %}</strong>
+        <span class="tw:mt-1 tw:block tw:text-sm tw:text-base-content/45">{% translate "or click to select documents" %}</span>
+        <div class="tw:mt-3 tw:text-xs tw:leading-5 tw:text-base-content/40">{% translate "Maximum" %} {{ ticket.category.comment_attachment_max_size_mb }} MB {% translate "per file" %} · {% translate "Maximum" %} {{ ticket.category.comment_attachment_max_count }} {% translate "files" %}<br>{% translate "Allowed" %}: {{ ticket.category.comment_attachment_extensions }}</div>
+        <input id="comment-attachments" type="file" name="attachments" class="tw:hidden" multiple>
+      </div>
+      <div id="comment-selected-files" class="tw:mt-3 tw:space-y-2"></div>
     </div>
+    {% else %}
+    <div class="tw:d-alert"><i class="bi bi-lock"></i><span class="tw:text-sm">{% translate "File upload is disabled for this category." %}</span></div>
+    {% endif %}
 
-    <form id="ticket-comment-form" method="post" enctype="multipart/form-data" hx-post="{% url 'portal:add_comment' ticket.reference %}" hx-encoding="multipart/form-data" hx-target="#comment-list" hx-swap="beforeend" hx-disabled-elt="#comment-submit-button" hx-indicator="#comment-submit-spinner">
-        {% csrf_token %}
-
-        <div class="mb-3">
-            <label class="form-label" for="{{ comment_form.body.id_for_label }}">{% translate "Message" %} <span>*</span></label>
-            {{ comment_form.body }}
-        </div>
-
-        {% if comment_form.is_internal %}
-            <div class="form-check mb-3">
-                {{ comment_form.is_internal }}
-                <label class="form-check-label" for="{{ comment_form.is_internal.id_for_label }}">{% translate "Internal note" %}</label>
-                <div class="form-text">{% translate "Internal notes are visible only to authorized staff." %}</div>
-            </div>
-        {% endif %}
-
-        {% if ticket.category.comment_attachment_required %}
-
-            <div class="mb-3">
-                <label class="form-label"><i class="bi bi-paperclip me-1"></i>{% translate "Documents" %} <span>*</span></label>
-
-                <div id="comment-dropzone" class="border rounded p-4 text-center" role="button" tabindex="0">
-                    <i class="bi bi-cloud-arrow-up fs-2 d-block mb-2"></i>
-
-                    <strong class="d-block">{% translate "Drag & drop documents here" %}</strong>
-
-                    <span class="text-muted small">{% translate "or click to select documents" %}</span>
-
-                    <div class="form-text mt-2">
-                        {% translate "Maximum" %} {{ ticket.category.comment_attachment_max_size_mb }} MB {% translate "per file" %}
-                        ·
-                        {% translate "Maximum" %} {{ ticket.category.comment_attachment_max_count }} {% translate "files" %}
-                        <br>
-                        {% translate "Allowed" %}: {{ ticket.category.comment_attachment_extensions }}
-                    </div>
-
-                    <input id="comment-attachments" type="file" name="attachments" class="d-none" multiple>
-                </div>
-
-                <div id="comment-selected-files" class="attachment-list mt-3"></div>
-            </div>
-
-        {% else %}
-
-            <div class="mb-3">
-                <div class="border rounded p-3 text-muted small">
-                    <i class="bi bi-lock me-1"></i>
-                    {% translate "File upload is disabled for this category." %}
-                </div>
-            </div>
-
-        {% endif %}
-
-        <div class="col-md-12 mb-2">
-            <label class="form-label" for="{{ comment_form.status.id_for_label }}">
-            {% translate "Status" %}
-            </label>
-            {{ comment_form.status }}
-        </div>
-        
-        <div class="d-flex justify-content-end">
-            <button id="comment-submit-button" class="btn btn-primary" type="submit">
-                <span id="comment-submit-spinner" class="htmx-indicator spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                <i class="bi bi-send me-2"></i>
-                {% translate "Post Comment" %}
-            </button>
-        </div>
-
-    </form>
-
+    <label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Status" %}</span>{{ comment_form.status }}</label>
+    <div class="tw:flex tw:justify-end"><button id="comment-submit-button" class="tw:d-btn tw:d-btn-primary tw:rounded-full" type="submit"><span id="comment-submit-spinner" class="htmx-indicator tw:d-loading tw:d-loading-spinner tw:d-loading-xs" role="status" aria-hidden="true"></span><i class="bi bi-send"></i>{% translate "Post Comment" %}</button></div>
+  </form>
 </div>
 
 {% if ticket.category.comment_attachment_required %}
 <script>
 (function () {
-    const form = document.getElementById("ticket-comment-form");
-    const dropzone = document.getElementById("comment-dropzone");
-    const input = document.getElementById("comment-attachments");
-    const selectedFilesContainer = document.getElementById("comment-selected-files");
+  const form = document.getElementById("ticket-comment-form");
+  const dropzone = document.getElementById("comment-dropzone");
+  const input = document.getElementById("comment-attachments");
+  const selectedFilesContainer = document.getElementById("comment-selected-files");
+  if (!form || !dropzone || !input || !selectedFilesContainer) return;
+  let selectedFiles = [];
 
-    if (!form || !dropzone || !input || !selectedFilesContainer) {
-        return;
-    }
-
-    let selectedFiles = [];
-
-    function syncInput() {
-        const transfer = new DataTransfer();
-
-        selectedFiles.forEach(function (file) {
-            transfer.items.add(file);
-        });
-
-        input.files = transfer.files;
-    }
-
-    function formatFileSize(bytes) {
-        if (bytes < 1024) {
-            return bytes + " B";
-        }
-
-        if (bytes < 1024 * 1024) {
-            return (bytes / 1024).toFixed(1) + " KB";
-        }
-
-        return (bytes / (1024 * 1024)).toFixed(2) + " MB";
-    }
-
-    function renderSelectedFiles() {
-        selectedFilesContainer.innerHTML = "";
-
-        selectedFiles.forEach(function (file, index) {
-            const item = document.createElement("div");
-            item.className = "d-flex align-items-center gap-2 border rounded p-2 mb-2";
-
-            const icon = document.createElement("span");
-            icon.className = "file-icon";
-            icon.innerHTML = '<i class="bi bi-file-earmark"></i>';
-
-            const information = document.createElement("span");
-            information.className = "flex-grow-1 overflow-hidden";
-
-            const name = document.createElement("strong");
-            name.className = "d-block text-truncate";
-            name.textContent = file.name;
-
-            const size = document.createElement("small");
-            size.className = "text-muted";
-            size.textContent = formatFileSize(file.size);
-
-            information.appendChild(name);
-            information.appendChild(size);
-
-            const removeButton = document.createElement("button");
-            removeButton.type = "button";
-            removeButton.className = "btn btn-sm btn-outline-danger";
-            removeButton.innerHTML = '<i class="bi bi-trash"></i>';
-            removeButton.setAttribute("aria-label", "{% translate 'Remove document' %}");
-
-            removeButton.addEventListener("click", function () {
-                selectedFiles.splice(index, 1);
-                syncInput();
-                renderSelectedFiles();
-            });
-
-            item.appendChild(icon);
-            item.appendChild(information);
-            item.appendChild(removeButton);
-
-            selectedFilesContainer.appendChild(item);
-        });
-    }
-
-    function addFiles(files) {
-        Array.from(files).forEach(function (file) {
-            const alreadySelected = selectedFiles.some(function (existingFile) {
-                return existingFile.name === file.name &&
-                       existingFile.size === file.size &&
-                       existingFile.lastModified === file.lastModified;
-            });
-
-            if (!alreadySelected) {
-                selectedFiles.push(file);
-            }
-        });
-
+  function syncInput() {
+    const transfer = new DataTransfer();
+    selectedFiles.forEach(file => transfer.items.add(file));
+    input.files = transfer.files;
+  }
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  }
+  function renderSelectedFiles() {
+    selectedFilesContainer.innerHTML = "";
+    selectedFiles.forEach(function (file, index) {
+      const item = document.createElement("div");
+      item.className = "tw:flex tw:items-center tw:gap-3 tw:rounded-xl tw:border tw:border-base-300 tw:bg-base-100 tw:p-3";
+      const icon = document.createElement("span");
+      icon.className = "tw:grid tw:h-9 tw:w-9 tw:place-items-center tw:rounded-lg tw:bg-primary/10 tw:text-primary";
+      icon.innerHTML = '<i class="bi bi-file-earmark"></i>';
+      const information = document.createElement("span");
+      information.className = "tw:min-w-0 tw:flex-1";
+      const name = document.createElement("strong");
+      name.className = "tw:block tw:truncate tw:text-sm";
+      name.textContent = file.name;
+      const size = document.createElement("small");
+      size.className = "tw:text-xs tw:text-base-content/45";
+      size.textContent = formatFileSize(file.size);
+      information.append(name, size);
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm tw:text-error";
+      removeButton.innerHTML = '<i class="bi bi-trash"></i>';
+      removeButton.setAttribute("aria-label", "{% translate 'Remove document' %}");
+      removeButton.addEventListener("click", function () {
+        selectedFiles.splice(index, 1);
         syncInput();
         renderSelectedFiles();
-    }
-
-    dropzone.addEventListener("click", function () {
-        input.click();
+      });
+      item.append(icon, information, removeButton);
+      selectedFilesContainer.appendChild(item);
     });
-
-    dropzone.addEventListener("keydown", function (event) {
-        if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            input.click();
-        }
+  }
+  function addFiles(files) {
+    Array.from(files).forEach(function (file) {
+      const alreadySelected = selectedFiles.some(function (existingFile) {
+        return existingFile.name === file.name && existingFile.size === file.size && existingFile.lastModified === file.lastModified;
+      });
+      if (!alreadySelected) selectedFiles.push(file);
     });
-
-    input.addEventListener("change", function () {
-        addFiles(input.files);
-    });
-
-    dropzone.addEventListener("dragover", function (event) {
-        event.preventDefault();
-        dropzone.classList.add("border-primary");
-    });
-
-    dropzone.addEventListener("dragleave", function () {
-        dropzone.classList.remove("border-primary");
-    });
-
-    dropzone.addEventListener("drop", function (event) {
-        event.preventDefault();
-        dropzone.classList.remove("border-primary");
-        addFiles(event.dataTransfer.files);
-    });
-
-    document.body.addEventListener("ticketCommentPosted", function () {
-        selectedFiles = [];
-        syncInput();
-        renderSelectedFiles();
-
-        const errorContainer = document.getElementById("comment-form-errors");
-
-        if (errorContainer) {
-            errorContainer.innerHTML = "";
-        }
-
-        form.reset();
-
-        const editorField = form.querySelector('[name="body"]');
-
-        if (!editorField) {
-            return;
-        }
-
-        /*
-         * Summernote
-         */
-        if (
-            window.jQuery &&
-            window.jQuery.fn &&
-            typeof window.jQuery.fn.summernote === "function"
-        ) {
-            const $editor = window.jQuery(editorField);
-
-            if ($editor.next(".note-editor").length) {
-                $editor.summernote("reset");
-                return;
-            }
-        }
-
-        /*
-         * TinyMCE
-         */
-        if (
-            window.tinymce &&
-            editorField.id &&
-            window.tinymce.get(editorField.id)
-        ) {
-            window.tinymce.get(editorField.id).setContent("");
-            return;
-        }
-
-        /*
-         * Standard textarea fallback.
-         */
-        editorField.value = "";
-        editorField.dispatchEvent(new Event("input", { bubbles: true }));
-    });
+    syncInput();
+    renderSelectedFiles();
+  }
+  dropzone.addEventListener("click", function (event) {
+    if (event.target !== input) input.click();
+  });
+  dropzone.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); input.click(); }
+  });
+  input.addEventListener("change", function () { addFiles(input.files); });
+  dropzone.addEventListener("dragover", function (event) { event.preventDefault(); dropzone.classList.add("tw:border-primary", "tw:bg-primary/5"); });
+  dropzone.addEventListener("dragleave", function () { dropzone.classList.remove("tw:border-primary", "tw:bg-primary/5"); });
+  dropzone.addEventListener("drop", function (event) { event.preventDefault(); dropzone.classList.remove("tw:border-primary", "tw:bg-primary/5"); addFiles(event.dataTransfer.files); });
+  document.body.addEventListener("ticketCommentPosted", function () {
+    selectedFiles = []; syncInput(); renderSelectedFiles();
+    const errorContainer = document.getElementById("comment-form-errors");
+    if (errorContainer) errorContainer.innerHTML = "";
+    form.reset();
+    const editorField = form.querySelector('[name="body"]');
+    if (!editorField) return;
+    editorField.value = "";
+    editorField.dispatchEvent(new Event("input", { bubbles: true }));
+    const richEditor = editorField.nextElementSibling?.querySelector?.(".richtext-canvas");
+    if (richEditor) richEditor.innerHTML = "";
+  });
 })();
 </script>
 {% else %}
 <script>
 (function () {
-    const form = document.getElementById("ticket-comment-form");
-
-    if (!form) {
-        return;
-    }
-
-    document.body.addEventListener("ticketCommentPosted", function () {
-        const errorContainer = document.getElementById("comment-form-errors");
-
-        if (errorContainer) {
-            errorContainer.innerHTML = "";
-        }
-
-        form.reset();
-
-        const editorField = form.querySelector('[name="body"]');
-
-        if (!editorField) {
-            return;
-        }
-
-        if (
-            window.jQuery &&
-            window.jQuery.fn &&
-            typeof window.jQuery.fn.summernote === "function"
-        ) {
-            const $editor = window.jQuery(editorField);
-
-            if ($editor.next(".note-editor").length) {
-                $editor.summernote("reset");
-                return;
-            }
-        }
-
-        if (
-            window.tinymce &&
-            editorField.id &&
-            window.tinymce.get(editorField.id)
-        ) {
-            window.tinymce.get(editorField.id).setContent("");
-            return;
-        }
-
-        editorField.value = "";
-        editorField.dispatchEvent(new Event("input", { bubbles: true }));
-    });
+  const form = document.getElementById("ticket-comment-form");
+  if (!form) return;
+  document.body.addEventListener("ticketCommentPosted", function () {
+    const errorContainer = document.getElementById("comment-form-errors");
+    if (errorContainer) errorContainer.innerHTML = "";
+    form.reset();
+    const editorField = form.querySelector('[name="body"]');
+    if (!editorField) return;
+    editorField.value = "";
+    editorField.dispatchEvent(new Event("input", { bubbles: true }));
+    const richEditor = editorField.nextElementSibling?.querySelector?.(".richtext-canvas");
+    if (richEditor) richEditor.innerHTML = "";
+  });
 })();
 </script>
 {% endif %}

@@ -1,68 +1,25 @@
 {% load i18n %}
-<section class="panel mb-4">
-  <div class="panel-heading">
-    <div>
-      <h2>{% if task %}{% translate "Edit task" %}{% else %}{% translate "Create task" %}{% endif %}</h2>
-      <p>{% translate "The task is synchronized with a GLIS ticket. Tagged users receive task status notifications." %}</p>
+<section class="tw:d-card tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-2xl" data-reveal>
+  <div class="tw:d-card-body tw:p-5 tw:sm:p-6">
+    <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
+      <div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-2">{% if task %}{% translate "Edit task" %}{% else %}{% translate "Create task" %}{% endif %}</span><h2 class="tw:d-card-title tw:text-xl">{% translate "Task details" %}</h2><p class="tw:mt-1 tw:text-sm tw:text-base-content/50">{% translate "The task is synchronized with a GLIS ticket. Tagged users receive task status notifications." %}</p></div>
+      <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm" type="button" onclick="document.getElementById('task-form-shell').innerHTML=''"><i class="bi bi-x-lg"></i></button>
     </div>
-    <button class="btn btn-sm btn-outline-secondary" type="button" onclick="document.getElementById('task-form-shell').innerHTML=''">
-      <i class="bi bi-x-lg"></i>
-    </button>
+    <form class="tw:mt-5" method="post" hx-post="{% if task %}{% url 'tasks:edit' task.pk %}{% else %}{% url 'tasks:create' %}{% endif %}" hx-target="#task-form-shell" hx-swap="innerHTML">
+      {% csrf_token %}{% if form.non_field_errors %}<div class="tw:d-alert tw:d-alert-error tw:mb-4">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="tw:grid tw:gap-4 tw:md:grid-cols-12">
+        <label class="tw:d-fieldset tw:md:col-span-8"><span class="tw:d-fieldset-legend">{% translate "Title" %}</span>{{ form.title }}{{ form.title.errors }}</label>
+        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Due date" %}</span>{{ form.due_date }}{{ form.due_date.errors }}</label>
+        <label class="tw:d-fieldset tw:md:col-span-12"><span class="tw:d-fieldset-legend">{% translate "Description" %}</span>{{ form.description }}{{ form.description.errors }}</label>
+        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Project" %}</span>{{ form.project }}{{ form.project.errors }}</label>
+        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Product" %}</span>{{ form.product }}{{ form.product.errors }}</label>
+        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Category" %}</span>{{ form.category }}{{ form.category.errors }}</label>
+        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Owner" %}</span>{{ form.owner }}{{ form.owner.errors }}</label>
+        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Priority" %}</span>{{ form.priority }}{{ form.priority.errors }}</label>
+        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Status" %}</span>{{ form.status }}{{ form.status.errors }}</label>
+        <label class="tw:d-fieldset tw:md:col-span-12"><span class="tw:d-fieldset-legend">{% translate "Tag / notify users" %}</span>{{ form.tagged_users }}{{ form.tagged_users.errors }}<span class="tw:d-label tw:text-xs tw:text-base-content/45">{% translate "Tagged users are notified when the task ticket status changes." %}</span></label>
+      </div>
+      <div class="tw:mt-5 tw:flex tw:justify-end"><button class="tw:d-btn tw:d-btn-primary tw:rounded-full" type="submit"><i class="bi bi-check2"></i>{% if task %}{% translate "Save changes" %}{% else %}{% translate "Create task" %}{% endif %}</button></div>
+    </form>
   </div>
-
-  <form method="post"
-        hx-post="{% if task %}{% url 'tasks:edit' task.pk %}{% else %}{% url 'tasks:create' %}{% endif %}"
-        hx-target="#task-form-shell"
-        hx-swap="innerHTML">
-    {% csrf_token %}
-    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
-    <div class="row g-3">
-      <div class="col-lg-8">
-        <label class="form-label" for="{{ form.title.id_for_label }}">{% translate "Title" %}</label>
-        {{ form.title }}{{ form.title.errors }}
-      </div>
-      <div class="col-lg-4">
-        <label class="form-label" for="{{ form.due_date.id_for_label }}">{% translate "Due date" %}</label>
-        {{ form.due_date }}{{ form.due_date.errors }}
-      </div>
-      <div class="col-12">
-        <label class="form-label" for="{{ form.description.id_for_label }}">{% translate "Description" %}</label>
-        {{ form.description }}{{ form.description.errors }}
-      </div>
-      <div class="col-md-4">
-        <label class="form-label" for="{{ form.project.id_for_label }}">{% translate "Project" %}</label>
-        {{ form.project }}{{ form.project.errors }}
-      </div>
-      <div class="col-md-4">
-        <label class="form-label" for="{{ form.product.id_for_label }}">{% translate "Product" %}</label>
-        {{ form.product }}{{ form.product.errors }}
-      </div>
-      <div class="col-md-4">
-        <label class="form-label" for="{{ form.category.id_for_label }}">{% translate "Category" %}</label>
-        {{ form.category }}{{ form.category.errors }}
-      </div>
-      <div class="col-md-4">
-        <label class="form-label" for="{{ form.owner.id_for_label }}">{% translate "Owner" %}</label>
-        {{ form.owner }}{{ form.owner.errors }}
-      </div>
-      <div class="col-md-4">
-        <label class="form-label" for="{{ form.priority.id_for_label }}">{% translate "Priority" %}</label>
-        {{ form.priority }}{{ form.priority.errors }}
-      </div>
-      <div class="col-md-4">
-        <label class="form-label" for="{{ form.status.id_for_label }}">{% translate "Status" %}</label>
-        {{ form.status }}{{ form.status.errors }}
-      </div>
-      <div class="col-12">
-        <label class="form-label" for="{{ form.tagged_users.id_for_label }}">{% translate "Tag / notify users" %}</label>
-        {{ form.tagged_users }}{{ form.tagged_users.errors }}
-        <div class="form-text">{% translate "Tagged users are notified when the task ticket status changes." %}</div>
-      </div>
-    </div>
-    <div class="d-flex justify-content-end gap-2 mt-4">
-      <button class="btn btn-primary" type="submit">
-        <i class="bi bi-check2 me-1"></i>{% if task %}{% translate "Save changes" %}{% else %}{% translate "Create task" %}{% endif %}
-      </button>
-    </div>
-  </form>
 </section>

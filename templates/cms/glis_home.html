@@ -1,18 +1,11 @@
 {% extends "base_public.html" %}
 {% load i18n %}
-{% block title %}
-    {% translate "Greenline Insurance Services — Insurance service, made clear" %}
-{% endblock %}
+{% block title %}{% translate "Greenline Insurance Services — Insurance service, made clear" %}{% endblock %}
 {% block content %}
 <div id="home-content" hx-get="{% url 'home_content_html' %}" hx-trigger="load" hx-swap="innerHTML">
-    <div class="container py-5">
-        <div class="text-center">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">
-                    {% translate "Loading..." %}
-                </span>
-            </div>
-        </div>
-    </div>
+  <div class="tw:mx-auto tw:flex tw:min-h-[65vh] tw:max-w-7xl tw:flex-col tw:items-center tw:justify-center tw:gap-5 tw:px-6">
+    <span class="tw:d-loading tw:d-loading-spinner tw:d-loading-lg tw:text-primary"></span>
+    <div class="tw:text-center"><strong class="tw:block tw:text-lg">{% translate "Preparing your GLIS experience" %}</strong><span class="tw:text-sm tw:text-base-content/50">{% translate "Loading services and live content..." %}</span></div>
+  </div>
 </div>
 {% endblock %}

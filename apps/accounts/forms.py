@@ -6,8 +6,8 @@ from .models import UserProfile
 
 
 class EmailOrUsernameAuthenticationForm(AuthenticationForm):
-    username = forms.CharField(label=_("Email or username"), widget=forms.TextInput(attrs={"class": "form-control", "autocomplete": "username", "autofocus": True}))
-    password = forms.CharField(label=_("Password"), strip=False, widget=forms.PasswordInput(attrs={"class": "form-control", "autocomplete": "current-password"}))
+    username = forms.CharField(label=_("Email or username"), widget=forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full", "autocomplete": "username", "autofocus": True}))
+    password = forms.CharField(label=_("Password"), strip=False, widget=forms.PasswordInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full", "autocomplete": "current-password"}))
 
     error_messages = {"invalid_login": _("The email/username or password is incorrect. Check Caps Lock and try again."), "inactive": _("This account is inactive.")}
 
@@ -26,21 +26,21 @@ class EmailOrUsernameAuthenticationForm(AuthenticationForm):
 
 
 class UserProfileForm(forms.Form):
-    first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={"class": "form-control"}))
-    last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
-    email = forms.EmailField(widget=forms.EmailInput(attrs={"class": "form-control"}))
-    phone = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
-    organization = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
-    job_title = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
-    department = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "form-control"}))
-    bio = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": "form-control", "rows": 4}))
-    preferred_language = forms.ChoiceField(choices=UserProfile._meta.get_field("preferred_language").choices, widget=forms.Select(attrs={"class": "form-select"}))
-    theme = forms.ChoiceField(choices=UserProfile._meta.get_field("theme").choices, widget=forms.Select(attrs={"class": "form-select"}))
-    sidebar_mode = forms.ChoiceField(label=_("Portal navigation"), choices=UserProfile.SidebarMode.choices, widget=forms.Select(attrs={"class": "form-select"}))
-    avatar = forms.ImageField(required=False, widget=forms.FileInput(attrs={"class": "form-control", "accept": "image/png,image/jpeg,image/webp"}))
-    remove_avatar = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input"}))
-    email_notifications = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input"}))
-    browser_notifications = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input"}))
+    first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}))
+    last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}))
+    phone = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}))
+    organization = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}))
+    job_title = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}))
+    department = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}))
+    bio = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": "tw:d-textarea tw:d-textarea-bordered tw:w-full", "rows": 4}))
+    preferred_language = forms.ChoiceField(choices=UserProfile._meta.get_field("preferred_language").choices, widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}))
+    theme = forms.ChoiceField(choices=UserProfile._meta.get_field("theme").choices, widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}))
+    sidebar_mode = forms.ChoiceField(label=_("Portal navigation"), choices=UserProfile.SidebarMode.choices, widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}))
+    avatar = forms.ImageField(required=False, widget=forms.FileInput(attrs={"class": "tw:d-file-input tw:d-file-input-bordered tw:w-full", "accept": "image/png,image/jpeg,image/webp"}))
+    remove_avatar = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "tw:d-toggle tw:d-toggle-primary"}))
+    email_notifications = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "tw:d-toggle tw:d-toggle-primary"}))
+    browser_notifications = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "tw:d-toggle tw:d-toggle-primary"}))
 
     def __init__(self, *args, user, **kwargs):
         self.user = user

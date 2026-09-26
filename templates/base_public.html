@@ -1,340 +1,151 @@
 {% load static i18n cms_tags menu_tags sekizai_tags %}
 {% get_current_language as LANGUAGE_CODE %}
-
 <!doctype html>
-<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}" data-bs-theme="light">
-
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}" data-bs-theme="light" data-theme="glis">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-
   <title>{% block title %}{% page_attribute "page_title" %}{% endblock %}</title>
-
   <meta name="description" content="{% block description %}{% page_attribute "meta_description" %}{% endblock %}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+  {# Bootstrap remains temporarily for legacy CMS/HTMX partials. New UI is fully prefixed Tailwind/daisyUI. #}
   {% if LANGUAGE_CODE == 'ar' %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
   {% else %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   {% endif %}
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="{% static 'css/glis.css' %}" rel="stylesheet">
-
+  <link href="{% static 'css/glis-tailwind.css' %}" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@10.10.0/ol.css">
 
   {% render_block "css" %}
   {% block extra_head %}{% endblock %}
 </head>
-
-<body class="public-shell" x-data="siteShell">
-
+<body class="public-shell tw:min-h-screen tw:bg-base-100 tw:text-base-content tw:antialiased" x-data="siteShell">
   {% cms_toolbar %}
-
   <a class="skip-link" href="#main-content">{% translate "Skip to content" %}</a>
 
-  <div class="utility-bar d-none d-lg-block">
-    <div class="container d-flex justify-content-between align-items-center">
-
-      <span>
-        <i class="bi bi-shield-check me-2"></i>
-        {% translate "Secure insurance service coordination" %}
-      </span>
-
-      <div class="d-flex gap-4">
-        {% if glis_site.contact_email %}
-        <a href="mailto:{{ glis_site.contact_email }}">
-          <i class="bi bi-envelope me-1"></i>{{ glis_site.contact_email }}
-        </a>
-        {% endif %}
-
-        {% if glis_site.contact_phone %}
-        <span>
-          <i class="bi bi-telephone me-1"></i>{{ glis_site.contact_phone }}
-        </span>
-        {% endif %}
+  <div class="tw:hidden tw:lg:block tw:bg-neutral tw:text-neutral-content">
+    <div class="tw:mx-auto tw:flex tw:max-w-7xl tw:items-center tw:justify-between tw:px-6 tw:py-2 tw:text-xs">
+      <span class="tw:flex tw:items-center tw:gap-2 tw:font-semibold tw:tracking-wide"><i class="bi bi-shield-check tw:text-success"></i>{% translate "Secure insurance service coordination" %}</span>
+      <div class="tw:flex tw:items-center tw:gap-6 tw:text-neutral-content/75">
+        {% if glis_site.contact_email %}<a class="tw:hover:text-neutral-content" href="mailto:{{ glis_site.contact_email }}"><i class="bi bi-envelope tw:me-2"></i>{{ glis_site.contact_email }}</a>{% endif %}
+        {% if glis_site.contact_phone %}<a class="tw:hover:text-neutral-content" href="tel:{{ glis_site.contact_phone }}"><i class="bi bi-telephone tw:me-2"></i>{{ glis_site.contact_phone }}</a>{% endif %}
       </div>
-
     </div>
   </div>
 
-<header class="site-header sticky-top">
-
-    <nav class="navbar navbar-expand-xl" aria-label="{% translate 'Primary navigation' %}">
-
-        <div class="container">
-
-            <!-- =========================================================
-                 LOGO
-            ========================================================== -->
-
-            <a class="navbar-brand brand-lockup me-3" href="/">
-                <img style="height:50px; width:100px;" src="/api/v1/site-logo/" alt="Company Logo">              
-            </a>
-
-
-            <!-- =========================================================
-                 MOBILE / CMS SMALL-VIEW TOGGLER
-            ========================================================== -->
-
-            <button
-                class="navbar-toggler"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#publicNav"
-                aria-controls="publicNav"
-                aria-expanded="false"
-                aria-label="{% translate 'Toggle navigation' %}"
-            >
-
-                <span class="navbar-toggler-icon"></span>
-
-            </button>
-
-
-            <!-- =========================================================
-                 COLLAPSIBLE NAVIGATION
-                 
-                 IMPORTANT:
-                 This is now Bootstrap "collapse", NOT "offcanvas".
-            ========================================================== -->
-
-            <div
-                class="collapse navbar-collapse"
-                id="publicNav"
-            >
-
-                <!-- CMS MENU -->
-
-                <ul class="navbar-nav mx-auto gap-xl-1">
-
-                    {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
-
-                </ul>
-
-
-                <!-- =====================================================
-                     RIGHT SIDE ACTIONS
-                ====================================================== -->
-
-                <div class="navbar-actions d-flex flex-column flex-xl-row align-items-xl-center gap-2 mt-3 mt-xl-0">
-
-
-                    <!-- THEME -->
-
-                    {% if glis_site.public_theme_switcher_enabled or not glis_site %}
-
-                    <button
-                        class="btn btn-icon"
-                        type="button"
-                        x-on:click="toggleTheme"
-                        aria-label="{% translate 'Change theme' %}"
-                    >
-
-                        <i
-                            class="bi"
-                            x-bind:class="themeIcon"
-                        ></i>
-
-                    </button>
-
-                    {% endif %}
-
-
-                    <!-- LANGUAGE -->
-
-                    <form
-                        action="{% url 'switch_language' %}"
-                        method="post"
-                        class="d-inline"
-                    >
-
-                        {% csrf_token %}
-
-                        <input
-                            name="next"
-                            type="hidden"
-                            value="{{ request.get_full_path }}"
-                        >
-
-                        <input
-                            name="language"
-                            type="hidden"
-                            value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}"
-                        >
-
-                        <button
-                            class="btn btn-language"
-                            type="submit"
-                        >
-
-                            {% if LANGUAGE_CODE == 'ar' %}
-                                English
-                            {% else %}
-                                العربية
-                            {% endif %}
-
-                        </button>
-
-                    </form>
-
-
-                    <!-- USER -->
-
-                    {% if user.is_authenticated %}
-
-                        <a
-                            class="btn btn-outline-primary"
-                            href="{% url 'portal:dashboard' %}"
-                        >
-                            {% translate "Open portal" %}
-                        </a>
-
-                    {% else %}
-
-                        <a
-                            class="btn btn-link text-body text-decoration-none"
-                            href="{% url 'account_login' %}"
-                        >
-                            {% translate "Sign in" %}
-                        </a>
-
-                    {% endif %}
-
-
-                    <!-- CREATE REQUEST -->
-
-                    <a
-                        class="btn btn-primary"
-                        href="{% url 'portal:create_ticket' 1 %}"
-                    >
-                        {% translate "Create request" %}
-                    </a>
-
-                </div>
-
-            </div>
-
+  <header class="tw:sticky tw:top-0 tw:z-50 tw:px-3 tw:pt-3">
+    <nav class="glis-glass glis-aura tw:d-navbar tw:mx-auto tw:max-w-7xl tw:rounded-[1.4rem] tw:px-3 tw:sm:px-5" data-aura aria-label="{% translate 'Primary navigation' %}">
+      <div class="tw:d-navbar-start tw:gap-2">
+        <div class="tw:d-dropdown tw:xl:hidden">
+          <div tabindex="0" role="button" class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" aria-label="{% translate 'Toggle navigation' %}"><i class="bi bi-list tw:text-2xl"></i></div>
+          <ul tabindex="0" class="tw:d-menu tw:d-dropdown-content tw:z-[80] tw:mt-4 tw:w-72 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-3 tw:shadow-2xl">
+            {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
+          </ul>
         </div>
-
-    </nav>
-
-</header>
-  {% if messages %}
-  <div class="toast-container position-fixed top-0 end-0 p-3">
-
-    {% for message in messages %}
-    <div class="toast show border-0 shadow" role="status">
-      <div class="toast-body d-flex align-items-center gap-2">
-
-        <i class="bi bi-check-circle-fill text-success"></i>
-        {{ message }}
-
-        <button type="button" class="btn-close ms-auto" data-bs-dismiss="toast"></button>
-
+        <a class="tw:flex tw:items-center tw:gap-3 tw:no-underline" href="/">
+          <span class="tw:relative tw:grid tw:h-12 tw:w-28 tw:place-items-center tw:overflow-hidden tw:rounded-2xl tw:bg-base-100 tw:shadow-sm">
+            <img class="tw:max-h-10 tw:max-w-24 tw:object-contain" src="/api/v1/site-logo/" alt="Company Logo">
+          </span>
+        </a>
       </div>
+
+      <div class="tw:d-navbar-center tw:hidden tw:xl:flex">
+        <ul class="tw:d-menu tw:d-menu-horizontal tw:items-center tw:gap-1 tw:px-1">
+          {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
+        </ul>
+      </div>
+
+      <div class="tw:d-navbar-end tw:gap-1 tw:sm:gap-2">
+        {% if glis_site.public_theme_switcher_enabled or not glis_site %}
+        <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-tooltip tw:d-tooltip-bottom" data-tip="{% translate 'Theme' %}" type="button" x-on:click="toggleTheme" aria-label="{% translate 'Change theme' %}">
+          <i class="bi tw:text-lg" x-bind:class="themeIcon"></i>
+        </button>
+        {% endif %}
+
+        <form action="{% url 'switch_language' %}" method="post" class="tw:m-0">
+          {% csrf_token %}
+          <input name="next" type="hidden" value="{{ request.get_full_path }}">
+          <input name="language" type="hidden" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
+          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:rounded-full" type="submit">{% if LANGUAGE_CODE == 'ar' %}EN{% else %}ع{% endif %}</button>
+        </form>
+
+        {% if user.is_authenticated %}
+        <a class="tw:d-btn tw:d-btn-ghost tw:hidden tw:md:inline-flex" href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Portal" %}</a>
+        {% else %}
+        <a class="tw:d-btn tw:d-btn-ghost tw:hidden tw:md:inline-flex" href="{% url 'account_login' %}">{% translate "Sign in" %}</a>
+        {% endif %}
+
+        <a class="tw:d-btn tw:d-btn-primary tw:d-btn-sm tw:sm:d-btn-md tw:rounded-full tw:shadow-lg tw:shadow-primary/20" href="{% url 'portal:create_ticket' 1 %}">
+          <i class="bi bi-plus-lg"></i><span class="tw:hidden tw:sm:inline">{% translate "Create request" %}</span>
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  {% if messages %}
+  <div class="tw:d-toast tw:d-toast-top tw:d-toast-end tw:z-[90] tw:mt-20">
+    {% for message in messages %}
+    <div role="status" class="tw:d-alert {% if message.tags == 'error' %}tw:d-alert-error{% else %}tw:d-alert-success{% endif %} tw:shadow-xl">
+      <i class="bi {% if message.tags == 'error' %}bi-exclamation-octagon{% else %}bi-check-circle{% endif %}"></i>
+      <span>{{ message }}</span>
     </div>
     {% endfor %}
-
   </div>
   {% endif %}
 
-  <main id="main-content">
+  <main id="main-content" class="tw:relative">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="site-footer" id="contact">
-
-    <div class="container py-5">
-      <div class="row g-5">
-
-        <div class="col-lg-5">
-          <div class="brand-lockup footer-brand">
-            <img style="height:40px; width:80px;" src="/api/v1/site-logo/" alt="Company Logo">
-          </div>
-
-          <p class="mt-3 footer-summary">
-            {% translate "A secure service layer connecting customers, providers, insurers and support teams across every request." %}
-          </p>
-
+  <footer id="contact" class="tw:relative tw:overflow-hidden tw:border-t tw:border-base-300 tw:bg-base-200">
+    <div class="glis-aura tw:absolute tw:inset-0 tw:pointer-events-none" aria-hidden="true"></div>
+    <div class="tw:relative tw:mx-auto tw:grid tw:max-w-7xl tw:gap-10 tw:px-6 tw:py-16 tw:md:grid-cols-2 tw:lg:grid-cols-12">
+      <div class="tw:lg:col-span-5">
+        <img class="tw:h-12 tw:w-auto tw:max-w-32 tw:object-contain" src="/api/v1/site-logo/" alt="Company Logo">
+        <p class="tw:mt-5 tw:max-w-md tw:text-base-content/65 tw:leading-7">{% translate "A secure service layer connecting customers, providers, insurers and support teams across every request." %}</p>
+        <div class="tw:mt-6 tw:flex tw:flex-wrap tw:gap-2">
+          <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:gap-2"><span class="tw:d-status tw:d-status-success"></span>{% translate "Service online" %}</span>
+          <span class="tw:d-badge tw:d-badge-outline"><i class="bi bi-shield-check"></i>{% translate "Privacy-aware" %}</span>
         </div>
+      </div>
 
-        <div class="col-6 col-lg-2">
+      <div class="tw:lg:col-span-2">
+        <h2 class="tw:text-sm tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Company" %}</h2>
+        <ul class="tw:mt-5 tw:space-y-3">{% show_menu 0 1 0 1 "cms/includes/footer_menu.html" %}</ul>
+      </div>
 
-          <h2 class="footer-title">{% translate "Company" %}</h2>
+      <div class="tw:lg:col-span-2">
+        <h2 class="tw:text-sm tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Support" %}</h2>
+        <ul class="tw:mt-5 tw:space-y-3">
+          <li><a class="tw:link tw:link-hover tw:text-base-content/70" href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}</a></li>
+          <li><a class="tw:link tw:link-hover tw:text-base-content/70" href="{% url 'portal:ticket_list' %}">{% translate "Track requests" %}</a></li>
+          <li><a class="tw:link tw:link-hover tw:text-base-content/70" href="{% url 'knowledge:list' %}">{% translate "Knowledge Base" %}</a></li>
+        </ul>
+      </div>
 
-          <ul class="list-unstyled mb-0">
-            {% show_menu 0 1 0 1 "cms/includes/footer_menu.html" %}
-          </ul>
-
-        </div>
-
-        <div class="col-6 col-lg-2">
-
-          <h2 class="footer-title">{% translate "Support" %}</h2>
-
-          <a href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}</a>
-          <a href="{% url 'portal:ticket_list' %}">{% translate "Track requests" %}</a>
-          <a href="{% url 'knowledge:list' %}">{% translate "Knowledge Base" %}</a>
-          <a href="#contact">{% translate "Contact us" %}</a>
-
-        </div>
-
-        <div class="col-lg-3">
-
-          <h2 class="footer-title">{% translate "Contact" %}</h2>
-
-          <p>
-            <i class="bi bi-geo-alt me-2"></i>
-            {% if LANGUAGE_CODE == 'ar' %}
-            {{ glis_site.address_ar|default:'مسقط، سلطنة عُمان' }}
-            {% else %}
-            {{ glis_site.address_en|default:'Muscat, Sultanate of Oman' }}
-            {% endif %}
-          </p>
-
-          {% if glis_site.contact_email %}
-          <p>
-            <i class="bi bi-envelope me-2"></i>
-            <a href="mailto:{{ glis_site.contact_email }}">{{ glis_site.contact_email }}</a>
-          </p>
-          {% endif %}
-
-          {% if glis_site.contact_phone %}
-          <p>
-            <i class="bi bi-telephone me-2"></i>
-            <a href="tel:{{ glis_site.contact_phone }}">{{ glis_site.contact_phone }}</a>
-          </p>
-          {% endif %}
-
-        </div>
-
+      <div class="tw:lg:col-span-3">
+        <h2 class="tw:text-sm tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Contact" %}</h2>
+        <ul class="tw:d-list tw:mt-3">
+          <li class="tw:d-list-row tw:px-0"><i class="bi bi-geo-alt tw:text-primary"></i><span class="tw:text-sm tw:text-base-content/70">{% if LANGUAGE_CODE == 'ar' %}{{ glis_site.address_ar|default:'مسقط، سلطنة عُمان' }}{% else %}{{ glis_site.address_en|default:'Muscat, Sultanate of Oman' }}{% endif %}</span></li>
+          {% if glis_site.contact_email %}<li class="tw:d-list-row tw:px-0"><i class="bi bi-envelope tw:text-primary"></i><a class="tw:text-sm tw:text-base-content/70" href="mailto:{{ glis_site.contact_email }}">{{ glis_site.contact_email }}</a></li>{% endif %}
+          {% if glis_site.contact_phone %}<li class="tw:d-list-row tw:px-0"><i class="bi bi-telephone tw:text-primary"></i><a class="tw:text-sm tw:text-base-content/70" href="tel:{{ glis_site.contact_phone }}">{{ glis_site.contact_phone }}</a></li>{% endif %}
+        </ul>
       </div>
     </div>
 
-    <div class="footer-bottom">
-
-      <div class="container d-flex flex-wrap justify-content-between gap-3">
-
-        <span>
-          © {% now "Y" %} {{ glis_site.short_name|default:'GLIS' }}. {% translate "All rights reserved." %}
-        </span>
-
-        <span>
-          <a href="#">{% translate "Privacy" %}</a>
-          <a href="#">{% translate "Terms" %}</a>
-          <a href="#">{% translate "Accessibility" %}</a>
-        </span>
-
+    <div class="tw:border-t tw:border-base-300">
+      <div class="tw:mx-auto tw:flex tw:max-w-7xl tw:flex-col tw:gap-3 tw:px-6 tw:py-5 tw:text-xs tw:text-base-content/55 tw:sm:flex-row tw:sm:items-center tw:sm:justify-between">
+        <span>© {% now "Y" %} {{ glis_site.short_name|default:'GLIS' }}. {% translate "All rights reserved." %}</span>
+        <span class="tw:flex tw:gap-5"><a class="tw:hover:text-primary" href="#">{% translate "Privacy" %}</a><a class="tw:hover:text-primary" href="#">{% translate "Terms" %}</a><a class="tw:hover:text-primary" href="#">{% translate "Accessibility" %}</a></span>
       </div>
-
     </div>
-
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" defer></script>
@@ -342,9 +153,7 @@
   <script src="{% static 'js/app.js' %}" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.15.8/dist/cdn.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/ol@10.10.0/dist/ol.js"></script>
-
   {% render_block "js" %}
   {% block extra_js %}{% endblock %}
-
 </body>
 </html>

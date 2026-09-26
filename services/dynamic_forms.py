@@ -59,26 +59,26 @@ class DynamicTicketForm(forms.Form):
             if source.get("registry"):
                 choices = DataSourceRegistry.choices(source["registry"], user=self.user)
             if control == "multiselect":
-                return forms.MultipleChoiceField(choices=choices, widget=forms.SelectMultiple(attrs={"class": "form-select"}), **common)
-            widget = forms.RadioSelect if control == "radio" else forms.Select(attrs={"class": "form-select"})
+                return forms.MultipleChoiceField(choices=choices, widget=forms.SelectMultiple(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}), **common)
+            widget = forms.RadioSelect(attrs={"class": "tw:d-radio tw:d-radio-primary"}) if control == "radio" else forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"})
             return forms.ChoiceField(choices=choices, widget=widget, **common)
         if control in {"checkbox", "switch"}:
-            return forms.BooleanField(widget=forms.CheckboxInput(attrs={"class": "form-check-input", "role": "switch" if control == "switch" else "checkbox"}), **common)
+            return forms.BooleanField(widget=forms.CheckboxInput(attrs={"class": "tw:d-toggle tw:d-toggle-primary" if control == "switch" else "tw:d-checkbox tw:d-checkbox-primary", "role": "switch" if control == "switch" else "checkbox"}), **common)
         if control == "file":
-            return forms.FileField(**common)
+            return forms.FileField(widget=forms.FileInput(attrs={"class": "tw:d-file-input tw:d-file-input-bordered tw:w-full"}), **common)
         if control in {"number", "currency", "rating"}:
-            return forms.DecimalField(min_value=validation.get("min"), max_value=validation.get("max"), decimal_places=2, widget=CONTROL_WIDGETS[control](attrs={"class": "form-control"}), **common)
+            return forms.DecimalField(min_value=validation.get("min"), max_value=validation.get("max"), decimal_places=2, widget=CONTROL_WIDGETS[control](attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}), **common)
         if control == "date":
-            field = forms.DateField(widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}), **common)
+            field = forms.DateField(widget=forms.DateInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full", "type": "date"}), **common)
         elif control == "datetime":
-            field = forms.DateTimeField(widget=forms.DateTimeInput(attrs={"class": "form-control", "type": "datetime-local"}), **common)
+            field = forms.DateTimeField(widget=forms.DateTimeInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full", "type": "datetime-local"}), **common)
         elif control == "email":
-            field = forms.EmailField(max_length=validation.get("max_length"), widget=forms.EmailInput(attrs={"class": "form-control"}), **common)
+            field = forms.EmailField(max_length=validation.get("max_length"), widget=forms.EmailInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}), **common)
         elif control == "url":
-            field = forms.URLField(widget=forms.URLInput(attrs={"class": "form-control"}), **common)
+            field = forms.URLField(widget=forms.URLInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}), **common)
         else:
             widget_cls = CONTROL_WIDGETS.get(control, forms.TextInput)
-            attrs = {"class": "form-control", "placeholder": localized(spec, "placeholder")}
+            attrs = {"class": "tw:d-textarea tw:d-textarea-bordered tw:w-full" if control in {"textarea", "richtext"} else "tw:d-input tw:d-input-bordered tw:w-full", "placeholder": localized(spec, "placeholder")}
             if control in {"textarea", "richtext"}:
                 attrs["rows"] = 5
             if control == "richtext":

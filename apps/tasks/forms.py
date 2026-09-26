@@ -25,15 +25,15 @@ class TaskForm(forms.ModelForm):
             "due_date",
         )
         widgets = {
-            "title": forms.TextInput(attrs={"class": "form-control"}),
-            "description": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
-            "project": forms.Select(attrs={"class": "form-select"}),
-            "product": forms.Select(attrs={"class": "form-select"}),
-            "category": forms.Select(attrs={"class": "form-select"}),
-            "priority": forms.Select(attrs={"class": "form-select"}),
-            "owner": forms.Select(attrs={"class": "form-select"}),
-            "tagged_users": forms.SelectMultiple(attrs={"class": "form-select", "size": 6}),
-            "due_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "title": forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}),
+            "description": forms.Textarea(attrs={"class": "tw:d-textarea tw:d-textarea-bordered tw:w-full", "rows": 4}),
+            "project": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
+            "product": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
+            "category": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
+            "priority": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
+            "owner": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
+            "tagged_users": forms.SelectMultiple(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full", "size": 6}),
+            "due_date": forms.DateInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full", "type": "date"}),
         }
 
     def __init__(self, *args, user=None, **kwargs):
@@ -42,7 +42,7 @@ class TaskForm(forms.ModelForm):
         User = get_user_model()
         self.fields["owner"].queryset = User.objects.filter(is_active=True).order_by("first_name", "last_name", "email")
         self.fields["tagged_users"].queryset = self.fields["owner"].queryset
-        self.fields["status"].widget.attrs["class"] = "form-select"
+        self.fields["status"].widget.attrs["class"] = "tw:d-select tw:d-select-bordered tw:w-full"
 
         if user and user.is_authenticated:
             if user.is_staff or user.is_superuser:

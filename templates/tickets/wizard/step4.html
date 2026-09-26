@@ -1,90 +1,16 @@
-{% extends 'tickets/wizard/base.html' %}{% load i18n %}{% block wizard_content %}<div class="wizard-panel-heading"><span
-        class="step-icon"><i class="bi bi-check2-square"></i></span>
-    <div><span>{% translate "Step 4 of 4" %}</span>
-        <h2>{% translate "Review and submit" %}</h2>
-        <p>{% translate "Check the final request, adjust the AI recommendations where needed, and attach supporting
-            documents." %}</p>
-    </div>
+{% extends 'tickets/wizard/base.html' %}{% load i18n %}{% block wizard_content %}
+<div class="tw:flex tw:gap-4"><span class="tw:grid tw:h-12 tw:w-12 tw:shrink-0 tw:place-items-center tw:rounded-2xl tw:bg-success/12 tw:text-success"><i class="bi bi-check2-square tw:text-xl"></i></span><div><span class="tw:text-xs tw:font-black tw:uppercase tw:tracking-[.16em] tw:text-primary">{% translate "Step 4 of 4" %}</span><h2 class="tw:mt-1 tw:text-2xl tw:font-black">{% translate "Review and submit" %}</h2><p class="tw:mt-1 tw:text-base-content/55">{% translate "Check the final request, adjust the AI recommendations where needed, and attach supporting documents." %}</p></div></div>
+<form class="tw:mt-7" method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+<div class="tw:grid tw:gap-6 tw:xl:grid-cols-[1.3fr_.7fr]">
+  <div class="tw:space-y-5">
+    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100"><div class="tw:d-card-body tw:p-5"><h3 class="tw:d-card-title tw:text-lg"><i class="bi bi-pencil-square tw:text-primary"></i>{% translate "Final request" %}</h3><label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Subject" %}</span>{{ form.subject }}{{ form.subject.errors }}</label><label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Description" %}</span>{{ form.description }}{{ form.description.errors }}</label><label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Priority" %}</span>{{ form.priority }}{{ form.priority.errors }}</label></div></section>
+    {% if attachment_specs %}<section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100"><div class="tw:d-card-body tw:p-5"><h3 class="tw:d-card-title tw:text-lg"><i class="bi bi-paperclip tw:text-primary"></i>{% translate "Supporting documents" %}</h3><div class="tw:grid tw:gap-3">{% for item in attachment_specs %}<label class="tw:flex tw:cursor-pointer tw:items-center tw:gap-4 tw:rounded-2xl tw:border tw:border-dashed tw:border-base-300 tw:p-4 tw:transition tw:hover:border-primary"><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-xl tw:bg-primary/10 tw:text-primary"><i class="bi bi-cloud-arrow-up"></i></span><span class="tw:flex-1"><strong class="tw:block">{{ item.label }}{% if item.required %} *{% endif %}</strong><small class="tw:text-base-content/45">{{ item.help_text }}</small></span><input class="tw:d-file-input tw:d-file-input-bordered tw:d-file-input-sm tw:max-w-xs" type="file" name="{{ item.name }}" {% if item.multiple %}multiple{% endif %} {% if item.required %}required{% endif %} accept="{{ item.allowed_extensions|join:',' }}"></label>{% endfor %}</div></div></section>{% endif %}
+  </div>
+  <aside class="tw:space-y-5">
+    <div class="tw:d-aura tw:d-aura-holo tw:d-aura-lg"><section class="tw:d-card tw:bg-neutral tw:text-neutral-content"><div class="tw:d-card-body tw:p-5"><span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:w-fit">{% translate "Human review required" %}</span><h3 class="tw:d-card-title tw:mt-2"><i class="bi bi-stars"></i>{% translate "AI recommendation" %}</h3><div class="tw:d-stats tw:d-stats-vertical tw:bg-neutral-content/5"><div class="tw:d-stat"><div class="tw:d-stat-title tw:text-neutral-content/50">{% translate "Category" %}</div><div class="tw:d-stat-value tw:text-lg">{{ category.name_en }}</div></div><div class="tw:d-stat"><div class="tw:d-stat-title tw:text-neutral-content/50">{% translate "Suggested group" %}</div><div class="tw:d-stat-value tw:text-lg">{{ analysis.suggested_group|default:"Customer Service" }}</div></div><div class="tw:d-stat"><div class="tw:d-stat-title tw:text-neutral-content/50">{% translate "Confidence" %}</div><div class="tw:d-stat-value tw:text-lg">{{ analysis.confidence|default:"0.82" }}</div></div></div><p class="tw:text-xs tw:text-neutral-content/55">{% translate "Recommendations do not determine policy coverage, claim liability or payment approval." %}</p></div></section></div>
+    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-200/55"><div class="tw:d-card-body tw:p-5"><h3 class="tw:d-card-title tw:text-lg">{% translate "Request summary" %}</h3><ul class="tw:d-list"><li class="tw:d-list-row tw:px-0"><span>{% translate "Project" %}</span><strong class="tw:ms-auto">{{ wizard.selection.project }}</strong></li><li class="tw:d-list-row tw:px-0"><span>{% translate "Product" %}</span><strong class="tw:ms-auto">{{ wizard.selection.product }}</strong></li><li class="tw:d-list-row tw:px-0"><span>{% translate "Category" %}</span><strong class="tw:ms-auto">{{ category.name_en }}</strong></li><li class="tw:d-list-row tw:px-0"><span>{% translate "Clarifications" %}</span><strong class="tw:ms-auto">4 / 4</strong></li></ul></div></section>
+  </aside>
 </div>
-<form method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}<div class="review-grid">
-        <div class="review-main">
-            <section class="review-section">
-                <div class="review-section-title"><i class="bi bi-pencil-square"></i>
-                    <h3>{% translate "Final request" %}</h3>
-                </div>
-                <div class="mb-3"><label class="form-label" for="{{ form.subject.id_for_label }}">
-                    {% translate "Subject" %}
-                </label>
-                {{ form.subject }}
-                {{ form.subject.errors }}
-            </div>
-                <div class="mb-3"><label class="form-label" for="{{ form.description.id_for_label }}">{% translate "Description" %}</label>
-                    {{ form.description }}{{ form.description.errors }}</div>
-                <div><label class="form-label" for="{{ form.priority.id_for_label }}">{% translate "Priority"%}</label>{{ form.priority }}{{ form.priority.errors }}</div>
-            </section>{% if attachment_specs %}<section class="review-section">
-                <div class="review-section-title"><i class="bi bi-paperclip"></i>
-                    <h3>{% translate "Supporting documents" %}</h3>
-                </div>
-                <div class="upload-list">{% for item in attachment_specs %}<label class="upload-item"><span class="file-icon"><i class="bi bi-cloud-arrow-up"></i></span><span><strong>{{ item.label}}{% if item.required %}<em>*</em>{% endif %}</strong><small>{{ item.help_text}}</small></span><input type="file" name="{{ item.name }}" 
-                                {% if item.multiple %}
-                                multiple
-                                {% endif %} {% if item.required %}required{% endif %}
-                            accept="{{ item.allowed_extensions|join:',' }}"></label>{% endfor %}</div>
-            </section>{% endif %}
-        </div>
-        <aside class="review-side">
-            <section class="ai-review-card">
-                <div class="ai-review-heading"><span><i class="bi bi-stars"></i></span>
-                    <div><strong>{% translate "AI recommendation" %}</strong><small>{% translate "Human review required"
-                            %}</small></div>
-                </div>
-                <dl>
-                    <div>
-                        <dt>{% translate "Category" %}</dt>
-                        <dd>{{ category.name_en }}</dd>
-                    </div>
-                    <div>
-                        <dt>{% translate "Suggested group" %}</dt>
-                        <dd>{{ analysis.suggested_group|default:"Customer Service" }}</dd>
-                    </div>
-                    <div>
-                        <dt>{% translate "Confidence" %}</dt>
-                        <dd><span class="confidence-bar"><span style="width:82%"></span></span>{{
-                            analysis.confidence|default:"0.82" }}</dd>
-                    </div>
-                </dl>
-                <p><i class="bi bi-info-circle"></i>{% translate "Recommendations do not determine policy coverage,
-                    claim liability or payment approval." %}</p>
-            </section>
-            <section class="review-summary">
-                <h3>{% translate "Request summary" %}</h3>
-                <dl>
-                    <div>
-                        <dt>{% translate "Project" %}</dt>
-                        <dd>{{ wizard.selection.project }}</dd>
-                    </div>
-                    <div>
-                        <dt>{% translate "Product" %}</dt>
-                        <dd>{{ wizard.selection.product }}</dd>
-                    </div>
-                    <div>
-                        <dt>{% translate "Category" %}</dt>
-                        <dd>{{ category.name_en }}</dd>
-                    </div>
-                    <div>
-                        <dt>{% translate "Clarifications" %}</dt>
-                        <dd>4 / 4</dd>
-                    </div>
-                </dl>
-            </section>
-        </aside>
-    </div>
-    <div class="alert alert-info p-2 mt-2">{{ form.acknowledgment }}
-        <label class="form-check-label" for="{{ form.acknowledgment.id_for_label }}"> &nbsp; {{ form.acknowledgment.label }}</label>
-        {{ form.acknowledgment.errors }}
-    </div>
-    <div class="wizard-actions">
-        <a class="btn btn-soft btn-lg" href="{% url 'portal:create_ticket' 3 %}"><i class="bi bi-arrow-left me-2"></i>{% translate "Back" %}</a>
-        <button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-send-check me-2"></i> {% translate "Submit request" %}</button>
-    </div>
+<label class="tw:d-alert tw:mt-6 tw:cursor-pointer">{{ form.acknowledgment }}<span>{{ form.acknowledgment.label }}</span>{{ form.acknowledgment.errors }}</label>
+<div class="tw:mt-7 tw:flex tw:justify-between tw:gap-3"><a class="tw:d-btn tw:d-btn-ghost tw:d-btn-lg tw:rounded-full" href="{% url 'portal:create_ticket' 3 %}"><i class="bi bi-arrow-left"></i>{% translate "Back" %}</a><button class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:rounded-full" type="submit"><i class="bi bi-send-check"></i>{% translate "Submit request" %}</button></div>
 </form>{% endblock %}

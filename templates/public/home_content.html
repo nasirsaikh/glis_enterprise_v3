@@ -1,669 +1,341 @@
 {% load cms_tags i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 
-<style>
-:root{
-  --x-bg:#06110b;--x-bg2:#0a1c12;--x-panel:rgba(10,27,18,.64);--x-panel-strong:rgba(9,24,16,.86);
-  --x-text:#f4fbf7;--x-muted:#91a89b;--x-line:rgba(184,255,212,.13);--x-green:#52e58f;--x-green2:#16b968;
-  --x-gold:#f1c65f;--x-cyan:#72e7d2;--x-shadow:0 30px 90px rgba(0,0,0,.36);--x-radius:30px;
-}
-[data-bs-theme="light"]{
-  --x-bg:#edf5f0;--x-bg2:#f7faf8;--x-panel:rgba(255,255,255,.7);--x-panel-strong:rgba(255,255,255,.9);
-  --x-text:#102219;--x-muted:#60746a;--x-line:rgba(17,108,63,.13);--x-green:#16834f;--x-green2:#32bb72;
-  --x-gold:#bd8c20;--x-cyan:#199f92;--x-shadow:0 30px 90px rgba(30,78,52,.14);
-}
-html{scroll-behavior:smooth}
-.glis-x3d{position:relative;background:var(--x-bg);color:var(--x-text);overflow:hidden;isolation:isolate}
-.glis-x3d *{box-sizing:border-box}
-.glis-x3d a{text-decoration:none}
-.glis-x3d-noise{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.13;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");mix-blend-mode:soft-light}
-.glis-x3d-cinematic{position:relative;z-index:2;background:
-radial-gradient(circle at 15% 16%,rgba(82,229,143,.10),transparent 27%),
-radial-gradient(circle at 84% 10%,rgba(241,198,95,.08),transparent 22%),
-linear-gradient(180deg,var(--x-bg),color-mix(in srgb,var(--x-bg) 90%,#103923 10%))}
-.glis-x3d-stage{position:sticky;top:0;height:100svh;margin-bottom:-100svh;z-index:0;overflow:hidden;pointer-events:none}
-#glisThreeStage{position:absolute;inset:0;width:100%;height:100%;display:block}
-.glis-x3d-stage:after{content:"";position:absolute;inset:0;background:
-radial-gradient(circle at 50% 50%,transparent 28%,rgba(0,0,0,.12) 72%,rgba(0,0,0,.32) 100%),
-linear-gradient(90deg,rgba(0,0,0,.14),transparent 28%,transparent 72%,rgba(0,0,0,.14));pointer-events:none}
-[data-bs-theme="light"] .glis-x3d-stage:after{background:radial-gradient(circle at 50% 50%,transparent 30%,rgba(220,237,228,.12) 72%,rgba(217,232,224,.5) 100%)}
-.glis-x3d-fallback{position:absolute;left:56%;top:50%;width:min(46vw,620px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:
-radial-gradient(circle at 38% 30%,rgba(255,255,255,.9),transparent 8%),
-radial-gradient(circle at 45% 45%,rgba(82,229,143,.65),rgba(82,229,143,.1) 42%,transparent 66%);
-filter:blur(.1px) drop-shadow(0 40px 90px rgba(33,216,112,.16));opacity:.8}
-.glis-webgl-ready .glis-x3d-fallback{opacity:0}
-.glis-x3d-grid{position:absolute;inset:auto 0 0;height:45vh;background-image:
-linear-gradient(rgba(82,229,143,.05) 1px,transparent 1px),
-linear-gradient(90deg,rgba(82,229,143,.05) 1px,transparent 1px);background-size:64px 64px;transform:perspective(450px) rotateX(68deg) scale(1.7);transform-origin:bottom;mask-image:linear-gradient(to top,#000,transparent);opacity:.45}
-.glis-x3d-scene{position:relative;z-index:3;min-height:100svh;display:flex;align-items:center;padding:9rem 0 6rem}
-.glis-x3d-scene .container{position:relative}
-.glis-x3d-copy{max-width:590px}
-.glis-x3d-copy.is-right{margin-left:auto}
-[dir="rtl"] .glis-x3d-copy.is-right{margin-left:0;margin-right:auto}
-.glis-x3d-kicker{display:inline-flex;align-items:center;gap:.7rem;color:var(--x-green);font-size:.78rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;margin-bottom:1.3rem}
-.glis-x3d-kicker:before{content:"";width:34px;height:1px;background:currentColor}
-.glis-x3d-title{margin:0 0 1.45rem;font-size:clamp(3.4rem,7.2vw,7.8rem);line-height:.89;letter-spacing:-.062em;font-weight:850;color:var(--x-text);text-wrap:balance}
-.glis-x3d-title .accent{color:var(--x-green)}
-.glis-x3d-title .outline{-webkit-text-stroke:1px color-mix(in srgb,var(--x-text) 55%,transparent);color:transparent}
-.glis-x3d-lead{max-width:530px;color:var(--x-muted);font-size:clamp(1.05rem,1.55vw,1.3rem);line-height:1.72;margin-bottom:2rem}
-.glis-x3d-actions{display:flex;flex-wrap:wrap;gap:.8rem}
-.glis-x3d-btn{display:inline-flex;align-items:center;justify-content:center;gap:.65rem;padding:1rem 1.35rem;border-radius:999px;font-size:.92rem;font-weight:800;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
-.glis-x3d-btn.primary{background:var(--x-green);color:#032011;box-shadow:0 14px 45px rgba(82,229,143,.22)}
-.glis-x3d-btn.primary:hover{transform:translateY(-3px);box-shadow:0 18px 55px rgba(82,229,143,.3)}
-.glis-x3d-btn.ghost{border:1px solid var(--x-line);background:rgba(255,255,255,.035);color:var(--x-text);backdrop-filter:blur(16px)}
-.glis-x3d-btn.ghost:hover{transform:translateY(-3px);border-color:rgba(82,229,143,.38)}
-.glis-x3d-meta{display:flex;flex-wrap:wrap;gap:1.2rem;margin-top:2.25rem}
-.glis-x3d-meta span{display:flex;align-items:center;gap:.5rem;color:var(--x-muted);font-size:.82rem;font-weight:650}
-.glis-x3d-meta i{color:var(--x-green)}
-.glis-x3d-ghostword{position:absolute;left:-2vw;top:50%;transform:translateY(-50%);font-size:clamp(9rem,24vw,25rem);line-height:.7;font-weight:900;letter-spacing:-.09em;color:transparent;-webkit-text-stroke:1px rgba(171,255,206,.055);white-space:nowrap;user-select:none;pointer-events:none}
-.glis-x3d-scene:nth-of-type(even) .glis-x3d-ghostword{left:auto;right:-2vw}
-.glis-x3d-number{position:absolute;right:2rem;top:50%;transform:translateY(-50%) rotate(90deg);transform-origin:center;font-size:.7rem;letter-spacing:.28em;text-transform:uppercase;color:color-mix(in srgb,var(--x-muted) 70%,transparent)}
-[dir="rtl"] .glis-x3d-number{right:auto;left:2rem}
-.glis-x3d-ministats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:2.3rem;max-width:560px}
-.glis-x3d-ministat{padding:1rem 1.05rem;border-left:1px solid var(--x-line)}
-[dir="rtl"] .glis-x3d-ministat{border-left:0;border-right:1px solid var(--x-line)}
-.glis-x3d-ministat strong{display:block;color:var(--x-text);font-size:1.5rem;letter-spacing:-.04em}
-.glis-x3d-ministat small{color:var(--x-muted);font-size:.74rem}
-.glis-x3d-progress{position:fixed;left:24px;top:50%;transform:translateY(-50%);z-index:40;display:flex;flex-direction:column;gap:10px;opacity:0;transition:opacity .3s ease}
-.glis-x3d-progress.visible{opacity:1}
-[dir="rtl"] .glis-x3d-progress{left:auto;right:24px}
-.glis-x3d-dot{display:flex;align-items:center;gap:10px;color:var(--x-muted);font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;cursor:pointer;background:none;border:0;padding:4px 0;text-align:left}
-.glis-x3d-dot:before{content:"";width:7px;height:7px;border-radius:50%;border:1px solid currentColor;background:transparent;transition:.3s}
-.glis-x3d-dot span{opacity:0;transform:translateX(-5px);transition:.3s}
-.glis-x3d-dot.active{color:var(--x-green)}
-.glis-x3d-dot.active:before{background:var(--x-green);box-shadow:0 0 0 5px rgba(82,229,143,.08)}
-.glis-x3d-dot.active span{opacity:1;transform:none}
-.glis-x3d-scroll{position:absolute;left:50%;bottom:2rem;transform:translateX(-50%);display:flex;align-items:center;gap:.7rem;color:var(--x-muted);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase}
-.glis-x3d-scroll:before{content:"";width:1px;height:44px;background:linear-gradient(var(--x-green),transparent);animation:glisScrollPulse 1.8s ease-in-out infinite}
-
-.glis-editorial{position:relative;z-index:4;background:var(--x-bg2);color:var(--x-text)}
-.glis-section{position:relative;padding:110px 0}
-.glis-section-sm{position:relative;padding:78px 0}
-.glis-section-heading{max-width:810px}
-.glis-eyebrow{display:inline-flex;align-items:center;gap:.55rem;color:var(--x-green);font-size:.76rem;font-weight:850;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem}
-.glis-title{color:var(--x-text);font-weight:850;letter-spacing:-.045em;line-height:1.02}
-.glis-copy{color:var(--x-muted);line-height:1.76}
-.glis-gradient-text{background:linear-gradient(90deg,var(--x-green),var(--x-cyan),var(--x-gold));-webkit-background-clip:text;background-clip:text;color:transparent}
-.glis-card{position:relative;height:100%;border:1px solid var(--x-line);border-radius:var(--x-radius);background:var(--x-panel);backdrop-filter:blur(22px);box-shadow:var(--x-shadow);overflow:hidden;transform-style:preserve-3d;transition:box-shadow .3s ease,border-color .3s ease,background .3s ease,transform .2s ease}
-.glis-card:before{content:"";position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.08),transparent 38%,rgba(82,229,143,.035));pointer-events:none}
-.glis-card:hover{border-color:rgba(82,229,143,.32);box-shadow:0 35px 95px rgba(0,0,0,.2)}
-.glis-card>*{position:relative;z-index:1}
-.glis-service-card,.glis-feature-card{padding:1.7rem}
-.glis-service-card{min-height:330px;display:flex;flex-direction:column}
-.glis-service-card .glis-link{margin-top:auto}
-.glis-icon{width:58px;height:58px;display:grid;place-items:center;border-radius:18px;border:1px solid var(--x-line);background:rgba(82,229,143,.08);color:var(--x-green);font-size:1.45rem;transition:transform .28s ease}
-.glis-card:hover .glis-icon{transform:translateZ(28px) rotate(-6deg)}
-.glis-service-category{display:inline-flex;padding:.34rem .7rem;border-radius:999px;background:rgba(82,229,143,.07);color:var(--x-green);font-size:.7rem;font-weight:800}
-.glis-link{display:inline-flex;align-items:center;color:var(--x-green);font-weight:800;text-decoration:none}
-.glis-link i{transition:transform .25s ease}.glis-link:hover i{transform:translateX(6px)}
-[dir="rtl"] .glis-link:hover i{transform:translateX(-6px)}
-.glis-quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;border:1px solid var(--x-line);background:var(--x-line);border-radius:26px;overflow:hidden}
-.glis-quick{position:relative;min-height:185px;padding:1.35rem;background:var(--x-bg2);color:var(--x-text);display:flex;flex-direction:column;justify-content:space-between;transition:background .3s ease}
-.glis-quick:hover{background:color-mix(in srgb,var(--x-bg2) 88%,var(--x-green) 12%)}
-.glis-quick .index{font-size:.65rem;letter-spacing:.14em;color:var(--x-muted)}
-.glis-quick strong{font-size:1rem}.glis-quick i{color:var(--x-green);font-size:1.35rem}
-.glis-stats{background:linear-gradient(135deg,#04100a,#082817 55%,#0e4628);overflow:hidden}
-.glis-stat{padding:1.8rem;border-top:1px solid rgba(255,255,255,.13)}
-.glis-stat-value{font-size:clamp(2.2rem,4vw,4.4rem);font-weight:850;letter-spacing:-.055em;color:#7af0ad}
-.glis-loading{min-height:180px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.8rem}
-.glis-faq .accordion{--bs-accordion-bg:transparent;--bs-accordion-color:var(--x-text);--bs-accordion-border-color:var(--x-line);--bs-accordion-btn-color:var(--x-text);--bs-accordion-btn-bg:transparent;--bs-accordion-active-color:var(--x-green);--bs-accordion-active-bg:rgba(82,229,143,.045)}
-.glis-faq .accordion-button{font-weight:800;box-shadow:none!important}.glis-faq .accordion-body{color:var(--x-muted)}
-.glis-partner{min-height:110px;display:flex;align-items:center;justify-content:center;padding:1.2rem;border:1px solid var(--x-line);border-radius:22px;background:var(--x-panel);transition:transform .3s ease,border-color .3s ease}
-.glis-partner:hover{transform:translateY(-5px);border-color:rgba(82,229,143,.3)}
-.glis-partner img{max-height:58px;max-width:170px;object-fit:contain;filter:saturate(.7);opacity:.78;transition:.3s}.glis-partner:hover img{filter:saturate(1);opacity:1}
-.glis-theme-toggle{position:fixed;right:22px;bottom:22px;z-index:1050;width:52px;height:52px;border:1px solid var(--x-line);border-radius:50%;background:var(--x-panel-strong);color:var(--x-text);box-shadow:var(--x-shadow);display:grid;place-items:center;font-size:1.1rem;backdrop-filter:blur(20px);transition:transform .25s}
-.glis-theme-toggle:hover{transform:translateY(-4px) rotate(8deg)}[dir="rtl"] .glis-theme-toggle{right:auto;left:22px}
-.glis-reveal{opacity:0;transform:translateY(42px);transition:opacity .85s cubic-bezier(.16,1,.3,1),transform .85s cubic-bezier(.16,1,.3,1)}
-.glis-reveal.glis-visible{opacity:1;transform:none}
-.glis-x3d-spot{position:absolute;width:560px;height:560px;border-radius:50%;filter:blur(10px);background:radial-gradient(circle,rgba(82,229,143,.1),transparent 66%);pointer-events:none}
-.glis-x3d-spot.one{right:-240px;top:10%}.glis-x3d-spot.two{left:-260px;bottom:5%}
-@keyframes glisScrollPulse{0%,100%{opacity:.35;transform:scaleY(.55);transform-origin:top}50%{opacity:1;transform:scaleY(1);transform-origin:top}}
-@media(max-width:1199.98px){.glis-x3d-title{font-size:clamp(3.2rem,7vw,6rem)}}
-@media(max-width:991.98px){
-  .glis-x3d-scene{min-height:92svh;padding:7rem 0 5rem}
-  .glis-x3d-copy,.glis-x3d-copy.is-right{max-width:600px;margin:0}
-  .glis-x3d-stage{opacity:.72}
-  .glis-x3d-stage:after{background:linear-gradient(90deg,rgba(0,0,0,.32),rgba(0,0,0,.02))}
-  [data-bs-theme="light"] .glis-x3d-stage:after{background:linear-gradient(90deg,rgba(237,245,240,.8),rgba(237,245,240,.12))}
-  .glis-x3d-progress{display:none}.glis-quick-grid{grid-template-columns:repeat(2,1fr)}.glis-section{padding:82px 0}
-}
-@media(max-width:575.98px){
-  .glis-x3d-scene{min-height:86svh;padding:5.7rem 0 4.2rem}
-  .glis-x3d-title{font-size:clamp(2.65rem,14vw,4.4rem)}
-  .glis-x3d-lead{font-size:1rem}.glis-x3d-actions{flex-direction:column;align-items:stretch}.glis-x3d-btn{width:100%}
-  .glis-x3d-meta{gap:.7rem 1rem}.glis-x3d-ministats{grid-template-columns:1fr 1fr}.glis-x3d-ministat:nth-child(3){grid-column:1/-1}
-  .glis-x3d-number,.glis-x3d-scroll{display:none}.glis-x3d-ghostword{font-size:38vw}
-  .glis-quick-grid{grid-template-columns:1fr}.glis-quick{min-height:135px}.glis-section{padding:64px 0}.glis-section-sm{padding:54px 0}
-  .glis-theme-toggle{right:14px;bottom:14px}
-}
-@media(prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}.glis-x3d *{animation:none!important;transition:none!important}.glis-reveal{opacity:1;transform:none}
-  #glisThreeStage{display:none}.glis-x3d-fallback{opacity:.55}.glis-x3d-stage{position:absolute}
-}
-</style>
-
-<div class="glis-x3d">
-  <div class="glis-x3d-noise" aria-hidden="true"></div>
-
-  <div class="glis-x3d-progress" id="glisX3dProgress" aria-label="{% translate 'Section navigation' %}">
-    <button type="button" class="glis-x3d-dot active" data-target="glis-scene-0"><span>{% translate "Start" %}</span></button>
-    <button type="button" class="glis-x3d-dot" data-target="glis-scene-1"><span>{% translate "Connect" %}</span></button>
-    <button type="button" class="glis-x3d-dot" data-target="glis-scene-2"><span>{% translate "Care" %}</span></button>
-    <button type="button" class="glis-x3d-dot" data-target="glis-scene-3"><span>{% translate "Resolve" %}</span></button>
-  </div>
-
-  <div class="glis-x3d-cinematic" id="glisCinematic">
-    <div class="glis-x3d-stage" aria-hidden="true">
-      <canvas id="glisThreeStage"></canvas>
-      <div class="glis-x3d-fallback"></div>
-      <div class="glis-x3d-grid"></div>
-    </div>
-
-    {% if hero %}
-    <section class="glis-x3d-scene" id="glis-scene-0" data-scene="0">
-      <div class="glis-x3d-ghostword">GLIS</div>
-      <div class="container">
-        <div class="glis-x3d-copy glis-scene-copy">
-          {% if hero.hero_eyebrow_en or hero.hero_eyebrow_ar %}
-          <div class="glis-x3d-kicker">{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_eyebrow_ar|default:hero.hero_eyebrow_en }}{% else %}{{ hero.hero_eyebrow_en }}{% endif %}</div>
-          {% endif %}
-          <h1 class="glis-x3d-title">{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_title_ar|default:hero.hero_title_en }}{% else %}{{ hero.hero_title_en }}{% endif %}</h1>
-          <p class="glis-x3d-lead">{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_subtitle_ar|default:hero.hero_subtitle_en }}{% else %}{{ hero.hero_subtitle_en }}{% endif %}</p>
-          <div class="glis-x3d-actions">
-            <a class="glis-x3d-btn primary" href="{{ hero.hero_primary_cta_url|default:'#network-providers' }}">{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_primary_cta_ar|default:hero.hero_primary_cta_en }}{% else %}{{ hero.hero_primary_cta_en }}{% endif %}<i class="bi bi-arrow-up-right"></i></a>
-            <a class="glis-x3d-btn ghost" href="{{ hero.hero_secondary_cta_url|default:'#services' }}">{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_secondary_cta_ar|default:hero.hero_secondary_cta_en }}{% else %}{{ hero.hero_secondary_cta_en }}{% endif %}<i class="bi bi-play-circle"></i></a>
-          </div>
-          <div class="glis-x3d-meta">
-            <span><i class="bi bi-shield-check"></i>{% translate "Secure by design" %}</span>
-            <span><i class="bi bi-globe2"></i>{% translate "English & Arabic" %}</span>
-            <span><i class="bi bi-activity"></i>{% translate "Live service visibility" %}</span>
-          </div>
+<div class="tw:overflow-hidden tw:bg-base-100 tw:text-base-content">
+  <section class="glis-aura tw:relative tw:min-h-[88svh] tw:overflow-hidden tw:border-b tw:border-base-300" data-aura>
+    <div class="tw:absolute tw:inset-x-0 tw:top-0 tw:h-40 tw:bg-gradient-to-b tw:from-primary/8 tw:to-transparent" aria-hidden="true"></div>
+    <div class="tw:relative tw:mx-auto tw:grid tw:min-h-[88svh] tw:max-w-7xl tw:items-center tw:gap-14 tw:px-6 tw:py-20 tw:lg:grid-cols-[1.08fr_.92fr] tw:lg:py-24">
+      <div class="tw:relative tw:z-10" data-reveal>
+        <div class="tw:mb-6 tw:flex tw:flex-wrap tw:items-center tw:gap-3">
+          <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:d-badge-lg tw:gap-2 tw:px-4">
+            <span class="tw:d-status tw:d-status-success tw:animate-pulse"></span>
+            {% if hero.hero_eyebrow_en or hero.hero_eyebrow_ar %}
+              {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_eyebrow_ar|default:hero.hero_eyebrow_en }}{% else %}{{ hero.hero_eyebrow_en }}{% endif %}
+            {% else %}
+              {% translate "Connected insurance. Beautifully simple." %}
+            {% endif %}
+          </span>
+          <span class="tw:d-badge tw:d-badge-outline tw:d-badge-lg tw:gap-2"><i class="bi bi-shield-check"></i>{% translate "Secure by design" %}</span>
         </div>
-        <div class="glis-x3d-number">01 / {% translate "Experience" %}</div>
-        <div class="glis-x3d-scroll">{% translate "Scroll to explore" %}</div>
-      </div>
-    </section>
-    {% endif %}
 
-    <section class="glis-x3d-scene" id="glis-scene-1" data-scene="1">
-      <div class="glis-x3d-ghostword">{% translate "ONE" %}</div>
-      <div class="container">
-        <div class="glis-x3d-copy is-right glis-scene-copy">
-          <div class="glis-x3d-kicker">{% translate "Connected insurance" %}</div>
-          <h2 class="glis-x3d-title">{% translate "One platform." %}<br><span class="outline">{% translate "Every connection." %}</span></h2>
-          <p class="glis-x3d-lead">{% translate "Customers, insurers, providers and service teams move through one coordinated digital experience instead of disconnected conversations." %}</p>
-          <div class="glis-x3d-ministats">
-            <div class="glis-x3d-ministat"><strong>{% translate "One" %}</strong><small>{% translate "service workspace" %}</small></div>
-            <div class="glis-x3d-ministat"><strong>{% translate "Live" %}</strong><small>{% translate "request visibility" %}</small></div>
-            <div class="glis-x3d-ministat"><strong>{% translate "Role-aware" %}</strong><small>{% translate "secure access" %}</small></div>
-          </div>
+        <h1 class="tw:max-w-4xl tw:text-5xl tw:font-black tw:leading-[.96] tw:tracking-[-.055em] tw:sm:text-6xl tw:lg:text-7xl tw:xl:text-8xl">
+          {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_title_ar|default:hero.hero_title_en }}{% else %}{{ hero.hero_title_en }}{% endif %}
+        </h1>
+
+        <div class="tw:mt-5 tw:flex tw:flex-wrap tw:items-baseline tw:gap-x-3 tw:text-2xl tw:font-black tw:tracking-tight tw:sm:text-3xl">
+          <span class="tw:text-base-content/55">{% translate "Built for" %}</span>
+          <span class="tw:d-text-rotate tw:text-primary">
+            <span>
+              <span>{% translate "claims" %}</span>
+              <span>{% translate "healthcare" %}</span>
+              <span>{% translate "policy service" %}</span>
+              <span>{% translate "customer care" %}</span>
+            </span>
+          </span>
         </div>
-        <div class="glis-x3d-number">02 / {% translate "Connect" %}</div>
-      </div>
-    </section>
 
-    <section class="glis-x3d-scene" id="glis-scene-2" data-scene="2">
-      <div class="glis-x3d-ghostword">{% translate "CARE" %}</div>
-      <div class="container">
-        <div class="glis-x3d-copy glis-scene-copy">
-          <div class="glis-x3d-kicker">{% translate "Healthcare network" %}</div>
-          <h2 class="glis-x3d-title">{% translate "Care that feels" %}<br><span class="accent">{% translate "connected." %}</span></h2>
-          <p class="glis-x3d-lead">{% translate "Provider discovery, medical guidance, pre-authorization, reimbursement and support come together in a clearer member journey." %}</p>
-          <div class="glis-x3d-actions">
-            <a class="glis-x3d-btn primary" href="#network-providers">{% translate "Find a provider" %}<i class="bi bi-hospital"></i></a>
-            <a class="glis-x3d-btn ghost" href="#medical-process">{% translate "See the medical journey" %}<i class="bi bi-arrow-down-right"></i></a>
-          </div>
+        <p class="tw:mt-7 tw:max-w-2xl tw:text-lg tw:leading-8 tw:text-base-content/65 tw:sm:text-xl">
+          {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_subtitle_ar|default:hero.hero_subtitle_en }}{% else %}{{ hero.hero_subtitle_en }}{% endif %}
+        </p>
+
+        <div class="tw:mt-8 tw:flex tw:flex-wrap tw:gap-3">
+          <span class="tw:d-aura tw:d-aura-holo tw:d-aura-sm tw:rounded-full">
+            <a class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:rounded-full tw:px-7 tw:shadow-xl tw:shadow-primary/20 glis-shine" href="{{ hero.hero_primary_cta_url|default:'#network-providers' }}">
+              {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_primary_cta_ar|default:hero.hero_primary_cta_en }}{% else %}{{ hero.hero_primary_cta_en }}{% endif %}
+              <i class="bi bi-arrow-up-right"></i>
+            </a>
+          </span>
+          <a class="tw:d-btn tw:d-btn-outline tw:d-btn-lg tw:rounded-full tw:px-7" href="{{ hero.hero_secondary_cta_url|default:'#services' }}">
+            {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_secondary_cta_ar|default:hero.hero_secondary_cta_en }}{% else %}{{ hero.hero_secondary_cta_en }}{% endif %}
+            <i class="bi bi-arrow-down-right"></i>
+          </a>
         </div>
-        <div class="glis-x3d-number">03 / {% translate "Care" %}</div>
-      </div>
-    </section>
 
-    <section class="glis-x3d-scene" id="glis-scene-3" data-scene="3">
-      <div class="glis-x3d-ghostword">{% translate "MOVE" %}</div>
-      <div class="container">
-        <div class="glis-x3d-copy is-right glis-scene-copy">
-          <div class="glis-x3d-kicker">{% translate "Service in motion" %}</div>
-          <h2 class="glis-x3d-title">{% translate "Every request." %}<br><span class="accent">{% translate "Always moving." %}</span></h2>
-          <p class="glis-x3d-lead">{% translate "Structured intake, intelligent routing, accountable ownership and visible outcomes keep every service request moving toward resolution." %}</p>
-          <div class="glis-x3d-actions">
-            <a class="glis-x3d-btn primary" href="{% url 'portal:create_ticket' 1 %}">{% translate "Create a request" %}<i class="bi bi-arrow-up-right"></i></a>
-            {% if user.is_authenticated %}<a class="glis-x3d-btn ghost" href="{% url 'portal:dashboard' %}">{% translate "Open portal" %}<i class="bi bi-grid"></i></a>{% endif %}
-          </div>
-        </div>
-        <div class="glis-x3d-number">04 / {% translate "Resolve" %}</div>
-      </div>
-    </section>
-  </div>
-
-  <div class="glis-editorial">
-    <section class="glis-section-sm">
-      <div class="container">
-        <div class="glis-quick-grid glis-reveal">
-          <a href="#network-providers" class="glis-quick"><span class="index">01</span><i class="bi bi-hospital"></i><div><strong>{% translate "Find a Provider" %}</strong><div class="glis-copy small">{% translate "Hospitals, clinics and pharmacies" %}</div></div></a>
-          <a href="#medical-process" class="glis-quick"><span class="index">02</span><i class="bi bi-clipboard2-check"></i><div><strong>{% translate "Pre-Authorization" %}</strong><div class="glis-copy small">{% translate "Medical approval guidance" %}</div></div></a>
-          <a href="#downloads" class="glis-quick"><span class="index">03</span><i class="bi bi-receipt"></i><div><strong>{% translate "Reimbursement" %}</strong><div class="glis-copy small">{% translate "Forms and claim guidance" %}</div></div></a>
-          <a href="#medical-contacts" class="glis-quick"><span class="index">04</span><i class="bi bi-headset"></i><div><strong>{% translate "Need Help?" %}</strong><div class="glis-copy small">{% translate "Contact our support team" %}</div></div></a>
+        <div class="tw:mt-9 tw:grid tw:max-w-2xl tw:grid-cols-2 tw:gap-3 tw:sm:grid-cols-3">
+          <div class="tw:flex tw:items-center tw:gap-2 tw:text-sm tw:font-semibold tw:text-base-content/65"><i class="bi bi-globe2 tw:text-primary"></i>{% translate "English & Arabic" %}</div>
+          <div class="tw:flex tw:items-center tw:gap-2 tw:text-sm tw:font-semibold tw:text-base-content/65"><i class="bi bi-activity tw:text-primary"></i>{% translate "Live visibility" %}</div>
+          <div class="tw:flex tw:items-center tw:gap-2 tw:text-sm tw:font-semibold tw:text-base-content/65"><i class="bi bi-signpost-split tw:text-primary"></i>{% translate "Smart routing" %}</div>
         </div>
       </div>
-    </section>
 
-    <section class="glis-section" id="services">
-      <span class="glis-x3d-spot one"></span>
-      <div class="container">
-        <div class="row justify-content-between align-items-end g-4 mb-5 glis-reveal">
-          <div class="col-lg-8">
-            <span class="glis-eyebrow"><i class="bi bi-grid-1x2"></i>{% translate "Connected Services" %}</span>
-            <h2 class="glis-title display-3 mb-3">{% translate "Designed around the" %}<br><span class="glis-gradient-text">{% translate "insurance journey." %}</span></h2>
-            <p class="glis-copy fs-5 mb-0">{% translate "A single, structured experience for claims support, policy servicing, provider requests, payments and customer care." %}</p>
-          </div>
-        </div>
-        <div class="row g-4">
-          {% for service in services %}
-          <div class="col-md-6 col-xl-4 glis-reveal">
-            <article class="glis-card glis-service-card" data-tilt>
-              <div class="d-flex align-items-start justify-content-between gap-3 mb-4">
-                <div class="glis-icon"><i class="bi {{ service.icon }}"></i></div>
-                {% if service.category %}<span class="glis-service-category">{% if LANGUAGE_CODE == "ar" %}{{ service.category.name_ar|default:service.category.name_en }}{% else %}{{ service.category.name_en }}{% endif %}</span>{% endif %}
-              </div>
-              <h3 class="h4 glis-title mb-3">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3>
-              <p class="glis-copy mb-4">{% if LANGUAGE_CODE == "ar" %}{{ service.summary_ar|default:service.summary_en }}{% else %}{{ service.summary_en }}{% endif %}</p>
-              <a href="{{ service.link|default:'#' }}" class="glis-link">{% translate "Explore service" %}<i class="bi bi-arrow-right ms-2"></i></a>
-            </article>
-          </div>
-          {% empty %}
-          <div class="col-12"><div class="glis-card p-4 text-center glis-copy">{% translate "No services currently available." %}</div></div>
-          {% endfor %}
-        </div>
-      </div>
-    </section>
-
-    {% if tpa_services %}
-    <section class="glis-section" id="medical-services">
-      <span class="glis-x3d-spot two"></span>
-      <div class="container">
-        <div class="text-center mx-auto mb-5 glis-reveal glis-section-heading">
-          <span class="glis-eyebrow"><i class="bi bi-heart-pulse"></i>{% translate "Medical TPA Services" %}</span>
-          <h2 class="glis-title display-3 mb-3">{% translate "Healthcare management" %}<br><span class="glis-gradient-text">{% translate "made easier." %}</span></h2>
-          <p class="glis-copy fs-5 mb-0">{% translate "Integrated health administration services connecting members, healthcare providers and insurance partners." %}</p>
-        </div>
-        <div class="row g-4">
-          {% for service in tpa_services %}
-          <div class="col-md-6 col-lg-4 glis-reveal">
-            <article class="glis-card glis-feature-card" data-tilt>
-              {% if service.icon %}<div class="glis-icon mb-4"><i class="bi {{ service.icon }}"></i></div>{% endif %}
-              <h3 class="h5 glis-title mb-3">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3>
-              <p class="glis-copy mb-4">{% if LANGUAGE_CODE == "ar" %}{{ service.short_description_ar|default:service.short_description_en }}{% else %}{{ service.short_description_en }}{% endif %}</p>
-              {% if service.url %}<a href="{{ service.url }}" class="glis-link">{% translate "Learn more" %}<i class="bi bi-arrow-right ms-2"></i></a>{% endif %}
-            </article>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </section>
-    {% endif %}
-
-    <section id="network-providers" class="glis-section">
-      <div hx-get="{% url 'home_network_providers' %}" hx-trigger="load" hx-swap="innerHTML">
-        <div class="container glis-loading"><div class="spinner-border text-success"></div><p class="glis-copy mb-0">{% translate "Loading healthcare network..." %}</p></div>
-      </div>
-    </section>
-
-    {% if features %}
-    <section class="glis-section">
-      <div class="container">
-        <div class="text-center mx-auto mb-5 glis-reveal glis-section-heading">
-          <span class="glis-eyebrow"><i class="bi bi-gem"></i>{% translate "Why Choose Us" %}</span>
-          <h2 class="glis-title display-3 mb-3">{% translate "Built for a modern" %}<br>{% translate "healthcare experience." %}</h2>
-          <p class="glis-copy fs-5 mb-0">{% translate "Smart, secure and scalable capabilities designed around members, providers and insurers." %}</p>
-        </div>
-        <div class="row g-4">
-          {% for feature in features %}
-          <div class="col-md-6 col-lg-4 glis-reveal"><article class="glis-card glis-feature-card" data-tilt>{% if feature.icon %}<div class="glis-icon mb-4"><i class="bi {{ feature.icon }}"></i></div>{% endif %}<h3 class="h5 glis-title mb-3">{% if LANGUAGE_CODE == "ar" %}{{ feature.title_ar|default:feature.title_en }}{% else %}{{ feature.title_en }}{% endif %}</h3><p class="glis-copy mb-0">{% if LANGUAGE_CODE == "ar" %}{{ feature.description_ar|default:feature.description_en }}{% else %}{{ feature.description_en }}{% endif %}</p></article></div>
-          {% endfor %}
-        </div>
-      </div>
-    </section>
-    {% endif %}
-
-    <section class="glis-section-sm glis-stats">
-      <div class="container">
-        <div class="row g-4 text-center">
-          {% for stat in statistics %}
-          <div class="col-6 col-lg-3 glis-reveal"><div class="glis-stat"><strong class="glis-stat-value d-block mb-2" data-counter="{{ stat.value }}" data-suffix="{{ stat.suffix }}">{{ stat.value }}{{ stat.suffix }}</strong><span class="text-white-50 fw-semibold">{% if LANGUAGE_CODE == "ar" %}{{ stat.label_ar|default:stat.label_en }}{% else %}{{ stat.label_en }}{% endif %}</span></div></div>
-          {% empty %}
-          <div class="col-12"><div class="glis-stat">{% translate "No statistics configured." %}</div></div>
-          {% endfor %}
-        </div>
-      </div>
-    </section>
-
-    <section id="medical-process" class="glis-section">
-      <div hx-get="{% url 'home_medical_process' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="container glis-loading"><div class="spinner-border text-success"></div><p class="glis-copy mb-0">{% translate "Loading medical process..." %}</p></div></div>
-    </section>
-
-    <section id="insurance-partners" class="glis-section-sm">
-      <div hx-get="{% url 'home_insurance_partners' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="container glis-loading"><div class="spinner-border spinner-border-sm text-success"></div><p class="glis-copy mb-0">{% translate "Loading insurance partners..." %}</p></div></div>
-    </section>
-
-    <section id="management" class="glis-section">
-      <div hx-get="{% url 'home_management' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="container glis-loading"><div class="spinner-border text-success"></div><p class="glis-copy mb-0">{% translate "Loading management team..." %}</p></div></div>
-    </section>
-
-    <section id="downloads" class="glis-section">
-      <div hx-get="{% url 'home_medical_downloads' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="container glis-loading"><div class="spinner-border text-success"></div><p class="glis-copy mb-0">{% translate "Loading resources..." %}</p></div></div>
-    </section>
-
-    <section id="medical-contacts" class="glis-section-sm">
-      <div hx-get="{% url 'home_medical_contacts' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="container glis-loading"><div class="spinner-border text-success"></div><p class="glis-copy mb-0">{% translate "Loading contact information..." %}</p></div></div>
-    </section>
-
-    {% if testimonials %}
-    <section class="glis-section">
-      <div class="container">
-        <div class="row justify-content-between align-items-end g-4 mb-5 glis-reveal"><div class="col-lg-8"><span class="glis-eyebrow"><i class="bi bi-chat-quote"></i>{% translate "Testimonials" %}</span><h2 class="glis-title display-3 mb-0">{% translate "Trusted experiences," %}<br>{% translate "shared by people." %}</h2></div></div>
-        <div class="row g-4">
-          {% for testimonial in testimonials %}
-          <div class="col-md-6 col-lg-4 glis-reveal"><article class="glis-card p-4" data-tilt><div class="display-3 text-success opacity-25">“</div><p class="glis-copy fs-5 mb-4">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.quote_ar|default:testimonial.quote_en }}{% else %}{{ testimonial.quote_en }}{% endif %}</p><div class="d-flex align-items-center gap-3">{% if testimonial.photo %}<img src="{{ testimonial.photo.url }}" alt="{{ testimonial.name }}" width="58" height="58" class="rounded-4 object-fit-cover">{% else %}<div class="glis-icon"><i class="bi bi-person"></i></div>{% endif %}<div><strong class="glis-title d-block">{{ testimonial.name }}</strong><span class="glis-copy small">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.role_ar|default:testimonial.role_en }}{% else %}{{ testimonial.role_en }}{% endif %}</span></div></div></article></div>
-          {% endfor %}
-        </div>
-      </div>
-    </section>
-    {% endif %}
-
-    {% if faqs %}
-    <section class="glis-section glis-faq">
-      <div class="container">
-        <div class="row g-5">
-          <div class="col-lg-4 glis-reveal"><span class="glis-eyebrow"><i class="bi bi-question-circle"></i>{% translate "Help Center" %}</span><h2 class="glis-title display-4 mb-3">{% translate "Frequently asked questions" %}</h2><p class="glis-copy fs-5 mb-0">{% translate "Quick answers to common questions about healthcare services, providers and medical administration." %}</p></div>
-          <div class="col-lg-8 glis-reveal">
-            <div class="accordion rounded-4 overflow-hidden border" id="faqAccordion">
-              {% for faq in faqs %}
-              <div class="accordion-item border-0 border-bottom bg-transparent"><h2 class="accordion-header"><button class="accordion-button collapsed py-4" type="button" data-bs-toggle="collapse" data-bs-target="#faq-{{ faq.pk }}">{% if LANGUAGE_CODE == "ar" %}{{ faq.question_ar|default:faq.question_en }}{% else %}{{ faq.question_en }}{% endif %}</button></h2><div id="faq-{{ faq.pk }}" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body pb-4">{% if LANGUAGE_CODE == "ar" %}{{ faq.answer_ar|default:faq.answer_en }}{% else %}{{ faq.answer_en }}{% endif %}</div></div></div>
-              {% endfor %}
+      <div class="tw:relative tw:mx-auto tw:w-full tw:max-w-xl" data-reveal>
+        <div class="glis-orb tw:relative tw:aspect-square tw:w-full tw:rounded-[2.75rem] tw:border tw:border-base-300 tw:bg-gradient-to-br tw:from-primary/12 tw:via-base-100 tw:to-secondary/12 tw:p-8 tw:shadow-2xl tw:shadow-primary/10">
+          <span class="glis-orb-ring"></span><span class="glis-orb-ring"></span><span class="glis-orb-ring"></span>
+          <div class="tw:absolute tw:inset-[17%] tw:grid tw:place-items-center tw:rounded-full tw:bg-primary/10 tw:shadow-[inset_0_0_80px_color-mix(in_oklab,var(--color-primary)_22%,transparent)]">
+            <div class="tw:grid tw:h-36 tw:w-36 tw:place-items-center tw:rounded-[2.2rem] tw:bg-primary tw:text-primary-content tw:shadow-2xl tw:shadow-primary/35 tw:sm:h-44 tw:sm:w-44">
+              <i class="bi bi-shield-check tw:text-6xl tw:sm:text-7xl"></i>
             </div>
           </div>
+
+          <article class="glis-glass glis-tilt tw:absolute tw:start-0 tw:top-[8%] tw:w-[64%] tw:rounded-3xl tw:p-4" data-tilt>
+            <div class="tw:flex tw:items-center tw:justify-between tw:gap-3">
+              <div class="tw:flex tw:items-center tw:gap-3">
+                <span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-2xl tw:bg-success/15 tw:text-success"><i class="bi bi-check2-circle tw:text-xl"></i></span>
+                <div><strong class="tw:block">{% translate "Request received" %}</strong><small class="tw:text-base-content/55">{% translate "Assigned automatically" %}</small></div>
+              </div>
+              <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft">{% translate "Live" %}</span>
+            </div>
+          </article>
+
+          <article class="glis-glass glis-tilt tw:absolute tw:end-[-3%] tw:bottom-[9%] tw:w-[66%] tw:rounded-3xl tw:p-4" data-tilt>
+            <div class="tw:flex tw:items-center tw:justify-between tw:gap-4">
+              <div><span class="tw:text-xs tw:font-bold tw:uppercase tw:tracking-[.16em] tw:text-primary">{% translate "Service health" %}</span><strong class="tw:mt-1 tw:block tw:text-2xl">{% translate "On track" %}</strong></div>
+              <div class="tw:d-radial-progress tw:text-success" style="--value:88;--size:4.2rem;--thickness:.4rem" role="progressbar">88%</div>
+            </div>
+          </article>
+
+          <div class="tw:absolute tw:end-[7%] tw:top-[11%] tw:animate-glis-float tw:rounded-2xl tw:bg-accent tw:p-3 tw:text-accent-content tw:shadow-xl"><i class="bi bi-stars tw:text-xl"></i></div>
+          <div class="tw:absolute tw:bottom-[20%] tw:start-[5%] tw:animate-glis-float tw:rounded-2xl tw:bg-secondary tw:p-3 tw:text-secondary-content tw:shadow-xl tw:[animation-delay:1.4s]"><i class="bi bi-heart-pulse tw:text-xl"></i></div>
         </div>
       </div>
-    </section>
-    {% endif %}
+    </div>
 
-    {% if partners %}
-    <section class="glis-section-sm">
-      <div class="container">
-        <div class="text-center mb-4 glis-reveal"><span class="glis-eyebrow"><i class="bi bi-building-check"></i>{% translate "Our Ecosystem" %}</span></div>
-        <div class="row align-items-center justify-content-center g-3">
-          {% for partner in partners %}
-          <div class="col-6 col-md-3 glis-reveal"><div class="glis-partner">{% if partner.website %}<a href="{{ partner.website }}" target="_blank" rel="noopener" class="text-decoration-none d-flex align-items-center justify-content-center w-100">{% endif %}{% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="img-fluid">{% else %}<strong class="glis-title fs-5 text-center">{{ partner.name }}</strong>{% endif %}{% if partner.website %}</a>{% endif %}</div></div>
+    <div class="tw:absolute tw:bottom-5 tw:start-1/2 tw:-translate-x-1/2 tw:text-center tw:text-xs tw:font-black tw:uppercase tw:tracking-[.22em] tw:text-base-content/40">
+      <i class="bi bi-mouse tw:me-2"></i>{% translate "Scroll to explore" %}
+    </div>
+  </section>
+
+  <section class="tw:border-b tw:border-base-300 tw:bg-base-200/70">
+    <div class="tw:mx-auto tw:max-w-7xl tw:px-6 tw:py-7">
+      <ul class="tw:d-list tw:grid tw:gap-3 tw:md:grid-cols-2 tw:xl:grid-cols-4">
+        <li class="tw:d-list-row glis-tilt tw:rounded-2xl tw:bg-base-100 tw:shadow-sm" data-tilt><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-xl tw:bg-primary/12 tw:text-primary"><i class="bi bi-hospital"></i></span><div><a class="tw:font-bold" href="#network-providers">{% translate "Find a Provider" %}</a><div class="tw:text-xs tw:text-base-content/55">{% translate "Hospitals, clinics and pharmacies" %}</div></div></li>
+        <li class="tw:d-list-row glis-tilt tw:rounded-2xl tw:bg-base-100 tw:shadow-sm" data-tilt><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-xl tw:bg-secondary/12 tw:text-secondary"><i class="bi bi-clipboard2-check"></i></span><div><a class="tw:font-bold" href="#journey">{% translate "Pre-Authorization" %}</a><div class="tw:text-xs tw:text-base-content/55">{% translate "Medical approval guidance" %}</div></div></li>
+        <li class="tw:d-list-row glis-tilt tw:rounded-2xl tw:bg-base-100 tw:shadow-sm" data-tilt><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-xl tw:bg-accent/18 tw:text-accent-content"><i class="bi bi-receipt"></i></span><div><a class="tw:font-bold" href="#downloads">{% translate "Reimbursement" %}</a><div class="tw:text-xs tw:text-base-content/55">{% translate "Forms and claim guidance" %}</div></div></li>
+        <li class="tw:d-list-row glis-tilt tw:rounded-2xl tw:bg-base-100 tw:shadow-sm" data-tilt><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-xl tw:bg-info/12 tw:text-info"><i class="bi bi-headset"></i></span><div><a class="tw:font-bold" href="#medical-contacts">{% translate "Need Help?" %}</a><div class="tw:text-xs tw:text-base-content/55">{% translate "Contact our support team" %}</div></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="services" class="tw:relative tw:py-24">
+    <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
+      <div class="tw:grid tw:gap-8 tw:lg:grid-cols-[.78fr_1.22fr] tw:lg:items-end" data-reveal>
+        <div>
+          <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4 tw:gap-2"><i class="bi bi-grid-1x2"></i>{% translate "Connected Services" %}</span>
+          <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "A better interface for the entire insurance journey." %}</h2>
+        </div>
+        <p class="tw:max-w-2xl tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Claims support, policy servicing, provider requests, medical administration, payments and customer care—organized into one clear service layer." %}</p>
+      </div>
+
+      <div class="tw:mt-12 tw:grid tw:gap-5 tw:md:grid-cols-2 tw:xl:grid-cols-3">
+        {% for service in services %}
+        <article class="tw:d-card glis-tilt glis-glass tw:group tw:min-h-[20rem] tw:border tw:border-base-300 tw:bg-base-100/75 tw:shadow-xl tw:transition" data-tilt data-reveal>
+          <div class="tw:d-card-body tw:relative tw:p-7">
+            <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
+              <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-primary/12 tw:text-2xl tw:text-primary tw:transition tw:group-hover:-rotate-6 tw:group-hover:scale-110"><i class="bi {{ service.icon|default:'bi-stars' }}"></i></span>
+              {% if service.category %}<span class="tw:d-badge tw:d-badge-outline">{% if LANGUAGE_CODE == "ar" %}{{ service.category.name_ar|default:service.category.name_en }}{% else %}{{ service.category.name_en }}{% endif %}</span>{% endif %}
+            </div>
+            <h3 class="tw:d-card-title tw:mt-6 tw:text-2xl tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3>
+            <p class="tw:mt-2 tw:leading-7 tw:text-base-content/60">{% if LANGUAGE_CODE == "ar" %}{{ service.summary_ar|default:service.summary_en }}{% else %}{{ service.summary_en }}{% endif %}</p>
+            <div class="tw:d-card-actions tw:mt-auto tw:pt-6">
+              <a href="{{ service.link|default:'#' }}" class="tw:d-btn tw:d-btn-ghost tw:rounded-full tw:px-0 tw:text-primary tw:hover:bg-transparent">{% translate "Explore service" %}<i class="bi bi-arrow-right tw:transition tw:group-hover:translate-x-1"></i></a>
+            </div>
+          </div>
+        </article>
+        {% empty %}
+        <div class="tw:d-alert tw:d-alert-info tw:md:col-span-2 tw:xl:col-span-3"><i class="bi bi-info-circle"></i><span>{% translate "No services currently available." %}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="tw:bg-neutral tw:py-20 tw:text-neutral-content">
+    <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
+      <div class="tw:flex tw:flex-col tw:gap-6 tw:lg:flex-row tw:lg:items-end tw:lg:justify-between" data-reveal>
+        <div><span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:mb-4">{% translate "Live service intelligence" %}</span><h2 class="tw:max-w-3xl tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Operational clarity you can feel at a glance." %}</h2></div>
+        <p class="tw:max-w-xl tw:text-neutral-content/60">{% translate "Useful signals stay visible without overwhelming the experience." %}</p>
+      </div>
+
+      <div class="tw:d-stats tw:mt-10 tw:w-full tw:grid tw:grid-cols-2 tw:overflow-hidden tw:bg-neutral-content/5 tw:shadow-2xl tw:lg:grid-cols-4">
+        {% for stat in statistics %}
+        <div class="tw:d-stat tw:border tw:border-neutral-content/10" data-reveal>
+          <div class="tw:d-stat-figure tw:text-success"><i class="bi bi-graph-up-arrow tw:text-2xl"></i></div>
+          <div class="tw:d-stat-value tw:text-neutral-content" data-counter="{{ stat.value }}" data-suffix="{{ stat.suffix }}">{{ stat.value }}{{ stat.suffix }}</div>
+          <div class="tw:d-stat-desc tw:text-neutral-content/55">{% if LANGUAGE_CODE == "ar" %}{{ stat.label_ar|default:stat.label_en }}{% else %}{{ stat.label_en }}{% endif %}</div>
+        </div>
+        {% empty %}
+        <div class="tw:d-stat"><div class="tw:d-stat-value">24/7</div><div class="tw:d-stat-desc">{% translate "Request visibility" %}</div></div>
+        <div class="tw:d-stat"><div class="tw:d-stat-value">2</div><div class="tw:d-stat-desc">{% translate "Languages" %}</div></div>
+        <div class="tw:d-stat"><div class="tw:d-stat-value">100%</div><div class="tw:d-stat-desc">{% translate "Activity tracked" %}</div></div>
+        <div class="tw:d-stat"><div class="tw:d-stat-value">1</div><div class="tw:d-stat-desc">{% translate "Connected workspace" %}</div></div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {% if features %}
+  <section class="tw:py-24">
+    <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
+      <div class="tw:mx-auto tw:max-w-3xl tw:text-center" data-reveal>
+        <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-gem tw:me-2"></i>{% translate "Interactive gallery" %}</span>
+        <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Hover. Explore. Discover what makes the experience different." %}</h2>
+      </div>
+      <div class="glis-hover-gallery tw:mt-12 tw:flex tw:flex-col tw:gap-4 tw:md:min-h-[31rem] tw:md:flex-row">
+        {% for feature in features %}
+        <div class="tw:d-hover-3d tw:min-h-[18rem]" data-reveal>
+          <article class="tw:group tw:relative tw:h-full tw:min-h-[18rem] tw:overflow-hidden tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-gradient-to-br tw:from-primary/12 tw:via-base-100 tw:to-secondary/10 tw:p-7 tw:shadow-xl">
+            <div class="tw:absolute tw:-end-10 tw:-top-10 tw:h-36 tw:w-36 tw:rounded-full tw:bg-primary/15 tw:blur-3xl tw:transition tw:group-hover:scale-150"></div>
+            <div class="tw:relative tw:flex tw:h-full tw:flex-col">
+              <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-base-100 tw:text-2xl tw:text-primary tw:shadow-lg"><i class="bi {{ feature.icon|default:'bi-stars' }}"></i></span>
+              <div class="tw:mt-auto">
+                <h3 class="tw:text-2xl tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ feature.title_ar|default:feature.title_en }}{% else %}{{ feature.title_en }}{% endif %}</h3>
+                <p class="tw:mt-3 tw:max-w-sm tw:leading-7 tw:text-base-content/60">{% if LANGUAGE_CODE == "ar" %}{{ feature.description_ar|default:feature.description_en }}{% else %}{{ feature.description_en }}{% endif %}</p>
+              </div>
+            </div>
+          </article>
+          <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if tpa_services %}
+  <section id="medical-services" class="tw:border-y tw:border-base-300 tw:bg-base-200/60 tw:py-24">
+    <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
+      <div class="tw:grid tw:gap-10 tw:lg:grid-cols-[.75fr_1.25fr]">
+        <div data-reveal><span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft tw:mb-4"><i class="bi bi-heart-pulse tw:me-2"></i>{% translate "Medical TPA Services" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Healthcare management, connected end-to-end." %}</h2><p class="tw:mt-5 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Member, provider and insurer workflows come together in one coordinated experience." %}</p></div>
+        <ul class="tw:d-list tw:gap-2">
+          {% for service in tpa_services %}
+          <li class="tw:d-list-row glis-tilt tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm" data-tilt data-reveal>
+            <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-secondary/12 tw:text-secondary"><i class="bi {{ service.icon|default:'bi-heart-pulse' }}"></i></span>
+            <div class="tw:d-list-col-grow"><h3 class="tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3><p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{% if LANGUAGE_CODE == "ar" %}{{ service.short_description_ar|default:service.short_description_en }}{% else %}{{ service.short_description_en }}{% endif %}</p></div>
+            {% if service.url %}<a class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" href="{{ service.url }}" aria-label="{% translate 'Learn more' %}"><i class="bi bi-arrow-up-right"></i></a>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <section id="journey" class="tw:py-24">
+    <div class="tw:mx-auto tw:max-w-6xl tw:px-6">
+      <div class="tw:text-center" data-reveal><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-signpost-split tw:me-2"></i>{% translate "Timeline" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "From request to resolution, every step stays visible." %}</h2></div>
+      <ul class="tw:d-timeline tw:d-timeline-vertical tw:mt-12">
+        {% for step in process_steps %}
+        <li data-reveal>
+          {% if not forloop.first %}<hr class="tw:bg-primary/30">{% endif %}
+          <div class="tw:d-timeline-start tw:mb-10 tw:w-full tw:md:w-[calc(50%-2rem)] {% cycle 'tw:md:text-end' '' %}">
+            <div class="tw:d-timeline-box glis-glass tw:border-base-300 tw:p-5 tw:shadow-lg">
+              <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-3">0{{ forloop.counter }}</span>
+              <h3 class="tw:text-lg tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ step.title_ar|default:step.title_en }}{% else %}{{ step.title_en }}{% endif %}</h3>
+              <p class="tw:mt-2 tw:text-sm tw:leading-6 tw:text-base-content/55">{% if LANGUAGE_CODE == "ar" %}{{ step.description_ar|default:step.description_en }}{% else %}{{ step.description_en }}{% endif %}</p>
+            </div>
+          </div>
+          <div class="tw:d-timeline-middle"><span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-full tw:bg-primary tw:text-primary-content tw:shadow-lg"><i class="bi {{ step.icon|default:'bi-check2' }}"></i></span></div>
+          <div class="tw:d-timeline-end"></div>
+          {% if not forloop.last %}<hr class="tw:bg-primary/30">{% endif %}
+        </li>
+        {% empty %}
+        {% for label in "1234"|make_list %}
+        <li data-reveal>{% if not forloop.first %}<hr class="tw:bg-primary/30">{% endif %}<div class="tw:d-timeline-start tw:mb-10"><div class="tw:d-timeline-box tw:p-5"><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">0{{ forloop.counter }}</span><strong class="tw:mt-3 tw:block">{% cycle "Choose your service" "Share the essentials" "Collaborate securely" "See the outcome" %}</strong></div></div><div class="tw:d-timeline-middle"><span class="tw:grid tw:h-9 tw:w-9 tw:place-items-center tw:rounded-full tw:bg-primary tw:text-primary-content"><i class="bi bi-check2"></i></span></div>{% if not forloop.last %}<hr class="tw:bg-primary/30">{% endif %}</li>
+        {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  <section id="network-providers" class="tw:border-y tw:border-base-300 tw:bg-base-200/55 tw:py-20">
+    <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
+      <div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
+        <div class="tw:d-card-body tw:p-4 tw:sm:p-6 tw:lg:p-8">
+          <div hx-get="{% url 'home_network_providers' %}" hx-trigger="load" hx-swap="innerHTML">
+            <div class="tw:flex tw:min-h-56 tw:flex-col tw:items-center tw:justify-center tw:gap-4"><span class="tw:d-loading tw:d-loading-spinner tw:d-loading-lg tw:text-primary"></span><p class="tw:text-base-content/55">{% translate "Loading healthcare network..." %}</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="medical-process" class="tw:py-20">
+    <div hx-get="{% url 'home_medical_process' %}" hx-trigger="revealed" hx-swap="innerHTML">
+      <div class="tw:mx-auto tw:flex tw:max-w-7xl tw:items-center tw:justify-center tw:gap-3 tw:px-6 tw:py-16"><span class="tw:d-loading tw:d-loading-dots tw:d-loading-lg tw:text-primary"></span><span class="tw:text-base-content/55">{% translate "Loading medical process..." %}</span></div>
+    </div>
+  </section>
+
+  <section id="insurance-partners" class="tw:border-y tw:border-base-300 tw:bg-base-200/40 tw:py-16">
+    <div hx-get="{% url 'home_insurance_partners' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="tw:mx-auto tw:flex tw:max-w-7xl tw:items-center tw:justify-center tw:gap-3 tw:px-6"><span class="tw:d-loading tw:d-loading-ring tw:text-primary"></span><span class="tw:text-base-content/55">{% translate "Loading insurance partners..." %}</span></div></div>
+  </section>
+
+  <section id="management" class="tw:py-20">
+    <div hx-get="{% url 'home_management' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="tw:mx-auto tw:flex tw:max-w-7xl tw:items-center tw:justify-center tw:gap-3 tw:px-6 tw:py-14"><span class="tw:d-loading tw:d-loading-spinner tw:text-primary"></span><span class="tw:text-base-content/55">{% translate "Loading management team..." %}</span></div></div>
+  </section>
+
+  <section id="downloads" class="tw:border-y tw:border-base-300 tw:bg-base-200/45 tw:py-20">
+    <div hx-get="{% url 'home_medical_downloads' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="tw:mx-auto tw:flex tw:max-w-7xl tw:items-center tw:justify-center tw:gap-3 tw:px-6 tw:py-14"><span class="tw:d-loading tw:d-loading-bars tw:text-primary"></span><span class="tw:text-base-content/55">{% translate "Loading resources..." %}</span></div></div>
+  </section>
+
+  <section id="medical-contacts" class="tw:py-20">
+    <div hx-get="{% url 'home_medical_contacts' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="tw:mx-auto tw:flex tw:max-w-7xl tw:items-center tw:justify-center tw:gap-3 tw:px-6 tw:py-14"><span class="tw:d-loading tw:d-loading-dots tw:text-primary"></span><span class="tw:text-base-content/55">{% translate "Loading contact information..." %}</span></div></div>
+  </section>
+
+  {% if testimonials %}
+  <section class="tw:bg-neutral tw:py-24 tw:text-neutral-content">
+    <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
+      <div data-reveal><span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:mb-4"><i class="bi bi-chat-quote tw:me-2"></i>{% translate "Testimonials" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Trusted experiences, shared by people." %}</h2></div>
+      <div class="tw:d-carousel tw:mt-10 tw:w-full tw:gap-5 tw:rounded-box">
+        {% for testimonial in testimonials %}
+        <article class="tw:d-carousel-item tw:w-[88%] tw:sm:w-[60%] tw:lg:w-[38%]">
+          <div class="tw:d-card tw:w-full tw:border tw:border-neutral-content/10 tw:bg-neutral-content/5 tw:text-neutral-content tw:shadow-xl">
+            <div class="tw:d-card-body tw:p-7"><div class="tw:text-6xl tw:font-black tw:text-success/35">“</div><p class="tw:text-lg tw:leading-8 tw:text-neutral-content/75">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.quote_ar|default:testimonial.quote_en }}{% else %}{{ testimonial.quote_en }}{% endif %}</p><div class="tw:mt-5 tw:flex tw:items-center tw:gap-3">{% if testimonial.photo %}<div class="tw:d-avatar"><div class="tw:w-12 tw:rounded-2xl"><img src="{{ testimonial.photo.url }}" alt="{{ testimonial.name }}"></div></div>{% else %}<div class="tw:d-avatar tw:d-avatar-placeholder"><div class="tw:w-12 tw:rounded-2xl tw:bg-success tw:text-success-content"><span>{{ testimonial.name|first }}</span></div></div>{% endif %}<div><strong class="tw:block">{{ testimonial.name }}</strong><small class="tw:text-neutral-content/50">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.role_ar|default:testimonial.role_en }}{% else %}{{ testimonial.role_en }}{% endif %}</small></div></div></div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if faqs %}
+  <section class="tw:py-24">
+    <div class="tw:mx-auto tw:grid tw:max-w-7xl tw:gap-12 tw:px-6 tw:lg:grid-cols-[.72fr_1.28fr]">
+      <div data-reveal><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-question-circle tw:me-2"></i>{% translate "Help Center" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Questions, answered without friction." %}</h2><p class="tw:mt-5 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Quick guidance about services, healthcare providers and medical administration." %}</p></div>
+      <div class="tw:space-y-3">
+        {% for faq in faqs %}
+        <details class="tw:d-collapse tw:d-collapse-arrow tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm" data-reveal>
+          <summary class="tw:d-collapse-title tw:text-lg tw:font-bold">{% if LANGUAGE_CODE == "ar" %}{{ faq.question_ar|default:faq.question_en }}{% else %}{{ faq.question_en }}{% endif %}</summary>
+          <div class="tw:d-collapse-content tw:leading-7 tw:text-base-content/60"><p>{% if LANGUAGE_CODE == "ar" %}{{ faq.answer_ar|default:faq.answer_en }}{% else %}{{ faq.answer_en }}{% endif %}</p></div>
+        </details>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if partners %}
+  <section class="tw:border-t tw:border-base-300 tw:bg-base-200/50 tw:py-16">
+    <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
+      <div class="tw:text-center" data-reveal><span class="tw:d-badge tw:d-badge-outline"><i class="bi bi-building-check tw:me-2"></i>{% translate "Our ecosystem" %}</span></div>
+      <div class="tw:mt-8 tw:grid tw:gap-6 tw:lg:grid-cols-[1.1fr_.9fr] tw:lg:items-center">
+        <figure class="tw:d-hover-gallery tw:h-64 tw:overflow-hidden tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" data-reveal>
+          {% for partner in partners|slice:":10" %}{% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="tw:h-full tw:w-full tw:bg-base-100 tw:object-contain tw:p-10">{% endif %}{% endfor %}
+        </figure>
+        <div class="tw:grid tw:grid-cols-2 tw:gap-3">
+          {% for partner in partners|slice:":8" %}
+          <div class="glis-tilt tw:grid tw:min-h-24 tw:place-items-center tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100 tw:p-4 tw:shadow-sm" data-tilt data-reveal>
+            {% if partner.website %}<a href="{{ partner.website }}" target="_blank" rel="noopener" class="tw:grid tw:h-full tw:w-full tw:place-items-center">{% endif %}
+            {% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="tw:max-h-10 tw:max-w-full tw:object-contain">{% else %}<strong class="tw:text-center tw:text-sm">{{ partner.name }}</strong>{% endif %}
+            {% if partner.website %}</a>{% endif %}
+          </div>
           {% endfor %}
         </div>
       </div>
-    </section>
-    {% endif %}
-  </div>
+    </div>
+  </section>
+  {% endif %}
 
-  <button type="button" class="glis-theme-toggle" id="glisThemeToggle" aria-label="{% translate 'Toggle light and dark mode' %}" title="{% translate 'Toggle light and dark mode' %}"><i class="bi bi-moon-stars" id="glisThemeIcon"></i></button>
+  <section class="glis-aura tw:relative tw:py-24" data-aura>
+    <div class="tw:mx-auto tw:max-w-6xl tw:px-6">
+      <div class="glis-glass tw:relative tw:overflow-hidden tw:rounded-[2.5rem] tw:border tw:border-primary/20 tw:p-8 tw:text-center tw:shadow-2xl tw:sm:p-12 tw:lg:p-16" data-reveal>
+        <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-5">{% translate "Ready when you are" %}</span>
+        <h2 class="tw:mx-auto tw:max-w-4xl tw:text-4xl tw:font-black tw:tracking-[-.045em] tw:sm:text-5xl tw:lg:text-6xl">{% translate "Tell us what you need. We’ll make the next step clear." %}</h2>
+        <p class="tw:mx-auto tw:mt-5 tw:max-w-2xl tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Start a secure request or sign in to continue an existing conversation." %}</p>
+        <div class="tw:mt-8 tw:flex tw:flex-wrap tw:justify-center tw:gap-3">
+          <span class="tw:d-aura tw:d-aura-dual tw:d-aura-glow tw:d-aura-lg tw:rounded-full"><a class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:rounded-full tw:px-8 glis-shine" href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}<i class="bi bi-arrow-up-right"></i></a></span>
+          <a class="tw:d-btn tw:d-btn-outline tw:d-btn-lg tw:rounded-full tw:px-8" href="{% url 'account_login' %}">{% translate "Sign in" %}</a>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
-
-<script>
-(function(){
-  if(window.__glisX3dCleanup){try{window.__glisX3dCleanup()}catch(e){}}
-  var cleanups=[],root=document.documentElement,host=document.querySelector(".glis-x3d");
-  if(!host)return;
-  var reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  function on(el,event,fn,opts){if(!el)return;el.addEventListener(event,fn,opts);cleanups.push(function(){el.removeEventListener(event,fn,opts)})}
-  function applyTheme(theme){
-    root.setAttribute("data-bs-theme",theme);
-    var icon=document.getElementById("glisThemeIcon");
-    if(icon)icon.className=theme==="dark"?"bi bi-sun":"bi bi-moon-stars";
-    localStorage.setItem("glis-theme",theme);
-  }
-  var toggle=document.getElementById("glisThemeToggle");
-  var stored=localStorage.getItem("glis-theme");
-  var systemDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;
-  applyTheme(stored||root.getAttribute("data-bs-theme")||(systemDark?"dark":"light"));
-  on(toggle,"click",function(){applyTheme(root.getAttribute("data-bs-theme")==="dark"?"light":"dark")});
-
-  window.glisReveal=function(scope){
-    var scopeRoot=scope||document,items=scopeRoot.querySelectorAll(".glis-reveal:not(.glis-visible)");
-    if(reduced||!("IntersectionObserver" in window)){items.forEach(function(el){el.classList.add("glis-visible")});return}
-    var ob=new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){if(entry.isIntersecting){entry.target.classList.add("glis-visible");ob.unobserve(entry.target)}})
-    },{threshold:.12,rootMargin:"0px 0px -7% 0px"});
-    items.forEach(function(el,index){el.style.transitionDelay=Math.min(index%5,4)*55+"ms";ob.observe(el)});
-    cleanups.push(function(){ob.disconnect()});
-  };
-  window.glisReveal(document);
-
-  if(!reduced){
-    document.querySelectorAll("[data-tilt]").forEach(function(card){
-      var move=function(e){
-        if(window.innerWidth<992)return;
-        var r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
-        card.style.transform="perspective(1000px) rotateX("+(-y*5)+"deg) rotateY("+(x*6)+"deg) translateY(-5px)";
-      };
-      var leave=function(){card.style.transform=""};
-      on(card,"pointermove",move);on(card,"pointerleave",leave);
-    });
-  }
-
-  document.querySelectorAll("[data-counter]").forEach(function(el){
-    if(reduced)return;
-    var raw=(el.getAttribute("data-counter")||"").replace(/,/g,""),target=parseFloat(raw);
-    if(!isFinite(target))return;
-    var suffix=el.getAttribute("data-suffix")||"",done=false;
-    var ob=new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        if(!entry.isIntersecting||done)return;done=true;
-        var start=performance.now(),duration=1350;
-        function frame(now){
-          var p=Math.min((now-start)/duration,1),ease=1-Math.pow(1-p,3),v=target*ease;
-          el.textContent=(Math.abs(target)>=1000?Math.round(v).toLocaleString():Math.round(v*10)/10)+suffix;
-          if(p<1)requestAnimationFrame(frame);
-        }
-        requestAnimationFrame(frame);ob.disconnect();
-      })
-    },{threshold:.45});
-    ob.observe(el);cleanups.push(function(){ob.disconnect()});
-  });
-
-  var scenes=Array.prototype.slice.call(document.querySelectorAll(".glis-x3d-scene"));
-  var progress=document.getElementById("glisX3dProgress");
-  var dots=Array.prototype.slice.call(document.querySelectorAll(".glis-x3d-dot"));
-  if(scenes.length&&"IntersectionObserver" in window){
-    var sceneOb=new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        if(entry.isIntersecting){
-          var index=parseInt(entry.target.getAttribute("data-scene")||"0",10);
-          dots.forEach(function(dot,i){dot.classList.toggle("active",i===index)});
-        }
-      });
-    },{threshold:.5});
-    scenes.forEach(function(s){sceneOb.observe(s)});
-    cleanups.push(function(){sceneOb.disconnect()});
-  }
-  dots.forEach(function(dot){on(dot,"click",function(){var t=document.getElementById(dot.getAttribute("data-target"));if(t)t.scrollIntoView({behavior:"smooth"})})});
-  if(progress){
-    var cinematic=document.getElementById("glisCinematic");
-    var pOb=new IntersectionObserver(function(entries){entries.forEach(function(e){progress.classList.toggle("visible",e.isIntersecting)})},{threshold:.04});
-    if(cinematic)pOb.observe(cinematic);cleanups.push(function(){pOb.disconnect()});
-  }
-
-  function loadScript(src,test){
-    return new Promise(function(resolve,reject){
-      if(test&&test()){resolve();return}
-      var existing=document.querySelector('script[data-glis-src="'+src+'"]');
-      if(existing){
-        existing.addEventListener("load",function(){resolve()},{once:true});
-        existing.addEventListener("error",reject,{once:true});
-        return;
-      }
-      var s=document.createElement("script");s.src=src;s.async=true;s.dataset.glisSrc=src;
-      s.onload=function(){resolve()};s.onerror=reject;document.head.appendChild(s);
-    });
-  }
-
-  function initMotion(){
-    if(reduced)return;
-    return loadScript("https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js",function(){return !!window.gsap})
-    .then(function(){return loadScript("https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js",function(){return !!window.ScrollTrigger})})
-    .then(function(){
-      if(!window.gsap||!window.ScrollTrigger)return;
-      window.gsap.registerPlugin(window.ScrollTrigger);
-      document.querySelectorAll(".glis-scene-copy").forEach(function(copy){
-        window.gsap.fromTo(copy,{opacity:.2,y:50},{opacity:1,y:0,duration:1,ease:"power3.out",scrollTrigger:{trigger:copy,start:"top 78%",toggleActions:"play none none reverse"}});
-      });
-      cleanups.push(function(){try{window.ScrollTrigger.getAll().forEach(function(t){if(t.trigger&&host.contains(t.trigger))t.kill()})}catch(e){}});
-    });
-  }
-
-  function initThree(){
-    if(reduced)return Promise.resolve();
-    var canvas=document.getElementById("glisThreeStage"),cinematic=document.getElementById("glisCinematic");
-    if(!canvas||!cinematic)return Promise.resolve();
-    return import("https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js").then(function(THREE){
-      host.classList.add("glis-webgl-ready");
-      var renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:true,powerPreference:"high-performance"});
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.65));
-      renderer.setSize(window.innerWidth,window.innerHeight,false);
-      renderer.outputColorSpace=THREE.SRGBColorSpace;
-      renderer.toneMapping=THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure=1.08;
-
-      var scene=new THREE.Scene();
-      var camera=new THREE.PerspectiveCamera(35,window.innerWidth/window.innerHeight,.1,100);
-      camera.position.set(0,.1,9.2);
-      scene.add(new THREE.AmbientLight(0xffffff,1.5));
-      var key=new THREE.DirectionalLight(0x9effc0,5.5);key.position.set(4,5,6);scene.add(key);
-      var rim=new THREE.DirectionalLight(0xf1c65f,4);rim.position.set(-5,-2,4);scene.add(rim);
-      var cyan=new THREE.PointLight(0x72e7d2,4,18);cyan.position.set(0,-3,4);scene.add(cyan);
-
-      var world=new THREE.Group();scene.add(world);
-      world.position.set(2.1,.05,0);
-
-      var shieldShape=new THREE.Shape();
-      shieldShape.moveTo(0,1.55);shieldShape.bezierCurveTo(.9,1.35,1.45,1.05,1.45,.35);
-      shieldShape.bezierCurveTo(1.45,-.9,.68,-1.65,0,-2.05);
-      shieldShape.bezierCurveTo(-.68,-1.65,-1.45,-.9,-1.45,.35);
-      shieldShape.bezierCurveTo(-1.45,1.05,-.9,1.35,0,1.55);
-      var shieldGeo=new THREE.ExtrudeGeometry(shieldShape,{depth:.28,bevelEnabled:true,bevelSegments:6,steps:1,bevelSize:.09,bevelThickness:.09});
-      shieldGeo.center();
-      var shieldMat=new THREE.MeshPhysicalMaterial({color:0x0e6c40,metalness:.48,roughness:.2,clearcoat:1,clearcoatRoughness:.12,transmission:.08,thickness:.8,transparent:true,opacity:.88});
-      var shield=new THREE.Mesh(shieldGeo,shieldMat);shield.rotation.y=-.18;world.add(shield);
-
-      var knotGeo=new THREE.TorusKnotGeometry(1.62,.22,220,32,2,3);
-      var knotMat=new THREE.MeshPhysicalMaterial({color:0x52e58f,metalness:.82,roughness:.17,clearcoat:1,clearcoatRoughness:.08,iridescence:.65,iridescenceIOR:1.35});
-      var knot=new THREE.Mesh(knotGeo,knotMat);knot.rotation.x=.35;knot.rotation.z=.45;world.add(knot);
-
-      var coreGeo=new THREE.IcosahedronGeometry(.64,3);
-      var coreMat=new THREE.MeshPhysicalMaterial({color:0xeefcf4,metalness:.15,roughness:.08,transmission:.35,thickness:1.3,transparent:true,opacity:.88});
-      var core=new THREE.Mesh(coreGeo,coreMat);world.add(core);
-      var wire=new THREE.LineSegments(new THREE.WireframeGeometry(coreGeo),new THREE.LineBasicMaterial({color:0x52e58f,transparent:true,opacity:.23}));wire.scale.setScalar(1.08);world.add(wire);
-
-      var rings=new THREE.Group();world.add(rings);
-      [
-        [2.35,.015,0x52e58f,.35,.3],
-        [2.75,.012,0xf1c65f,1.05,-.2],
-        [3.05,.01,0x72e7d2,.75,.75]
-      ].forEach(function(cfg){
-        var g=new THREE.TorusGeometry(cfg[0],cfg[1],8,180);
-        var m=new THREE.MeshBasicMaterial({color:cfg[2],transparent:true,opacity:.38});
-        var torus=new THREE.Mesh(g,m);torus.rotation.x=cfg[3];torus.rotation.y=cfg[4];rings.add(torus);
-      });
-
-      var satellites=new THREE.Group();world.add(satellites);
-      for(var i=0;i<9;i++){
-        var a=i/9*Math.PI*2,r=2.4+(i%3)*.28;
-        var s=new THREE.Mesh(new THREE.SphereGeometry(.07+(i%2)*.025,18,18),new THREE.MeshPhysicalMaterial({color:i%3===0?0xf1c65f:0x72e7d2,metalness:.45,roughness:.18,emissive:i%3===0?0x614600:0x063f3a,emissiveIntensity:.4}));
-        s.position.set(Math.cos(a)*r,Math.sin(a*.8)*1.5,Math.sin(a)*.75);satellites.add(s);
-      }
-
-      var floating=new THREE.Group();world.add(floating);
-      for(var b=0;b<6;b++){
-        var box=new THREE.Mesh(new THREE.BoxGeometry(.5,.72,.12),new THREE.MeshPhysicalMaterial({color:b%2?0x133c29:0x0b2d1c,metalness:.2,roughness:.22,transparent:true,opacity:.82,clearcoat:.7}));
-        var aa=b/6*Math.PI*2;
-        box.position.set(Math.cos(aa)*3.2,Math.sin(aa)*2.05,(b%3-1)*.45);
-        box.rotation.z=aa*.38;floating.add(box);
-        var edge=new THREE.LineSegments(new THREE.EdgesGeometry(box.geometry),new THREE.LineBasicMaterial({color:0x7dffb2,transparent:true,opacity:.28}));box.add(edge);
-      }
-
-      var particleCount=window.innerWidth<700?260:650;
-      var positions=new Float32Array(particleCount*3);
-      for(var p=0;p<particleCount;p++){
-        var rr=4+Math.random()*9,th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);
-        positions[p*3]=rr*Math.sin(ph)*Math.cos(th);positions[p*3+1]=rr*Math.cos(ph)*.72;positions[p*3+2]=rr*Math.sin(ph)*Math.sin(th);
-      }
-      var pGeo=new THREE.BufferGeometry();pGeo.setAttribute("position",new THREE.BufferAttribute(positions,3));
-      var pMat=new THREE.PointsMaterial({color:0x7ef0ac,size:.018,transparent:true,opacity:.5,sizeAttenuation:true});
-      var particles=new THREE.Points(pGeo,pMat);scene.add(particles);
-
-      var pointer={x:0,y:0},targetPointer={x:0,y:0};
-      var pointerMove=function(e){targetPointer.x=(e.clientX/window.innerWidth-.5)*2;targetPointer.y=(e.clientY/window.innerHeight-.5)*2};
-      window.addEventListener("pointermove",pointerMove,{passive:true});
-
-      var sceneStates=[
-        {x:2.1,y:.05,z:0,rx:.05,ry:-.15,rz:0,s:1},
-        {x:-2.15,y:.15,z:.15,rx:.25,ry:1.05,rz:-.18,s:.92},
-        {x:2.05,y:.08,z:.1,rx:-.2,ry:2.0,rz:.22,s:.86},
-        {x:-1.55,y:-.05,z:.15,rx:.12,ry:2.85,rz:-.08,s:1.13}
-      ];
-      var currentState=0,scrollProgress=0;
-      function updateStateFromScroll(){
-        var rect=cinematic.getBoundingClientRect(),total=Math.max(1,cinematic.offsetHeight-window.innerHeight);
-        scrollProgress=Math.min(1,Math.max(0,-rect.top/total));
-        var scaled=scrollProgress*(sceneStates.length-1),idx=Math.min(sceneStates.length-2,Math.floor(scaled)),local=scaled-idx;
-        var a=sceneStates[idx],bb=sceneStates[idx+1]||a;
-        world.position.x=THREE.MathUtils.lerp(a.x,bb.x,local);
-        world.position.y=THREE.MathUtils.lerp(a.y,bb.y,local);
-        world.position.z=THREE.MathUtils.lerp(a.z,bb.z,local);
-        world.rotation.x=THREE.MathUtils.lerp(a.rx,bb.rx,local);
-        world.rotation.y=THREE.MathUtils.lerp(a.ry,bb.ry,local);
-        world.rotation.z=THREE.MathUtils.lerp(a.rz,bb.rz,local);
-        var sc=THREE.MathUtils.lerp(a.s,bb.s,local);world.scale.setScalar(sc);
-        currentState=Math.round(scaled);
-      }
-      var onScroll=function(){updateStateFromScroll()};
-      window.addEventListener("scroll",onScroll,{passive:true});updateStateFromScroll();
-
-      var resize=function(){
-        camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.65));renderer.setSize(window.innerWidth,window.innerHeight,false);
-      };
-      window.addEventListener("resize",resize);
-
-      var running=true,raf=0,clock=new THREE.Clock();
-      function animate(){
-        if(!running)return;
-        var t=clock.getElapsedTime();
-        pointer.x+=(targetPointer.x-pointer.x)*.035;pointer.y+=(targetPointer.y-pointer.y)*.035;
-        knot.rotation.x+=.0015;knot.rotation.y+=.0021;core.rotation.y-=.0028;core.rotation.x+=.0014;wire.rotation.copy(core.rotation);
-        rings.rotation.z=t*.035;satellites.rotation.y=t*.07;floating.rotation.y=-t*.045;particles.rotation.y=t*.006;
-        floating.children.forEach(function(obj,index){obj.position.y+=Math.sin(t*1.15+index)*.0007});
-        camera.position.x=pointer.x*.18;camera.position.y=.1-pointer.y*.14;camera.lookAt(0,0,0);
-        var themeLight=root.getAttribute("data-bs-theme")==="light";
-        renderer.toneMappingExposure=themeLight?1.22:1.05;
-        renderer.render(scene,camera);raf=requestAnimationFrame(animate);
-      }
-      animate();
-
-      cleanups.push(function(){
-        running=false;cancelAnimationFrame(raf);window.removeEventListener("pointermove",pointerMove);window.removeEventListener("scroll",onScroll);window.removeEventListener("resize",resize);
-        renderer.dispose();[shieldGeo,knotGeo,coreGeo,pGeo].forEach(function(g){g.dispose&&g.dispose()});
-        [shieldMat,knotMat,coreMat,pMat].forEach(function(m){m.dispose&&m.dispose()});
-      });
-    }).catch(function(err){console.warn("GLIS 3D scene unavailable; using visual fallback.",err)});
-  }
-
-  var htmxSwap=function(event){
-    window.glisReveal(event.target);
-    if(event.target.id==="network-providers"||(event.target.querySelector&&event.target.querySelector("#providerMap"))){if(window.initializeProviderMap)window.initializeProviderMap()}
-  };
-  on(document.body,"htmx:afterSwap",htmxSwap);
-
-  Promise.all([initMotion(),initThree()]).catch(function(){});
-
-  window.__glisX3dCleanup=function(){
-    cleanups.forEach(function(fn){try{fn()}catch(e){}});cleanups=[];
-  };
-})();
-</script>

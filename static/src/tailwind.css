@@ -1,0 +1,264 @@
+@import "tailwindcss" prefix(tw);
+
+@source "../../templates";
+@source "../../apps";
+@source "../../services";
+@source "../js";
+
+@theme {
+  --font-sans: "Inter", "Cairo", ui-sans-serif, system-ui, sans-serif;
+  --animate-glis-float: glis-float 7s ease-in-out infinite;
+  --animate-glis-pulse: glis-pulse 4s ease-in-out infinite;
+  --animate-glis-orbit: glis-orbit 18s linear infinite;
+  --animate-glis-marquee: glis-marquee 28s linear infinite;
+}
+
+@plugin "daisyui" {
+  prefix: "d-";
+  themes: false;
+  logs: false;
+}
+
+@plugin "daisyui/theme" {
+  name: "glis";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: oklch(99% 0.006 155);
+  --color-base-200: oklch(96.5% 0.012 155);
+  --color-base-300: oklch(92.5% 0.022 155);
+  --color-base-content: oklch(24% 0.035 158);
+  --color-primary: oklch(58% 0.17 154);
+  --color-primary-content: oklch(98% 0.01 154);
+  --color-secondary: oklch(62% 0.11 205);
+  --color-secondary-content: oklch(98% 0.01 205);
+  --color-accent: oklch(78% 0.14 84);
+  --color-accent-content: oklch(24% 0.04 84);
+  --color-neutral: oklch(30% 0.04 158);
+  --color-neutral-content: oklch(96% 0.01 158);
+  --color-info: oklch(70% 0.12 230);
+  --color-info-content: oklch(22% 0.04 230);
+  --color-success: oklch(67% 0.17 149);
+  --color-success-content: oklch(98% 0.01 149);
+  --color-warning: oklch(80% 0.16 82);
+  --color-warning-content: oklch(28% 0.05 82);
+  --color-error: oklch(63% 0.22 28);
+  --color-error-content: oklch(98% 0.01 28);
+  --radius-selector: 999px;
+  --radius-field: 1rem;
+  --radius-box: 1.5rem;
+  --size-selector: .25rem;
+  --size-field: .25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 1;
+}
+
+@plugin "daisyui/theme" {
+  name: "glis-dark";
+  default: false;
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-base-100: oklch(18% 0.025 158);
+  --color-base-200: oklch(15% 0.028 158);
+  --color-base-300: oklch(12% 0.03 158);
+  --color-base-content: oklch(94% 0.018 155);
+  --color-primary: oklch(72% 0.18 151);
+  --color-primary-content: oklch(16% 0.035 151);
+  --color-secondary: oklch(75% 0.12 195);
+  --color-secondary-content: oklch(16% 0.035 195);
+  --color-accent: oklch(82% 0.15 86);
+  --color-accent-content: oklch(20% 0.04 86);
+  --color-neutral: oklch(28% 0.04 158);
+  --color-neutral-content: oklch(94% 0.018 155);
+  --color-info: oklch(74% 0.12 230);
+  --color-info-content: oklch(16% 0.03 230);
+  --color-success: oklch(74% 0.18 149);
+  --color-success-content: oklch(16% 0.03 149);
+  --color-warning: oklch(82% 0.16 82);
+  --color-warning-content: oklch(18% 0.04 82);
+  --color-error: oklch(70% 0.2 28);
+  --color-error-content: oklch(16% 0.03 28);
+  --radius-selector: 999px;
+  --radius-field: 1rem;
+  --radius-box: 1.5rem;
+  --size-selector: .25rem;
+  --size-field: .25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 1;
+}
+
+@custom-variant dark (&:where([data-theme="glis-dark"], [data-theme="glis-dark"] *));
+
+@keyframes glis-float {
+  0%, 100% { transform: translate3d(0,0,0) rotate(0deg); }
+  50% { transform: translate3d(0,-14px,0) rotate(1.5deg); }
+}
+@keyframes glis-pulse {
+  0%, 100% { opacity: .35; transform: scale(.92); }
+  50% { opacity: .75; transform: scale(1.08); }
+}
+@keyframes glis-orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes glis-marquee {
+  to { transform: translateX(-50%); }
+}
+@keyframes glis-shine {
+  0% { transform: translateX(-130%) skewX(-18deg); }
+  70%, 100% { transform: translateX(230%) skewX(-18deg); }
+}
+@keyframes glis-rotate-word {
+  0% { opacity: 0; transform: translateY(70%) rotateX(-80deg); filter: blur(8px); }
+  18%, 72% { opacity: 1; transform: translateY(0) rotateX(0); filter: blur(0); }
+  100% { opacity: 0; transform: translateY(-65%) rotateX(75deg); filter: blur(8px); }
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-sans); }
+
+.glis-aura {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.glis-aura::before {
+  content: "";
+  position: absolute;
+  inset: -35%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at var(--aura-x, 22%) var(--aura-y, 20%), color-mix(in oklab, var(--color-primary) 32%, transparent) 0 8%, transparent 30%),
+    radial-gradient(circle at 78% 18%, color-mix(in oklab, var(--color-secondary) 25%, transparent), transparent 28%),
+    radial-gradient(circle at 55% 92%, color-mix(in oklab, var(--color-accent) 18%, transparent), transparent 32%);
+  filter: blur(46px) saturate(125%);
+  animation: glis-pulse 7s ease-in-out infinite;
+}
+.glis-aura::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .18;
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--color-base-content) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--color-base-content) 8%, transparent) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+
+.glis-glass {
+  background: color-mix(in oklab, var(--color-base-100) 76%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
+  backdrop-filter: blur(24px) saturate(130%);
+  box-shadow: 0 22px 70px color-mix(in oklab, var(--color-neutral) 14%, transparent);
+}
+
+.glis-tilt {
+  --rx: 0deg;
+  --ry: 0deg;
+  --tz: 0px;
+  transform: perspective(1100px) rotateX(var(--rx)) rotateY(var(--ry)) translateZ(var(--tz));
+  transform-style: preserve-3d;
+  transition: transform .18s ease, box-shadow .25s ease, border-color .25s ease;
+  will-change: transform;
+}
+.glis-tilt:hover {
+  --tz: 10px;
+  box-shadow: 0 30px 80px color-mix(in oklab, var(--color-primary) 14%, transparent);
+}
+.glis-tilt > * {
+  transform: translateZ(18px);
+}
+
+.glis-hover-gallery > * {
+  transition: flex .45s cubic-bezier(.2,.75,.25,1), transform .45s ease, filter .45s ease, opacity .45s ease;
+}
+@media (min-width: 768px) {
+  .glis-hover-gallery > * { flex: 1 1 0; }
+  .glis-hover-gallery:hover > * { filter: saturate(.65); opacity: .66; transform: scale(.985); }
+  .glis-hover-gallery > *:hover { flex: 1.55 1 0; filter: saturate(1.1); opacity: 1; transform: translateY(-8px) scale(1.015); }
+}
+
+.glis-shine { position: relative; overflow: hidden; }
+.glis-shine::after {
+  content: "";
+  position: absolute;
+  inset: -30% auto -30% -40%;
+  width: 32%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, white 44%, transparent), transparent);
+  animation: glis-shine 5.5s ease-in-out infinite;
+}
+
+.glis-orb {
+  position: relative;
+  transform-style: preserve-3d;
+  animation: glis-float 7s ease-in-out infinite;
+}
+.glis-orb-ring {
+  position: absolute;
+  inset: 12%;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 40%, transparent);
+  border-radius: 999px;
+  animation: glis-orbit 18s linear infinite;
+}
+.glis-orb-ring:nth-child(2) { inset: 20%; animation-duration: 13s; animation-direction: reverse; transform: rotateX(62deg); }
+.glis-orb-ring:nth-child(3) { inset: 28%; animation-duration: 9s; transform: rotateY(66deg); }
+
+.glis-rotate-stage { display: inline-grid; perspective: 700px; min-width: 7.5ch; }
+.glis-rotate-word {
+  grid-area: 1 / 1;
+  display: inline-block;
+  transform-origin: 50% 50%;
+  animation: glis-rotate-word .62s ease both;
+}
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(26px) scale(.985);
+  transition: opacity .75s ease, transform .75s cubic-bezier(.2,.8,.2,1);
+}
+[data-reveal].is-visible { opacity: 1; transform: none; }
+
+.portal-tw-sidebar {
+  width: 17rem;
+  transition: width .25s ease, transform .25s ease;
+}
+.portal-tw-stage {
+  margin-inline-start: 17rem;
+  transition: margin-inline-start .25s ease;
+}
+.sidebar-mode-mini .portal-tw-sidebar { width: 5.5rem; }
+.sidebar-mode-mini .portal-tw-stage { margin-inline-start: 5.5rem; }
+.sidebar-mode-mini .portal-tw-label { display: none; }
+.sidebar-mode-mini .portal-tw-navlink { justify-content: center; }
+.sidebar-mode-hidden .portal-tw-sidebar { transform: translateX(-110%); }
+[dir="rtl"] .sidebar-mode-hidden .portal-tw-sidebar { transform: translateX(110%); }
+.sidebar-mode-hidden .portal-tw-stage { margin-inline-start: 0; }
+
+.glis-portal-nav-scroll { scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--color-primary) 35%, transparent) transparent; }
+
+.glis-chart-shell .js-plotly-plot,
+.glis-chart-shell .plot-container,
+.glis-chart-shell .svg-container { width: 100% !important; }
+
+@media (max-width: 1023px) {
+  .portal-tw-stage { margin-inline-start: 0 !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+  [data-reveal] { opacity: 1; transform: none; }
+  .glis-tilt { transform: none !important; }
+}

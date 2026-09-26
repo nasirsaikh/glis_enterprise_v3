@@ -38,12 +38,19 @@ The existing theme toggle now updates both `data-theme` for daisyUI and `data-bs
 
 ## Migration scope in this branch
 
-- Public base shell and navigation
-- CMS public home loader
-- Public homepage content
-- Portal base shell/navigation
+- Public base shell, navigation, footer and CMS homepage
+- Public Knowledge Base list/detail
+- Sign in, sign up and password reset
+- Portal base shell/navigation and responsive mobile drawer
 - Portal overview dashboard
-- Shared motion layer: reveal, pointer aura, 3D tilt, rotating text, hover gallery, counters
-- Existing HTMX, Plotly, rich-text, notifications and sidebar preference behavior retained
+- Ticket list, ticket detail/conversation, editor and 4-step creation wizard
+- Task workspace, HTMX editor and tables
+- Notifications
+- Document Center
+- Profile and security
+- Vanna analytics workspace
+- Django form widgets and dynamic form controls
+- Shared motion layer: reveal, pointer aura, 3D tilt, native daisyUI Aura, Hover 3D, Hover Gallery, Text Rotate, Timeline, Stats and Lists
+- Existing HTMX, Plotly, rich-text, document upload, notifications and sidebar preference behavior retained
 
-Remaining legacy screens continue to render with Bootstrap and can be migrated incrementally using the same prefixed component system.
+Bootstrap remains loaded as a compatibility layer for any infrequently used legacy partials that have not yet been rewritten. Migrated screens use the collision-safe Tailwind/daisyUI component system and can coexist with those partials while the final cleanup is completed.

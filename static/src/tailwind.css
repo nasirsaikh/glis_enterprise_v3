@@ -1,6 +1,8 @@
 @import "tailwindcss" prefix(tw);
 
 @source "../../templates";
+@source "../../apps";
+@source "../../services";
 @source "../js";
 
 @theme {

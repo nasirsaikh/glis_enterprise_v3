@@ -1,333 +1,80 @@
-{% extends "base_portal.html" %}
-{% load i18n %}
-
+{% extends "base_portal.html" %}{% load i18n %}
 {% block title %}{% translate "Vanna analytics" %}{% endblock %}
-{% block main_class %}portal-main-analytics{% endblock %}
-
+{% block main_class %}tw:p-0 portal-main-analytics{% endblock %}
 {% block content %}
-
 {% if selected_domain %}
-
 {% url 'orchestrator:session_detail' '00000000-0000-0000-0000-000000000000' as session_detail_template %}
-
-<div class="container-fluid px-0"
-     id="vanna-workbench"
+<div id="vanna-workbench"
+     class="tw:grid tw:min-h-[calc(100vh-6rem)] tw:overflow-hidden tw:bg-base-100 tw:lg:grid-cols-[18rem_1fr]"
      data-session-detail-template="{{ session_detail_template }}"
      data-session-list-url="{% url 'orchestrator:session_list' %}"
      data-domain-id="{{ selected_domain.pk }}">
-  <div class="row g-0 vh-100">
-    <div class="col-12 col-lg-2 border-end bg-body-tertiary">
-      <aside class="ai-session-rail h-100 d-flex flex-column" aria-label="{% translate 'Analysis sessions' %}">
-        <div class="p-3 border-bottom">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <span class="page-eyebrow">
-                {% translate "Question history" %}
-              </span>
-              <h4 class="mb-0">
-                {% translate "Ask Vanna" %}
-              </h4>
-            </div>
-            <button class="btn btn-primary btn-sm rounded-circle"
-                    id="vanna-new-session"
-                    type="button"
-                    title="{% translate 'Start a new conversation' %}">
-              <i class="bi bi-plus-lg"></i>
-            </button>
-          </div>
 
-          <form class="ai-domain-switch" method="get">
-
-            <label class="form-label small text-muted" for="vanna-domain">
-              {% translate "Analytics domain" %}
-            </label>
-
-            <select class="form-select"
-                    id="vanna-domain"
-                    name="domain"
-                    data-auto-submit>
-
-              {% for domain in domains %}
-                <option value="{{ domain.pk }}" {% if domain == selected_domain %}selected{% endif %}>
-                  {{ domain.name }}
-                </option>
-              {% endfor %}
-
-            </select>
-
-          </form>
-
-        </div>
-
-
-        <div class="ai-session-list flex-grow-1 overflow-auto p-2"
-             id="vanna-session-list">
-
-          {% for session in analysis_sessions %}
-
-            <button
-              class="ai-session-item w-100 text-start border-0 rounded-3 p-3 mb-2{% if active_session.pk == session.pk %} active{% endif %}"
-              type="button"
-              data-session-id="{{ session.pk }}">
-
-              <div class="d-flex gap-2">
-
-                <i class="bi bi-chat-left-text mt-1"></i>
-
-                <div class="flex-grow-1 overflow-hidden">
-
-                  <strong class="d-block text-truncate">
-                    {{ session.title|truncatechars:58 }}
-                  </strong>
-
-                  <small class="text-muted">
-                    {{ session.question_count }} {% translate "questions" %}
-                    · {{ session.updated_at|timesince }} {% translate "ago" %}
-                  </small>
-
-                </div>
-
-              </div>
-
-            </button>
-
-          {% empty %}
-
-            <div class="text-center text-muted py-5"
-                 id="vanna-session-empty">
-
-              <i class="bi bi-chat-square-dots fs-2 d-block mb-2"></i>
-
-              <span>
-                {% translate "Your conversations will appear here." %}
-              </span>
-
-            </div>
-
-          {% endfor %}
-
-        </div>
-
-
-        {% if user.is_staff %}
-
-          <div class="border-top p-3">
-
-            <a class="btn btn-outline-secondary w-100"
-               href="{% url 'admin:orchestrator_businessrule_changelist' %}">
-
-              <i class="bi bi-sliders me-2"></i>
-              {% translate "Rules, prompts & training" %}
-
-            </a>
-
-          </div>
-
-        {% endif %}
-
-      </aside>
-
+  <aside class="ai-session-rail tw:flex tw:min-h-0 tw:flex-col tw:border-b tw:border-base-300 tw:bg-base-200/65 tw:lg:border-b-0 tw:lg:border-e" aria-label="{% translate 'Analysis sessions' %}">
+    <div class="tw:border-b tw:border-base-300 tw:p-4">
+      <div class="tw:flex tw:items-center tw:justify-between tw:gap-3">
+        <div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-2"><i class="bi bi-stars tw:me-1"></i>{% translate "AI analytics" %}</span><h1 class="tw:text-xl tw:font-black">{% translate "Ask Vanna" %}</h1></div>
+        <button class="tw:d-btn tw:d-btn-primary tw:d-btn-circle tw:d-btn-sm" id="vanna-new-session" type="button" title="{% translate 'Start a new conversation' %}"><i class="bi bi-plus-lg"></i></button>
+      </div>
+      <form class="ai-domain-switch tw:mt-4" method="get">
+        <label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Analytics domain" %}</span>
+          <select class="tw:d-select tw:d-select-bordered tw:w-full" id="vanna-domain" name="domain" data-auto-submit>{% for domain in domains %}<option value="{{ domain.pk }}" {% if domain == selected_domain %}selected{% endif %}>{{ domain.name }}</option>{% endfor %}</select>
+        </label>
+      </form>
     </div>
 
-
-    <!-- CHAT AREA -->
-    <div class="col-12 col-lg-10">
-
-      <section class="d-flex flex-column vh-100">
-
-        <!-- HEADER -->
-        <header class="border-bottom bg-body px-3 px-md-4 py-3">
-
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-
-            <div class="d-flex align-items-center gap-2">
-
-              <span class="ai-status-dot"></span>
-
-              <div>
-                <strong class="d-block">
-                  {{ selected_domain.name }}
-                </strong>
-              </div>
-
-            </div>
-
-
-            <div class="d-flex align-items-center gap-2">
-
-              <span class="badge text-bg-light border">
-                <i class="bi bi-database me-1"></i>
-                {{ selected_domain.collection_name|default:"Tool Memory" }}
-              </span>
-
-              <span class="badge text-bg-light border">
-                <i class="bi bi-shield-check me-1"></i>
-                {% translate "Governed" %}
-              </span>
-
-            </div>
-
-          </div>
-
-        </header>
-
-
-        {% if vanna_settings.provider == "ollama_vanna" and not vanna_settings.allow_sql_execution %}
-
-          <div class="alert alert-warning rounded-0 mb-0">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            {% translate "Local Model is selected, but SQL execution is disabled in Settings." %}
-          </div>
-
-        {% endif %}
-
-
-        <!-- CONVERSATION -->
-        <div class="ai-conversation flex-grow-1 overflow-auto p-3 p-md-4"
-             id="vanna-conversation"
-             aria-live="polite">
-
-          <div class="ai-conversation-loading text-center py-5"
-               id="vanna-history-loading">
-
-            <span class="spinner-border spinner-border-sm me-2"></span>
-            {% translate "Loading conversation…" %}
-
-          </div>
-
-
-          <div class="ai-welcome d-none text-center py-5"
-               id="vanna-welcome">
-
-            <div class="mb-3">
-              <i class="bi bi-stars display-5 text-primary"></i>
-            </div>
-
-            <h2 class="h4">
-              {% translate "Start a governed data conversation" %}
-            </h2>
-
-            <p class="text-muted mx-auto" style="max-width:650px;">
-              {% translate "Ask a business question. Vanna retrieves relevant ChromaDB context, applies access rules, runs read-only SQL and keeps every question in this session." %}
-            </p>
-
-          </div>
-
-        </div>
-
-
-        <!-- COMPOSER -->
-        <div class="border-top bg-body p-3" style="margin-bottom: 100px;">
-
-          <div class="prompt-chips ai-suggestion-row d-flex gap-2 overflow-auto mb-2"
-               id="vanna-suggestions">
-
-            {% for prompt in suggested_prompts %}
-              <button type="button"
-                      class="btn btn-sm btn-outline-secondary text-nowrap"
-                      data-vanna-prompt="{{ prompt.text_en }}">
-                {{ prompt.text_en }}
-              </button>
-            {% endfor %}
-
-          </div>
-
-
-          <form id="vanna-form"
-                class="ai-composer"
-                action="{% url 'orchestrator:ask' %}"
-                method="post">
-
-            {% csrf_token %}
-
-            <input type="hidden"
-                   name="domain"
-                   value="{{ selected_domain.pk }}">
-
-            <input type="hidden"
-                   name="session_id"
-                   id="vanna-session"
-                   value="{% if active_session %}{{ active_session.pk }}{% endif %}">
-
-            <label class="visually-hidden"
-                   for="vanna-question">
-              {% translate "What would you like to analyze?" %}
-            </label>
-
-
-            <div class="input-group shadow-sm">
-
-              <textarea class="form-control"
-                        id="vanna-question"
-                        name="question"
-                        rows="2"
-                        required
-                        placeholder="{% translate 'How can I help with your data?' %}"></textarea>
-
-              <button class="btn btn-primary px-4"
-                      id="vanna-send"
-                      type="submit"
-                      title="{% translate 'Send question' %}">
-
-                <i class="bi bi-arrow-up"></i>
-
-              </button>
-
-            </div>
-
-
-            <!-- <div class="d-flex justify-content-between mt-2 px-1">
-
-              <small class="text-muted">
-                <i class="bi bi-database me-1"></i>
-                {{ selected_domain.collection_name|default:"Tool Memory" }}
-              </small>
-
-            </div> -->
-
-          </form>
-
-
-          <div id="vanna-error"
-               class="alert alert-danger d-none mt-2 mb-0">
-          </div>
-
-        </div>
-
-      </section>
-
+    <div class="ai-session-list tw:max-h-64 tw:flex-1 tw:overflow-y-auto tw:p-2 tw:lg:max-h-none" id="vanna-session-list">
+      {% for session in analysis_sessions %}
+      <button class="ai-session-item tw:mb-1 tw:flex tw:w-full tw:gap-3 tw:rounded-2xl tw:border-0 tw:bg-transparent tw:p-3 tw:text-start tw:transition tw:hover:bg-base-100 {% if active_session.pk == session.pk %}active tw:bg-base-100 tw:shadow-sm{% endif %}" type="button" data-session-id="{{ session.pk }}">
+        <span class="tw:grid tw:h-9 tw:w-9 tw:shrink-0 tw:place-items-center tw:rounded-xl tw:bg-primary/10 tw:text-primary"><i class="bi bi-chat-left-text"></i></span>
+        <span class="tw:min-w-0 tw:flex-1"><strong class="tw:block tw:truncate tw:text-sm">{{ session.title|truncatechars:58 }}</strong><small class="tw:mt-1 tw:block tw:text-xs tw:text-base-content/45">{{ session.question_count }} {% translate "questions" %} · {{ session.updated_at|timesince }} {% translate "ago" %}</small></span>
+      </button>
+      {% empty %}
+      <div class="tw:flex tw:flex-col tw:items-center tw:gap-2 tw:py-10 tw:text-center tw:text-base-content/45" id="vanna-session-empty"><i class="bi bi-chat-square-dots tw:text-2xl"></i><span>{% translate "Your conversations will appear here." %}</span></div>
+      {% endfor %}
     </div>
 
-  </div>
+    {% if user.is_staff %}
+    <div class="tw:border-t tw:border-base-300 tw:p-3"><a class="tw:d-btn tw:d-btn-outline tw:d-btn-sm tw:w-full" href="{% url 'admin:orchestrator_businessrule_changelist' %}"><i class="bi bi-sliders"></i>{% translate "Rules, prompts & training" %}</a></div>
+    {% endif %}
+  </aside>
 
+  <section class="tw:flex tw:min-h-[70vh] tw:min-w-0 tw:flex-col">
+    <header class="glis-glass tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-b tw:border-base-300 tw:px-4 tw:py-3 tw:sm:px-6">
+      <div class="tw:flex tw:items-center tw:gap-3"><span class="tw:d-status tw:d-status-success tw:animate-pulse"></span><div><strong class="tw:block">{{ selected_domain.name }}</strong><small class="tw:text-base-content/45">{% translate "Governed analytics workspace" %}</small></div></div>
+      <div class="tw:flex tw:flex-wrap tw:gap-2"><span class="tw:d-badge tw:d-badge-outline tw:gap-1"><i class="bi bi-database"></i>{{ selected_domain.collection_name|default:"Tool Memory" }}</span><span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:gap-1"><i class="bi bi-shield-check"></i>{% translate "Governed" %}</span></div>
+    </header>
 
-  <div id="vanna-diagnostic-log" class="d-none"></div>
-  <span id="vanna-diagnostic-count" class="d-none">0</span>
+    {% if vanna_settings.provider == "ollama_vanna" and not vanna_settings.allow_sql_execution %}
+    <div class="tw:d-alert tw:d-alert-warning tw:rounded-none"><i class="bi bi-exclamation-triangle"></i><span>{% translate "Local Model is selected, but SQL execution is disabled in Settings." %}</span></div>
+    {% endif %}
 
+    <div class="ai-conversation tw:flex-1 tw:overflow-y-auto tw:bg-base-200/30 tw:p-4 tw:sm:p-6" id="vanna-conversation" aria-live="polite">
+      <div class="ai-conversation-loading tw:flex tw:items-center tw:justify-center tw:gap-2 tw:py-16 tw:text-base-content/45" id="vanna-history-loading"><span class="tw:d-loading tw:d-loading-spinner tw:d-loading-sm"></span>{% translate "Loading conversation…" %}</div>
+      <div class="ai-welcome d-none tw:mx-auto tw:max-w-2xl tw:py-16 tw:text-center" id="vanna-welcome">
+        <span class="tw:d-aura tw:d-aura-holo tw:d-aura-lg tw:rounded-[2rem]"><span class="tw:grid tw:h-20 tw:w-20 tw:place-items-center tw:rounded-[2rem] tw:bg-primary tw:text-primary-content"><i class="bi bi-stars tw:text-3xl"></i></span></span>
+        <h2 class="tw:mt-6 tw:text-3xl tw:font-black tw:tracking-[-.04em]">{% translate "Start a governed data conversation" %}</h2>
+        <p class="tw:mt-3 tw:leading-7 tw:text-base-content/55">{% translate "Ask a business question. Vanna retrieves relevant ChromaDB context, applies access rules, runs read-only SQL and keeps every question in this session." %}</p>
+      </div>
+    </div>
+
+    <div class="tw:border-t tw:border-base-300 tw:bg-base-100 tw:p-3 tw:sm:p-4">
+      <div class="prompt-chips ai-suggestion-row tw:mb-3 tw:flex tw:gap-2 tw:overflow-x-auto tw:pb-1" id="vanna-suggestions">{% for prompt in suggested_prompts %}<button type="button" class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:shrink-0 tw:rounded-full tw:border tw:border-base-300" data-vanna-prompt="{{ prompt.text_en }}">{{ prompt.text_en }}</button>{% endfor %}</div>
+      <form id="vanna-form" class="ai-composer tw:mx-auto tw:max-w-5xl" action="{% url 'orchestrator:ask' %}" method="post">
+        {% csrf_token %}<input type="hidden" name="domain" value="{{ selected_domain.pk }}"><input type="hidden" name="session_id" id="vanna-session" value="{% if active_session %}{{ active_session.pk }}{% endif %}">
+        <label class="tw:sr-only" for="vanna-question">{% translate "What would you like to analyze?" %}</label>
+        <div class="tw:flex tw:items-end tw:gap-2 tw:rounded-[1.6rem] tw:border tw:border-base-300 tw:bg-base-200/55 tw:p-2 tw:shadow-lg tw:focus-within:border-primary">
+          <textarea class="tw:d-textarea tw:min-h-16 tw:flex-1 tw:resize-none tw:border-0 tw:bg-transparent tw:focus:outline-none" id="vanna-question" name="question" rows="2" required placeholder="{% translate 'How can I help with your data?' %}"></textarea>
+          <button class="tw:d-btn tw:d-btn-primary tw:d-btn-circle tw:shrink-0" id="vanna-send" type="submit" title="{% translate 'Send question' %}"><i class="bi bi-arrow-up"></i></button>
+        </div>
+      </form>
+      <div id="vanna-error" class="alert alert-danger d-none tw:mx-auto tw:mt-2 tw:max-w-5xl"></div>
+    </div>
+  </section>
+
+  <div id="vanna-diagnostic-log" class="d-none"></div><span id="vanna-diagnostic-count" class="d-none">0</span>
 </div>
-
 {% else %}
-
-<div class="container py-5">
-
-  <div class="card border-0 shadow-sm">
-    <div class="card-body text-center py-5">
-
-      <i class="bi bi-database-x display-5 text-muted"></i>
-
-      <h4 class="mt-3">
-        {% translate "No analytics domain is available" %}
-      </h4>
-
-      <p class="text-muted mb-0">
-        {% translate "Ask an administrator to configure a permitted AI domain." %}
-      </p>
-
-    </div>
-  </div>
-
-</div>
-
+<div class="tw:mx-auto tw:max-w-3xl tw:py-16"><div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl"><div class="tw:d-card-body tw:items-center tw:py-14 tw:text-center"><i class="bi bi-database-x tw:text-4xl tw:text-base-content/35"></i><h2 class="tw:d-card-title tw:mt-3">{% translate "No analytics domain is available" %}</h2><p class="tw:text-base-content/55">{% translate "Ask an administrator to configure a permitted AI domain." %}</p></div></div></div>
 {% endif %}
-
 {% endblock %}

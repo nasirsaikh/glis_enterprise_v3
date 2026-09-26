@@ -4,7 +4,7 @@
 <div class="tw:overflow-hidden tw:bg-base-100 tw:text-base-content">
   <section class="glis-aura tw:relative tw:min-h-[88svh] tw:overflow-hidden tw:border-b tw:border-base-300" data-aura>
     <div class="tw:absolute tw:inset-x-0 tw:top-0 tw:h-40 tw:bg-gradient-to-b tw:from-primary/8 tw:to-transparent" aria-hidden="true"></div>
-    <div class="tw:relative tw:mx-auto tw:grid tw:min-h-[88svh] tw:max-w-7xl tw:items-center tw:gap-14 tw:px-6 tw:py-20 lg:tw:grid-cols-[1.08fr_.92fr] lg:tw:py-24">
+    <div class="tw:relative tw:mx-auto tw:grid tw:min-h-[88svh] tw:max-w-7xl tw:items-center tw:gap-14 tw:px-6 tw:py-20 tw:lg:grid-cols-[1.08fr_.92fr] tw:lg:py-24">
       <div class="tw:relative tw:z-10" data-reveal>
         <div class="tw:mb-6 tw:flex tw:flex-wrap tw:items-center tw:gap-3">
           <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:d-badge-lg tw:gap-2 tw:px-4">
@@ -18,18 +18,18 @@
           <span class="tw:d-badge tw:d-badge-outline tw:d-badge-lg tw:gap-2"><i class="bi bi-shield-check"></i>{% translate "Secure by design" %}</span>
         </div>
 
-        <h1 class="tw:max-w-4xl tw:text-5xl tw:font-black tw:leading-[.96] tw:tracking-[-.055em] sm:tw:text-6xl lg:tw:text-7xl xl:tw:text-8xl">
+        <h1 class="tw:max-w-4xl tw:text-5xl tw:font-black tw:leading-[.96] tw:tracking-[-.055em] tw:sm:text-6xl tw:lg:text-7xl tw:xl:text-8xl">
           {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_title_ar|default:hero.hero_title_en }}{% else %}{{ hero.hero_title_en }}{% endif %}
         </h1>
 
-        <div class="tw:mt-5 tw:flex tw:flex-wrap tw:items-baseline tw:gap-x-3 tw:text-2xl tw:font-black tw:tracking-tight sm:tw:text-3xl">
+        <div class="tw:mt-5 tw:flex tw:flex-wrap tw:items-baseline tw:gap-x-3 tw:text-2xl tw:font-black tw:tracking-tight tw:sm:text-3xl">
           <span class="tw:text-base-content/55">{% translate "Built for" %}</span>
           <span class="glis-rotate-stage tw:text-primary">
             <span data-rotate-text="{% translate 'claims' %}|{% translate 'healthcare' %}|{% translate 'policy service' %}|{% translate 'customer care' %}">{% translate "claims" %}</span>
           </span>
         </div>
 
-        <p class="tw:mt-7 tw:max-w-2xl tw:text-lg tw:leading-8 tw:text-base-content/65 sm:tw:text-xl">
+        <p class="tw:mt-7 tw:max-w-2xl tw:text-lg tw:leading-8 tw:text-base-content/65 tw:sm:text-xl">
           {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_subtitle_ar|default:hero.hero_subtitle_en }}{% else %}{{ hero.hero_subtitle_en }}{% endif %}
         </p>
 
@@ -44,7 +44,7 @@
           </a>
         </div>
 
-        <div class="tw:mt-9 tw:grid tw:max-w-2xl tw:grid-cols-2 tw:gap-3 sm:tw:grid-cols-3">
+        <div class="tw:mt-9 tw:grid tw:max-w-2xl tw:grid-cols-2 tw:gap-3 tw:sm:grid-cols-3">
           <div class="tw:flex tw:items-center tw:gap-2 tw:text-sm tw:font-semibold tw:text-base-content/65"><i class="bi bi-globe2 tw:text-primary"></i>{% translate "English & Arabic" %}</div>
           <div class="tw:flex tw:items-center tw:gap-2 tw:text-sm tw:font-semibold tw:text-base-content/65"><i class="bi bi-activity tw:text-primary"></i>{% translate "Live visibility" %}</div>
           <div class="tw:flex tw:items-center tw:gap-2 tw:text-sm tw:font-semibold tw:text-base-content/65"><i class="bi bi-signpost-split tw:text-primary"></i>{% translate "Smart routing" %}</div>
@@ -55,8 +55,8 @@
         <div class="glis-orb tw:relative tw:aspect-square tw:w-full tw:rounded-[2.75rem] tw:border tw:border-base-300 tw:bg-gradient-to-br tw:from-primary/12 tw:via-base-100 tw:to-secondary/12 tw:p-8 tw:shadow-2xl tw:shadow-primary/10">
           <span class="glis-orb-ring"></span><span class="glis-orb-ring"></span><span class="glis-orb-ring"></span>
           <div class="tw:absolute tw:inset-[17%] tw:grid tw:place-items-center tw:rounded-full tw:bg-primary/10 tw:shadow-[inset_0_0_80px_color-mix(in_oklab,var(--color-primary)_22%,transparent)]">
-            <div class="tw:grid tw:h-36 tw:w-36 tw:place-items-center tw:rounded-[2.2rem] tw:bg-primary tw:text-primary-content tw:shadow-2xl tw:shadow-primary/35 sm:tw:h-44 sm:tw:w-44">
-              <i class="bi bi-shield-check tw:text-6xl sm:tw:text-7xl"></i>
+            <div class="tw:grid tw:h-36 tw:w-36 tw:place-items-center tw:rounded-[2.2rem] tw:bg-primary tw:text-primary-content tw:shadow-2xl tw:shadow-primary/35 tw:sm:h-44 tw:sm:w-44">
+              <i class="bi bi-shield-check tw:text-6xl tw:sm:text-7xl"></i>
             </div>
           </div>
 
@@ -78,7 +78,7 @@
           </article>
 
           <div class="tw:absolute tw:end-[7%] tw:top-[11%] tw:animate-glis-float tw:rounded-2xl tw:bg-accent tw:p-3 tw:text-accent-content tw:shadow-xl"><i class="bi bi-stars tw:text-xl"></i></div>
-          <div class="tw:absolute tw:bottom-[20%] tw:start-[5%] tw:animate-glis-float tw:rounded-2xl tw:bg-secondary tw:p-3 tw:text-secondary-content tw:shadow-xl [animation-delay:1.4s]"><i class="bi bi-heart-pulse tw:text-xl"></i></div>
+          <div class="tw:absolute tw:bottom-[20%] tw:start-[5%] tw:animate-glis-float tw:rounded-2xl tw:bg-secondary tw:p-3 tw:text-secondary-content tw:shadow-xl tw:[animation-delay:1.4s]"><i class="bi bi-heart-pulse tw:text-xl"></i></div>
         </div>
       </div>
     </div>
@@ -90,7 +90,7 @@
 
   <section class="tw:border-b tw:border-base-300 tw:bg-base-200/70">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6 tw:py-7">
-      <ul class="tw:d-list tw:grid tw:gap-3 md:tw:grid-cols-2 xl:tw:grid-cols-4">
+      <ul class="tw:d-list tw:grid tw:gap-3 tw:md:grid-cols-2 tw:xl:grid-cols-4">
         <li class="tw:d-list-row glis-tilt tw:rounded-2xl tw:bg-base-100 tw:shadow-sm" data-tilt><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-xl tw:bg-primary/12 tw:text-primary"><i class="bi bi-hospital"></i></span><div><a class="tw:font-bold" href="#network-providers">{% translate "Find a Provider" %}</a><div class="tw:text-xs tw:text-base-content/55">{% translate "Hospitals, clinics and pharmacies" %}</div></div></li>
         <li class="tw:d-list-row glis-tilt tw:rounded-2xl tw:bg-base-100 tw:shadow-sm" data-tilt><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-xl tw:bg-secondary/12 tw:text-secondary"><i class="bi bi-clipboard2-check"></i></span><div><a class="tw:font-bold" href="#journey">{% translate "Pre-Authorization" %}</a><div class="tw:text-xs tw:text-base-content/55">{% translate "Medical approval guidance" %}</div></div></li>
         <li class="tw:d-list-row glis-tilt tw:rounded-2xl tw:bg-base-100 tw:shadow-sm" data-tilt><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-xl tw:bg-accent/18 tw:text-accent-content"><i class="bi bi-receipt"></i></span><div><a class="tw:font-bold" href="#downloads">{% translate "Reimbursement" %}</a><div class="tw:text-xs tw:text-base-content/55">{% translate "Forms and claim guidance" %}</div></div></li>
@@ -101,31 +101,31 @@
 
   <section id="services" class="tw:relative tw:py-24">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
-      <div class="tw:grid tw:gap-8 lg:tw:grid-cols-[.78fr_1.22fr] lg:tw:items-end" data-reveal>
+      <div class="tw:grid tw:gap-8 tw:lg:grid-cols-[.78fr_1.22fr] tw:lg:items-end" data-reveal>
         <div>
           <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4 tw:gap-2"><i class="bi bi-grid-1x2"></i>{% translate "Connected Services" %}</span>
-          <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] sm:tw:text-5xl">{% translate "A better interface for the entire insurance journey." %}</h2>
+          <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "A better interface for the entire insurance journey." %}</h2>
         </div>
         <p class="tw:max-w-2xl tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Claims support, policy servicing, provider requests, medical administration, payments and customer care—organized into one clear service layer." %}</p>
       </div>
 
-      <div class="tw:mt-12 tw:grid tw:gap-5 md:tw:grid-cols-2 xl:tw:grid-cols-3">
+      <div class="tw:mt-12 tw:grid tw:gap-5 tw:md:grid-cols-2 tw:xl:grid-cols-3">
         {% for service in services %}
         <article class="tw:d-card glis-tilt glis-glass tw:group tw:min-h-[20rem] tw:border tw:border-base-300 tw:bg-base-100/75 tw:shadow-xl tw:transition" data-tilt data-reveal>
           <div class="tw:d-card-body tw:relative tw:p-7">
             <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
-              <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-primary/12 tw:text-2xl tw:text-primary tw:transition group-hover:tw:-rotate-6 group-hover:tw:scale-110"><i class="bi {{ service.icon|default:'bi-stars' }}"></i></span>
+              <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-primary/12 tw:text-2xl tw:text-primary tw:transition group-tw:hover:-rotate-6 group-tw:hover:scale-110"><i class="bi {{ service.icon|default:'bi-stars' }}"></i></span>
               {% if service.category %}<span class="tw:d-badge tw:d-badge-outline">{% if LANGUAGE_CODE == "ar" %}{{ service.category.name_ar|default:service.category.name_en }}{% else %}{{ service.category.name_en }}{% endif %}</span>{% endif %}
             </div>
             <h3 class="tw:d-card-title tw:mt-6 tw:text-2xl tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3>
             <p class="tw:mt-2 tw:leading-7 tw:text-base-content/60">{% if LANGUAGE_CODE == "ar" %}{{ service.summary_ar|default:service.summary_en }}{% else %}{{ service.summary_en }}{% endif %}</p>
             <div class="tw:d-card-actions tw:mt-auto tw:pt-6">
-              <a href="{{ service.link|default:'#' }}" class="tw:d-btn tw:d-btn-ghost tw:rounded-full tw:px-0 tw:text-primary hover:tw:bg-transparent">{% translate "Explore service" %}<i class="bi bi-arrow-right tw:transition group-hover:tw:translate-x-1"></i></a>
+              <a href="{{ service.link|default:'#' }}" class="tw:d-btn tw:d-btn-ghost tw:rounded-full tw:px-0 tw:text-primary tw:hover:bg-transparent">{% translate "Explore service" %}<i class="bi bi-arrow-right tw:transition group-tw:hover:translate-x-1"></i></a>
             </div>
           </div>
         </article>
         {% empty %}
-        <div class="tw:d-alert tw:d-alert-info md:tw:col-span-2 xl:tw:col-span-3"><i class="bi bi-info-circle"></i><span>{% translate "No services currently available." %}</span></div>
+        <div class="tw:d-alert tw:d-alert-info tw:md:col-span-2 tw:xl:col-span-3"><i class="bi bi-info-circle"></i><span>{% translate "No services currently available." %}</span></div>
         {% endfor %}
       </div>
     </div>
@@ -133,12 +133,12 @@
 
   <section class="tw:bg-neutral tw:py-20 tw:text-neutral-content">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
-      <div class="tw:flex tw:flex-col tw:gap-6 lg:tw:flex-row lg:tw:items-end lg:tw:justify-between" data-reveal>
-        <div><span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:mb-4">{% translate "Live service intelligence" %}</span><h2 class="tw:max-w-3xl tw:text-4xl tw:font-black tw:tracking-[-.04em] sm:tw:text-5xl">{% translate "Operational clarity you can feel at a glance." %}</h2></div>
+      <div class="tw:flex tw:flex-col tw:gap-6 tw:lg:flex-row tw:lg:items-end tw:lg:justify-between" data-reveal>
+        <div><span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:mb-4">{% translate "Live service intelligence" %}</span><h2 class="tw:max-w-3xl tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Operational clarity you can feel at a glance." %}</h2></div>
         <p class="tw:max-w-xl tw:text-neutral-content/60">{% translate "Useful signals stay visible without overwhelming the experience." %}</p>
       </div>
 
-      <div class="tw:d-stats tw:mt-10 tw:w-full tw:grid tw:grid-cols-2 tw:overflow-hidden tw:bg-neutral-content/5 tw:shadow-2xl lg:tw:grid-cols-4">
+      <div class="tw:d-stats tw:mt-10 tw:w-full tw:grid tw:grid-cols-2 tw:overflow-hidden tw:bg-neutral-content/5 tw:shadow-2xl tw:lg:grid-cols-4">
         {% for stat in statistics %}
         <div class="tw:d-stat tw:border tw:border-neutral-content/10" data-reveal>
           <div class="tw:d-stat-figure tw:text-success"><i class="bi bi-graph-up-arrow tw:text-2xl"></i></div>
@@ -160,12 +160,12 @@
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
       <div class="tw:mx-auto tw:max-w-3xl tw:text-center" data-reveal>
         <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-gem tw:me-2"></i>{% translate "Interactive gallery" %}</span>
-        <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] sm:tw:text-5xl">{% translate "Hover. Explore. Discover what makes the experience different." %}</h2>
+        <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Hover. Explore. Discover what makes the experience different." %}</h2>
       </div>
-      <div class="glis-hover-gallery tw:mt-12 tw:flex tw:flex-col tw:gap-4 md:tw:min-h-[31rem] md:tw:flex-row">
+      <div class="glis-hover-gallery tw:mt-12 tw:flex tw:flex-col tw:gap-4 tw:md:min-h-[31rem] tw:md:flex-row">
         {% for feature in features %}
         <article class="tw:group tw:relative tw:min-h-[18rem] tw:overflow-hidden tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-gradient-to-br tw:from-primary/12 tw:via-base-100 tw:to-secondary/10 tw:p-7 tw:shadow-xl" data-reveal>
-          <div class="tw:absolute tw:-end-10 tw:-top-10 tw:h-36 tw:w-36 tw:rounded-full tw:bg-primary/15 tw:blur-3xl tw:transition group-hover:tw:scale-150"></div>
+          <div class="tw:absolute tw:-end-10 tw:-top-10 tw:h-36 tw:w-36 tw:rounded-full tw:bg-primary/15 tw:blur-3xl tw:transition group-tw:hover:scale-150"></div>
           <div class="tw:relative tw:flex tw:h-full tw:flex-col">
             <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-base-100 tw:text-2xl tw:text-primary tw:shadow-lg"><i class="bi {{ feature.icon|default:'bi-stars' }}"></i></span>
             <div class="tw:mt-auto">
@@ -183,8 +183,8 @@
   {% if tpa_services %}
   <section id="medical-services" class="tw:border-y tw:border-base-300 tw:bg-base-200/60 tw:py-24">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
-      <div class="tw:grid tw:gap-10 lg:tw:grid-cols-[.75fr_1.25fr]">
-        <div data-reveal><span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft tw:mb-4"><i class="bi bi-heart-pulse tw:me-2"></i>{% translate "Medical TPA Services" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] sm:tw:text-5xl">{% translate "Healthcare management, connected end-to-end." %}</h2><p class="tw:mt-5 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Member, provider and insurer workflows come together in one coordinated experience." %}</p></div>
+      <div class="tw:grid tw:gap-10 tw:lg:grid-cols-[.75fr_1.25fr]">
+        <div data-reveal><span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft tw:mb-4"><i class="bi bi-heart-pulse tw:me-2"></i>{% translate "Medical TPA Services" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Healthcare management, connected end-to-end." %}</h2><p class="tw:mt-5 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Member, provider and insurer workflows come together in one coordinated experience." %}</p></div>
         <ul class="tw:d-list tw:gap-2">
           {% for service in tpa_services %}
           <li class="tw:d-list-row glis-tilt tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm" data-tilt data-reveal>
@@ -201,12 +201,12 @@
 
   <section id="journey" class="tw:py-24">
     <div class="tw:mx-auto tw:max-w-6xl tw:px-6">
-      <div class="tw:text-center" data-reveal><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-signpost-split tw:me-2"></i>{% translate "Timeline" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] sm:tw:text-5xl">{% translate "From request to resolution, every step stays visible." %}</h2></div>
+      <div class="tw:text-center" data-reveal><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-signpost-split tw:me-2"></i>{% translate "Timeline" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "From request to resolution, every step stays visible." %}</h2></div>
       <ul class="tw:d-timeline tw:d-timeline-vertical tw:mt-12">
         {% for step in process_steps %}
         <li data-reveal>
           {% if not forloop.first %}<hr class="tw:bg-primary/30">{% endif %}
-          <div class="tw:d-timeline-start tw:mb-10 tw:w-full md:tw:w-[calc(50%-2rem)] {% cycle 'md:tw:text-end' '' %}">
+          <div class="tw:d-timeline-start tw:mb-10 tw:w-full tw:md:w-[calc(50%-2rem)] {% cycle 'tw:md:text-end' '' %}">
             <div class="tw:d-timeline-box glis-glass tw:border-base-300 tw:p-5 tw:shadow-lg">
               <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-3">0{{ forloop.counter }}</span>
               <h3 class="tw:text-lg tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ step.title_ar|default:step.title_en }}{% else %}{{ step.title_en }}{% endif %}</h3>
@@ -229,7 +229,7 @@
   <section id="network-providers" class="tw:border-y tw:border-base-300 tw:bg-base-200/55 tw:py-20">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
       <div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
-        <div class="tw:d-card-body tw:p-4 sm:tw:p-6 lg:tw:p-8">
+        <div class="tw:d-card-body tw:p-4 tw:sm:p-6 tw:lg:p-8">
           <div hx-get="{% url 'home_network_providers' %}" hx-trigger="load" hx-swap="innerHTML">
             <div class="tw:flex tw:min-h-56 tw:flex-col tw:items-center tw:justify-center tw:gap-4"><span class="tw:d-loading tw:d-loading-spinner tw:d-loading-lg tw:text-primary"></span><p class="tw:text-base-content/55">{% translate "Loading healthcare network..." %}</p></div>
           </div>
@@ -263,10 +263,10 @@
   {% if testimonials %}
   <section class="tw:bg-neutral tw:py-24 tw:text-neutral-content">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
-      <div data-reveal><span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:mb-4"><i class="bi bi-chat-quote tw:me-2"></i>{% translate "Testimonials" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] sm:tw:text-5xl">{% translate "Trusted experiences, shared by people." %}</h2></div>
+      <div data-reveal><span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:mb-4"><i class="bi bi-chat-quote tw:me-2"></i>{% translate "Testimonials" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Trusted experiences, shared by people." %}</h2></div>
       <div class="tw:d-carousel tw:mt-10 tw:w-full tw:gap-5 tw:rounded-box">
         {% for testimonial in testimonials %}
-        <article class="tw:d-carousel-item tw:w-[88%] sm:tw:w-[60%] lg:tw:w-[38%]">
+        <article class="tw:d-carousel-item tw:w-[88%] tw:sm:w-[60%] tw:lg:w-[38%]">
           <div class="tw:d-card tw:w-full tw:border tw:border-neutral-content/10 tw:bg-neutral-content/5 tw:text-neutral-content tw:shadow-xl">
             <div class="tw:d-card-body tw:p-7"><div class="tw:text-6xl tw:font-black tw:text-success/35">“</div><p class="tw:text-lg tw:leading-8 tw:text-neutral-content/75">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.quote_ar|default:testimonial.quote_en }}{% else %}{{ testimonial.quote_en }}{% endif %}</p><div class="tw:mt-5 tw:flex tw:items-center tw:gap-3">{% if testimonial.photo %}<div class="tw:d-avatar"><div class="tw:w-12 tw:rounded-2xl"><img src="{{ testimonial.photo.url }}" alt="{{ testimonial.name }}"></div></div>{% else %}<div class="tw:d-avatar tw:d-avatar-placeholder"><div class="tw:w-12 tw:rounded-2xl tw:bg-success tw:text-success-content"><span>{{ testimonial.name|first }}</span></div></div>{% endif %}<div><strong class="tw:block">{{ testimonial.name }}</strong><small class="tw:text-neutral-content/50">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.role_ar|default:testimonial.role_en }}{% else %}{{ testimonial.role_en }}{% endif %}</small></div></div></div>
           </div>
@@ -279,8 +279,8 @@
 
   {% if faqs %}
   <section class="tw:py-24">
-    <div class="tw:mx-auto tw:grid tw:max-w-7xl tw:gap-12 tw:px-6 lg:tw:grid-cols-[.72fr_1.28fr]">
-      <div data-reveal><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-question-circle tw:me-2"></i>{% translate "Help Center" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] sm:tw:text-5xl">{% translate "Questions, answered without friction." %}</h2><p class="tw:mt-5 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Quick guidance about services, healthcare providers and medical administration." %}</p></div>
+    <div class="tw:mx-auto tw:grid tw:max-w-7xl tw:gap-12 tw:px-6 tw:lg:grid-cols-[.72fr_1.28fr]">
+      <div data-reveal><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-question-circle tw:me-2"></i>{% translate "Help Center" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Questions, answered without friction." %}</h2><p class="tw:mt-5 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Quick guidance about services, healthcare providers and medical administration." %}</p></div>
       <div class="tw:space-y-3">
         {% for faq in faqs %}
         <details class="tw:d-collapse tw:d-collapse-arrow tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm" data-reveal>
@@ -297,7 +297,7 @@
   <section class="tw:border-t tw:border-base-300 tw:bg-base-200/50 tw:py-16">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
       <div class="tw:text-center" data-reveal><span class="tw:d-badge tw:d-badge-outline"><i class="bi bi-building-check tw:me-2"></i>{% translate "Our ecosystem" %}</span></div>
-      <div class="tw:mt-8 tw:grid tw:grid-cols-2 tw:gap-3 md:tw:grid-cols-4">
+      <div class="tw:mt-8 tw:grid tw:grid-cols-2 tw:gap-3 tw:md:grid-cols-4">
         {% for partner in partners %}
         <div class="glis-tilt tw:grid tw:min-h-28 tw:place-items-center tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100 tw:p-5 tw:shadow-sm" data-tilt data-reveal>
           {% if partner.website %}<a href="{{ partner.website }}" target="_blank" rel="noopener" class="tw:grid tw:h-full tw:w-full tw:place-items-center">{% endif %}
@@ -312,9 +312,9 @@
 
   <section class="glis-aura tw:relative tw:py-24" data-aura>
     <div class="tw:mx-auto tw:max-w-6xl tw:px-6">
-      <div class="glis-glass tw:relative tw:overflow-hidden tw:rounded-[2.5rem] tw:border tw:border-primary/20 tw:p-8 tw:text-center tw:shadow-2xl sm:tw:p-12 lg:tw:p-16" data-reveal>
+      <div class="glis-glass tw:relative tw:overflow-hidden tw:rounded-[2.5rem] tw:border tw:border-primary/20 tw:p-8 tw:text-center tw:shadow-2xl tw:sm:p-12 tw:lg:p-16" data-reveal>
         <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-5">{% translate "Ready when you are" %}</span>
-        <h2 class="tw:mx-auto tw:max-w-4xl tw:text-4xl tw:font-black tw:tracking-[-.045em] sm:tw:text-5xl lg:tw:text-6xl">{% translate "Tell us what you need. We’ll make the next step clear." %}</h2>
+        <h2 class="tw:mx-auto tw:max-w-4xl tw:text-4xl tw:font-black tw:tracking-[-.045em] tw:sm:text-5xl tw:lg:text-6xl">{% translate "Tell us what you need. We’ll make the next step clear." %}</h2>
         <p class="tw:mx-auto tw:mt-5 tw:max-w-2xl tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Start a secure request or sign in to continue an existing conversation." %}</p>
         <div class="tw:mt-8 tw:flex tw:flex-wrap tw:justify-center tw:gap-3">
           <a class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:rounded-full tw:px-8 glis-shine" href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}<i class="bi bi-arrow-up-right"></i></a>

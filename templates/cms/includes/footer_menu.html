@@ -1,7 +1,4 @@
 {% load menu_tags %}
-
 {% for child in children %}
-<li>
-  <a href="{{ child.get_absolute_url }}">{{ child.get_menu_title }}</a>
-</li>
+<li><a class="tw:link tw:link-hover tw:text-base-content/70 hover:tw:text-primary" href="{{ child.get_absolute_url }}">{{ child.get_menu_title }}</a></li>
 {% endfor %}

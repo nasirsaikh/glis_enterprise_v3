@@ -3,9 +3,12 @@
   const root = document.documentElement;
   const preferredTheme = () => localStorage.getItem("glis-theme") || "system";
   const resolvedTheme = (choice) => choice === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : choice;
+  const daisyTheme = (choice) => resolvedTheme(choice) === "dark" ? "glis-dark" : "glis";
   const applyTheme = (choice) => {
-    root.setAttribute("data-bs-theme", resolvedTheme(choice));
-    document.dispatchEvent(new CustomEvent("glis:theme", {detail: {theme: resolvedTheme(choice)}}));
+    const resolved = resolvedTheme(choice);
+    root.setAttribute("data-bs-theme", resolved);
+    root.setAttribute("data-theme", daisyTheme(choice));
+    document.dispatchEvent(new CustomEvent("glis:theme", {detail: {theme: resolved, daisyTheme: daisyTheme(choice)}}));
   };
   applyTheme(preferredTheme());
 
@@ -21,16 +24,101 @@
     }));
   });
 
-  const reveal = () => {
-    const items = document.querySelectorAll("[data-reveal]");
+  const reveal = (scope = document) => {
+    const items = scope.querySelectorAll("[data-reveal]:not(.is-visible)");
     if (!items.length) return;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
       items.forEach((item) => item.classList.add("is-visible")); return;
     }
     const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
       if (entry.isIntersecting) { entry.target.classList.add("is-visible"); observer.unobserve(entry.target); }
-    }), {threshold: .12});
+    }), {threshold: .12, rootMargin: "0px 0px -6% 0px"});
     items.forEach((item) => observer.observe(item));
+  };
+
+  const setupAura = (scope = document) => {
+    scope.querySelectorAll("[data-aura]:not([data-aura-ready])").forEach((element) => {
+      element.dataset.auraReady = "true";
+      element.addEventListener("pointermove", (event) => {
+        const rect = element.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / Math.max(rect.width, 1)) * 100;
+        const y = ((event.clientY - rect.top) / Math.max(rect.height, 1)) * 100;
+        element.style.setProperty("--aura-x", x.toFixed(1) + "%");
+        element.style.setProperty("--aura-y", y.toFixed(1) + "%");
+      });
+    });
+  };
+
+  const setupTilt = (scope = document) => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    scope.querySelectorAll("[data-tilt]:not([data-tilt-ready])").forEach((card) => {
+      card.dataset.tiltReady = "true";
+      card.classList.add("glis-tilt");
+      card.addEventListener("pointermove", (event) => {
+        if (window.innerWidth < 768) return;
+        const rect = card.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / Math.max(rect.width, 1)) - .5;
+        const y = ((event.clientY - rect.top) / Math.max(rect.height, 1)) - .5;
+        card.style.setProperty("--rx", (-y * 7).toFixed(2) + "deg");
+        card.style.setProperty("--ry", (x * 9).toFixed(2) + "deg");
+      });
+      card.addEventListener("pointerleave", () => {
+        card.style.setProperty("--rx", "0deg");
+        card.style.setProperty("--ry", "0deg");
+      });
+    });
+  };
+
+  const setupRotatingText = (scope = document) => {
+    scope.querySelectorAll("[data-rotate-text]:not([data-rotate-ready])").forEach((element) => {
+      const words = (element.dataset.rotateText || "").split("|").map(value => value.trim()).filter(Boolean);
+      if (!words.length) return;
+      element.dataset.rotateReady = "true";
+      let index = 0;
+      const render = () => {
+        element.textContent = words[index % words.length];
+        element.classList.remove("glis-rotate-word");
+        void element.offsetWidth;
+        element.classList.add("glis-rotate-word");
+        index += 1;
+      };
+      render();
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches && words.length > 1) {
+        window.setInterval(render, 2600);
+      }
+    });
+  };
+
+  const setupCounters = (scope = document) => {
+    scope.querySelectorAll("[data-counter]:not([data-counter-ready])").forEach((element) => {
+      element.dataset.counterReady = "true";
+      const target = Number(String(element.dataset.counter || "").replace(/,/g, ""));
+      if (!Number.isFinite(target) || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const suffix = element.dataset.suffix || "";
+      const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        const start = performance.now();
+        const duration = 1200;
+        const frame = (now) => {
+          const progress = Math.min((now - start) / duration, 1);
+          const value = target * (1 - Math.pow(1 - progress, 3));
+          element.textContent = (Math.abs(target) >= 1000 ? Math.round(value).toLocaleString() : Math.round(value * 10) / 10) + suffix;
+          if (progress < 1) requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }), {threshold: .35});
+      observer.observe(element);
+    });
+  };
+
+  const setupMobileNav = () => {
+    const dialog = document.getElementById("mobilePortalNav");
+    if (!dialog || dialog.dataset.ready === "true") return;
+    dialog.dataset.ready = "true";
+    document.querySelectorAll("[data-mobile-nav-open]").forEach((button) => button.addEventListener("click", () => dialog.showModal()));
+    dialog.querySelectorAll("[data-mobile-nav-close]").forEach((button) => button.addEventListener("click", () => dialog.close()));
+    dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
   };
 
   const chartLayout = () => {
@@ -389,9 +477,17 @@
     window.setInterval(poll, 30000);
   };
 
-  const init = (scope = document) => { reveal(); setupRichText(scope); setupDropzones(scope); };
+  const init = (scope = document) => {
+    reveal(scope);
+    setupAura(scope);
+    setupTilt(scope);
+    setupRotatingText(scope);
+    setupCounters(scope);
+    setupRichText(scope);
+    setupDropzones(scope);
+  };
   document.addEventListener("DOMContentLoaded", () => {
-    init(); setupSidebar(); setupVanna(); setupNotifications(); setTimeout(renderCharts, 120);
+    init(); setupSidebar(); setupMobileNav(); setupVanna(); setupNotifications(); setTimeout(renderCharts, 120);
   });
   document.addEventListener("glis:theme", () => setTimeout(renderCharts, 30));
   document.body.addEventListener("htmx:afterSwap", (event) => init(event.detail.target));

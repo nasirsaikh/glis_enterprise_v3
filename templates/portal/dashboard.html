@@ -1,32 +1,168 @@
-{% extends 'base_portal.html' %}{% load i18n %}{% block title %}{% translate "Overview" %}{% endblock %}
-{% block content %}
-<div class="page-heading d-flex flex-wrap justify-content-between align-items-end gap-3"><div><span class="page-eyebrow">{% translate "Service operations" %}</span><h1>{% blocktranslate with name=user.first_name|default:user.email %}Good to see you, {{ name }}{% endblocktranslate %}</h1>
+{% extends 'base_portal.html' %}
+{% load i18n %}
+{% block title %}{% translate "Overview" %}{% endblock %}
 
-</div><div class="d-flex gap-2"><a class="btn btn-outline-primary" href="{% url 'portal:export_tickets' %}"><i class="bi bi-download me-2"></i>{% translate "Export" %}</a><a class="btn btn-primary" href="{% url 'portal:create_ticket' 1 %}"><i class="bi bi-plus-lg me-2"></i>{% translate "Create ticket" %}</a></div></div>
-<div class="metric-grid dashboard-metrics">
-  <article class="metric-card"><div class="metric-icon mint"><i class="bi bi-inbox"></i></div><div><span>{% translate "Open tickets" %}</span><strong>{{ metrics.open }}</strong><small>{% translate "Active workload" %}</small></div></article>
-  <article class="metric-card"><div class="metric-icon blue"><i class="bi bi-person-check"></i></div><div><span>{% translate "Assigned to me" %}</span><strong>{{ metrics.assigned }}</strong><small>{% translate "Direct and shared queue" %}</small></div></article>
-  <article class="metric-card"><div class="metric-icon amber"><i class="bi bi-exclamation-triangle"></i></div><div><span>{% translate "Overdue" %}</span><strong>{{ metrics.overdue }}</strong><small>{% translate "Requires action" %}</small></div></article>
-  <article class="metric-card"><div class="metric-icon purple"><i class="bi bi-check2-circle"></i></div><div><span>{% translate "Resolved this month" %}</span><strong>{{ metrics.resolved_month }}</strong><small>{% translate "Completed outcomes" %}</small></div></article>
-  <article class="metric-card"><div class="metric-icon blue"><i class="bi bi-reply"></i></div><div><span>{% translate "First response TAT" %}</span><strong>{{ metrics.first_response_tat }}h</strong><small>{% translate "Average turnaround" %}</small></div></article>
-  <article class="metric-card"><div class="metric-icon mint"><i class="bi bi-stopwatch"></i></div><div><span>{% translate "Resolution TAT" %}</span><strong>{{ metrics.resolution_tat }}h</strong><small>{% translate "Average turnaround" %}</small></div></article>
-  <article class="metric-card"><div class="metric-icon purple"><i class="bi bi-bullseye"></i></div><div><span>{% translate "SLA attainment" %}</span><strong>{{ metrics.sla_attainment }}%</strong><small>{% translate "Resolved within target" %}</small></div></article>
-</div>
-<div class="row g-4 mt-1">
-  <div class="col-xl-8"><section class="panel h-100"><div class="panel-heading"><div><h2>{% translate "Day-wise opened tickets" %}</h2><p>{% translate "New workload across the last 14 days" %}</p></div></div><div id="ticket-daily-chart" class="dashboard-chart"></div></section></div>
-  <div class="col-xl-4"><section class="panel h-100"><div class="panel-heading"><div><h2>{% translate "Status mix" %}</h2><p>{% translate "Current ticket states" %}</p></div></div><div id="ticket-status-chart" class="dashboard-chart compact"></div></section></div>
-</div>
-<div class="row g-4 mt-1">
-  <div class="col-xl-4"><section class="panel h-100"><div class="panel-heading"><div><h2>{% translate "Priority mix" %}</h2><p>{% translate "Current urgency distribution" %}</p></div></div><div id="ticket-priority-chart" class="dashboard-chart compact"></div></section></div>
-  <div class="col-xl-4"><section class="panel h-100"><div class="panel-heading"><div><h2>{% translate "Assigned to" %}</h2><p>{% translate "Primary owner names" %}</p></div></div><div id="ticket-assignee-chart" class="dashboard-chart compact"></div></section></div>
-  <div class="col-xl-4"><section class="panel h-100"><div class="panel-heading"><div><h2>{% translate "By category" %}</h2><p>{% translate "Top request categories" %}</p></div></div><div id="ticket-category-chart" class="dashboard-chart compact"></div></section></div>
-</div>
-<div class="row g-4 mt-1">
-  <div class="col-xl-6"><section class="panel h-100"><div class="panel-heading"><div><h2>{% translate "By product" %}</h2><p>{% translate "Workload by product" %}</p></div></div><div id="ticket-product-chart" class="dashboard-chart"></div></section></div>
-  <div class="col-xl-6"><section class="panel h-100"><div class="panel-heading"><div><h2>{% translate "By project" %}</h2><p>{% translate "Workload by project" %}</p></div></div><div id="ticket-project-chart" class="dashboard-chart"></div></section></div>
-</div>
-<div class="row g-4 mt-1"><div class="col-xl-8"><section class="panel"><div class="panel-heading"><div><h2>{% translate "Recent tickets" %}</h2>
-  
-</div><a href="{% url 'portal:ticket_list' %}">{% translate "View all" %}</a></div><div class="table-responsive"><table class="table portal-table align-middle"><thead><tr><th>{% translate "Ticket" %}</th><th>{% translate "Service" %}</th><th>{% translate "Priority" %}</th><th>{% translate "Status" %}</th><th>{% translate "SLA" %}</th></tr></thead><tbody>{% for ticket in recent_tickets %}<tr><td><a class="ticket-link" href="{% url 'portal:ticket_detail' ticket.reference %}"><strong>{{ ticket.reference }}</strong><span>{{ ticket.subject|truncatechars:44 }}</span></a></td><td><span>{{ ticket.project.name_en }}</span><small>{{ ticket.category.name_en }}</small></td><td><span class="priority-chip priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td><td><span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td><td><span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span></td></tr>{% empty %}<tr><td colspan="5"><div class="empty-state compact"><i class="bi bi-inbox"></i><strong>{% translate "No tickets yet" %}</strong></div></td></tr>{% endfor %}</tbody></table></div></section></div><div class="col-xl-4"><section class="panel attention-panel"><div class="panel-heading"><div><h2>{% translate "Needs attention" %}</h2><p>{% translate "Critical or approaching SLA" %}</p></div><span class="count-badge">{{ attention|length }}</span></div><div class="attention-list">{% for ticket in attention %}<a href="{% url 'portal:ticket_detail' ticket.reference %}"><span class="attention-icon"><i class="bi bi-exclamation-lg"></i></span><span><strong>{{ ticket.reference }}</strong><small>{{ ticket.subject|truncatechars:42 }}</small></span><span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span></a>{% empty %}<div class="empty-state compact"><i class="bi bi-check2-circle"></i><strong>{% translate "All clear" %}</strong></div>{% endfor %}</div></section><section class="panel quick-panel mt-4"><span class="quick-icon"><i class="bi bi-stars"></i></span><div><h2>{% translate "Vanna analytics" %}</h2><p>{% translate "Ask permission-aware questions about your service data." %}</p><a href="{% url 'orchestrator:console' %}">{% translate "Open analytics" %}<i class="bi bi-arrow-right"></i></a></div></section></div></div>
+{% block content %}
+<section class="glis-aura tw:relative tw:overflow-hidden tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-base-100 tw:p-6 tw:shadow-xl sm:tw:p-8" data-aura data-reveal>
+  <div class="tw:relative tw:z-10 tw:flex tw:flex-col tw:gap-7 xl:tw:flex-row xl:tw:items-end xl:tw:justify-between">
+    <div>
+      <div class="tw:mb-4 tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+        <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:gap-2"><span class="tw:d-status tw:d-status-success tw:animate-pulse"></span>{% translate "Service operations live" %}</span>
+        <span class="tw:d-badge tw:d-badge-outline tw:gap-2"><i class="bi bi-shield-check"></i>{% translate "Permission aware" %}</span>
+      </div>
+      <h1 class="tw:text-3xl tw:font-black tw:tracking-[-.04em] sm:tw:text-4xl xl:tw:text-5xl">
+        {% blocktranslate with name=user.first_name|default:user.email %}Good to see you, {{ name }}{% endblocktranslate %}
+      </h1>
+      <div class="tw:mt-3 tw:flex tw:flex-wrap tw:items-center tw:gap-2 tw:text-lg tw:font-bold tw:text-base-content/55">
+        <span>{% translate "Your workspace is" %}</span>
+        <span class="glis-rotate-stage tw:text-primary"><span data-rotate-text="{% translate 'live' %}|{% translate 'focused' %}|{% translate 'accountable' %}|{% translate 'ready' %}">{% translate "live" %}</span></span>
+      </div>
+    </div>
+    <div class="tw:flex tw:flex-wrap tw:gap-2">
+      <a class="tw:d-btn tw:d-btn-outline tw:rounded-full" href="{% url 'portal:export_tickets' %}"><i class="bi bi-download"></i>{% translate "Export" %}</a>
+      <a class="tw:d-btn tw:d-btn-primary tw:rounded-full tw:shadow-lg tw:shadow-primary/20 glis-shine" href="{% url 'portal:create_ticket' 1 %}"><i class="bi bi-plus-lg"></i>{% translate "Create ticket" %}</a>
+    </div>
+  </div>
+</section>
+
+<section class="tw:mt-5 tw:grid tw:gap-4 sm:tw:grid-cols-2 xl:tw:grid-cols-4 2xl:tw:grid-cols-7" aria-label="{% translate 'Key metrics' %}">
+  <article class="tw:d-stat glis-tilt tw:rounded-[1.5rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg" data-tilt data-reveal>
+    <div class="tw:d-stat-figure tw:text-primary"><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-2xl tw:bg-primary/12"><i class="bi bi-inbox tw:text-xl"></i></span></div>
+    <div class="tw:d-stat-title">{% translate "Open tickets" %}</div>
+    <div class="tw:d-stat-value tw:text-3xl">{{ metrics.open }}</div>
+    <div class="tw:d-stat-desc">{% translate "Active workload" %}</div>
+  </article>
+  <article class="tw:d-stat glis-tilt tw:rounded-[1.5rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg" data-tilt data-reveal>
+    <div class="tw:d-stat-figure tw:text-info"><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-2xl tw:bg-info/12"><i class="bi bi-person-check tw:text-xl"></i></span></div>
+    <div class="tw:d-stat-title">{% translate "Assigned to me" %}</div>
+    <div class="tw:d-stat-value tw:text-3xl">{{ metrics.assigned }}</div>
+    <div class="tw:d-stat-desc">{% translate "Direct & shared" %}</div>
+  </article>
+  <article class="tw:d-stat glis-tilt tw:rounded-[1.5rem] tw:border tw:border-error/20 tw:bg-base-100 tw:shadow-lg" data-tilt data-reveal>
+    <div class="tw:d-stat-figure tw:text-error"><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-2xl tw:bg-error/10"><i class="bi bi-exclamation-triangle tw:text-xl"></i></span></div>
+    <div class="tw:d-stat-title">{% translate "Overdue" %}</div>
+    <div class="tw:d-stat-value tw:text-3xl tw:text-error">{{ metrics.overdue }}</div>
+    <div class="tw:d-stat-desc">{% translate "Requires action" %}</div>
+  </article>
+  <article class="tw:d-stat glis-tilt tw:rounded-[1.5rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg" data-tilt data-reveal>
+    <div class="tw:d-stat-figure tw:text-success"><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-2xl tw:bg-success/12"><i class="bi bi-check2-circle tw:text-xl"></i></span></div>
+    <div class="tw:d-stat-title">{% translate "Resolved" %}</div>
+    <div class="tw:d-stat-value tw:text-3xl">{{ metrics.resolved_month }}</div>
+    <div class="tw:d-stat-desc">{% translate "This month" %}</div>
+  </article>
+  <article class="tw:d-stat glis-tilt tw:rounded-[1.5rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg" data-tilt data-reveal>
+    <div class="tw:d-stat-figure tw:text-secondary"><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-2xl tw:bg-secondary/12"><i class="bi bi-reply tw:text-xl"></i></span></div>
+    <div class="tw:d-stat-title">{% translate "First response" %}</div>
+    <div class="tw:d-stat-value tw:text-3xl">{{ metrics.first_response_tat }}h</div>
+    <div class="tw:d-stat-desc">{% translate "Average TAT" %}</div>
+  </article>
+  <article class="tw:d-stat glis-tilt tw:rounded-[1.5rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg" data-tilt data-reveal>
+    <div class="tw:d-stat-figure tw:text-accent"><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-2xl tw:bg-accent/18"><i class="bi bi-stopwatch tw:text-xl"></i></span></div>
+    <div class="tw:d-stat-title">{% translate "Resolution TAT" %}</div>
+    <div class="tw:d-stat-value tw:text-3xl">{{ metrics.resolution_tat }}h</div>
+    <div class="tw:d-stat-desc">{% translate "Average TAT" %}</div>
+  </article>
+  <article class="tw:d-stat glis-tilt tw:rounded-[1.5rem] tw:border tw:border-primary/20 tw:bg-primary tw:text-primary-content tw:shadow-xl tw:shadow-primary/20" data-tilt data-reveal>
+    <div class="tw:d-stat-figure tw:text-primary-content"><span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-2xl tw:bg-primary-content/12"><i class="bi bi-bullseye tw:text-xl"></i></span></div>
+    <div class="tw:d-stat-title tw:text-primary-content/65">{% translate "SLA attainment" %}</div>
+    <div class="tw:d-stat-value tw:text-3xl">{{ metrics.sla_attainment }}%</div>
+    <div class="tw:d-stat-desc tw:text-primary-content/65">{% translate "Within target" %}</div>
+  </article>
+</section>
+
+<section class="tw:mt-5 tw:grid tw:gap-5 xl:tw:grid-cols-12">
+  <article class="tw:d-card glis-glass glis-chart-shell tw:border tw:border-base-300 tw:shadow-xl xl:tw:col-span-8" data-reveal>
+    <div class="tw:d-card-body tw:p-5 sm:tw:p-6">
+      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-3">
+        <div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-2"><i class="bi bi-activity tw:me-1"></i>{% translate "14 day pulse" %}</span><h2 class="tw:d-card-title tw:text-xl">{% translate "Day-wise opened tickets" %}</h2><p class="tw:mt-1 tw:text-sm tw:text-base-content/50">{% translate "New workload across the last 14 days" %}</p></div>
+        <div class="tw:d-tooltip" data-tip="{% translate 'Live workload trend' %}"><span class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle"><i class="bi bi-graph-up-arrow tw:text-primary"></i></span></div>
+      </div>
+      <div id="ticket-daily-chart" class="dashboard-chart tw:min-h-[18rem]"></div>
+    </div>
+  </article>
+
+  <article class="tw:d-card glis-glass glis-chart-shell tw:border tw:border-base-300 tw:shadow-xl xl:tw:col-span-4" data-reveal>
+    <div class="tw:d-card-body tw:p-5 sm:tw:p-6">
+      <div><span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft tw:mb-2">{% translate "Distribution" %}</span><h2 class="tw:d-card-title tw:text-xl">{% translate "Status mix" %}</h2><p class="tw:mt-1 tw:text-sm tw:text-base-content/50">{% translate "Current ticket states" %}</p></div>
+      <div id="ticket-status-chart" class="dashboard-chart compact tw:min-h-[18rem]"></div>
+    </div>
+  </article>
+</section>
+
+<section class="tw:mt-5 tw:grid tw:gap-5 md:tw:grid-cols-2 xl:tw:grid-cols-3">
+  <article class="tw:d-card glis-glass glis-chart-shell tw:border tw:border-base-300 tw:shadow-lg" data-reveal><div class="tw:d-card-body tw:p-5"><div><span class="tw:d-badge tw:d-badge-warning tw:d-badge-soft tw:mb-2">{% translate "Urgency" %}</span><h2 class="tw:d-card-title tw:text-lg">{% translate "Priority mix" %}</h2></div><div id="ticket-priority-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
+  <article class="tw:d-card glis-glass glis-chart-shell tw:border tw:border-base-300 tw:shadow-lg" data-reveal><div class="tw:d-card-body tw:p-5"><div><span class="tw:d-badge tw:d-badge-info tw:d-badge-soft tw:mb-2">{% translate "Ownership" %}</span><h2 class="tw:d-card-title tw:text-lg">{% translate "Assigned to" %}</h2></div><div id="ticket-assignee-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
+  <article class="tw:d-card glis-glass glis-chart-shell tw:border tw:border-base-300 tw:shadow-lg md:tw:col-span-2 xl:tw:col-span-1" data-reveal><div class="tw:d-card-body tw:p-5"><div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-2">{% translate "Services" %}</span><h2 class="tw:d-card-title tw:text-lg">{% translate "By category" %}</h2></div><div id="ticket-category-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
+</section>
+
+<section class="tw:mt-5 tw:grid tw:gap-5 xl:tw:grid-cols-2">
+  <article class="tw:d-card glis-glass glis-chart-shell tw:border tw:border-base-300 tw:shadow-lg" data-reveal><div class="tw:d-card-body tw:p-5 sm:tw:p-6"><div class="tw:flex tw:items-center tw:justify-between"><div><h2 class="tw:d-card-title tw:text-lg">{% translate "By product" %}</h2><p class="tw:text-sm tw:text-base-content/50">{% translate "Workload by product" %}</p></div><i class="bi bi-box-seam tw:text-2xl tw:text-primary"></i></div><div id="ticket-product-chart" class="dashboard-chart tw:min-h-[18rem]"></div></div></article>
+  <article class="tw:d-card glis-glass glis-chart-shell tw:border tw:border-base-300 tw:shadow-lg" data-reveal><div class="tw:d-card-body tw:p-5 sm:tw:p-6"><div class="tw:flex tw:items-center tw:justify-between"><div><h2 class="tw:d-card-title tw:text-lg">{% translate "By project" %}</h2><p class="tw:text-sm tw:text-base-content/50">{% translate "Workload by project" %}</p></div><i class="bi bi-kanban tw:text-2xl tw:text-secondary"></i></div><div id="ticket-project-chart" class="dashboard-chart tw:min-h-[18rem]"></div></div></article>
+</section>
+
+<section class="tw:mt-5 tw:grid tw:gap-5 xl:tw:grid-cols-12">
+  <article class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl xl:tw:col-span-8" data-reveal>
+    <div class="tw:d-card-body tw:p-0">
+      <div class="tw:flex tw:items-center tw:justify-between tw:gap-3 tw:px-5 tw:pt-5 sm:tw:px-6 sm:tw:pt-6">
+        <div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-2">{% translate "Latest activity" %}</span><h2 class="tw:d-card-title tw:text-xl">{% translate "Recent tickets" %}</h2></div>
+        <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:rounded-full tw:text-primary" href="{% url 'portal:ticket_list' %}">{% translate "View all" %}<i class="bi bi-arrow-right"></i></a>
+      </div>
+      <div class="tw:mt-4 tw:overflow-x-auto">
+        <table class="tw:d-table tw:d-table-zebra">
+          <thead><tr><th>{% translate "Ticket" %}</th><th>{% translate "Service" %}</th><th>{% translate "Priority" %}</th><th>{% translate "Status" %}</th><th>{% translate "SLA" %}</th><th></th></tr></thead>
+          <tbody>
+            {% for ticket in recent_tickets %}
+            <tr class="tw:hover:bg-primary/5">
+              <td><a class="tw:group tw:block tw:min-w-48 tw:no-underline" href="{% url 'portal:ticket_detail' ticket.reference %}"><strong class="tw:block tw:text-primary">{{ ticket.reference }}</strong><span class="tw:mt-1 tw:block tw:max-w-64 tw:truncate tw:text-xs tw:text-base-content/50">{{ ticket.subject|truncatechars:44 }}</span></a></td>
+              <td><span class="tw:block tw:font-semibold">{{ ticket.project.name_en }}</span><small class="tw:text-base-content/45">{{ ticket.category.name_en }}</small></td>
+              <td><span class="priority-chip priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+              <td><span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+              <td><span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span></td>
+              <td><a class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm" href="{% url 'portal:ticket_detail' ticket.reference %}" aria-label="{% translate 'Open ticket' %}"><i class="bi bi-arrow-up-right"></i></a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6"><div class="tw:flex tw:flex-col tw:items-center tw:gap-3 tw:py-12 tw:text-base-content/45"><i class="bi bi-inbox tw:text-3xl"></i><strong>{% translate "No tickets yet" %}</strong></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </article>
+
+  <div class="tw:space-y-5 xl:tw:col-span-4">
+    <article class="tw:d-card tw:border tw:border-error/15 tw:bg-base-100 tw:shadow-xl" data-reveal>
+      <div class="tw:d-card-body tw:p-5 sm:tw:p-6">
+        <div class="tw:flex tw:items-start tw:justify-between tw:gap-3">
+          <div><span class="tw:d-badge tw:d-badge-error tw:d-badge-soft tw:mb-2">{% translate "Attention queue" %}</span><h2 class="tw:d-card-title tw:text-xl">{% translate "Needs attention" %}</h2><p class="tw:text-sm tw:text-base-content/50">{% translate "Critical or approaching SLA" %}</p></div>
+          <span class="tw:d-badge tw:d-badge-error">{{ attention|length }}</span>
+        </div>
+        <ul class="tw:d-list tw:mt-3">
+          {% for ticket in attention %}
+          <li class="tw:d-list-row tw:rounded-2xl tw:px-2 tw:transition tw:hover:bg-error/5">
+            <span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-xl tw:bg-error/10 tw:text-error"><i class="bi bi-exclamation-lg"></i></span>
+            <div class="tw:d-list-col-grow tw:min-w-0"><a class="tw:font-black tw:text-base-content tw:no-underline" href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a><small class="tw:block tw:truncate tw:text-base-content/45">{{ ticket.subject|truncatechars:42 }}</small></div>
+            <span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span>
+          </li>
+          {% empty %}
+          <li class="tw:flex tw:flex-col tw:items-center tw:gap-2 tw:py-8 tw:text-center tw:text-base-content/45"><span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-full tw:bg-success/12 tw:text-success"><i class="bi bi-check2-circle tw:text-xl"></i></span><strong>{% translate "All clear" %}</strong></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </article>
+
+    <article class="glis-aura glis-tilt tw:d-card tw:overflow-hidden tw:border tw:border-primary/20 tw:bg-primary tw:text-primary-content tw:shadow-2xl tw:shadow-primary/20" data-aura data-tilt data-reveal>
+      <div class="tw:d-card-body tw:p-6">
+        <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
+          <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-primary-content/12 tw:text-2xl"><i class="bi bi-stars"></i></span>
+          <span class="tw:d-badge tw:border-primary-content/20 tw:bg-primary-content/10 tw:text-primary-content">{% translate "AI analytics" %}</span>
+        </div>
+        <h2 class="tw:d-card-title tw:mt-5 tw:text-2xl">{% translate "Vanna analytics" %}</h2>
+        <p class="tw:text-primary-content/70">{% translate "Ask permission-aware questions about your service data and move from dashboard to answer." %}</p>
+        <div class="tw:d-card-actions tw:mt-4"><a class="tw:d-btn tw:border-0 tw:bg-primary-content tw:text-primary tw:hover:bg-primary-content/90" href="{% url 'orchestrator:console' %}">{% translate "Open analytics" %}<i class="bi bi-arrow-up-right"></i></a></div>
+      </div>
+    </article>
+  </div>
+</section>
+
 {{ chart_data|json_script:"dashboard-data" }}
 {% endblock %}

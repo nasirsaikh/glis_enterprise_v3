@@ -1,49 +1,55 @@
-name: Tailwind daisyUI build
+name: Django UI validation
 
 on:
   push:
     branches:
-      - tailwind-daisyui-aura-redesign
+      - main
+      - django-cdn-tailwind-daisyui
     paths:
-      - "package.json"
-      - "static/src/tailwind.css"
+      - "static/css/glis-tailwind.css"
       - "static/js/app.js"
       - "templates/**"
-      - "apps/**"
-      - "services/**"
       - "apps/**"
       - "services/**"
       - ".github/workflows/tailwind-build.yml"
   pull_request:
     paths:
-      - "package.json"
-      - "static/src/tailwind.css"
+      - "static/css/glis-tailwind.css"
       - "static/js/app.js"
       - "templates/**"
+      - "apps/**"
+      - "services/**"
       - ".github/workflows/tailwind-build.yml"
 
 permissions:
-  contents: write
-
-concurrency:
-  group: tailwind-daisyui-${{ github.ref }}
-  cancel-in-progress: true
+  contents: read
 
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          node-version: "22"
+          python-version: "3.13"
 
-      - name: Install UI dependencies
-        run: npm install --no-audit --no-fund
+      - name: Verify Django-only UI assets
+        run: |
+          test ! -f package.json
+          test ! -f package-lock.json
+          test ! -f static/src/tailwind.css
+          test -s static/css/glis-tailwind.css
+          grep -Fq "tailwindcss v4.3.3" static/css/glis-tailwind.css
+          grep -Fq "tw\\:d-btn" static/css/glis-tailwind.css
+          grep -Fq "tw\\:d-aura" static/css/glis-tailwind.css
+          grep -Fq "tw\\:d-hover-3d" static/css/glis-tailwind.css
+          grep -Fq "tw\\:d-text-rotate" static/css/glis-tailwind.css
+          grep -Fq "{% static 'css/glis-tailwind.css' %}" templates/base_public.html
+          grep -Fq "{% static 'css/glis-tailwind.css' %}" templates/base_portal.html
 
       - name: Validate prefixed Tailwind syntax
         shell: python
@@ -51,58 +57,24 @@ jobs:
           from pathlib import Path
           import re
 
-          files = list(Path("templates").rglob("*.html")) + list(Path("apps").rglob("*.py")) + list(Path("services").rglob("*.py"))
-          bad = []
-          pattern = re.compile(r"\b(?:sm|md|lg|xl|2xl|hover|focus|active|disabled|group-hover|group-focus):tw:")
+          files = (
+              list(Path("templates").rglob("*.html"))
+              + list(Path("apps").rglob("*.py"))
+              + list(Path("services").rglob("*.py"))
+          )
+          invalid = []
+          wrong_order = re.compile(r"\b(?:sm|md|lg|xl|2xl|hover|focus|active|disabled|group-hover|group-focus):tw:")
           mangled = re.compile(r"\b(?:2tw:|group-tw:)")
+
           for path in files:
               text = path.read_text(encoding="utf-8")
-              for match in pattern.finditer(text):
-                  bad.append(f"{path}: {match.group(0)}")
+              for match in wrong_order.finditer(text):
+                  invalid.append(f"{path}: {match.group(0)}")
               for match in mangled.finditer(text):
-                  bad.append(f"{path}: {match.group(0)}")
-          if bad:
-              raise SystemExit("Invalid prefixed Tailwind variants:\n" + "\n".join(bad))
+                  invalid.append(f"{path}: {match.group(0)}")
 
-          required = {
-              "templates/public/home_content.html": [
-                  "tw:d-aura", "tw:d-hover-3d", "tw:d-hover-gallery",
-                  "tw:d-text-rotate", "tw:d-list", "tw:d-stat", "tw:d-timeline",
-              ],
-              "templates/portal/dashboard.html": [
-                  "tw:d-stat", "tw:d-card", "tw:d-list", "tw:d-table",
-                  "tw:d-aura", "tw:d-text-rotate",
-              ],
-          }
-          for file_name, classes in required.items():
-              text = Path(file_name).read_text(encoding="utf-8")
-              missing = [name for name in classes if name not in text]
-              if missing:
-                  raise SystemExit(f"{file_name} missing: {', '.join(missing)}")
+          if invalid:
+              raise SystemExit("Invalid prefixed Tailwind syntax:\n" + "\n".join(invalid))
 
       - name: Validate Python syntax
         run: python -m compileall -q apps services
-
-      - name: Build production CSS
-        run: npm run build:css
-
-      - name: Verify generated CSS
-        run: |
-          test -s static/css/glis-tailwind.css
-          grep -q "d-btn" static/css/glis-tailwind.css
-          grep -q "d-aura" static/css/glis-tailwind.css
-          grep -q "d-hover-3d" static/css/glis-tailwind.css
-          grep -q "d-text-rotate" static/css/glis-tailwind.css
-
-      - name: Commit compiled CSS
-        if: github.event_name == 'push'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add static/css/glis-tailwind.css package-lock.json
-          if git diff --cached --quiet; then
-            echo "Compiled UI is already current."
-          else
-            git commit -m "Build Tailwind daisyUI production CSS"
-            git push
-          fi

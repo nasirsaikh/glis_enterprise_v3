@@ -1,56 +1,70 @@
-# Tailwind CSS + daisyUI migration
+# Tailwind CSS + daisyUI in GLIS
 
-This branch introduces a collision-safe Tailwind CSS 4 + daisyUI 5 layer alongside the existing Bootstrap templates.
+GLIS is a Django application and **does not require Node.js, npm, npx, Vite, or a Tailwind build command to run**.
 
-## Why the prefixes
+## Runtime setup
 
-The existing application still has Bootstrap-based ticket, document, account and HTMX partial templates. To avoid class collisions during the migration:
+The production Tailwind CSS 4 + daisyUI 5 bundle is already committed as a normal Django static asset:
 
-- Tailwind utilities use the `tw:` prefix, for example `tw:flex` and `tw:p-6`.
-- daisyUI uses the `d-` component prefix and is also namespaced by Tailwind, for example `tw:d-btn`, `tw:d-card`, `tw:d-stat`.
-- The existing Bootstrap CSS remains loaded for screens that have not yet been migrated.
-
-This lets migrated and legacy views run side-by-side safely.
-
-## Commands
-
-```bash
-npm install
-npm run build:css
+```
+static/css/glis-tailwind.css
 ```
 
-For development:
+Both main shells load it through Django static files:
 
-```bash
-npm run watch:css
+```django
+<link href="{% static 'css/glis-tailwind.css' %}" rel="stylesheet">
 ```
 
-The source file is `static/src/tailwind.css` and the generated production file is `static/css/glis-tailwind.css`.
+Run GLIS normally:
+
+```bash
+python manage.py migrate
+python manage.py collectstatic --noinput
+python manage.py runserver
+```
+
+For local DEBUG development, `collectstatic` is usually not required because Django serves app/project static files directly.
+
+## Why GLIS keeps prefixed classes
+
+GLIS still contains older Bootstrap-based screens while the redesigned public and portal screens use Tailwind/daisyUI. To prevent collisions with common Bootstrap class names such as `btn`, `card`, `table`, `modal`, `input`, and `badge`, the new design uses:
+
+- Tailwind prefix: `tw:`
+- daisyUI component prefix: `d-`
+- Example: `tw:flex`, `tw:bg-base-100`, `tw:d-btn`, `tw:d-card`
+
+Do not remove these prefixes while Bootstrap compatibility is still required.
 
 ## Themes
 
-The UI ships with two custom daisyUI themes:
+The committed stylesheet contains the GLIS themes:
 
-- `glis` — light
-- `glis-dark` — dark
+- `glis`
+- `glis-dark`
 
-The existing theme toggle now updates both `data-theme` for daisyUI and `data-bs-theme` for remaining Bootstrap views.
+`static/js/app.js` synchronizes the existing light/dark preference with Bootstrap's `data-bs-theme` and daisyUI's `data-theme`.
 
-## Migration scope in this branch
+## No npm requirement
 
-- Public base shell, navigation, footer and CMS homepage
-- Public Knowledge Base list/detail
-- Sign in, sign up and password reset
-- Portal base shell/navigation and responsive mobile drawer
-- Portal overview dashboard
-- Ticket list, ticket detail/conversation, editor and 4-step creation wizard
-- Task workspace, HTMX editor and tables
-- Notifications
-- Document Center
-- Profile and security
-- Vanna analytics workspace
-- Django form widgets and dynamic form controls
-- Shared motion layer: reveal, pointer aura, 3D tilt, native daisyUI Aura, Hover 3D, Hover Gallery, Text Rotate, Timeline, Stats and Lists
-- Existing HTMX, Plotly, rich-text, document upload, notifications and sidebar preference behavior retained
+The following build-only files are intentionally not part of the Django project anymore:
 
-Bootstrap remains loaded as a compatibility layer for any infrequently used legacy partials that have not yet been rewritten. Migrated screens use the collision-safe Tailwind/daisyUI component system and can coexist with those partials while the final cleanup is completed.
+- `package.json`
+- `package-lock.json`
+- `static/src/tailwind.css`
+
+The generated production stylesheet is version-controlled, so pulling the repository is enough to receive the UI.
+
+## Deployment
+
+For Vercel/WhiteNoise or another Django deployment, deploy exactly like the rest of the project:
+
+```bash
+python manage.py collectstatic --noinput
+```
+
+No Node build stage is required.
+
+## Important
+
+If a future UI change introduces a Tailwind/daisyUI class that is not already present in `static/css/glis-tailwind.css`, regenerate the production stylesheet separately before committing that UI change. Normal application developers and deployments still do not need npm.

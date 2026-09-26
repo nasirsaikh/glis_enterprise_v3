@@ -15,12 +15,12 @@
       </h1>
       <div class="tw:mt-3 tw:flex tw:flex-wrap tw:items-center tw:gap-2 tw:text-lg tw:font-bold tw:text-base-content/55">
         <span>{% translate "Your workspace is" %}</span>
-        <span class="glis-rotate-stage tw:text-primary"><span data-rotate-text="{% translate 'live' %}|{% translate 'focused' %}|{% translate 'accountable' %}|{% translate 'ready' %}">{% translate "live" %}</span></span>
+        <span class="tw:d-text-rotate tw:text-primary"><span><span>{% translate "live" %}</span><span>{% translate "focused" %}</span><span>{% translate "accountable" %}</span><span>{% translate "ready" %}</span></span></span>
       </div>
     </div>
     <div class="tw:flex tw:flex-wrap tw:gap-2">
       <a class="tw:d-btn tw:d-btn-outline tw:rounded-full" href="{% url 'portal:export_tickets' %}"><i class="bi bi-download"></i>{% translate "Export" %}</a>
-      <a class="tw:d-btn tw:d-btn-primary tw:rounded-full tw:shadow-lg tw:shadow-primary/20 glis-shine" href="{% url 'portal:create_ticket' 1 %}"><i class="bi bi-plus-lg"></i>{% translate "Create ticket" %}</a>
+      <span class="tw:d-aura tw:d-aura-holo tw:d-aura-sm tw:rounded-full"><a class="tw:d-btn tw:d-btn-primary tw:rounded-full tw:shadow-lg tw:shadow-primary/20 glis-shine" href="{% url 'portal:create_ticket' 1 %}"><i class="bi bi-plus-lg"></i>{% translate "Create ticket" %}</a></span>
     </div>
   </div>
 </section>

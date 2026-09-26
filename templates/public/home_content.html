@@ -24,8 +24,13 @@
 
         <div class="tw:mt-5 tw:flex tw:flex-wrap tw:items-baseline tw:gap-x-3 tw:text-2xl tw:font-black tw:tracking-tight tw:sm:text-3xl">
           <span class="tw:text-base-content/55">{% translate "Built for" %}</span>
-          <span class="glis-rotate-stage tw:text-primary">
-            <span data-rotate-text="{% translate 'claims' %}|{% translate 'healthcare' %}|{% translate 'policy service' %}|{% translate 'customer care' %}">{% translate "claims" %}</span>
+          <span class="tw:d-text-rotate tw:text-primary">
+            <span>
+              <span>{% translate "claims" %}</span>
+              <span>{% translate "healthcare" %}</span>
+              <span>{% translate "policy service" %}</span>
+              <span>{% translate "customer care" %}</span>
+            </span>
           </span>
         </div>
 
@@ -34,10 +39,12 @@
         </p>
 
         <div class="tw:mt-8 tw:flex tw:flex-wrap tw:gap-3">
-          <a class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:rounded-full tw:px-7 tw:shadow-xl tw:shadow-primary/20 glis-shine" href="{{ hero.hero_primary_cta_url|default:'#network-providers' }}">
-            {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_primary_cta_ar|default:hero.hero_primary_cta_en }}{% else %}{{ hero.hero_primary_cta_en }}{% endif %}
-            <i class="bi bi-arrow-up-right"></i>
-          </a>
+          <span class="tw:d-aura tw:d-aura-holo tw:d-aura-sm tw:rounded-full">
+            <a class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:rounded-full tw:px-7 tw:shadow-xl tw:shadow-primary/20 glis-shine" href="{{ hero.hero_primary_cta_url|default:'#network-providers' }}">
+              {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_primary_cta_ar|default:hero.hero_primary_cta_en }}{% else %}{{ hero.hero_primary_cta_en }}{% endif %}
+              <i class="bi bi-arrow-up-right"></i>
+            </a>
+          </span>
           <a class="tw:d-btn tw:d-btn-outline tw:d-btn-lg tw:rounded-full tw:px-7" href="{{ hero.hero_secondary_cta_url|default:'#services' }}">
             {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_secondary_cta_ar|default:hero.hero_secondary_cta_en }}{% else %}{{ hero.hero_secondary_cta_en }}{% endif %}
             <i class="bi bi-arrow-down-right"></i>
@@ -164,16 +171,19 @@
       </div>
       <div class="glis-hover-gallery tw:mt-12 tw:flex tw:flex-col tw:gap-4 tw:md:min-h-[31rem] tw:md:flex-row">
         {% for feature in features %}
-        <article class="tw:group tw:relative tw:min-h-[18rem] tw:overflow-hidden tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-gradient-to-br tw:from-primary/12 tw:via-base-100 tw:to-secondary/10 tw:p-7 tw:shadow-xl" data-reveal>
-          <div class="tw:absolute tw:-end-10 tw:-top-10 tw:h-36 tw:w-36 tw:rounded-full tw:bg-primary/15 tw:blur-3xl tw:transition tw:group-hover:scale-150"></div>
-          <div class="tw:relative tw:flex tw:h-full tw:flex-col">
-            <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-base-100 tw:text-2xl tw:text-primary tw:shadow-lg"><i class="bi {{ feature.icon|default:'bi-stars' }}"></i></span>
-            <div class="tw:mt-auto">
-              <h3 class="tw:text-2xl tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ feature.title_ar|default:feature.title_en }}{% else %}{{ feature.title_en }}{% endif %}</h3>
-              <p class="tw:mt-3 tw:max-w-sm tw:leading-7 tw:text-base-content/60">{% if LANGUAGE_CODE == "ar" %}{{ feature.description_ar|default:feature.description_en }}{% else %}{{ feature.description_en }}{% endif %}</p>
+        <div class="tw:d-hover-3d tw:min-h-[18rem]" data-reveal>
+          <article class="tw:group tw:relative tw:h-full tw:min-h-[18rem] tw:overflow-hidden tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-gradient-to-br tw:from-primary/12 tw:via-base-100 tw:to-secondary/10 tw:p-7 tw:shadow-xl">
+            <div class="tw:absolute tw:-end-10 tw:-top-10 tw:h-36 tw:w-36 tw:rounded-full tw:bg-primary/15 tw:blur-3xl tw:transition tw:group-hover:scale-150"></div>
+            <div class="tw:relative tw:flex tw:h-full tw:flex-col">
+              <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-base-100 tw:text-2xl tw:text-primary tw:shadow-lg"><i class="bi {{ feature.icon|default:'bi-stars' }}"></i></span>
+              <div class="tw:mt-auto">
+                <h3 class="tw:text-2xl tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ feature.title_ar|default:feature.title_en }}{% else %}{{ feature.title_en }}{% endif %}</h3>
+                <p class="tw:mt-3 tw:max-w-sm tw:leading-7 tw:text-base-content/60">{% if LANGUAGE_CODE == "ar" %}{{ feature.description_ar|default:feature.description_en }}{% else %}{{ feature.description_en }}{% endif %}</p>
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
+          <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+        </div>
         {% endfor %}
       </div>
     </div>
@@ -297,14 +307,19 @@
   <section class="tw:border-t tw:border-base-300 tw:bg-base-200/50 tw:py-16">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
       <div class="tw:text-center" data-reveal><span class="tw:d-badge tw:d-badge-outline"><i class="bi bi-building-check tw:me-2"></i>{% translate "Our ecosystem" %}</span></div>
-      <div class="tw:mt-8 tw:grid tw:grid-cols-2 tw:gap-3 tw:md:grid-cols-4">
-        {% for partner in partners %}
-        <div class="glis-tilt tw:grid tw:min-h-28 tw:place-items-center tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100 tw:p-5 tw:shadow-sm" data-tilt data-reveal>
-          {% if partner.website %}<a href="{{ partner.website }}" target="_blank" rel="noopener" class="tw:grid tw:h-full tw:w-full tw:place-items-center">{% endif %}
-          {% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="tw:max-h-14 tw:max-w-full tw:object-contain">{% else %}<strong class="tw:text-center">{{ partner.name }}</strong>{% endif %}
-          {% if partner.website %}</a>{% endif %}
+      <div class="tw:mt-8 tw:grid tw:gap-6 tw:lg:grid-cols-[1.1fr_.9fr] tw:lg:items-center">
+        <figure class="tw:d-hover-gallery tw:h-64 tw:overflow-hidden tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" data-reveal>
+          {% for partner in partners|slice:":10" %}{% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="tw:h-full tw:w-full tw:bg-base-100 tw:object-contain tw:p-10">{% endif %}{% endfor %}
+        </figure>
+        <div class="tw:grid tw:grid-cols-2 tw:gap-3">
+          {% for partner in partners|slice:":8" %}
+          <div class="glis-tilt tw:grid tw:min-h-24 tw:place-items-center tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100 tw:p-4 tw:shadow-sm" data-tilt data-reveal>
+            {% if partner.website %}<a href="{{ partner.website }}" target="_blank" rel="noopener" class="tw:grid tw:h-full tw:w-full tw:place-items-center">{% endif %}
+            {% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="tw:max-h-10 tw:max-w-full tw:object-contain">{% else %}<strong class="tw:text-center tw:text-sm">{{ partner.name }}</strong>{% endif %}
+            {% if partner.website %}</a>{% endif %}
+          </div>
+          {% endfor %}
         </div>
-        {% endfor %}
       </div>
     </div>
   </section>
@@ -317,7 +332,7 @@
         <h2 class="tw:mx-auto tw:max-w-4xl tw:text-4xl tw:font-black tw:tracking-[-.045em] tw:sm:text-5xl tw:lg:text-6xl">{% translate "Tell us what you need. We’ll make the next step clear." %}</h2>
         <p class="tw:mx-auto tw:mt-5 tw:max-w-2xl tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Start a secure request or sign in to continue an existing conversation." %}</p>
         <div class="tw:mt-8 tw:flex tw:flex-wrap tw:justify-center tw:gap-3">
-          <a class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:rounded-full tw:px-8 glis-shine" href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}<i class="bi bi-arrow-up-right"></i></a>
+          <span class="tw:d-aura tw:d-aura-dual tw:d-aura-glow tw:d-aura-lg tw:rounded-full"><a class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:rounded-full tw:px-8 glis-shine" href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}<i class="bi bi-arrow-up-right"></i></a></span>
           <a class="tw:d-btn tw:d-btn-outline tw:d-btn-lg tw:rounded-full tw:px-8" href="{% url 'account_login' %}">{% translate "Sign in" %}</a>
         </div>
       </div>

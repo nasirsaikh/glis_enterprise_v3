@@ -9,6 +9,10 @@ on:
       - "static/src/tailwind.css"
       - "static/js/app.js"
       - "templates/**"
+      - "apps/**"
+      - "services/**"
+      - "apps/**"
+      - "services/**"
       - ".github/workflows/tailwind-build.yml"
   pull_request:
     paths:
@@ -43,14 +47,7 @@ jobs:
           from pathlib import Path
           import re
 
-          files = [
-              Path("templates/base_public.html"),
-              Path("templates/base_portal.html"),
-              Path("templates/public/home_content.html"),
-              Path("templates/portal/dashboard.html"),
-              Path("templates/cms/includes/public_menu.html"),
-              Path("templates/cms/includes/footer_menu.html"),
-          ]
+          files = list(Path("templates").rglob("*.html")) + list(Path("apps").rglob("*.py")) + list(Path("services").rglob("*.py"))
           bad = []
           pattern = re.compile(r"\b(?:sm|md|lg|xl|2xl|hover|focus|active|disabled|group-hover|group-focus):tw:")
           mangled = re.compile(r"\b(?:2tw:|group-tw:)")
@@ -78,6 +75,9 @@ jobs:
               missing = [name for name in classes if name not in text]
               if missing:
                   raise SystemExit(f"{file_name} missing: {', '.join(missing)}")
+
+      - name: Validate Python syntax
+        run: python -m compileall -q apps services
 
       - name: Build production CSS
         run: npm run build:css

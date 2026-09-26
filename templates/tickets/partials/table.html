@@ -1,104 +1,50 @@
 {% load i18n %}
-<section class="panel table-panel">
-  <div class="panel-heading">
+<section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" data-reveal>
+  <div class="tw:flex tw:flex-col tw:gap-4 tw:border-b tw:border-base-300 tw:px-5 tw:py-5 tw:sm:flex-row tw:sm:items-center tw:sm:justify-between tw:sm:px-6">
     <div>
       {% if ticket_tab == "tasks" %}
-        <h2>{% blocktranslate count count=page_obj.paginator.count %}{{ count }} task ticket{% plural %}{{ count }} task tickets{% endblocktranslate %}</h2>
-        <p>{% translate "Task tickets remain part of the normal GLIS ticket workflow and audit history." %}</p>
+      <h2 class="tw:text-xl tw:font-black">{% blocktranslate count count=page_obj.paginator.count %}{{ count }} task ticket{% plural %}{{ count }} task tickets{% endblocktranslate %}</h2>
+      <p class="tw:mt-1 tw:text-sm tw:text-base-content/50">{% translate "Task tickets remain part of the normal GLIS workflow and audit history." %}</p>
       {% else %}
-        <h2>{% blocktranslate count count=page_obj.paginator.count %}{{ count }} ticket{% plural %}{{ count }} tickets{% endblocktranslate %}</h2>
-        <p>{% translate "Results respect your role, project and group access." %}</p>
+      <h2 class="tw:text-xl tw:font-black">{% blocktranslate count count=page_obj.paginator.count %}{{ count }} ticket{% plural %}{{ count }} tickets{% endblocktranslate %}</h2>
+      <p class="tw:mt-1 tw:text-sm tw:text-base-content/50">{% translate "Results respect your role, project and group access." %}</p>
       {% endif %}
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <span class="visibility-note"><i class="bi bi-shield-check"></i>{% translate "Permission filtered" %}</span>
-      <a class="btn btn-sm btn-outline-secondary" href="{% url 'portal:export_tickets' %}?{{ request.GET.urlencode }}">
-        <i class="bi bi-download me-1"></i>{% translate "Export" %}
-      </a>
+    <div class="tw:flex tw:items-center tw:gap-2">
+      <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:gap-1"><i class="bi bi-shield-check"></i>{% translate "Permission filtered" %}</span>
+      <a class="tw:d-btn tw:d-btn-outline tw:d-btn-sm" href="{% url 'portal:export_tickets' %}?{{ request.GET.urlencode }}"><i class="bi bi-download"></i>{% translate "Export" %}</a>
     </div>
   </div>
-  <div class="table-responsive">
-    <table class="table portal-table table-hover table-sm ticket-workspace align-middle">
-      <thead>
-        <tr>
-          <th>{% translate "Ticket" %}</th>
-          <th>{% translate "Project / category" %}</th>
-          <th>{% translate "Requester" %}</th>
-          <th>{% translate "Assigned users / groups" %}</th>
-          <th>{% translate "Priority" %}</th>
-          <th>{% translate "Status" %}</th>
-          <th>{% if ticket_tab == "tasks" %}{% translate "Task due" %}{% else %}{% translate "SLA due" %}{% endif %}</th>
-          <th><span class="visually-hidden">{% translate "Actions" %}</span></th>
-        </tr>
-      </thead>
+
+  <div class="tw:overflow-x-auto">
+    <table class="tw:d-table tw:d-table-zebra">
+      <thead><tr><th>{% translate "Ticket" %}</th><th>{% translate "Project / category" %}</th><th>{% translate "Requester" %}</th><th>{% translate "Assigned" %}</th><th>{% translate "Priority" %}</th><th>{% translate "Status" %}</th><th>{% if ticket_tab == "tasks" %}{% translate "Task due" %}{% else %}{% translate "SLA due" %}{% endif %}</th><th></th></tr></thead>
       <tbody>
-        {% for ticket in page_obj %}
-        <tr>
-          <td>
-            <a class="ticket-link" href="{% url 'portal:ticket_detail' ticket.reference %}">
-              <strong>{{ ticket.reference }}</strong><span>{{ ticket.subject|truncatechars:48 }}</span>
-            </a>
-            {% if ticket.visibility == 'restricted' %}<span class="restricted-label"><i class="bi bi-lock"></i>{% translate "Restricted" %}</span>{% endif %}
-          </td>
-          <td><span>{{ ticket.project.name_en }}</span><small>{{ ticket.category.name_en }}</small></td>
-          <td><span>{{ ticket.requester.get_full_name|default:ticket.requester.email }}</span><small>{{ ticket.requester.email }}</small></td>
-          <td>
-            <div class="assignment-summary">
-              {% for assignee in ticket.assignees.all %}
-                <span class="avatar xs" title="{{ assignee.get_full_name|default:assignee.email }}">{{ assignee.first_name|first|default:assignee.email|first|upper }}</span>
-              {% empty %}<span class="unassigned">{% translate "No staff" %}</span>{% endfor %}
-            </div>
-            <small>{% for group in ticket.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "No group" %}{% endfor %}</small>
-          </td>
-          <td><span class="priority-chip priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
-          <td><span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
-          <td>
-            {% if ticket_tab == "tasks" %}
-              <span>{{ ticket.task_item.due_date|date:"d M Y" }}</span>
-              <small>{% if ticket.task_item.recurring_task_id %}{% translate "Recurring" %}{% else %}{% translate "Manual" %}{% endif %}</small>
-            {% else %}
-              <span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span>
-              <small>{% if ticket.resolution_due_at %}{{ ticket.resolution_due_at|date:"d M Y H:i" }}{% else %}—{% endif %}</small>
-            {% endif %}
-          </td>
-          <td><a class="btn btn-icon btn-sm" href="{% url 'portal:ticket_detail' ticket.reference %}" aria-label="{% translate 'Open ticket' %}"><i class="bi bi-chevron-right"></i></a></td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="8">
-          <div class="empty-state">
-            <span class="empty-icon"><i class="bi bi-search"></i></span>
-            {% if ticket_tab == "tasks" %}
-              <strong>{% translate "No matching task tickets" %}</strong>
-              <p>{% translate "Adjust the filters or create/manage tasks from the task workspace." %}</p>
-              <a class="btn btn-primary" href="{% url 'tasks:list' %}">{% translate "Open tasks" %}</a>
-            {% else %}
-              <strong>{% translate "No matching tickets" %}</strong>
-              <p>{% translate "Adjust the filters or create a new service request." %}</p>
-              <a class="btn btn-primary" href="{% url 'portal:create_ticket' 1 %}">{% translate "Create ticket" %}</a>
-            {% endif %}
-          </div>
-        </td></tr>
-        {% endfor %}
+      {% for ticket in page_obj %}
+      <tr class="tw:hover:bg-primary/5">
+        <td>
+          <a class="tw:block tw:min-w-52 tw:no-underline" href="{% url 'portal:ticket_detail' ticket.reference %}"><strong class="tw:block tw:text-primary">{{ ticket.reference }}</strong><span class="tw:mt-1 tw:block tw:max-w-72 tw:truncate tw:text-xs tw:text-base-content/50">{{ ticket.subject|truncatechars:48 }}</span></a>
+          {% if ticket.visibility == 'restricted' %}<span class="tw:d-badge tw:d-badge-warning tw:d-badge-soft tw:d-badge-xs tw:mt-2"><i class="bi bi-lock"></i>{% translate "Restricted" %}</span>{% endif %}
+        </td>
+        <td><span class="tw:block tw:font-semibold">{{ ticket.project.name_en }}</span><small class="tw:text-base-content/45">{{ ticket.category.name_en }}</small></td>
+        <td><span class="tw:block tw:max-w-48 tw:truncate">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</span><small class="tw:block tw:max-w-48 tw:truncate tw:text-base-content/45">{{ ticket.requester.email }}</small></td>
+        <td><div class="tw:flex tw:-space-x-2">{% for assignee in ticket.assignees.all %}<div class="tw:d-avatar tw:d-avatar-placeholder" title="{{ assignee.get_full_name|default:assignee.email }}"><div class="tw:w-8 tw:rounded-full tw:border-2 tw:border-base-100 tw:bg-primary tw:text-primary-content"><span class="tw:text-xs">{{ assignee.first_name|first|default:assignee.email|first|upper }}</span></div></div>{% empty %}<span class="tw:text-xs tw:text-base-content/40">{% translate "No staff" %}</span>{% endfor %}</div><small class="tw:mt-1 tw:block tw:max-w-40 tw:truncate tw:text-base-content/45">{% for group in ticket.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "No group" %}{% endfor %}</small></td>
+        <td><span class="priority-chip priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+        <td><span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+        <td>{% if ticket_tab == "tasks" %}<span class="tw:block">{{ ticket.task_item.due_date|date:"d M Y" }}</span><small class="tw:text-base-content/45">{% if ticket.task_item.recurring_task_id %}{% translate "Recurring" %}{% else %}{% translate "Manual" %}{% endif %}</small>{% else %}<span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span><small class="tw:mt-1 tw:block tw:text-base-content/45">{% if ticket.resolution_due_at %}{{ ticket.resolution_due_at|date:"d M Y H:i" }}{% else %}—{% endif %}</small>{% endif %}</td>
+        <td><a class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm" href="{% url 'portal:ticket_detail' ticket.reference %}" aria-label="{% translate 'Open ticket' %}"><i class="bi bi-chevron-right"></i></a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8"><div class="tw:flex tw:flex-col tw:items-center tw:gap-3 tw:py-14 tw:text-center tw:text-base-content/45"><span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-base-200"><i class="bi bi-search tw:text-2xl"></i></span><strong class="tw:text-base-content">{% if ticket_tab == "tasks" %}{% translate "No matching task tickets" %}{% else %}{% translate "No matching tickets" %}{% endif %}</strong><p>{% translate "Adjust the filters or create a new request." %}</p></div></td></tr>
+      {% endfor %}
       </tbody>
     </table>
   </div>
+
   {% if page_obj.paginator.num_pages > 1 %}
-  <div class="table-pagination">
-    <span>{% blocktranslate with current=page_obj.number total=page_obj.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}</span>
-    <nav><ul class="pagination mb-0">
-      {% if page_obj.has_previous %}
-      <li class="page-item"><a class="page-link"
-          hx-get="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}"
-          hx-target="#ticket-table"
-          href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a></li>
-      {% endif %}
-      {% if page_obj.has_next %}
-      <li class="page-item"><a class="page-link"
-          hx-get="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}"
-          hx-target="#ticket-table"
-          href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">{% translate "Next" %}</a></li>
-      {% endif %}
-    </ul></nav>
+  <div class="tw:flex tw:flex-col tw:gap-3 tw:border-t tw:border-base-300 tw:px-5 tw:py-4 tw:sm:flex-row tw:sm:items-center tw:sm:justify-between">
+    <span class="tw:text-sm tw:text-base-content/50">{% blocktranslate with current=page_obj.number total=page_obj.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}</span>
+    <div class="tw:d-join">{% if page_obj.has_previous %}<a class="tw:d-btn tw:d-btn-sm tw:d-join-item" hx-get="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}" hx-target="#ticket-table" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a>{% endif %}{% if page_obj.has_next %}<a class="tw:d-btn tw:d-btn-sm tw:d-join-item" hx-get="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}" hx-target="#ticket-table" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">{% translate "Next" %}</a>{% endif %}</div>
   </div>
   {% endif %}
 </section>

@@ -1,43 +1,12 @@
 {% load i18n %}
-
-<div class="comment {% if comment.is_internal %}internal-comment{% endif %}">
-    <span class="avatar sm">{{ comment.author.first_name|first|default:comment.author.email|first|upper }}</span>
-
-    <div>
-        <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
-            <div>
-                <strong>{{ comment.author.get_full_name|default:comment.author.email }}</strong>
-
-                {% if comment.is_internal %}
-                    <span class="badge text-bg-warning ms-1"><i class="bi bi-lock-fill me-1"></i>{% translate "Internal" %}</span>
-                {% endif %}
-            </div>
-
-            <small class="text-muted">{{ comment.created_at|date:"d M Y, h:i A" }}</small>
-        </div>
-
-        <div class="rich-content">{{ comment.body|safe }}</div>
-
-        {% if comment.attachments.all %}
-            <div class="attachment-list mt-3">
-                {% for attachment in comment.attachments.all %}
-                    <a href="{% url 'portal:download_attachment' attachment.pk %}">
-                        <span class="file-icon"><i class="bi bi-file-earmark"></i></span>
-
-                        <span class="flex-grow-1 overflow-hidden">
-                            <strong class="d-block text-truncate">{{ attachment.original_name }}</strong>
-                            <small>{{ attachment.size|filesizeformat }} · {{ attachment.created_at|date:"d M Y, h:i A" }} · {{ attachment.scan_status|title }}</small>
-                        </span>
-
-                        <i class="bi bi-download ms-auto"></i>
-                    </a>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <div class="text-end mt-2">
-            <small class="text-muted">{{ comment.get_status_display }}</small>
-            <small class="text-muted">{% translate "Sent" %} {{ comment.created_at|date:"h:i A" }}</small>
-        </div>
+<article class="comment {% if comment.is_internal %}internal-comment tw:border-warning/25 tw:bg-warning/5{% endif %} tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-200/35 tw:p-4">
+  <div class="tw:flex tw:gap-3">
+    <div class="tw:d-avatar tw:d-avatar-placeholder tw:shrink-0"><div class="tw:w-9 tw:rounded-xl tw:bg-secondary tw:text-secondary-content"><span class="tw:text-xs tw:font-bold">{{ comment.author.first_name|first|default:comment.author.email|first|upper }}</span></div></div>
+    <div class="tw:min-w-0 tw:flex-1">
+      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-2"><div><strong class="tw:text-sm">{{ comment.author.get_full_name|default:comment.author.email }}</strong>{% if comment.is_internal %}<span class="tw:d-badge tw:d-badge-warning tw:d-badge-soft tw:d-badge-xs tw:ms-2"><i class="bi bi-lock-fill"></i>{% translate "Internal" %}</span>{% endif %}</div><time class="tw:text-xs tw:text-base-content/40">{{ comment.created_at|date:"d M Y, h:i A" }}</time></div>
+      <div class="rich-content tw:mt-3 tw:leading-7 tw:text-base-content/75 tw:[&_p]:mb-3">{{ comment.body|safe }}</div>
+      {% if comment.attachments.all %}<ul class="tw:d-list tw:mt-3">{% for attachment in comment.attachments.all %}<li><a class="tw:d-list-row tw:rounded-xl tw:border tw:border-base-300 tw:bg-base-100 tw:no-underline" href="{% url 'portal:download_attachment' attachment.pk %}"><span class="tw:grid tw:h-9 tw:w-9 tw:place-items-center tw:rounded-lg tw:bg-primary/10 tw:text-primary"><i class="bi bi-file-earmark"></i></span><span class="tw:d-list-col-grow tw:min-w-0"><strong class="tw:block tw:truncate tw:text-sm">{{ attachment.original_name }}</strong><small class="tw:text-xs tw:text-base-content/40">{{ attachment.size|filesizeformat }} · {{ attachment.created_at|date:"d M Y, h:i A" }} · {{ attachment.scan_status|title }}</small></span><i class="bi bi-download tw:text-primary"></i></a></li>{% endfor %}</ul>{% endif %}
+      <div class="tw:mt-2 tw:flex tw:justify-end tw:gap-2 tw:text-[.68rem] tw:text-base-content/40"><span>{{ comment.get_status_display }}</span><span>·</span><span>{% translate "Sent" %} {{ comment.created_at|date:"h:i A" }}</span></div>
     </div>
-</div>
+  </div>
+</article>

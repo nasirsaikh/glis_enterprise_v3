@@ -15,7 +15,7 @@
     </ul>
   </details>
   {% else %}
-  <a class="tw:font-semibold tw:transition tw:duration-200 hover:tw:text-primary{% if child.selected %} tw:text-primary{% endif %}" href="{{ child.get_absolute_url }}">{{ child.get_menu_title }}</a>
+  <a class="tw:font-semibold tw:transition tw:duration-200 tw:hover:text-primary{% if child.selected %} tw:text-primary{% endif %}" href="{{ child.get_absolute_url }}">{{ child.get_menu_title }}</a>
   {% endif %}
 </li>
 {% endfor %}

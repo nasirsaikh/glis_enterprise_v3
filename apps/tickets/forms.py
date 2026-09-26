@@ -124,7 +124,7 @@ class TicketReviewForm(forms.Form):
     subject = forms.CharField(max_length=240, widget=forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}))
     description = forms.CharField(max_length=2_000_000, widget=forms.Textarea(attrs={"class": "tw:d-textarea tw:d-textarea-bordered tw:w-full richtext-source", "rows": 6}))
     priority = forms.ChoiceField(choices=Ticket.Priority.choices, widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}))
-    acknowledgment = forms.BooleanField(label=_("I confirm that the information is accurate and may be processed to provide this service."))
+    acknowledgment = forms.BooleanField(label=_("I confirm that the information is accurate and may be processed to provide this service."), widget=forms.CheckboxInput(attrs={"class": "tw:d-checkbox tw:d-checkbox-primary"}))
 
 
 # class TicketCommentForm(forms.ModelForm):
@@ -149,7 +149,13 @@ class TicketCommentForm(forms.ModelForm):
                 attrs={
                     "class": "tw:d-select tw:d-select-bordered tw:w-full",
                 }
-            ),            
+            ),
+            "is_internal": forms.CheckboxInput(
+                attrs={
+                    "class": "tw:d-toggle tw:d-toggle-primary",
+                    "role": "switch",
+                }
+            ),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -200,7 +206,7 @@ class TicketShareForm(forms.Form):
 
 
 class TicketApprovalDecisionForm(forms.Form):
-    decision = forms.ChoiceField(choices=[("approve", _("Approve")), ("reject", _("Reject"))], widget=forms.RadioSelect)
+    decision = forms.ChoiceField(choices=[("approve", _("Approve")), ("reject", _("Reject"))], widget=forms.RadioSelect(attrs={"class": "tw:d-radio tw:d-radio-primary"}))
     note = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={"class": "tw:d-textarea tw:d-textarea-bordered tw:w-full", "rows": 3}))
 
 

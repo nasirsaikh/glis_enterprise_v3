@@ -60,12 +60,12 @@ class DynamicTicketForm(forms.Form):
                 choices = DataSourceRegistry.choices(source["registry"], user=self.user)
             if control == "multiselect":
                 return forms.MultipleChoiceField(choices=choices, widget=forms.SelectMultiple(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}), **common)
-            widget = forms.RadioSelect if control == "radio" else forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"})
+            widget = forms.RadioSelect(attrs={"class": "tw:d-radio tw:d-radio-primary"}) if control == "radio" else forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"})
             return forms.ChoiceField(choices=choices, widget=widget, **common)
         if control in {"checkbox", "switch"}:
-            return forms.BooleanField(widget=forms.CheckboxInput(attrs={"class": "tw:d-toggle tw:d-toggle-primary", "role": "switch" if control == "switch" else "checkbox"}), **common)
+            return forms.BooleanField(widget=forms.CheckboxInput(attrs={"class": "tw:d-toggle tw:d-toggle-primary" if control == "switch" else "tw:d-checkbox tw:d-checkbox-primary", "role": "switch" if control == "switch" else "checkbox"}), **common)
         if control == "file":
-            return forms.FileField(**common)
+            return forms.FileField(widget=forms.FileInput(attrs={"class": "tw:d-file-input tw:d-file-input-bordered tw:w-full"}), **common)
         if control in {"number", "currency", "rating"}:
             return forms.DecimalField(min_value=validation.get("min"), max_value=validation.get("max"), decimal_places=2, widget=CONTROL_WIDGETS[control](attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}), **common)
         if control == "date":

@@ -29,7 +29,7 @@
   <a class="skip-link" href="#portal-main">{% translate "Skip to content" %}</a>
 
   <aside id="portal-sidebar"
-         class="portal-tw-sidebar glis-aura tw:fixed tw:inset-y-0 tw:start-0 tw:z-50 tw:hidden tw:flex-col tw:border-e tw:border-base-300 tw:bg-neutral tw:text-neutral-content tw:shadow-2xl lg:tw:flex"
+         class="portal-tw-sidebar glis-aura tw:fixed tw:inset-y-0 tw:start-0 tw:z-50 tw:hidden tw:flex-col tw:border-e tw:border-base-300 tw:bg-neutral tw:text-neutral-content tw:shadow-2xl tw:lg:flex"
          data-aura>
     <a class="tw:flex tw:h-20 tw:items-center tw:gap-3 tw:border-b tw:border-neutral-content/10 tw:px-4 tw:no-underline"
        href="{% url 'portal:dashboard' %}" title="GLIS">
@@ -92,25 +92,25 @@
   </aside>
 
   <div class="portal-tw-stage tw:min-h-screen">
-    <header class="tw:sticky tw:top-0 tw:z-40 tw:p-3 sm:tw:p-4">
-      <div class="glis-glass glis-aura tw:d-navbar tw:min-h-16 tw:rounded-[1.4rem] tw:px-2 sm:tw:px-4" data-aura>
-        <div class="tw:d-navbar-start tw:min-w-0 tw:gap-1 sm:tw:gap-2">
-          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:hidden lg:tw:inline-flex"
+    <header class="tw:sticky tw:top-0 tw:z-40 tw:p-3 tw:sm:p-4">
+      <div class="glis-glass glis-aura tw:d-navbar tw:min-h-16 tw:rounded-[1.4rem] tw:px-2 tw:sm:px-4" data-aura>
+        <div class="tw:d-navbar-start tw:min-w-0 tw:gap-1 tw:sm:gap-2">
+          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:hidden tw:lg:inline-flex"
                   id="sidebar-toggle" type="button" aria-controls="portal-sidebar"
                   aria-expanded="{% if user.profile.sidebar_mode == 'full' %}true{% else %}false{% endif %}"
                   title="{% translate 'Change navigation size' %}">
             <i class="bi bi-layout-sidebar-inset tw:text-lg"></i>
           </button>
 
-          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle lg:tw:hidden" type="button" data-mobile-nav-open aria-label="{% translate 'Open menu' %}">
+          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:lg:hidden" type="button" data-mobile-nav-open aria-label="{% translate 'Open menu' %}">
             <i class="bi bi-list tw:text-xl"></i>
           </button>
 
-          <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:hidden sm:tw:inline-flex" href="/" title="{% translate 'Public website' %}">
+          <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:hidden tw:sm:inline-flex" href="/" title="{% translate 'Public website' %}">
             <i class="bi bi-house"></i>
           </a>
 
-          <div class="tw:relative tw:hidden tw:min-w-0 tw:max-w-xl tw:flex-1 md:tw:block">
+          <div class="tw:relative tw:hidden tw:min-w-0 tw:max-w-xl tw:flex-1 tw:md:block">
             <i class="bi bi-search tw:pointer-events-none tw:absolute tw:start-4 tw:top-1/2 tw:z-10 tw:-translate-y-1/2 tw:text-base-content/40"></i>
             <input class="tw:d-input tw:d-input-bordered tw:w-full tw:rounded-full tw:bg-base-100/70 tw:ps-11"
                    type="search" name="q"
@@ -123,9 +123,9 @@
         </div>
 
         <div class="tw:d-navbar-end tw:gap-1">
-          <a class="tw:d-btn tw:d-btn-primary tw:d-btn-sm tw:hidden tw:rounded-full tw:shadow-lg tw:shadow-primary/15 sm:tw:inline-flex lg:tw:d-btn-md"
+          <a class="tw:d-btn tw:d-btn-primary tw:d-btn-sm tw:hidden tw:rounded-full tw:shadow-lg tw:shadow-primary/15 tw:sm:inline-flex tw:lg:d-btn-md"
              href="{% url 'portal:create_ticket' 1 %}">
-            <i class="bi bi-plus-lg"></i><span class="tw:hidden xl:tw:inline">{% translate "New ticket" %}</span>
+            <i class="bi bi-plus-lg"></i><span class="tw:hidden tw:xl:inline">{% translate "New ticket" %}</span>
           </a>
 
           <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" x-on:click="toggleTheme" aria-label="{% translate 'Change theme' %}">
@@ -170,14 +170,14 @@
           </details>
 
           <details class="tw:d-dropdown tw:d-dropdown-end">
-            <summary class="tw:d-btn tw:d-btn-ghost tw:h-12 tw:gap-2 tw:rounded-full tw:px-2 sm:tw:px-3">
+            <summary class="tw:d-btn tw:d-btn-ghost tw:h-12 tw:gap-2 tw:rounded-full tw:px-2 tw:sm:px-3">
               {% if user.profile.avatar %}
               <div class="tw:d-avatar"><div class="tw:w-9 tw:rounded-full"><img src="{{ user.profile.avatar.url }}" alt=""></div></div>
               {% else %}
               <div class="tw:d-avatar tw:d-avatar-placeholder"><div class="tw:w-9 tw:rounded-full tw:bg-primary tw:text-primary-content"><span class="tw:text-sm tw:font-bold">{{ user.first_name|first|default:user.email|first|upper }}</span></div></div>
               {% endif %}
-              <span class="tw:hidden tw:max-w-36 tw:text-start xl:tw:block"><strong class="tw:block tw:truncate tw:text-xs">{{ user.get_full_name|default:user.email }}</strong><small class="tw:block tw:truncate tw:text-[.68rem] tw:font-normal tw:text-base-content/45">{{ user.profile.get_role_display|default:'User' }}</small></span>
-              <i class="bi bi-chevron-down tw:hidden tw:text-xs xl:tw:block"></i>
+              <span class="tw:hidden tw:max-w-36 tw:text-start tw:xl:block"><strong class="tw:block tw:truncate tw:text-xs">{{ user.get_full_name|default:user.email }}</strong><small class="tw:block tw:truncate tw:text-[.68rem] tw:font-normal tw:text-base-content/45">{{ user.profile.get_role_display|default:'User' }}</small></span>
+              <i class="bi bi-chevron-down tw:hidden tw:text-xs tw:xl:block"></i>
             </summary>
             <ul class="tw:d-menu tw:d-dropdown-content tw:z-[80] tw:mt-3 tw:w-64 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-2 tw:shadow-2xl">
               <li><a href="{% url 'accounts:profile' %}"><i class="bi bi-person"></i>{% translate "Profile & security" %}</a></li>
@@ -204,12 +204,12 @@
     </div>
     {% endif %}
 
-    <main id="portal-main" class="portal-main tw:min-h-[calc(100vh-6rem)] tw:p-3 sm:tw:p-4 lg:tw:p-6 xl:tw:p-8 {% block main_class %}{% endblock %}">
+    <main id="portal-main" class="portal-main tw:min-h-[calc(100vh-6rem)] tw:p-3 tw:sm:p-4 tw:lg:p-6 tw:xl:p-8 {% block main_class %}{% endblock %}">
       {% block content %}{% endblock %}
     </main>
   </div>
 
-  <dialog id="mobilePortalNav" class="tw:d-modal tw:d-modal-start lg:tw:hidden">
+  <dialog id="mobilePortalNav" class="tw:d-modal tw:d-modal-start tw:lg:hidden">
     <div class="tw:d-modal-box tw:m-0 tw:h-dvh tw:max-h-none tw:w-[min(88vw,22rem)] tw:rounded-none tw:bg-neutral tw:p-0 tw:text-neutral-content">
       <div class="tw:flex tw:h-20 tw:items-center tw:justify-between tw:border-b tw:border-neutral-content/10 tw:px-4">
         <a class="tw:flex tw:items-center tw:gap-3 tw:no-underline" href="{% url 'portal:dashboard' %}">

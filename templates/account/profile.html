@@ -1,35 +1,14 @@
 {% extends 'base_portal.html' %}{% load i18n %}{% block title %}{% translate "Profile & security" %}{% endblock %}
-{% block content %}<div class="page-heading"><span class="page-eyebrow">{% translate "Account" %}</span>
-    <h1>{% translate "Profile & security" %}</h1>
-    <p>{% translate "Manage your personal information, avatar, preferences and password." %}</p>
+{% block content %}
+<div class="tw:space-y-5">
+  <section class="glis-aura tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-base-100 tw:p-6 tw:shadow-xl" data-aura data-reveal><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-3"><i class="bi bi-person-gear tw:me-1"></i>{% translate "Account" %}</span><h1 class="tw:text-3xl tw:font-black tw:tracking-[-.04em] tw:sm:text-4xl">{% translate "Profile & security" %}</h1><p class="tw:mt-2 tw:text-base-content/55">{% translate "Manage your personal information, avatar, preferences and password." %}</p></section>
+  <div class="tw:grid tw:gap-5 tw:xl:grid-cols-[1.35fr_.65fr]">
+    <form class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" method="post" enctype="multipart/form-data" data-reveal>{% csrf_token %}<input type="hidden" name="action" value="profile"><div class="tw:d-card-body tw:p-5 tw:sm:p-7">
+      <div class="tw:mb-6 tw:flex tw:items-center tw:gap-4">{% if user.profile.avatar %}<div class="tw:d-avatar"><div class="tw:w-20 tw:rounded-[1.4rem]"><img src="{{ user.profile.avatar.url }}" alt=""></div></div>{% else %}<div class="tw:d-avatar tw:d-avatar-placeholder"><div class="tw:w-20 tw:rounded-[1.4rem] tw:bg-primary tw:text-primary-content"><span class="tw:text-2xl tw:font-black">{{ user.first_name|first|default:user.email|first|upper }}</span></div></div>{% endif %}<div><h2 class="tw:text-2xl tw:font-black">{{ user.get_full_name|default:user.email }}</h2><p class="tw:text-sm tw:text-base-content/45">{{ user.profile.get_role_display }}</p></div></div>
+      <div class="tw:grid tw:gap-4 tw:md:grid-cols-2">{% for field in form %}{% if field.field.widget.input_type == 'checkbox' %}<label class="tw:flex tw:items-center tw:gap-3 tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-200/40 tw:p-4 tw:md:col-span-2">{{ field }}<span><strong class="tw:block tw:text-sm">{{ field.label }}</strong>{% if field.help_text %}<small class="tw:text-base-content/45">{{ field.help_text|safe }}</small>{% endif %}</span></label>{% else %}<label class="tw:d-fieldset {% if field.name == 'bio' or field.name == 'avatar' %}tw:md:col-span-2{% endif %}"><span class="tw:d-fieldset-legend">{{ field.label }}</span>{{ field }}{% if field.help_text %}<span class="tw:d-label tw:text-xs tw:text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}{{ field.errors }}</label>{% endif %}{% endfor %}</div>
+      <div class="tw:mt-6 tw:flex tw:justify-end"><button class="tw:d-btn tw:d-btn-primary tw:rounded-full" type="submit"><i class="bi bi-check2"></i>{% translate "Save profile" %}</button></div>
+    </div></form>
+    <form class="tw:d-card glis-tilt tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" method="post" action="{% url 'accounts:change_password' %}" data-tilt data-reveal>{% csrf_token %}<div class="tw:d-card-body tw:p-5 tw:sm:p-6"><span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-primary/12 tw:text-primary"><i class="bi bi-shield-lock tw:text-xl"></i></span><h2 class="tw:d-card-title tw:mt-3">{% translate "Change password" %}</h2><p class="tw:text-sm tw:text-base-content/50">{% translate "Use a strong password that you do not reuse elsewhere." %}</p><div class="tw:mt-4 tw:space-y-4 tw:[&_input]:w-full tw:[&_input]:rounded-xl tw:[&_input]:border tw:[&_input]:border-base-300 tw:[&_input]:bg-base-100 tw:[&_input]:px-4 tw:[&_input]:py-3">{% for field in password_form %}<label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{{ field.label }}</span>{{ field }}{{ field.errors }}{% if field.help_text %}<span class="tw:d-label tw:text-xs tw:text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}</label>{% endfor %}</div><button class="tw:d-btn tw:d-btn-outline tw:mt-5 tw:w-full tw:rounded-full" type="submit">{% translate "Update password" %}</button></div></form>
+  </div>
 </div>
-<div class="row g-4">
-    <div class="col-xl-8 ">
-        <form class="panel p-3" method="post" enctype="multipart/form-data">{% csrf_token %}<input type="hidden"
-                name="action" value="profile">
-            <div class="profile-hero">{% if user.profile.avatar %}<img class="profile-avatar"
-                    src="{{ user.profile.avatar.url }}" alt="">{% else %}<span class="profile-avatar fallback">{{user.first_name|first|default:user.email|first|upper }}</span>{% endif %}<div>
-                    <h2>{{ user.get_full_name|default:user.email }}</h2>
-                    <p>{{ user.profile.get_role_display }}</p>
-                </div>
-            </div>
-            <div class="row g-3">{% for field in form %}<div
-                    class="{% if field.name == 'bio' or field.name == 'avatar' %} col-12 {% elif field.name == 'remove_avatar' or field.name == 'email_notifications' or field.name == 'browser_notifications' %} col-12 form-check ms-2 {% else %} col-md-6 {% endif %}">
-                    {% if field.field.widget.input_type == 'checkbox' %}
-                    {{ field }}
-                        <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {% else %}
-                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
-                        {% endif %}{{ field.errors }}
-                </div>{% endfor %}</div>
-            <div class="text-end mt-4"><button class="btn btn-primary" type="submit">{% translate "Save profile" %}</button></div>
-        </form>
-    </div>
-    <div class="col-xl-4">
-        <form class="panel p-3" method="post" action="{% url 'accounts:change_password' %}">{% csrf_token %}<h2 class="h5">
-                {% translate "Change password" %}</h2>
-            <p class="text-muted">{% translate "Use a strong password that you do not reuse elsewhere." %}</p>{% for field in password_form %}<div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}{{ field.errors }}{% if field.help_text %}<small class="form-text">{{ field.help_text|safe }}</small>
-                {% endif %}</div>{% endfor %}<button class="btn btn-outline-primary w-100" type="submit">{% translate "Update password" %}</button>
-        </form>
-    </div>
-</div>{% endblock %}
+{% endblock %}

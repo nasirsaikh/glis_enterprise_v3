@@ -30,20 +30,20 @@
   {% cms_toolbar %}
   <a class="skip-link" href="#main-content">{% translate "Skip to content" %}</a>
 
-  <div class="tw:hidden lg:tw:block tw:bg-neutral tw:text-neutral-content">
+  <div class="tw:hidden tw:lg:block tw:bg-neutral tw:text-neutral-content">
     <div class="tw:mx-auto tw:flex tw:max-w-7xl tw:items-center tw:justify-between tw:px-6 tw:py-2 tw:text-xs">
       <span class="tw:flex tw:items-center tw:gap-2 tw:font-semibold tw:tracking-wide"><i class="bi bi-shield-check tw:text-success"></i>{% translate "Secure insurance service coordination" %}</span>
       <div class="tw:flex tw:items-center tw:gap-6 tw:text-neutral-content/75">
-        {% if glis_site.contact_email %}<a class="hover:tw:text-neutral-content" href="mailto:{{ glis_site.contact_email }}"><i class="bi bi-envelope tw:me-2"></i>{{ glis_site.contact_email }}</a>{% endif %}
-        {% if glis_site.contact_phone %}<a class="hover:tw:text-neutral-content" href="tel:{{ glis_site.contact_phone }}"><i class="bi bi-telephone tw:me-2"></i>{{ glis_site.contact_phone }}</a>{% endif %}
+        {% if glis_site.contact_email %}<a class="tw:hover:text-neutral-content" href="mailto:{{ glis_site.contact_email }}"><i class="bi bi-envelope tw:me-2"></i>{{ glis_site.contact_email }}</a>{% endif %}
+        {% if glis_site.contact_phone %}<a class="tw:hover:text-neutral-content" href="tel:{{ glis_site.contact_phone }}"><i class="bi bi-telephone tw:me-2"></i>{{ glis_site.contact_phone }}</a>{% endif %}
       </div>
     </div>
   </div>
 
   <header class="tw:sticky tw:top-0 tw:z-50 tw:px-3 tw:pt-3">
-    <nav class="glis-glass glis-aura tw:d-navbar tw:mx-auto tw:max-w-7xl tw:rounded-[1.4rem] tw:px-3 sm:tw:px-5" data-aura aria-label="{% translate 'Primary navigation' %}">
+    <nav class="glis-glass glis-aura tw:d-navbar tw:mx-auto tw:max-w-7xl tw:rounded-[1.4rem] tw:px-3 tw:sm:px-5" data-aura aria-label="{% translate 'Primary navigation' %}">
       <div class="tw:d-navbar-start tw:gap-2">
-        <div class="tw:d-dropdown xl:tw:hidden">
+        <div class="tw:d-dropdown tw:xl:hidden">
           <div tabindex="0" role="button" class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" aria-label="{% translate 'Toggle navigation' %}"><i class="bi bi-list tw:text-2xl"></i></div>
           <ul tabindex="0" class="tw:d-menu tw:d-dropdown-content tw:z-[80] tw:mt-4 tw:w-72 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-3 tw:shadow-2xl">
             {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
@@ -56,13 +56,13 @@
         </a>
       </div>
 
-      <div class="tw:d-navbar-center tw:hidden xl:tw:flex">
+      <div class="tw:d-navbar-center tw:hidden tw:xl:flex">
         <ul class="tw:d-menu tw:d-menu-horizontal tw:items-center tw:gap-1 tw:px-1">
           {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
         </ul>
       </div>
 
-      <div class="tw:d-navbar-end tw:gap-1 sm:tw:gap-2">
+      <div class="tw:d-navbar-end tw:gap-1 tw:sm:gap-2">
         {% if glis_site.public_theme_switcher_enabled or not glis_site %}
         <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-tooltip tw:d-tooltip-bottom" data-tip="{% translate 'Theme' %}" type="button" x-on:click="toggleTheme" aria-label="{% translate 'Change theme' %}">
           <i class="bi tw:text-lg" x-bind:class="themeIcon"></i>
@@ -77,13 +77,13 @@
         </form>
 
         {% if user.is_authenticated %}
-        <a class="tw:d-btn tw:d-btn-ghost tw:hidden md:tw:inline-flex" href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Portal" %}</a>
+        <a class="tw:d-btn tw:d-btn-ghost tw:hidden tw:md:inline-flex" href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Portal" %}</a>
         {% else %}
-        <a class="tw:d-btn tw:d-btn-ghost tw:hidden md:tw:inline-flex" href="{% url 'account_login' %}">{% translate "Sign in" %}</a>
+        <a class="tw:d-btn tw:d-btn-ghost tw:hidden tw:md:inline-flex" href="{% url 'account_login' %}">{% translate "Sign in" %}</a>
         {% endif %}
 
-        <a class="tw:d-btn tw:d-btn-primary tw:d-btn-sm sm:tw:d-btn-md tw:rounded-full tw:shadow-lg tw:shadow-primary/20" href="{% url 'portal:create_ticket' 1 %}">
-          <i class="bi bi-plus-lg"></i><span class="tw:hidden sm:tw:inline">{% translate "Create request" %}</span>
+        <a class="tw:d-btn tw:d-btn-primary tw:d-btn-sm tw:sm:d-btn-md tw:rounded-full tw:shadow-lg tw:shadow-primary/20" href="{% url 'portal:create_ticket' 1 %}">
+          <i class="bi bi-plus-lg"></i><span class="tw:hidden tw:sm:inline">{% translate "Create request" %}</span>
         </a>
       </div>
     </nav>
@@ -106,8 +106,8 @@
 
   <footer id="contact" class="tw:relative tw:overflow-hidden tw:border-t tw:border-base-300 tw:bg-base-200">
     <div class="glis-aura tw:absolute tw:inset-0 tw:pointer-events-none" aria-hidden="true"></div>
-    <div class="tw:relative tw:mx-auto tw:grid tw:max-w-7xl tw:gap-10 tw:px-6 tw:py-16 md:tw:grid-cols-2 lg:tw:grid-cols-12">
-      <div class="lg:tw:col-span-5">
+    <div class="tw:relative tw:mx-auto tw:grid tw:max-w-7xl tw:gap-10 tw:px-6 tw:py-16 tw:md:grid-cols-2 tw:lg:grid-cols-12">
+      <div class="tw:lg:col-span-5">
         <img class="tw:h-12 tw:w-auto tw:max-w-32 tw:object-contain" src="/api/v1/site-logo/" alt="Company Logo">
         <p class="tw:mt-5 tw:max-w-md tw:text-base-content/65 tw:leading-7">{% translate "A secure service layer connecting customers, providers, insurers and support teams across every request." %}</p>
         <div class="tw:mt-6 tw:flex tw:flex-wrap tw:gap-2">
@@ -116,12 +116,12 @@
         </div>
       </div>
 
-      <div class="lg:tw:col-span-2">
+      <div class="tw:lg:col-span-2">
         <h2 class="tw:text-sm tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Company" %}</h2>
         <ul class="tw:mt-5 tw:space-y-3">{% show_menu 0 1 0 1 "cms/includes/footer_menu.html" %}</ul>
       </div>
 
-      <div class="lg:tw:col-span-2">
+      <div class="tw:lg:col-span-2">
         <h2 class="tw:text-sm tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Support" %}</h2>
         <ul class="tw:mt-5 tw:space-y-3">
           <li><a class="tw:link tw:link-hover tw:text-base-content/70" href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}</a></li>
@@ -130,7 +130,7 @@
         </ul>
       </div>
 
-      <div class="lg:tw:col-span-3">
+      <div class="tw:lg:col-span-3">
         <h2 class="tw:text-sm tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Contact" %}</h2>
         <ul class="tw:d-list tw:mt-3">
           <li class="tw:d-list-row tw:px-0"><i class="bi bi-geo-alt tw:text-primary"></i><span class="tw:text-sm tw:text-base-content/70">{% if LANGUAGE_CODE == 'ar' %}{{ glis_site.address_ar|default:'مسقط، سلطنة عُمان' }}{% else %}{{ glis_site.address_en|default:'Muscat, Sultanate of Oman' }}{% endif %}</span></li>
@@ -141,9 +141,9 @@
     </div>
 
     <div class="tw:border-t tw:border-base-300">
-      <div class="tw:mx-auto tw:flex tw:max-w-7xl tw:flex-col tw:gap-3 tw:px-6 tw:py-5 tw:text-xs tw:text-base-content/55 sm:tw:flex-row sm:tw:items-center sm:tw:justify-between">
+      <div class="tw:mx-auto tw:flex tw:max-w-7xl tw:flex-col tw:gap-3 tw:px-6 tw:py-5 tw:text-xs tw:text-base-content/55 tw:sm:flex-row tw:sm:items-center tw:sm:justify-between">
         <span>© {% now "Y" %} {{ glis_site.short_name|default:'GLIS' }}. {% translate "All rights reserved." %}</span>
-        <span class="tw:flex tw:gap-5"><a class="hover:tw:text-primary" href="#">{% translate "Privacy" %}</a><a class="hover:tw:text-primary" href="#">{% translate "Terms" %}</a><a class="hover:tw:text-primary" href="#">{% translate "Accessibility" %}</a></span>
+        <span class="tw:flex tw:gap-5"><a class="tw:hover:text-primary" href="#">{% translate "Privacy" %}</a><a class="tw:hover:text-primary" href="#">{% translate "Terms" %}</a><a class="tw:hover:text-primary" href="#">{% translate "Accessibility" %}</a></span>
       </div>
     </div>
   </footer>

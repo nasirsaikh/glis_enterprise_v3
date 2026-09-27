@@ -12,7 +12,7 @@ from .models import UserProfile
 
 def _style_password_form(form):
     for field in form.fields.values():
-        field.widget.attrs["class"] = "form-control"
+        field.widget.attrs["class"] = "tw:d-input tw:d-input-bordered tw:w-full"
     return form
 
 
@@ -53,3 +53,16 @@ def sidebar_preference(request):
     profile.sidebar_mode = mode
     profile.save(update_fields=["sidebar_mode", "updated_at"])
     return JsonResponse({"mode": mode})
+
+
+@login_required
+@require_POST
+def theme_preference(request):
+    theme = request.POST.get("theme", "").strip()
+    valid_themes = {value for value, _label in UserProfile.THEME_CHOICES}
+    if theme not in valid_themes:
+        return JsonResponse({"error": "Invalid theme."}, status=400)
+    profile = request.user.profile
+    profile.theme = theme
+    profile.save(update_fields=["theme", "updated_at"])
+    return JsonResponse({"theme": theme})

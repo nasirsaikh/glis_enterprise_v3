@@ -32,7 +32,7 @@
     {% endif %}
 
     <label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Status" %}</span>{{ comment_form.status }}</label>
-    <div class="tw:flex tw:justify-end"><button id="comment-submit-button" class="tw:d-btn tw:d-btn-primary tw:rounded-full" type="submit"><span id="comment-submit-spinner" class="htmx-indicator tw:d-loading tw:d-loading-spinner tw:d-loading-xs" role="status" aria-hidden="true"></span><i class="bi bi-send"></i>{% translate "Post Comment" %}</button></div>
+    <div class="tw:flex tw:justify-end"><button id="comment-submit-button" class="tw:d-btn tw:d-btn-primary tw:rounded-full" type="submit"><span id="comment-submit-spinner" data-htmx-indicator class="tw:d-loading tw:d-loading-spinner tw:d-loading-xs tw:hidden" role="status" aria-hidden="true"></span><i class="bi bi-send"></i>{% translate "Post Comment" %}</button></div>
   </form>
 </div>
 

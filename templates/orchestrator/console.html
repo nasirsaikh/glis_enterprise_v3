@@ -40,7 +40,7 @@
   </aside>
 
   <section class="tw:flex tw:min-h-[70vh] tw:min-w-0 tw:flex-col">
-    <header class="glis-glass tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-b tw:border-base-300 tw:px-4 tw:py-3 tw:sm:px-6">
+    <header class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-b tw:border-base-300 tw:px-4 tw:py-3 tw:sm:px-6">
       <div class="tw:flex tw:items-center tw:gap-3"><span class="tw:d-status tw:d-status-success tw:animate-pulse"></span><div><strong class="tw:block">{{ selected_domain.name }}</strong><small class="tw:text-base-content/45">{% translate "Governed analytics workspace" %}</small></div></div>
       <div class="tw:flex tw:flex-wrap tw:gap-2"><span class="tw:d-badge tw:d-badge-outline tw:gap-1"><i class="bi bi-database"></i>{{ selected_domain.collection_name|default:"Tool Memory" }}</span><span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:gap-1"><i class="bi bi-shield-check"></i>{% translate "Governed" %}</span></div>
     </header>
@@ -75,6 +75,6 @@
   <div id="vanna-diagnostic-log" class="d-none"></div><span id="vanna-diagnostic-count" class="d-none">0</span>
 </div>
 {% else %}
-<div class="tw:mx-auto tw:max-w-3xl tw:py-16"><div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl"><div class="tw:d-card-body tw:items-center tw:py-14 tw:text-center"><i class="bi bi-database-x tw:text-4xl tw:text-base-content/35"></i><h2 class="tw:d-card-title tw:mt-3">{% translate "No analytics domain is available" %}</h2><p class="tw:text-base-content/55">{% translate "Ask an administrator to configure a permitted AI domain." %}</p></div></div></div>
+<div class="tw:mx-auto tw:max-w-3xl tw:py-16"><div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:items-center tw:py-14 tw:text-center"><i class="bi bi-database-x tw:text-4xl tw:text-base-content/35"></i><h2 class="tw:d-card-title tw:mt-3">{% translate "No analytics domain is available" %}</h2><p class="tw:text-base-content/55">{% translate "Ask an administrator to configure a permitted AI domain." %}</p></div></div></div>
 {% endif %}
 {% endblock %}

@@ -1,1 +1,18 @@
-{% load i18n %}{% if term %}<div class="search-result-panel">{% for ticket in tickets %}<a href="{% url 'portal:ticket_detail' ticket.reference %}"><i class="bi bi-ticket-perforated"></i><span><strong>{{ ticket.reference }}</strong><small>{{ ticket.subject }}</small></span><span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></a>{% empty %}<div class="search-empty">{% translate "No permitted tickets found." %}</div>{% endfor %}</div>{% endif %}
+{% load i18n %}
+{% if term %}
+<div class="tw:d-card tw:mt-2 tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl">
+  <ul class="tw:d-list tw:p-2">
+    {% for ticket in tickets %}
+    <li>
+      <a class="tw:d-list-row tw:rounded-box tw:no-underline tw:hover:bg-base-200" href="{% url 'portal:ticket_detail' ticket.reference %}">
+        <span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-box tw:bg-primary/10 tw:text-primary"><i class="bi bi-ticket-perforated"></i></span>
+        <span class="tw:d-list-col-grow tw:min-w-0"><strong class="tw:block">{{ ticket.reference }}</strong><small class="tw:block tw:truncate tw:text-base-content/45">{{ ticket.subject }}</small></span>
+        {% include "components/status_badge.html" with status=ticket.status label=ticket.get_status_display %}
+      </a>
+    </li>
+    {% empty %}
+    <li class="tw:py-8 tw:text-center tw:text-base-content/45">{% translate "No permitted tickets found." %}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}

@@ -14,6 +14,44 @@ class UserProfile(TimeStampedModel):
         VIEWER = "viewer", "Viewer/Auditor"
         GUEST = "guest", "Guest"
 
+    class Theme(models.TextChoices):
+        SYSTEM = "system", "System"
+        LIGHT = "light", "Light"
+        DARK = "dark", "Dark"
+        CUPCAKE = "cupcake", "Cupcake"
+        BUMBLEBEE = "bumblebee", "Bumblebee"
+        EMERALD = "emerald", "Emerald"
+        CORPORATE = "corporate", "Corporate"
+        SYNTHWAVE = "synthwave", "Synthwave"
+        RETRO = "retro", "Retro"
+        CYBERPUNK = "cyberpunk", "Cyberpunk"
+        VALENTINE = "valentine", "Valentine"
+        HALLOWEEN = "halloween", "Halloween"
+        GARDEN = "garden", "Garden"
+        FOREST = "forest", "Forest"
+        AQUA = "aqua", "Aqua"
+        LOFI = "lofi", "Lofi"
+        PASTEL = "pastel", "Pastel"
+        FANTASY = "fantasy", "Fantasy"
+        WIREFRAME = "wireframe", "Wireframe"
+        BLACK = "black", "Black"
+        LUXURY = "luxury", "Luxury"
+        DRACULA = "dracula", "Dracula"
+        CMYK = "cmyk", "CMYK"
+        AUTUMN = "autumn", "Autumn"
+        BUSINESS = "business", "Business"
+        ACID = "acid", "Acid"
+        LEMONADE = "lemonade", "Lemonade"
+        NIGHT = "night", "Night"
+        COFFEE = "coffee", "Coffee"
+        WINTER = "winter", "Winter"
+        DIM = "dim", "Dim"
+        NORD = "nord", "Nord"
+        SUNSET = "sunset", "Sunset"
+        CARAMELLATTE = "caramellatte", "Caramellatte"
+        ABYSS = "abyss", "Abyss"
+        SILK = "silk", "Silk"
+
     class SidebarMode(models.TextChoices):
         FULL = "full", "Full navigation"
         MINI = "mini", "Icon-only navigation"
@@ -29,7 +67,7 @@ class UserProfile(TimeStampedModel):
     avatar = models.ImageField(upload_to="profiles/%Y/%m/", blank=True)
     reporting_manager = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="direct_reports", on_delete=models.SET_NULL)
     preferred_language = models.CharField(max_length=5, default="en", choices=[("en", "English"), ("ar", "العربية")])
-    theme = models.CharField(max_length=10, default="system", choices=[("system", "System"), ("light", "Light"), ("dark", "Dark")])
+    theme = models.CharField(max_length=24, default=Theme.SYSTEM, choices=Theme.choices)
     sidebar_mode = models.CharField(max_length=10, choices=SidebarMode.choices, default=SidebarMode.MINI)
     is_external = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=True)

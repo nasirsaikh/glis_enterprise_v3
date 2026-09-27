@@ -19,18 +19,19 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="{% static 'css/glis.css' %}" rel="stylesheet">
   <link href="{% static 'css/glis-tailwind.css' %}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
   {% block extra_head %}{% endblock %}
 </head>
 
-<body class="portal-shell sidebar-mode-{{ user.profile.sidebar_mode|default:'mini' }} tw:min-h-screen tw:bg-base-200 tw:text-base-content tw:antialiased"
+<body class="portal-shell sidebar-mode-mini tw:min-h-screen tw:bg-base-200 tw:text-base-content tw:antialiased"
       x-data="siteShell"
       data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}"
       data-sidebar-preference-url="{% url 'accounts:sidebar_preference' %}">
   <a class="skip-link" href="#portal-main">{% translate "Skip to content" %}</a>
 
   <aside id="portal-sidebar"
-         class="portal-tw-sidebar glis-aura tw:fixed tw:inset-y-0 tw:start-0 tw:z-50 tw:hidden tw:flex-col tw:border-e tw:border-base-300 tw:bg-neutral tw:text-neutral-content tw:shadow-2xl tw:lg:flex"
-         data-aura>
+         class="portal-tw-sidebar tw:fixed tw:inset-y-0 tw:start-0 tw:z-50 tw:hidden tw:flex-col tw:border-e tw:border-base-300 tw:bg-neutral tw:text-neutral-content tw:shadow-2xl tw:lg:flex"
+        >
     <a class="tw:flex tw:h-20 tw:items-center tw:gap-3 tw:border-b tw:border-neutral-content/10 tw:px-4 tw:no-underline"
        href="{% url 'portal:dashboard' %}" title="GLIS">
       <span class="tw:grid tw:h-12 tw:w-14 tw:shrink-0 tw:place-items-center tw:rounded-2xl tw:bg-white/95 tw:shadow-lg">
@@ -45,7 +46,7 @@
     <nav class="glis-portal-nav-scroll tw:flex-1 tw:overflow-y-auto tw:px-3 tw:py-5" aria-label="{% translate 'Portal navigation' %}">
       {% for section in portal_navigation_sections %}
         <div class="portal-tw-label tw:px-3 tw:pb-2 tw:pt-4 tw:text-[.64rem] tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-neutral-content/35">{{ section.label }}</div>
-        <ul class="tw:d-menu tw:w-full tw:gap-1 tw:p-0">
+        <ul class="menu tw:w-full tw:gap-1 tw:p-0">
           {% for item in section.items %}
           <li>
             <a class="portal-tw-navlink tw:min-h-12 tw:gap-3 tw:rounded-2xl tw:px-3 tw:font-semibold tw:transition tw:duration-200
@@ -57,14 +58,14 @@
                 <i class="bi {{ item.icon }} tw:text-lg"></i>
               </span>
               <span class="portal-tw-label tw:truncate">{{ item.label }}</span>
-              {% if item.emphasized %}<span class="portal-tw-label tw:d-badge tw:d-badge-primary tw:d-badge-xs tw:ms-auto">{% translate "New" %}</span>{% endif %}
+              {% if item.emphasized %}<span class="portal-tw-label badge badge-primary badge-xs tw:ms-auto">{% translate "New" %}</span>{% endif %}
             </a>
           </li>
           {% endfor %}
         </ul>
       {% empty %}
         <div class="portal-tw-label tw:px-3 tw:pb-2 tw:text-[.64rem] tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-neutral-content/35">{% translate "Workspace" %}</div>
-        <ul class="tw:d-menu tw:w-full tw:gap-1 tw:p-0">
+        <ul class="menu tw:w-full tw:gap-1 tw:p-0">
           <li><a class="portal-tw-navlink tw:min-h-12 tw:rounded-2xl tw:text-neutral-content/70" href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2 tw:text-lg"></i><span class="portal-tw-label">{% translate "Overview" %}</span></a></li>
           <li><a class="portal-tw-navlink tw:min-h-12 tw:rounded-2xl tw:text-neutral-content/70" href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated tw:text-lg"></i><span class="portal-tw-label">{% translate "Tickets" %}</span></a></li>
           <li><a class="portal-tw-navlink tw:min-h-12 tw:rounded-2xl tw:text-neutral-content/70" href="{% url 'orchestrator:console' %}"><i class="bi bi-stars tw:text-lg"></i><span class="portal-tw-label">{% translate "Vanna analytics" %}</span></a></li>
@@ -72,7 +73,7 @@
       {% endfor %}
 
       <div class="portal-tw-label tw:px-3 tw:pb-2 tw:pt-5 tw:text-[.64rem] tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-neutral-content/35">{% translate "Productivity" %}</div>
-      <ul class="tw:d-menu tw:w-full tw:p-0">
+      <ul class="menu tw:w-full tw:p-0">
         <li>
           <a class="portal-tw-navlink tw:min-h-12 tw:gap-3 tw:rounded-2xl tw:px-3 tw:font-semibold {% if request.resolver_match.namespace == 'tasks' %}tw:bg-primary tw:text-primary-content{% else %}tw:text-neutral-content/70 tw:hover:bg-neutral-content/8 tw:hover:text-neutral-content{% endif %}"
              href="{% url 'tasks:list' %}" title="{% translate 'Tasks' %}">
@@ -93,26 +94,26 @@
 
   <div class="portal-tw-stage tw:min-h-screen">
     <header class="tw:sticky tw:top-0 tw:z-40 tw:p-3 tw:sm:p-4">
-      <div class="glis-glass glis-aura tw:d-navbar tw:min-h-16 tw:rounded-[1.4rem] tw:px-2 tw:sm:px-4" data-aura>
-        <div class="tw:d-navbar-start tw:min-w-0 tw:gap-1 tw:sm:gap-2">
-          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:hidden tw:lg:inline-flex"
+      <div class="navbar tw:min-h-16 tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl tw:rounded-[1.4rem] tw:px-2 tw:sm:px-4">
+        <div class="navbar-start tw:min-w-0 tw:gap-1 tw:sm:gap-2">
+          <button class="btn btn-ghost btn-circle tw:hidden tw:lg:inline-flex"
                   id="sidebar-toggle" type="button" aria-controls="portal-sidebar"
-                  aria-expanded="{% if user.profile.sidebar_mode == 'full' %}true{% else %}false{% endif %}"
+                  aria-expanded="false"
                   title="{% translate 'Change navigation size' %}">
             <i class="bi bi-layout-sidebar-inset tw:text-lg"></i>
           </button>
 
-          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:lg:hidden" type="button" data-mobile-nav-open aria-label="{% translate 'Open menu' %}">
+          <button class="btn btn-ghost btn-circle tw:lg:hidden" type="button" data-mobile-nav-open aria-label="{% translate 'Open menu' %}">
             <i class="bi bi-list tw:text-xl"></i>
           </button>
 
-          <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:hidden tw:sm:inline-flex" href="/" title="{% translate 'Public website' %}">
+          <a class="btn btn-ghost btn-circle tw:hidden tw:sm:inline-flex" href="/" title="{% translate 'Public website' %}">
             <i class="bi bi-house"></i>
           </a>
 
           <div class="tw:relative tw:hidden tw:min-w-0 tw:max-w-xl tw:flex-1 tw:md:block">
             <i class="bi bi-search tw:pointer-events-none tw:absolute tw:start-4 tw:top-1/2 tw:z-10 tw:-translate-y-1/2 tw:text-base-content/40"></i>
-            <input class="tw:d-input tw:d-input-bordered tw:w-full tw:rounded-full tw:bg-base-100/70 tw:ps-11"
+            <input class="input input-bordered tw:w-full tw:rounded-full tw:bg-base-100/70 tw:ps-11"
                    type="search" name="q"
                    placeholder="{% translate 'Search tickets, requesters, projects…' %}"
                    hx-get="{% url 'portal:global_search' %}"
@@ -122,13 +123,13 @@
           </div>
         </div>
 
-        <div class="tw:d-navbar-end tw:gap-1">
-          <a class="tw:d-btn tw:d-btn-primary tw:d-btn-sm tw:hidden tw:rounded-full tw:shadow-lg tw:shadow-primary/15 tw:sm:inline-flex tw:lg:d-btn-md"
+        <div class="navbar-end tw:gap-1">
+          <a class="btn btn-primary btn-sm tw:hidden tw:rounded-full tw:shadow-lg tw:shadow-primary/15 tw:sm:inline-flex lg:btn-md"
              href="{% url 'portal:create_ticket' 1 %}">
             <i class="bi bi-plus-lg"></i><span class="tw:hidden tw:xl:inline">{% translate "New ticket" %}</span>
           </a>
 
-          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" x-on:click="toggleTheme" aria-label="{% translate 'Change theme' %}">
+          <button class="btn btn-ghost btn-circle" x-on:click="toggleTheme" aria-label="{% translate 'Change theme' %}">
             <i class="bi tw:text-lg" x-bind:class="themeIcon"></i>
           </button>
 
@@ -136,20 +137,20 @@
             {% csrf_token %}
             <input name="next" type="hidden" value="{{ request.get_full_path }}">
             <input name="language" type="hidden" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
-            <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:text-sm tw:font-black" type="submit" title="{% translate 'Change language' %}">{% if LANGUAGE_CODE == 'ar' %}EN{% else %}ع{% endif %}</button>
+            <button class="btn btn-ghost btn-circle tw:text-sm tw:font-black" type="submit" title="{% translate 'Change language' %}">{% if LANGUAGE_CODE == 'ar' %}EN{% else %}ع{% endif %}</button>
           </form>
 
-          <details class="tw:d-dropdown tw:d-dropdown-end">
-            <summary id="notification-button" class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:relative" aria-label="{% translate 'Notifications' %}">
+          <details class="dropdown dropdown-end">
+            <summary id="notification-button" class="btn btn-ghost btn-circle tw:relative" aria-label="{% translate 'Notifications' %}">
               <i class="bi bi-bell tw:text-lg"></i>
-              <span id="notification-count" class="notification-count tw:d-badge tw:d-badge-error tw:d-badge-xs tw:absolute tw:-end-1 tw:-top-1{% if not unread_notification_count %} d-none{% endif %}">{{ unread_notification_count }}</span>
+              <span id="notification-count" class="notification-count badge badge-error badge-xs tw:absolute tw:-end-1 tw:-top-1{% if not unread_notification_count %} tw:hidden{% endif %}">{{ unread_notification_count }}</span>
             </summary>
-            <div class="tw:d-dropdown-content tw:z-[80] tw:mt-3 tw:w-[min(92vw,25rem)] tw:overflow-hidden tw:rounded-[1.4rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
+            <div class="dropdown-content tw:z-[80] tw:mt-3 tw:w-[min(92vw,25rem)] tw:overflow-hidden tw:rounded-[1.4rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
               <div class="tw:flex tw:items-center tw:justify-between tw:border-b tw:border-base-300 tw:px-5 tw:py-4">
                 <strong>{% translate "Notifications" %}</strong>
                 <form action="{% url 'portal:mark_notifications_read' %}" method="post" class="tw:m-0">
                   {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
-                  <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs" type="submit">{% translate "Mark all read" %}</button>
+                  <button class="btn btn-ghost btn-xs" type="submit">{% translate "Mark all read" %}</button>
                 </form>
               </div>
               <div id="notification-items" class="tw:max-h-[28rem] tw:overflow-y-auto">
@@ -169,17 +170,17 @@
             </div>
           </details>
 
-          <details class="tw:d-dropdown tw:d-dropdown-end">
-            <summary class="tw:d-btn tw:d-btn-ghost tw:h-12 tw:gap-2 tw:rounded-full tw:px-2 tw:sm:px-3">
+          <details class="dropdown dropdown-end">
+            <summary class="btn btn-ghost tw:h-12 tw:gap-2 tw:rounded-full tw:px-2 tw:sm:px-3">
               {% if user.profile.avatar %}
-              <div class="tw:d-avatar"><div class="tw:w-9 tw:rounded-full"><img src="{{ user.profile.avatar.url }}" alt=""></div></div>
+              <div class="avatar"><div class="tw:w-9 tw:rounded-full"><img src="{{ user.profile.avatar.url }}" alt=""></div></div>
               {% else %}
-              <div class="tw:d-avatar tw:d-avatar-placeholder"><div class="tw:w-9 tw:rounded-full tw:bg-primary tw:text-primary-content"><span class="tw:text-sm tw:font-bold">{{ user.first_name|first|default:user.email|first|upper }}</span></div></div>
+              <div class="avatar avatar-placeholder"><div class="tw:w-9 tw:rounded-full tw:bg-primary tw:text-primary-content"><span class="tw:text-sm tw:font-bold">{{ user.first_name|first|default:user.email|first|upper }}</span></div></div>
               {% endif %}
               <span class="tw:hidden tw:max-w-36 tw:text-start tw:xl:block"><strong class="tw:block tw:truncate tw:text-xs">{{ user.get_full_name|default:user.email }}</strong><small class="tw:block tw:truncate tw:text-[.68rem] tw:font-normal tw:text-base-content/45">{{ user.profile.get_role_display|default:'User' }}</small></span>
               <i class="bi bi-chevron-down tw:hidden tw:text-xs tw:xl:block"></i>
             </summary>
-            <ul class="tw:d-menu tw:d-dropdown-content tw:z-[80] tw:mt-3 tw:w-64 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-2 tw:shadow-2xl">
+            <ul class="menu dropdown-content tw:z-[80] tw:mt-3 tw:w-64 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-2 tw:shadow-2xl">
               <li><a href="{% url 'accounts:profile' %}"><i class="bi bi-person"></i>{% translate "Profile & security" %}</a></li>
               {% if user.is_staff %}<li><a href="{% url 'admin:index' %}"><i class="bi bi-gear"></i>{% translate "Administration" %}</a></li>{% endif %}
               <li></li>
@@ -197,7 +198,7 @@
     {% if messages %}
     <div class="tw:fixed tw:end-4 tw:top-24 tw:z-[90] tw:w-[min(92vw,26rem)] tw:space-y-2">
       {% for message in messages %}
-      <div class="tw:d-alert {% if message.tags == 'error' %}tw:d-alert-error{% else %}tw:d-alert-success{% endif %} tw:shadow-xl">
+      <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %} tw:shadow-xl">
         <i class="bi {% if message.tags == 'error' %}bi-exclamation-octagon{% else %}bi-info-circle{% endif %}"></i><span>{{ message }}</span>
       </div>
       {% endfor %}
@@ -209,31 +210,31 @@
     </main>
   </div>
 
-  <dialog id="mobilePortalNav" class="tw:d-modal tw:d-modal-start tw:lg:hidden">
-    <div class="tw:d-modal-box tw:m-0 tw:h-dvh tw:max-h-none tw:w-[min(88vw,22rem)] tw:rounded-none tw:bg-neutral tw:p-0 tw:text-neutral-content">
+  <dialog id="mobilePortalNav" class="modal modal-start tw:lg:hidden">
+    <div class="modal-box tw:m-0 tw:h-dvh tw:max-h-none tw:w-[min(88vw,22rem)] tw:rounded-none tw:bg-neutral tw:p-0 tw:text-neutral-content">
       <div class="tw:flex tw:h-20 tw:items-center tw:justify-between tw:border-b tw:border-neutral-content/10 tw:px-4">
         <a class="tw:flex tw:items-center tw:gap-3 tw:no-underline" href="{% url 'portal:dashboard' %}">
           <span class="tw:grid tw:h-11 tw:w-14 tw:place-items-center tw:rounded-xl tw:bg-white"><img class="tw:max-h-8 tw:max-w-12" src="/api/v1/site-logo/" alt="GLIS"></span>
           <strong>GLIS {% translate "Portal" %}</strong>
         </a>
-        <button type="button" data-mobile-nav-close class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle"><i class="bi bi-x-lg"></i></button>
+        <button type="button" data-mobile-nav-close class="btn btn-ghost btn-circle"><i class="bi bi-x-lg"></i></button>
       </div>
       <nav class="tw:h-[calc(100dvh-5rem)] tw:overflow-y-auto tw:p-4">
         {% for section in portal_navigation_sections %}
         <div class="tw:px-3 tw:pb-2 tw:pt-4 tw:text-[.64rem] tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-neutral-content/35">{{ section.label }}</div>
-        <ul class="tw:d-menu tw:w-full tw:gap-1 tw:p-0">
+        <ul class="menu tw:w-full tw:gap-1 tw:p-0">
           {% for item in section.items %}
           <li><a class="tw:min-h-12 tw:rounded-2xl {% if item.active %}tw:bg-primary tw:text-primary-content{% else %}tw:text-neutral-content/70{% endif %}" href="{{ item.url }}" {% if item.new_window %}target="_blank" rel="noopener"{% endif %}><i class="bi {{ item.icon }}"></i>{{ item.label }}</a></li>
           {% endfor %}
         </ul>
         {% empty %}
-        <ul class="tw:d-menu tw:w-full tw:p-0"><li><a href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Overview" %}</a></li><li><a href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated"></i>{% translate "Tickets" %}</a></li></ul>
+        <ul class="menu tw:w-full tw:p-0"><li><a href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Overview" %}</a></li><li><a href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated"></i>{% translate "Tickets" %}</a></li></ul>
         {% endfor %}
         <div class="tw:px-3 tw:pb-2 tw:pt-5 tw:text-[.64rem] tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-neutral-content/35">{% translate "Productivity" %}</div>
-        <ul class="tw:d-menu tw:w-full tw:p-0"><li><a class="tw:min-h-12 tw:rounded-2xl" href="{% url 'tasks:list' %}"><i class="bi bi-list-task"></i>{% translate "Tasks" %}</a></li></ul>
+        <ul class="menu tw:w-full tw:p-0"><li><a class="tw:min-h-12 tw:rounded-2xl" href="{% url 'tasks:list' %}"><i class="bi bi-list-task"></i>{% translate "Tasks" %}</a></li></ul>
       </nav>
     </div>
-    <form method="dialog" class="tw:d-modal-backdrop"><button>{% translate "Close" %}</button></form>
+    <form method="dialog" class="modal-backdrop"><button>{% translate "Close" %}</button></form>
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" defer></script>

@@ -1,0 +1,1 @@
+<span class="tw:d-badge {% if priority == 'critical' %}tw:d-badge-error{% elif priority == 'high' %}tw:d-badge-warning{% elif priority == 'medium' %}tw:d-badge-info tw:d-badge-soft{% else %}tw:d-badge-ghost{% endif %}">{{ label|default:priority|title }}</span>

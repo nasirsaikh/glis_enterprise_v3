@@ -337,6 +337,24 @@ class PortalCustomizationTests(TestCase):
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.sidebar_mode, UserProfile.SidebarMode.HIDDEN)
 
+    def test_daisyui_theme_is_saved_to_profile(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse("accounts:theme_preference"), {"theme": UserProfile.Theme.NORD})
+        self.assertEqual(response.status_code, 200)
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.theme, UserProfile.Theme.NORD)
+
+    def test_portal_shell_is_daisyui_only(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("portal:managed_page", args=[self.page.slug]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "daisyui@5/themes.css")
+        self.assertContains(response, "tw:d-navbar")
+        self.assertContains(response, "tw:d-menu")
+        self.assertNotContains(response, "bootstrap.min.css")
+        self.assertNotContains(response, "bootstrap.bundle.min.js")
+        self.assertNotContains(response, "/static/css/glis.css")
+
     def test_admin_managed_portal_page_and_navigation_render(self):
         self.client.force_login(self.user)
         response = self.client.get(reverse("portal:managed_page", args=[self.page.slug]))

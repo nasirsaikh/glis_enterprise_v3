@@ -41,42 +41,28 @@
     </div>
   </div>
 
-  <header class="tw:sticky tw:top-0 tw:z-50 tw:px-3 tw:pt-3">
-    <nav class="navbar tw:mx-auto tw:w-full tw:max-w-7xl tw:rounded-[1.4rem] tw:border tw:border-base-300 tw:bg-base-100 tw:px-3 tw:shadow-xl tw:sm:px-5" aria-label="{% translate 'Primary navigation' %}">
-      <div class="navbar-start tw:gap-2">
-        <div class="dropdown tw:xl:hidden">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-circle" aria-label="{% translate 'Toggle navigation' %}"><i class="bi bi-list tw:text-2xl"></i></div>
-          <ul tabindex="0" class="menu dropdown-content tw:z-[80] tw:mt-4 tw:w-72 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-3 tw:shadow-2xl">
-            {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
-          {% include "cms/includes/claimslive_menu.html" %}
-          </ul>
-        </div>
-        <a class="tw:flex tw:items-center tw:gap-3 tw:no-underline" href="/">
-          <span class="tw:relative tw:grid tw:h-12 tw:w-28 tw:place-items-center tw:overflow-hidden tw:rounded-2xl tw:bg-base-100 tw:shadow-sm">
-            <img class="tw:max-h-10 tw:max-w-24 tw:object-contain" src="/api/v1/site-logo/" alt="Company Logo">
-          </span>
-        </a>
-      </div>
+  <header>
 
-      <div class="navbar-center tw:hidden tw:flex-1 tw:justify-center tw:xl:flex">
-        {% show_menu 0 100 100 100 "cms/includes/public_megamenu.html" %}
-      </div>
+<div class="navbar bg-base-100 shadow-sm">
+  <a class="btn btn-ghost text-xl">
+    <img class="tw:max-h-10 tw:max-w-24 tw:object-contain" src="/api/v1/site-logo/" alt="Company Logo">
+  </a>
+  {% show_menu 0 100 100 100 "cms/includes/public_megamenu.html" %}
 
-      <div class="navbar-end tw:gap-1 tw:sm:gap-2">
-        {% if glis_site.public_theme_switcher_enabled or not glis_site %}
+    {% if glis_site.public_theme_switcher_enabled or not glis_site %}
         <button class="btn btn-ghost btn-circle tooltip tooltip-bottom" data-tip="{% translate 'Theme' %}" type="button" x-on:click="toggleTheme" aria-label="{% translate 'Change theme' %}">
           <i class="bi tw:text-lg" x-bind:class="themeIcon"></i>
         </button>
         {% endif %}
 
-        <form action="{% url 'switch_language' %}" method="post" class="tw:m-0">
+                <form action="{% url 'switch_language' %}" method="post" class="tw:m-0">
           {% csrf_token %}
           <input name="next" type="hidden" value="{{ request.get_full_path }}">
           <input name="language" type="hidden" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
           <button class="btn btn-ghost btn-sm tw:rounded-full" type="submit">{% if LANGUAGE_CODE == 'ar' %}EN{% else %}ع{% endif %}</button>
         </form>
 
-        {% if user.is_authenticated %}
+  {% if user.is_authenticated %}
         <a class="btn btn-ghost tw:hidden tw:md:inline-flex" href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Portal" %}</a>
         {% else %}
         <a class="btn btn-ghost tw:hidden tw:md:inline-flex" href="{% url 'account_login' %}">{% translate "Sign in" %}</a>
@@ -85,8 +71,9 @@
         <a class="btn btn-primary btn-sm sm:btn-md tw:rounded-full tw:shadow-lg tw:shadow-primary/20" href="{% url 'portal:create_ticket' 1 %}">
           <i class="bi bi-plus-lg"></i><span class="tw:hidden tw:sm:inline">{% translate "Create request" %}</span>
         </a>
-      </div>
-    </nav>
+
+</div>
+
   </header>
 
   {% if messages %}

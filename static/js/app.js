@@ -458,8 +458,15 @@
   });
   document.addEventListener("glis:theme", () => setTimeout(renderCharts, 30));
   document.body.addEventListener("htmx:afterSwap", (event) => init(event.detail.target));
+  document.body.addEventListener("htmx:beforeRequest", (event) => {
+    const source = event.detail.elt;
+    const form = source instanceof HTMLFormElement ? source : source?.closest?.("form");
+    form?.querySelectorAll("[data-htmx-indicator]").forEach((item) => item.classList.remove("tw:hidden"));
+  });
   document.body.addEventListener("htmx:afterRequest", (event) => {
-    const form = event.detail.elt;
+    const source = event.detail.elt;
+    const form = source instanceof HTMLFormElement ? source : source?.closest?.("form");
+    form?.querySelectorAll("[data-htmx-indicator]").forEach((item) => item.classList.add("tw:hidden"));
     if (event.detail.successful && form instanceof HTMLFormElement && form.dataset.resetOnSuccess === "true") form.reset();
   });
 })();

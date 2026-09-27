@@ -11,22 +11,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  {# Bootstrap stays loaded for legacy screens. Prefixed Tailwind/daisyUI is served from the committed Django static bundle; no npm build is required. #}
-  {% if LANGUAGE_CODE == 'ar' %}
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-  {% else %}
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-  {% endif %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="{% static 'css/glis.css' %}" rel="stylesheet">
   <link href="{% static 'css/glis-tailwind.css' %}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css">
   {% block extra_head %}{% endblock %}
 </head>
 
 <body class="portal-shell sidebar-mode-mini tw:min-h-screen tw:bg-base-200 tw:text-base-content tw:antialiased"
       x-data="siteShell"
       data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}"
-      data-sidebar-preference-url="{% url 'accounts:sidebar_preference' %}">
+      data-sidebar-preference-url="{% url 'accounts:sidebar_preference' %}"
+      data-theme-preference-url="{% url 'accounts:theme_preference' %}"
+      data-user-theme="{{ user.profile.theme|default:'system' }}">
   <a class="skip-link" href="#portal-main">{% translate "Skip to content" %}</a>
 
     <aside id="portal-sidebar"
@@ -129,9 +126,32 @@
             <i class="bi bi-plus-lg"></i><span class="tw:hidden tw:xl:inline">{% translate "New ticket" %}</span>
           </a>
 
-          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" x-on:click="toggleTheme" aria-label="{% translate 'Change theme' %}">
-            <i class="bi tw:text-lg" x-bind:class="themeIcon"></i>
-          </button>
+          <details class="tw:d-dropdown tw:d-dropdown-end">
+            <summary class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" aria-label="{% translate 'Change theme' %}" title="{% translate 'Theme' %}">
+              <i class="bi bi-palette tw:text-lg"></i>
+            </summary>
+            <div class="tw:d-dropdown-content tw:z-[90] tw:mt-3 tw:w-72 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-4 tw:shadow-xl">
+              <label class="tw:d-fieldset">
+                <span class="tw:d-fieldset-legend">{% translate "Theme" %}</span>
+                <select class="tw:d-select tw:d-select-bordered tw:w-full" data-theme-select>
+                  <option value="system">{% translate "System" %}</option>
+                  <option value="light">Light</option><option value="dark">Dark</option><option value="cupcake">Cupcake</option>
+                  <option value="bumblebee">Bumblebee</option><option value="emerald">Emerald</option><option value="corporate">Corporate</option>
+                  <option value="synthwave">Synthwave</option><option value="retro">Retro</option><option value="cyberpunk">Cyberpunk</option>
+                  <option value="valentine">Valentine</option><option value="halloween">Halloween</option><option value="garden">Garden</option>
+                  <option value="forest">Forest</option><option value="aqua">Aqua</option><option value="lofi">Lo-fi</option>
+                  <option value="pastel">Pastel</option><option value="fantasy">Fantasy</option><option value="wireframe">Wireframe</option>
+                  <option value="black">Black</option><option value="luxury">Luxury</option><option value="dracula">Dracula</option>
+                  <option value="cmyk">CMYK</option><option value="autumn">Autumn</option><option value="business">Business</option>
+                  <option value="acid">Acid</option><option value="lemonade">Lemonade</option><option value="night">Night</option>
+                  <option value="coffee">Coffee</option><option value="winter">Winter</option><option value="dim">Dim</option>
+                  <option value="nord">Nord</option><option value="sunset">Sunset</option><option value="caramellatte">Caramellatte</option>
+                  <option value="abyss">Abyss</option><option value="silk">Silk</option>
+                </select>
+              </label>
+              <p class="tw:mt-2 tw:text-xs tw:text-base-content/50">{% translate "Saved to your profile and reused on future visits." %}</p>
+            </div>
+          </details>
 
           <form action="{% url 'switch_language' %}" method="post" class="tw:m-0">
             {% csrf_token %}

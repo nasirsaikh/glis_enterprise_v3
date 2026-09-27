@@ -156,13 +156,13 @@
   const setupSidebar = () => {
     const button = document.getElementById("sidebar-toggle");
     if (!button) return;
-    const modes = ["full", "mini", "hidden"];
+    const modes = ["mini", "full"];
     const currentMode = () => modes.find(mode => document.body.classList.contains("sidebar-mode-" + mode)) || "mini";
     const applyMode = (mode) => {
       modes.forEach(value => document.body.classList.toggle("sidebar-mode-" + value, value === mode));
       button.setAttribute("aria-expanded", String(mode === "full"));
       button.dataset.mode = mode;
-      button.querySelector("i").className = "bi " + (mode === "full" ? "bi-layout-sidebar-inset-reverse" : mode === "mini" ? "bi-layout-sidebar-inset" : "bi-layout-sidebar");
+      button.querySelector("i").className = "bi " + (mode === "full" ? "bi-layout-sidebar-inset-reverse" : "bi-layout-sidebar-inset");
     };
     applyMode(currentMode());
     button.addEventListener("click", async () => {

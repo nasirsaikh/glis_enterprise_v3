@@ -1,0 +1,21 @@
+Dear {{ recipient_name|default:"Colleague" }},
+
+{{ title }}
+{% if ticket_ref %}
+Request details
+Reference no.: {{ ticket_ref }}{% if ticket_subject %}
+Subject:       {{ ticket_subject }}{% endif %}{% if ticket_priority %}
+Priority:      {{ ticket_priority }}{% endif %}{% if ticket_status %}
+Status:        {{ ticket_status }}{% endif %}{% if requester_name %}
+Raised by:     {{ requester_name }}{% endif %}{% if ticket_created %}
+Date opened:   {{ ticket_created|date:"d M Y, H:i" }}{% endif %}
+{% endif %}{% if body %}
+Update:
+{{ body }}
+{% endif %}{% if link %}
+View request: {{ link }}
+{% endif %}
+Kind regards,
+GreenLine Insurance Services LLC
+
+This is a system-generated email. Please do not reply; respond in the portal.

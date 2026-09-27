@@ -47,6 +47,7 @@
           <div tabindex="0" role="button" class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" aria-label="{% translate 'Toggle navigation' %}"><i class="bi bi-list tw:text-2xl"></i></div>
           <ul tabindex="0" class="tw:d-menu tw:d-dropdown-content tw:z-[80] tw:mt-4 tw:w-72 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-3 tw:shadow-2xl">
             {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
+          {% include "cms/includes/claimslive_menu.html" %}
           </ul>
         </div>
         <a class="tw:flex tw:items-center tw:gap-3 tw:no-underline" href="/">
@@ -59,6 +60,7 @@
       <div class="tw:d-navbar-center tw:hidden tw:xl:flex">
         <ul class="tw:d-menu tw:d-menu-horizontal tw:items-center tw:gap-1 tw:px-1">
           {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
+          {% include "cms/includes/claimslive_menu.html" %}
         </ul>
       </div>
 

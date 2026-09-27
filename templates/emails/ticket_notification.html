@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<!--[if mso]>
+<xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
+<style>table,td,div,p,a,h1{font-family:Segoe UI,Arial,sans-serif !important;}</style>
+<![endif]-->
+<style>
+  :root{color-scheme:light;supported-color-schemes:light;}
+  body,table,td{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
+</style>
+<title>{{ title }}</title>
+</head>
+<body bgcolor="#F4F5F6" style="margin:0;padding:0;background:#F4F5F6;font-family:Segoe UI,Calibri,Arial,Helvetica,sans-serif;color:#2B3238;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">{{ title }}{% if ticket_subject %} | {{ ticket_subject }}{% endif %}</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F4F5F6" style="background:#F4F5F6;">
+<tr><td align="center" style="padding:32px 12px;">
+
+  <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="width:100%;max-width:640px;background:#FFFFFF;border:1px solid #DADFE2;">
+
+    <tr>
+      <td style="padding:24px 40px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td valign="middle">
+              {% if logo_cid %}
+                <img src="cid:{{ logo_cid }}" alt="GreenLine Insurance Services" height="46"{% if logo_width %} width="{{ logo_width }}"{% endif %} style="display:block;border:0;height:46px;{% if logo_width %}width:{{ logo_width }}px;{% endif %}">
+              {% else %}
+                <span style="font-size:17px;font-weight:700;color:#146E52;">GreenLine Insurance Services LLC</span>
+              {% endif %}
+            </td>
+            <td align="right" valign="middle" style="font-size:12px;line-height:1.6;color:#6A747B;">
+              {% now "d M Y" %}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr><td bgcolor="#1D9E75" height="3" style="height:3px;background:#1D9E75;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+    <tr>
+      <td style="padding:32px 40px 0;">
+        {% if kind_label %}<div style="font-size:12px;font-weight:600;color:{{ kind_color|default:'#1D9E75' }};margin-bottom:6px;">{{ kind_label }}</div>{% endif %}
+        <h1 style="margin:0;font-size:21px;line-height:1.35;font-weight:600;color:#1C2429;">{{ title }}</h1>
+      </td>
+    </tr>
+
+    <tr>
+      <td style="padding:20px 40px 0;font-size:15px;line-height:1.65;color:#2B3238;">
+        Dear {{ recipient_name|default:"Colleague" }},<br><br>
+        {% if ticket_ref %}Please be advised that there is an update on the following service request.{% else %}Please find the details of this notification below.{% endif %}
+      </td>
+    </tr>
+
+    {% if ticket_ref %}
+    <tr>
+      <td style="padding:24px 40px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #DADFE2;font-size:14px;">
+          <tr>
+            <td colspan="2" bgcolor="#F6F8F8" style="background:#F6F8F8;padding:11px 16px;border-bottom:1px solid #DADFE2;font-size:13px;font-weight:600;color:#1C2429;">Request details</td>
+          </tr>
+          <tr>
+            <td width="34%" style="padding:10px 16px;border-bottom:1px solid #ECEFF0;color:#6A747B;">Reference no.</td>
+            <td style="padding:10px 16px;border-bottom:1px solid #ECEFF0;font-weight:600;color:#146E52;">{{ ticket_ref }}</td>
+          </tr>
+          {% if ticket_subject %}
+          <tr>
+            <td style="padding:10px 16px;border-bottom:1px solid #ECEFF0;color:#6A747B;">Subject</td>
+            <td style="padding:10px 16px;border-bottom:1px solid #ECEFF0;color:#1C2429;">{{ ticket_subject }}</td>
+          </tr>
+          {% endif %}
+          {% if ticket_priority %}
+          <tr>
+            <td style="padding:10px 16px;border-bottom:1px solid #ECEFF0;color:#6A747B;">Priority</td>
+            <td style="padding:10px 16px;border-bottom:1px solid #ECEFF0;color:{% if priority_high %}#C23D63;font-weight:600{% else %}#1C2429{% endif %};">{{ ticket_priority }}</td>
+          </tr>
+          {% endif %}
+          {% if ticket_status %}
+          <tr>
+            <td style="padding:10px 16px;border-bottom:1px solid #ECEFF0;color:#6A747B;">Status</td>
+            <td style="padding:10px 16px;border-bottom:1px solid #ECEFF0;color:#1C2429;">{{ ticket_status }}</td>
+          </tr>
+          {% endif %}
+          {% if requester_name %}
+          <tr>
+            <td style="padding:10px 16px;border-bottom:1px solid #ECEFF0;color:#6A747B;">Raised by</td>
+            <td style="padding:10px 16px;border-bottom:1px solid #ECEFF0;color:#1C2429;">{{ requester_name }}</td>
+          </tr>
+          {% endif %}
+          {% if ticket_created %}
+          <tr>
+            <td style="padding:10px 16px;color:#6A747B;">Date opened</td>
+            <td style="padding:10px 16px;color:#1C2429;">{{ ticket_created|date:"d M Y, H:i" }}</td>
+          </tr>
+          {% endif %}
+        </table>
+      </td>
+    </tr>
+    {% endif %}
+
+    {% if body %}
+    <tr>
+      <td style="padding:24px 40px 0;">
+        <div style="font-size:13px;font-weight:600;color:#1C2429;margin-bottom:8px;">Update</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td width="3" bgcolor="#1D9E75" style="width:3px;background:#1D9E75;font-size:0;line-height:0;">&nbsp;</td>
+            <td bgcolor="#F6F8F8" style="background:#F6F8F8;padding:12px 16px;font-size:14px;line-height:1.65;color:#2B3238;">{{ body|linebreaksbr }}</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    {% endif %}
+
+    {% if link %}
+    <tr>
+      <td style="padding:28px 40px 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td bgcolor="#1D9E75" style="background:#1D9E75;border-radius:3px;">
+              <a href="{{ link }}" target="_blank" style="display:inline-block;padding:11px 28px;font-size:14px;font-weight:600;color:#FFFFFF !important;text-decoration:none;border:1px solid #1D9E75;"><span style="color:#FFFFFF;">View request</span></a>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#6A747B;">
+          If the button does not open, use this link: <a href="{{ link }}" style="color:#1D9E75;word-break:break-all;">{{ link }}</a>
+        </p>
+      </td>
+    </tr>
+    {% endif %}
+
+    <tr>
+      <td style="padding:32px 40px 32px;font-size:14px;line-height:1.65;color:#2B3238;">
+        Kind regards,<br>
+        <strong>GreenLine Insurance Services LLC</strong>
+      </td>
+    </tr>
+
+    <tr>
+      <td bgcolor="#F6F8F8" style="background:#F6F8F8;border-top:1px solid #DADFE2;padding:20px 40px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="font-size:12px;line-height:1.6;color:#6A747B;">
+              GreenLine Insurance Services LLC<br>
+              Muscat, Sultanate of Oman
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-top:14px;font-size:11px;line-height:1.55;color:#8B9499;">
+              This is a system-generated email from the GLIS MIS portal. Please do not reply to this message; add any response to the request in the portal.
+              <br><br>
+              Confidentiality notice: this email and any attachments may contain confidential information intended only for the named recipient. If you have received it in error, please notify the sender and delete it. Any unauthorised use, disclosure or copying is prohibited.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+  </table>
+</td></tr>
+</table>
+</body>
+</html>

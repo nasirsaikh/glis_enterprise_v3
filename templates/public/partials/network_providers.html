@@ -1,305 +1,171 @@
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 
-<div class="container" id="network-providers">
-
-    <div class="row justify-content-between align-items-end g-4 mb-5 glis-reveal">
-        <div class="col-lg-7">
-            <span class="glis-eyebrow mb-3">
-                <i class="bi bi-geo-alt"></i>
-                {% translate "Healthcare Network" %}
-            </span>
-            <h2 class="glis-title display-5 mb-3">
-                {% translate "Find a" %}
-                <span class="glis-gradient-text">
-                    {% translate "network provider" %}
-                </span>
-            </h2>
-            <p class="glis-copy fs-5 mb-0">
-                {% translate "Search hospitals, clinics, pharmacies and other healthcare providers in our medical network." %}
-            </p>
-        </div>
-        <div class="col-lg-auto">
-            <span class="badge rounded-pill text-bg-success px-3 py-2">
-                {{ providers|length }}
-                {% translate "providers found" %}
-            </span>
-        </div>
+<div id="network-provider-results" class="tw:flex tw:flex-col tw:gap-6">
+  <div class="tw:flex tw:flex-col tw:gap-4 tw:lg:flex-row tw:lg:items-end tw:lg:justify-between">
+    <div class="tw:max-w-3xl">
+      <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-3 tw:gap-2"><i class="bi bi-geo-alt"></i>{% translate "Healthcare Network" %}</span>
+      <h2 class="tw:text-3xl tw:font-black tw:tracking-[-.035em] tw:sm:text-4xl">{% translate "Find a network provider" %}</h2>
+      <p class="tw:mt-3 tw:text-base-content/60">{% translate "Search hospitals, clinics, pharmacies and other healthcare providers in our medical network." %}</p>
     </div>
+    <span class="tw:d-badge tw:d-badge-success tw:d-badge-outline tw:d-badge-lg">{{ providers|length }} {% translate "providers found" %}</span>
+  </div>
 
-    <form
-        hx-get="{% url 'home_network_providers' %}"
-        hx-target="#network-providers"
-        hx-swap="outerHTML"
-        hx-trigger="submit, change delay:300ms"
-    >
-        <div class="glis-card p-4 mb-4">
-            <div class="row g-3">
-                <div class="col-lg-4">
-                    <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <input
-                            type="search"
-                            name="search"
-                            class="form-control"
-                            placeholder="{% translate 'Hospital, clinic, pharmacy, area...' %}"
-                            value="{{ request.GET.search }}"
-                        >
-                    </div>
-                </div>
-
-                <div class="col-md-6 col-lg-2">
-                    <select name="provider_type" class="form-select">
-                        <option value="">{% translate "Provider Type" %}</option>
-                        {% for item in provider_types %}
-                        <option value="{{ item.pk }}" {% if request.GET.provider_type == item.pk|stringformat:"s" %}selected{% endif %}>
-                            {% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-6 col-lg-2">
-                    <select name="governorate" class="form-select">
-                        <option value="">{% translate "Governorate" %}</option>
-                        {% for item in governorates %}
-                        <option value="{{ item.pk }}" {% if request.GET.governorate == item.pk|stringformat:"s" %}selected{% endif %}>
-                            {% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-6 col-lg-2">
-                    <select name="insurer" class="form-select">
-                        <option value="">{% translate "Insurance Partner" %}</option>
-                        {% for item in insurance_partners %}
-                        <option value="{{ item.pk }}" {% if request.GET.insurer == item.pk|stringformat:"s" %}selected{% endif %}>
-                            {% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-6 col-lg-2">
-                    <select name="specialty" class="form-select">
-                        <option value="">{% translate "Specialty" %}</option>
-                        {% for item in specialties %}
-                        <option value="{{ item.pk }}" {% if request.GET.specialty == item.pk|stringformat:"s" %}selected{% endif %}>
-                            {% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
+  <form hx-get="{% url 'home_network_providers' %}" hx-target="#network-provider-results" hx-swap="outerHTML" hx-trigger="submit, change delay:300ms">
+    <div class="tw:grid tw:gap-4 tw:md:grid-cols-2">
+      <label class="tw:d-fieldset">
+        <span class="tw:d-fieldset-legend">{% translate "Search" %}</span>
+        <div class="tw:relative">
+          <i class="bi bi-search tw:pointer-events-none tw:absolute tw:start-4 tw:top-1/2 tw:z-10 tw:-translate-y-1/2 tw:text-base-content/40"></i>
+          <input type="search" name="search" class="tw:d-input tw:d-input-bordered tw:w-full tw:ps-11" placeholder="{% translate 'Hospital, clinic, pharmacy, area...' %}" value="{{ request.GET.search }}" hx-trigger="input changed delay:400ms, search, keyup[key=='Enter']">
         </div>
-    </form>
+      </label>
 
-    <!-- Full-Width Responsive Table View -->
-    <div class="row">
-        <div class="col-12">
-            <div class="glis-card p-3">
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th scope="col">{% translate "Provider" %}</th>
-                                <th scope="col">{% translate "Type" %}</th>
-                                <th scope="col">{% translate "Address" %}</th>
-                                <th scope="col">{% translate "Contact" %}</th>
-                                <th scope="col" class="text-end">{% translate "Action" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for provider in providers %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                      <div class="glis-icon flex-shrink-0 d-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 32px; height: 32px;">
-                                            <i class="bi {{ provider.provider_type.icon|default:'bi-hospital' }} fs-6 text-success"></i>
-                                        </div>
-                                        <div>
-                                            <h3 class="h6 glis-title mb-0">
-                                                {% if LANGUAGE_CODE == "ar" %}
-                                                    {{ provider.name_ar|default:provider.name_en }}
-                                                {% else %}
-                                                    {{ provider.name_en }}
-                                                {% endif %}
-                                            </h3>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span class="badge text-bg-success">
-                                        {% if LANGUAGE_CODE == "ar" %}
-                                            {{ provider.provider_type.name_ar|default:provider.provider_type.name_en }}
-                                        {% else %}
-                                            {{ provider.provider_type.name_en }}
-                                        {% endif %}
+      <label class="tw:d-fieldset">
+        <span class="tw:d-fieldset-legend">{% translate "Provider Type" %}</span>
+        <select name="provider_type" class="tw:d-select tw:d-select-bordered tw:w-full">
+          <option value="">{% translate "All provider types" %}</option>
+          {% for item in provider_types %}<option value="{{ item.pk }}"{% if request.GET.provider_type == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
+        </select>
+      </label>
 
-                                            {% if provider.is_24_hours %}
-                                                <span class="badge text-bg-warning">24/7</span>
-                                            {% endif %}
+      <label class="tw:d-fieldset">
+        <span class="tw:d-fieldset-legend">{% translate "Governorate" %}</span>
+        <select name="governorate" class="tw:d-select tw:d-select-bordered tw:w-full">
+          <option value="">{% translate "All governorates" %}</option>
+          {% for item in governorates %}<option value="{{ item.pk }}"{% if request.GET.governorate == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
+        </select>
+      </label>
 
-                                    </span>
-                                </td>
-                                <td>
-                                    <p class="glis-copy small text-muted mb-0">
-                                        <i class="bi bi-geo-alt me-1"></i>
-                                        {% if LANGUAGE_CODE == "ar" %}
-                                            {{ provider.address_ar|default:provider.address_en }}
-                                        {% else %}
-                                            {{ provider.address_en }}
-                                        {% endif %}
-                                    </p>
-                                </td>
-                                <td>
-                                    {% if provider.phone %}
-                                    <a href="tel:{{ provider.phone }}" class="btn btn-sm btn-outline-success py-0 px-2">
-                                        <i class="bi bi-telephone me-1"></i>{{ provider.phone }}
-                                    </a>
-                                    {% else %}
-                                    <span class="text-muted small">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-end">
-                                    {% if provider.latitude and provider.longitude %}
-                                    <button
-                                        type="button"
-                                        class="btn btn-sm btn-outline-primary show-map-modal-btn"
-                                        data-lat="{{ provider.latitude }}"
-                                        data-lng="{{ provider.longitude }}"
-                                        data-name="{% if LANGUAGE_CODE == 'ar' %}{{ provider.name_ar|default:provider.name_en }}{% else %}{{ provider.name_en }}{% endif %}"
-                                    >
-                                        <i class="bi bi-map me-1"></i>{% translate "Map" %}
-                                    </button>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center py-5">
-                                    <div class="glis-icon mx-auto mb-3">
-                                        <i class="bi bi-search"></i>
-                                    </div>
-                                    <h3 class="h5 glis-title">
-                                        {% translate "No providers found" %}
-                                    </h3>
-                                    <p class="glis-copy mb-0">
-                                        {% translate "Try changing the search or filters." %}
-                                    </p>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+      <label class="tw:d-fieldset">
+        <span class="tw:d-fieldset-legend">{% translate "Insurance Partner" %}</span>
+        <select name="insurer" class="tw:d-select tw:d-select-bordered tw:w-full">
+          <option value="">{% translate "All insurance partners" %}</option>
+          {% for item in insurance_partners %}<option value="{{ item.pk }}"{% if request.GET.insurer == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
+        </select>
+      </label>
+
+      <label class="tw:d-fieldset">
+        <span class="tw:d-fieldset-legend">{% translate "Specialty" %}</span>
+        <select name="specialty" class="tw:d-select tw:d-select-bordered tw:w-full">
+          <option value="">{% translate "All specialties" %}</option>
+          {% for item in specialties %}<option value="{{ item.pk }}"{% if request.GET.specialty == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
+        </select>
+      </label>
     </div>
-</div>
+  </form>
 
-<!-- Bootstrap Modal for Map View -->
-<div class="modal fade" id="providerMapModal" tabindex="-1" aria-labelledby="providerMapModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content glis-card border-0">
-            <div class="modal-header">
-                <h5 class="modal-title glis-title" id="providerMapModalLabel">{% translate "Provider Location" %}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-0">
-                <div id="modalProviderMap" style="width: 100%; height: 450px;"></div>
-            </div>
-        </div>
+  <div class="tw:overflow-x-auto tw:rounded-box tw:border tw:border-base-300">
+    <table class="tw:d-table tw:d-table-zebra">
+      <thead>
+        <tr>
+          <th>{% translate "Provider" %}</th>
+          <th>{% translate "Type" %}</th>
+          <th>{% translate "Band" %}</th>
+          <th>{% translate "Address" %}</th>
+          <th>{% translate "Contact" %}</th>
+          <th class="tw:text-end">{% translate "Action" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for provider in providers %}
+          {% if provider.is_featured or request.GET.search or request.GET.provider_type or request.GET.governorate or request.GET.insurer or request.GET.specialty %}
+          <tr class="tw:hover:bg-primary/5">
+            <td>
+              <div class="tw:flex tw:items-center tw:gap-3">
+                <span class="tw:grid tw:h-10 tw:w-10 tw:shrink-0 tw:place-items-center tw:rounded-xl tw:bg-primary/10 tw:text-primary"><i class="bi {{ provider.provider_type.icon|default:'bi-hospital' }}"></i></span>
+                <strong class="tw:block">{% if LANGUAGE_CODE == "ar" %}{{ provider.name_ar|default:provider.name_en }}{% else %}{{ provider.name_en }}{% endif %}</strong>
+              </div>
+            </td>
+            <td>
+              <div class="tw:flex tw:flex-wrap tw:gap-2">
+                <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft">{% if LANGUAGE_CODE == "ar" %}{{ provider.provider_type.name_ar|default:provider.provider_type.name_en }}{% else %}{{ provider.provider_type.name_en }}{% endif %}</span>
+                {% if provider.is_24_hours %}<span class="tw:d-badge tw:d-badge-warning tw:d-badge-outline">24/7</span>{% endif %}
+              </div>
+            </td>
+            <td>
+              {% if provider.network_level %}
+                {% if LANGUAGE_CODE == "ar" %}
+                  {% with band_label=provider.network_level.name_ar|default:provider.network_level.name_en|default:provider.network_level %}
+                    {% if band_label|upper == "BASIC" %}<span class="tw:d-badge tw:d-badge-warning tw:d-badge-outline">{% translate "Bronze" %}</span>
+                    {% elif band_label|upper == "A" %}<span class="tw:d-badge tw:d-badge-warning">{{ band_label }}</span>
+                    {% elif band_label|upper == "B" %}<span class="tw:d-badge tw:d-badge-neutral">{{ band_label }}</span>
+                    {% elif band_label|upper == "C" %}<span class="tw:d-badge tw:d-badge-secondary tw:d-badge-outline">{{ band_label }}</span>
+                    {% else %}<span class="tw:d-badge tw:d-badge-primary tw:d-badge-outline">{{ band_label }}</span>{% endif %}
+                  {% endwith %}
+                {% else %}
+                  {% with band_label=provider.network_level.name_en|default:provider.network_level %}
+                    {% if band_label|upper == "BASIC" %}<span class="tw:d-badge tw:d-badge-warning tw:d-badge-outline">{% translate "Bronze" %}</span>
+                    {% elif band_label|upper == "A" %}<span class="tw:d-badge tw:d-badge-warning">{{ band_label }}</span>
+                    {% elif band_label|upper == "B" %}<span class="tw:d-badge tw:d-badge-neutral">{{ band_label }}</span>
+                    {% elif band_label|upper == "C" %}<span class="tw:d-badge tw:d-badge-secondary tw:d-badge-outline">{{ band_label }}</span>
+                    {% else %}<span class="tw:d-badge tw:d-badge-primary tw:d-badge-outline">{{ band_label }}</span>{% endif %}
+                  {% endwith %}
+                {% endif %}
+              {% else %}<span class="tw:text-base-content/40">—</span>{% endif %}
+            </td>
+            <td><span class="tw:flex tw:items-start tw:gap-2 tw:text-sm tw:text-base-content/65"><i class="bi bi-geo-alt tw:mt-1 tw:text-primary"></i><span>{% if LANGUAGE_CODE == "ar" %}{{ provider.address_ar|default:provider.address_en }}{% else %}{{ provider.address_en }}{% endif %}</span></span></td>
+            <td>{% if provider.phone %}<a href="tel:{{ provider.phone }}" class="tw:d-btn tw:d-btn-outline tw:d-btn-success tw:d-btn-xs"><i class="bi bi-telephone"></i>{{ provider.phone }}</a>{% else %}<span class="tw:text-base-content/40">—</span>{% endif %}</td>
+            <td class="tw:text-end">{% if provider.latitude and provider.longitude %}<button type="button" class="show-map-modal-btn tw:d-btn tw:d-btn-outline tw:d-btn-primary tw:d-btn-xs" data-lat="{{ provider.latitude }}" data-lng="{{ provider.longitude }}" data-name="{% if LANGUAGE_CODE == 'ar' %}{{ provider.name_ar|default:provider.name_en }}{% else %}{{ provider.name_en }}{% endif %}"><i class="bi bi-map"></i>{% translate "Map" %}</button>{% endif %}</td>
+          </tr>
+          {% endif %}
+        {% empty %}
+          <tr><td colspan="6"><div class="tw:flex tw:flex-col tw:items-center tw:gap-3 tw:py-14 tw:text-base-content/45"><i class="bi bi-search tw:text-3xl"></i><strong>{% translate "No providers found" %}</strong><p>{% translate "Try changing the search or filters." %}</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <dialog id="providerMapModal" class="tw:d-modal">
+    <div class="tw:d-modal-box tw:max-w-4xl tw:p-0">
+      <div class="tw:flex tw:items-center tw:justify-between tw:border-b tw:border-base-300 tw:px-5 tw:py-4">
+        <h3 id="providerMapModalLabel" class="tw:text-lg tw:font-black">{% translate "Provider Location" %}</h3>
+        <form method="dialog"><button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm" aria-label="{% translate 'Close' %}"><i class="bi bi-x-lg"></i></button></form>
+      </div>
+      <div id="modalProviderMap" class="tw:w-full" style="height:450px"></div>
     </div>
+    <form method="dialog" class="tw:d-modal-backdrop"><button>{% translate "Close" %}</button></form>
+  </dialog>
 </div>
 
 <script>
-    (function () {
-        "use strict";
+(function () {
+  "use strict";
+  if (window.__glisProviderMapBound) return;
+  window.__glisProviderMapBound = true;
+  let modalMap = null;
 
-        let modalMap = null;
+  function initModalMap(lat, lng, providerName) {
+    const mapContainer = document.getElementById("modalProviderMap");
+    if (!mapContainer || typeof ol === "undefined") return;
+    mapContainer.innerHTML = "";
+    if (modalMap) { modalMap.setTarget(null); modalMap = null; }
+    const parsedLat = Number(lat);
+    const parsedLng = Number(lng);
+    const vectorSource = new ol.source.Vector();
+    if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng)) {
+      const feature = new ol.Feature({geometry: new ol.geom.Point(ol.proj.fromLonLat([parsedLng, parsedLat])), name: providerName});
+      feature.setStyle(new ol.style.Style({image: new ol.style.Circle({radius:10, fill:new ol.style.Fill({color:"#198754"}), stroke:new ol.style.Stroke({color:"#ffffff", width:3})})}));
+      vectorSource.addFeature(feature);
+    }
+    modalMap = new ol.Map({
+      target: "modalProviderMap",
+      layers: [new ol.layer.Tile({source:new ol.source.OSM()}), new ol.layer.Vector({source:vectorSource})],
+      view: new ol.View({center:ol.proj.fromLonLat([parsedLng || 58.3829, parsedLat || 23.5880]), zoom:15})
+    });
+    setTimeout(function () { if (modalMap) modalMap.updateSize(); }, 80);
+  }
 
-        function initModalMap(lat, lng, providerName) {
-            const mapContainer = document.getElementById("modalProviderMap");
-            if (!mapContainer || typeof ol === "undefined") return;
-
-            mapContainer.innerHTML = "";
-
-            if (modalMap) {
-                modalMap.setTarget(null);
-                modalMap = null;
-            }
-
-            const parsedLat = Number(lat);
-            const parsedLng = Number(lng);
-
-            const osmLayer = new ol.layer.Tile({
-                source: new ol.source.OSM()
-            });
-
-            const vectorSource = new ol.source.Vector();
-
-            if (Number.isFinite(parsedLat) && Number.isFinite(parsedLng)) {
-                const feature = new ol.Feature({
-                    geometry: new ol.geom.Point(ol.proj.fromLonLat([parsedLng, parsedLat])),
-                    name: providerName
-                });
-
-                feature.setStyle(new ol.style.Style({
-                    image: new ol.style.Circle({
-                        radius: 10,
-                        fill: new ol.style.Fill({ color: "#198754" }),
-                        stroke: new ol.style.Stroke({ color: "#ffffff", width: 3 })
-                    })
-                }));
-
-                vectorSource.addFeature(feature);
-            }
-
-            const vectorLayer = new ol.layer.Vector({
-                source: vectorSource
-            });
-
-            modalMap = new ol.Map({
-                target: "modalProviderMap",
-                layers: [osmLayer, vectorLayer],
-                view: new ol.View({
-                    center: ol.proj.fromLonLat([parsedLng || 58.3829, parsedLat || 23.5880]),
-                    zoom: 15
-                })
-            });
-
-            setTimeout(() => {
-                modalMap.updateSize();
-            }, 150);
-        }
-
-        // Event delegation for opening map inside modal
-        document.body.addEventListener("click", function (event) {
-            const btn = event.target.closest(".show-map-modal-btn");
-            if (!btn) return;
-
-            const lat = btn.getAttribute("data-lat");
-            const lng = btn.getAttribute("data-lng");
-            const name = btn.getAttribute("data-name") || "";
-
-            const modalElement = document.getElementById("providerMapModal");
-            const modalTitle = document.getElementById("providerMapModalLabel");
-            
-            if (modalTitle) {
-                modalTitle.textContent = name ? `${name} - Location` : "Provider Location";
-            }
-
-            const bsModal = new bootstrap.Modal(modalElement);
-            bsModal.show();
-
-            // Initialize map after modal animation completes for proper rendering size
-            modalElement.addEventListener("shown.bs.modal", function () {
-                initModalMap(lat, lng, name);
-            }, { once: true });
-        });
-    })();
+  document.body.addEventListener("click", function (event) {
+    const btn = event.target.closest(".show-map-modal-btn");
+    if (!btn) return;
+    const dialog = document.getElementById("providerMapModal");
+    const title = document.getElementById("providerMapModalLabel");
+    if (!dialog) return;
+    const name = btn.getAttribute("data-name") || "";
+    if (title && name) title.textContent = name;
+    if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "open");
+    setTimeout(function () { initModalMap(btn.getAttribute("data-lat"), btn.getAttribute("data-lng"), name); }, 60);
+  });
+})();
 </script>

@@ -1,0 +1,11 @@
+{% load i18n %}
+<li>
+  <details>
+    <summary class="tw:gap-2"><i class="bi bi-shield-lock"></i><span>{% translate "ClaimsLive" %}</span></summary>
+    <ul class="tw:z-[80] tw:w-72 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-3 tw:shadow-2xl">
+      <li><a class="tw:gap-3" href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fIntranet%2fIntranetHome%3fType%3dIntranet&Type=Intranet" target="_blank" rel="noopener"><i class="bi bi-shield-lock"></i><span>{% translate "Claims Services" %}</span></a></li>
+      <li><a class="tw:gap-3" href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fProviders%2fProviderHome%3fType%3dProvider&Type=Provider" target="_blank" rel="noopener"><i class="bi bi-hospital"></i><span>{% translate "Provider Services" %}</span></a></li>
+      <li><a class="tw:gap-3" href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fCorporate%2fCorporateHome%3fType%3dCorporate&Type=Corporate" target="_blank" rel="noopener"><i class="bi bi-people"></i><span>{% translate "Member Services" %}</span></a></li>
+    </ul>
+  </details>
+</li>

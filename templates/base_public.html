@@ -23,20 +23,6 @@
   <link href="{% static 'css/glis.css' %}" rel="stylesheet">
   <link href="{% static 'css/glis-tailwind.css' %}" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@10.10.0/ol.css">
-  <style>
-    .public-shell{font-family:"Cairo","Inter",sans-serif}
-    .public-shell [data-reveal]{animation:public-enter .72s cubic-bezier(.2,.75,.25,1) both}
-    .public-shell [data-reveal]:nth-child(2){animation-delay:90ms}
-    .public-shell [data-reveal]:nth-child(3){animation-delay:170ms}
-    .public-shell .public-hero-art{position:relative;isolation:isolate;transform:perspective(1200px) rotateY(-4deg) rotateX(2deg);transition:transform .65s cubic-bezier(.2,.8,.2,1),box-shadow .65s}
-    html[dir="rtl"] .public-shell .public-hero-art{transform:perspective(1200px) rotateY(4deg) rotateX(2deg)}
-    .public-shell .public-hero-art:hover{transform:perspective(1200px) rotateY(0) rotateX(0) translateY(-6px)}
-    .public-shell .public-service-card{transform-style:preserve-3d;transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s,border-color .4s}
-    .public-shell .public-service-card:hover{transform:translateY(-8px) rotateX(1.5deg);box-shadow:0 24px 55px -28px hsl(var(--p)/.42);border-color:hsl(var(--p)/.38)}
-    .public-shell .public-ambient{background:radial-gradient(ellipse at 72% 32%,hsl(var(--secondary)/.16),transparent 38%),radial-gradient(ellipse at 22% 75%,hsl(var(--primary)/.12),transparent 35%)}
-    @keyframes public-enter{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-    @media(prefers-reduced-motion:reduce){.public-shell [data-reveal]{animation:none}.public-shell .public-hero-art,.public-shell .public-service-card{transition:none}.public-shell .public-hero-art:hover,.public-shell .public-service-card:hover{transform:none}}
-  </style>
 
   {% render_block "css" %}
   {% block extra_head %}{% endblock %}
@@ -58,7 +44,7 @@
   <header>
 
     <div class="tw:sticky tw:top-0 tw:z-50 tw:border-b tw:border-base-300/70 tw:bg-base-100/90 tw:backdrop-blur-xl">
-      <div class="tw:d-navbar tw:mx-auto tw:max-w-7xl tw:items-center tw:gap-3 tw:px-4 tw:py-3 tw:sm:px-6">
+      <div class="tw:d-navbar tw:mx-auto tw:w-full tw:max-w-7xl tw:items-center tw:gap-3 tw:px-4 tw:py-3 tw:sm:px-6">
         <a class="tw:d-btn tw:d-btn-ghost tw:shrink-0 tw:px-2" href="/" aria-label="{{ glis_site.short_name|default:'GLIS' }}">
           {% if glis_site.logo %}<img class="tw:h-10 tw:max-w-32 tw:object-contain" src="/api/v1/site-logo/" alt="">{% endif %}
           <strong class="tw:text-xl tw:font-black tw:tracking-tight tw:text-primary">{{ glis_site.short_name|default:'GLIS' }}</strong>
@@ -94,7 +80,10 @@
         </div>
       </div>
       <nav id="public-mobile-nav" hidden class="tw:border-t tw:border-base-300 tw:bg-base-100 tw:px-5 tw:py-3 tw:lg:hidden" aria-label="{% translate 'Main navigation' %}">
-        {% show_menu 0 100 100 100 "cms/includes/public_megamenu.html" %}
+        <ul class="tw:d-menu tw:w-full tw:gap-1 tw:p-0">
+          {% show_menu 0 100 100 100 "cms/includes/public_menu.html" %}
+          {% include "cms/includes/claimslive_menu.html" %}
+        </ul>
       </nav>
     </div>
 

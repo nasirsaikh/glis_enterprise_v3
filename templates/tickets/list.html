@@ -1,7 +1,7 @@
 {% extends 'base_portal.html' %}{% load i18n %}{% block title %}{% translate "Tickets" %}{% endblock %}
 {% block content %}
 <div class="tw:flex tw:flex-col tw:gap-5">
-  <section class="glis-aura tw:flex tw:flex-col tw:gap-6 tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-base-100 tw:p-6 tw:shadow-xl tw:lg:flex-row tw:lg:items-end tw:lg:justify-between" data-aura data-reveal>
+  <section class="tw:d-card tw:flex tw:flex-col tw:gap-6 tw:rounded-[1.5rem] tw:border tw:border-base-300 tw:bg-base-100 tw:p-6 tw:shadow-sm tw:lg:flex-row tw:lg:items-end tw:lg:justify-between" data-reveal>
     <div>
       <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-3"><i class="bi {% if ticket_tab == 'tasks' %}bi-list-task{% else %}bi-ticket-perforated{% endif %} tw:me-1"></i>{% translate "Ticket workspace" %}</span>
       {% if ticket_tab == "tasks" %}

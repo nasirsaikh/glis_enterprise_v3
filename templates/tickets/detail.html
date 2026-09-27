@@ -5,7 +5,7 @@
 <div class="tw:space-y-5">
   <div class="tw:d-breadcrumbs tw:text-sm tw:text-base-content/50"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li>{{ ticket.reference }}</li><li>{{ ticket.category }}</li></ul></div>
 
-  <section class="glis-aura tw:rounded-[2rem] tw:border tw:border-base-300 tw:bg-base-100 tw:p-5 tw:shadow-xl tw:sm:p-7" data-aura data-reveal>
+  <section class="tw:d-card tw:rounded-[1.5rem] tw:border tw:border-base-300 tw:bg-base-100 tw:p-5 tw:shadow-sm tw:sm:p-7" data-reveal>
     <div class="tw:flex tw:flex-col tw:gap-5 tw:xl:flex-row tw:xl:items-start tw:xl:justify-between">
       <div class="tw:min-w-0 tw:flex-1">
         <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
@@ -33,7 +33,7 @@
         {% endif %}
         <details class="tw:d-dropdown tw:d-dropdown-end">
           <summary class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm"><i class="bi bi-three-dots"></i></summary>
-          <ul class="tw:d-menu tw:d-dropdown-content tw:z-40 tw:mt-2 tw:w-52 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-2 tw:shadow-xl">
+          <ul class="tw:d-menu tw:d-dropdown-content tw:z-40 tw:mt-2 tw:w-52 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-2 tw:shadow-sm">
             {% if can_share %}<li><button type="button" onclick="document.getElementById('shareModal').showModal()"><i class="bi bi-box-arrow-up-right"></i>{% translate "Share" %}</button></li>{% endif %}
             <li><a href="{% url 'portal:export_tickets' %}?q={{ ticket.reference|urlencode }}"><i class="bi bi-file-earmark-arrow-down"></i>{% translate "Export" %}</a></li>
           </ul>
@@ -43,7 +43,7 @@
   </section>
 
   <div class="tw:grid tw:gap-5 tw:xl:grid-cols-[minmax(0,1fr)_20rem]">
-    <section class="tw:d-card tw:min-w-0 tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" data-reveal>
+    <section class="tw:d-card tw:min-w-0 tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm" data-reveal>
       <div class="tw:flex tw:items-center tw:justify-between tw:gap-4 tw:border-b tw:border-base-300 tw:px-5 tw:py-4 tw:sm:px-6">
         <div><h2 class="tw:flex tw:items-center tw:gap-2 tw:text-xl tw:font-black"><i class="bi bi-chat-left-text tw:text-primary"></i>{% translate "Conversation" %}</h2><p class="tw:mt-1 tw:text-xs tw:text-base-content/45">{{ comments|length }} {% translate "updates" %}</p></div>
         <span class="tw:d-badge tw:d-badge-ghost tw:gap-1"><i class="bi bi-paperclip"></i>{{ ticket.attachments.count }} {% translate "files" %}</span>

@@ -1,35 +1,31 @@
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
-<div class="container">
-    <div class="glis-card p-4 p-lg-5">
-        <div class="row align-items-center g-4">
-            <div class="col-lg-4 glis-reveal">
-                <span class="glis-eyebrow mb-3"><i class="bi bi-headset"></i>{% translate "Need Assistance?" %}</span>
-                <h2 class="glis-title display-6">{% translate "We're here to help" %}</h2>
-                <p class="glis-copy mb-0">{% translate "Contact the appropriate team for claims, approvals, provider support or emergencies." %}</p>
+<div class="tw:mx-auto tw:max-w-7xl tw:px-6">
+  <div class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
+    <div class="card-body tw:grid tw:gap-8 tw:p-6 tw:lg:grid-cols-[.65fr_1.35fr]">
+      <div data-reveal>
+        <span class="badge badge-primary badge-soft tw:mb-4"><i class="bi bi-headset tw:me-2"></i>{% translate "Need Assistance?" %}</span>
+        <h2 class="tw:text-4xl tw:font-black">{% translate "We're here to help" %}</h2>
+        <p class="tw:mt-4 tw:leading-7 tw:text-base-content/60">{% translate "Contact the appropriate team for claims, approvals, provider support or emergencies." %}</p>
+      </div>
+      <ul class="list tw:rounded-box tw:bg-base-200/45 tw:p-2">
+        {% for contact in medical_contacts %}
+        <li class="list-row tw:rounded-box tw:bg-base-100 tw:shadow-sm" data-reveal>
+          <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-primary/10 tw:text-primary"><i class="bi {{ contact.icon|default:'bi-headset' }} tw:text-xl"></i></span>
+          <div class="list-col-grow">
+            <strong class="tw:block">{% if LANGUAGE_CODE == "ar" %}{{ contact.title_ar|default:contact.title_en }}{% else %}{{ contact.title_en }}{% endif %}</strong>
+            <div class="tw:mt-1 tw:flex tw:flex-wrap tw:gap-x-4 tw:gap-y-1 tw:text-sm tw:text-base-content/60">
+              {% if contact.phone %}<a class="link link-hover" href="tel:{{ contact.phone }}">{{ contact.phone }}</a>{% endif %}
+              {% if contact.email %}<a class="link link-hover" href="mailto:{{ contact.email }}">{{ contact.email }}</a>{% endif %}
+              {% if contact.whatsapp %}<a class="link link-hover tw:text-success" href="https://wa.me/{{ contact.whatsapp }}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> {{ contact.whatsapp }}</a>{% endif %}
             </div>
-            <div class="col-lg-8">
-                <div class="row g-3">
-                    {% for contact in medical_contacts %}
-                    <div class="col-md-6 glis-reveal">
-                        <div class="glis-contact-card p-3 h-100">
-                            <div class="d-flex gap-3">
-                                <div class="glis-icon flex-shrink-0"><i class="bi {{ contact.icon|default:'bi-headset' }}"></i></div>
-                                <div>
-                                    <strong class="glis-title d-block">{% if LANGUAGE_CODE == "ar" %}{{ contact.title_ar|default:contact.title_en }}{% else %}{{ contact.title_en }}{% endif %}</strong>
-                                    {% if contact.phone %}<a href="tel:{{ contact.phone }}" class="glis-link d-block mt-2">{{ contact.phone }}</a>{% endif %}
-                                    {% if contact.whatsapp %}<a href="https://wa.me/{{ contact.whatsapp }}" target="_blank" rel="noopener" class="glis-link d-block mt-1"><i class="bi bi-whatsapp me-1"></i>{{ contact.whatsapp }}</a>{% endif %}
-                                    {% if contact.email %}<a href="mailto:{{ contact.email }}" class="glis-copy small d-block mt-1">{{ contact.email }}</a>{% endif %}
-                                    {% if contact.is_24_hours %}<div class="mt-2"><span class="badge text-bg-success">24/7</span></div>{% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="col-12"><div class="glis-contact-card p-4 text-center glis-copy">{% translate "No medical contacts configured." %}</div></div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
+          </div>
+          {% if contact.is_24_hours %}<span class="badge badge-success badge-soft">24/7</span>{% endif %}
+        </li>
+        {% empty %}
+        <li class="list-row"><span>{% translate "No medical contacts configured." %}</span></li>
+        {% endfor %}
+      </ul>
     </div>
+  </div>
 </div>

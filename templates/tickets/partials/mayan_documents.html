@@ -1,2 +1,42 @@
 {% load i18n %}
-<div id="mayan-ticket-documents"><div class="d-flex justify-content-between align-items-center mb-3"><div><h3 class="h6 mb-1"><i class="bi bi-folder2-open me-2"></i>{% translate "Managed documents" %}</h3><small class="text-muted">{% translate "Stored and controlled by Mayan EDMS" %}</small></div></div>{% if mayan_error %}<div class="alert alert-warning py-2">{{ mayan_error }}</div>{% endif %}<form class="mb-3" method="post" enctype="multipart/form-data" hx-post="{% url 'portal:ticket_document_upload' ticket.reference %}" hx-target="#mayan-ticket-documents" hx-swap="outerHTML">{% csrf_token %}<div class="input-group"><input class="form-control" type="file" name="documents" multiple required><button class="btn btn-primary" type="submit"><i class="bi bi-cloud-arrow-up me-1"></i>{% translate "Upload" %}</button></div></form><div class="list-group list-group-flush">{% for document in mayan_documents %}<div class="list-group-item px-0 d-flex align-items-center gap-3"><i class="bi bi-file-earmark-text fs-4"></i><div class="flex-grow-1 overflow-hidden"><strong class="d-block text-truncate">{{ document.label|default:document.description|default:"Document" }}</strong><small class="text-muted">Mayan #{{ document.id }}</small></div><a class="btn btn-sm btn-outline-primary" href="{% url 'portal:ticket_document_download' ticket.reference document.id %}"><i class="bi bi-download"></i></a>{% if request.user.is_staff or request.user.is_superuser %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'documents:open' document.id %}" target="_blank"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}</div>{% empty %}<div class="text-muted small py-3">{% translate "No managed documents found for this ticket." %}</div>{% endfor %}</div></div>
+<div id="mayan-ticket-documents" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+  <div class="tw:d-card-body tw:p-4">
+    <div class="tw:flex tw:items-start tw:justify-between tw:gap-3">
+      <div>
+        <h3 class="tw:d-card-title tw:text-base"><i class="bi bi-folder2-open tw:text-primary"></i>{% translate "Managed documents" %}</h3>
+        <p class="tw:text-sm tw:text-base-content/45">{% translate "Stored and controlled by Mayan EDMS" %}</p>
+      </div>
+      <span class="tw:d-badge tw:d-badge-outline">{{ mayan_documents|length }}</span>
+    </div>
+
+    {% if mayan_error %}
+    <div class="tw:d-alert tw:d-alert-warning tw:mt-3"><i class="bi bi-exclamation-triangle"></i><span>{{ mayan_error }}</span></div>
+    {% endif %}
+
+    <form class="tw:mt-4" method="post" enctype="multipart/form-data"
+          hx-post="{% url 'portal:ticket_document_upload' ticket.reference %}"
+          hx-target="#mayan-ticket-documents" hx-swap="outerHTML">
+      {% csrf_token %}
+      <div class="tw:d-join tw:w-full">
+        <input class="tw:d-file-input tw:d-join-item tw:w-full" type="file" name="documents" multiple required>
+        <button class="tw:d-btn tw:d-btn-primary tw:d-join-item" type="submit"><i class="bi bi-cloud-arrow-up"></i>{% translate "Upload" %}</button>
+      </div>
+    </form>
+
+    <ul class="tw:d-list tw:mt-4">
+      {% for document in mayan_documents %}
+      <li class="tw:d-list-row tw:rounded-box tw:bg-base-200/40">
+        <span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-box tw:bg-primary/10 tw:text-primary"><i class="bi bi-file-earmark-text"></i></span>
+        <div class="tw:d-list-col-grow tw:min-w-0">
+          <strong class="tw:block tw:truncate">{{ document.label|default:document.description|default:"Document" }}</strong>
+          <small class="tw:text-base-content/45">Mayan #{{ document.id }}</small>
+        </div>
+        <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm" href="{% url 'portal:ticket_document_download' ticket.reference document.id %}" aria-label="{% translate 'Download' %}"><i class="bi bi-download"></i></a>
+        {% if request.user.is_staff or request.user.is_superuser %}<a class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm" href="{% url 'documents:open' document.id %}" target="_blank" aria-label="{% translate 'Open' %}"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}
+      </li>
+      {% empty %}
+      <li class="tw:py-6 tw:text-center tw:text-sm tw:text-base-content/45">{% translate "No managed documents found for this ticket." %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>

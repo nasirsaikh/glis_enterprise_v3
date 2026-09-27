@@ -1,26 +1,32 @@
 {% extends "base_portal.html" %}
 {% load i18n %}{% get_current_language as LANGUAGE_CODE %}
-
 {% block title %}{% if LANGUAGE_CODE == 'ar' %}{{ page.title_ar|default:page.title_en }}{% else %}{{ page.title_en }}{% endif %}{% endblock %}
-
 {% block content %}
-<article class="managed-portal-page managed-page-{{ page.layout }}">
-  <header class="page-heading managed-page-heading">
-    <span class="page-eyebrow"><i class="bi {{ page.portal_icon }} me-1"></i>{% translate "Portal content" %}</span>
-    <h1>{% if LANGUAGE_CODE == 'ar' %}{{ page.title_ar|default:page.title_en }}{% else %}{{ page.title_en }}{% endif %}</h1>
-    <p>{% if LANGUAGE_CODE == 'ar' %}{{ page.summary_ar|default:page.summary_en }}{% else %}{{ page.summary_en }}{% endif %}</p>
-    {% if preview %}<span class="badge text-bg-warning mt-2">{% translate "Preview" %}</span>{% endif %}
-  </header>
+<div class="tw:mx-auto tw:max-w-6xl tw:space-y-5">
+  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
+    <div class="tw:d-card-body tw:p-6">
+      <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+        <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft"><i class="bi {{ page.portal_icon }}"></i>{% translate "Portal content" %}</span>
+        {% if preview %}<span class="tw:d-badge tw:d-badge-warning">{% translate "Preview" %}</span>{% endif %}
+      </div>
+      <h1 class="tw:mt-3 tw:text-3xl tw:font-black tw:tracking-[-.04em]">{% if LANGUAGE_CODE == 'ar' %}{{ page.title_ar|default:page.title_en }}{% else %}{{ page.title_en }}{% endif %}</h1>
+      <p class="tw:text-base-content/55">{% if LANGUAGE_CODE == 'ar' %}{{ page.summary_ar|default:page.summary_en }}{% else %}{{ page.summary_en }}{% endif %}</p>
+    </div>
+  </section>
 
-  <section class="panel managed-page-body">{% if LANGUAGE_CODE == 'ar' %}{{ page.body_ar|default:page.body_en|safe }}{% else %}{{ page.body_en|safe }}{% endif %}</section>
+  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
+    <div class="tw:d-card-body tw:p-6 tw:leading-7">{% if LANGUAGE_CODE == 'ar' %}{{ page.body_ar|default:page.body_en|safe }}{% else %}{{ page.body_en|safe }}{% endif %}</div>
+  </section>
 
   {% for section in page.sections.all %}
     {% if section.is_visible %}
-      <section class="panel managed-page-section managed-page-section-{{ section.section_type }}">
-        <h2>{% if LANGUAGE_CODE == 'ar' %}{{ section.title_ar|default:section.title_en }}{% else %}{{ section.title_en }}{% endif %}</h2>
-        <div class="managed-page-copy">{% if LANGUAGE_CODE == 'ar' %}{{ section.content_ar|default:section.content_en|safe }}{% else %}{{ section.content_en|safe }}{% endif %}</div>
-      </section>
+    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
+      <div class="tw:d-card-body tw:p-6">
+        <h2 class="tw:d-card-title">{% if LANGUAGE_CODE == 'ar' %}{{ section.title_ar|default:section.title_en }}{% else %}{{ section.title_en }}{% endif %}</h2>
+        <div class="tw:leading-7 tw:text-base-content/75">{% if LANGUAGE_CODE == 'ar' %}{{ section.content_ar|default:section.content_en|safe }}{% else %}{{ section.content_en|safe }}{% endif %}</div>
+      </div>
+    </section>
     {% endif %}
   {% endfor %}
-</article>
+</div>
 {% endblock %}

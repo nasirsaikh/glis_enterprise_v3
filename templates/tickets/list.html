@@ -36,7 +36,7 @@
           <label class="tw:d-fieldset tw:xl:col-span-2"><span class="tw:d-fieldset-legend">{% translate "SLA" %}</span>{{ filter_form.sla }}</label>
           <div class="tw:flex tw:items-end tw:xl:col-span-1"><button class="tw:d-btn tw:d-btn-outline tw:w-full" type="submit" aria-label="{% translate 'Apply filters' %}"><i class="bi bi-funnel"></i></button></div>
         </div>
-        <div class="htmx-indicator tw:mt-3 tw:items-center tw:gap-2 tw:text-sm tw:text-base-content/45"><span class="tw:d-loading tw:d-loading-spinner tw:d-loading-xs"></span>{% translate "Updating…" %}</div>
+        <div data-htmx-indicator class="tw:mt-3 tw:hidden tw:items-center tw:gap-2 tw:text-sm tw:text-base-content/45"><span class="tw:d-loading tw:d-loading-spinner tw:d-loading-xs"></span>{% translate "Updating…" %}</div>
       </form>
     </div>
   </section>

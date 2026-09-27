@@ -1,14 +1,17 @@
 (function () {
   "use strict";
   const root = document.documentElement;
-  const preferredTheme = () => localStorage.getItem("glis-theme") || "system";
-  const resolvedTheme = (choice) => choice === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : choice;
-  const daisyTheme = (choice) => resolvedTheme(choice) === "dark" ? "glis-dark" : "glis";
+  const isPortal = () => Boolean(document.body?.classList.contains("portal-shell"));
+  const systemTheme = () => matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  const preferredTheme = () => {
+    if (isPortal()) return document.body.dataset.themePreference || localStorage.getItem("glis-portal-theme") || "system";
+    return localStorage.getItem("glis-public-theme") || "system";
+  };
+  const resolvedTheme = (choice) => choice === "system" ? systemTheme() : choice;
   const applyTheme = (choice) => {
     const resolved = resolvedTheme(choice);
-    root.setAttribute("data-bs-theme", resolved);
-    root.setAttribute("data-theme", daisyTheme(choice));
-    document.dispatchEvent(new CustomEvent("glis:theme", {detail: {theme: resolved, daisyTheme: daisyTheme(choice)}}));
+    root.setAttribute("data-theme", isPortal() ? resolved : (resolved === "dark" ? "glis-dark" : "glis"));
+    document.dispatchEvent(new CustomEvent("glis:theme", {detail: {theme: resolved}}));
   };
   applyTheme(preferredTheme());
 
@@ -18,11 +21,39 @@
       get themeIcon() { return resolvedTheme(this.theme) === "dark" ? "bi-sun" : "bi-moon-stars"; },
       toggleTheme() {
         this.theme = resolvedTheme(this.theme) === "dark" ? "light" : "dark";
-        localStorage.setItem("glis-theme", this.theme);
+        localStorage.setItem("glis-public-theme", this.theme);
         applyTheme(this.theme);
       }
     }));
   });
+
+  const setupThemePicker = () => {
+    const buttons = document.querySelectorAll("[data-theme-choice]");
+    if (!buttons.length) return;
+    const body = document.body;
+    const updateRadios = (choice) => {
+      document.querySelectorAll('input[name="theme-preview"]').forEach((radio) => {
+        radio.checked = radio.value === choice;
+      });
+    };
+    buttons.forEach((button) => button.addEventListener("click", async () => {
+      const choice = button.dataset.themeChoice || "system";
+      body.dataset.themePreference = choice;
+      localStorage.setItem("glis-portal-theme", choice);
+      applyTheme(choice);
+      updateRadios(choice);
+      button.closest("details")?.removeAttribute("open");
+      const token = document.querySelector('[name="csrfmiddlewaretoken"]')?.value || "";
+      try {
+        await fetch(body.dataset.themePreferenceUrl, {
+          method: "POST",
+          headers: {"X-CSRFToken": token, "X-Requested-With": "XMLHttpRequest", "Content-Type": "application/x-www-form-urlencoded"},
+          body: new URLSearchParams({theme: choice})
+        });
+      } catch (_) { /* Profile page remains the persistence fallback. */ }
+    }));
+    updateRadios(body.dataset.themePreference || "system");
+  };
 
   const reveal = (scope = document) => {
     const items = scope.querySelectorAll("[data-reveal]:not(.is-visible)");
@@ -129,16 +160,25 @@
     dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
   };
 
-  const chartLayout = () => {
-    const isDark = root.getAttribute("data-bs-theme") === "dark";
-    return {
-      paper_bgcolor: "transparent", plot_bgcolor: "transparent",
-      font: {family: "Inter, Cairo, sans-serif", size: 11, color: isDark ? "#dce9e2" : "#4c5c54"},
-      margin: {l: 45, r: 18, t: 18, b: 48}, showlegend: false,
-      xaxis: {gridcolor: isDark ? "#2d3d34" : "#edf1ef", automargin: true},
-      yaxis: {gridcolor: isDark ? "#2d3d34" : "#edf1ef", rangemode: "tozero", automargin: true}
-    };
+  const cssColor = (variable, fallback) => {
+    const probe = document.createElement("span");
+    probe.style.color = `var(${variable})`;
+    probe.style.position = "fixed";
+    probe.style.visibility = "hidden";
+    document.body.appendChild(probe);
+    const color = getComputedStyle(probe).color || fallback;
+    probe.remove();
+    return color;
   };
+  const chartLayout = () => ({
+    paper_bgcolor: "transparent",
+    plot_bgcolor: "transparent",
+    font: {family: "Inter, Cairo, sans-serif", size: 11, color: cssColor("--color-base-content", "#4c5c54")},
+    margin: {l: 45, r: 18, t: 18, b: 48},
+    showlegend: false,
+    xaxis: {gridcolor: cssColor("--color-base-300", "#edf1ef"), automargin: true},
+    yaxis: {gridcolor: cssColor("--color-base-300", "#edf1ef"), rangemode: "tozero", automargin: true}
+  });
   const plot = (id, traces, layout = {}) => {
     const element = document.getElementById(id);
     if (!element || !window.Plotly) return;
@@ -149,43 +189,55 @@
     const source = document.getElementById("dashboard-data");
     if (!source || !window.Plotly) return;
     const data = JSON.parse(source.textContent);
-    const colors = ["#147A50", "#2563EB", "#D99400", "#C2413B", "#7357C7", "#3CA37A", "#6B7280"];
-    plot("ticket-status-chart", [{type: "pie", labels: labels(data.status || [], "status"), values: (data.status || []).map(x => x.total), hole: .55, marker: {colors}, textinfo: "label+percent", hovertemplate: "%{label}: %{value}<extra></extra>"}], {margin: {l: 10, r: 10, t: 10, b: 10}});
-    plot("ticket-priority-chart", [{type: "pie", labels: labels(data.priority || [], "priority"), values: (data.priority || []).map(x => x.total), hole: .55, marker: {colors: ["#7ACFA5", "#2563EB", "#D99400", "#C2413B"]}, textinfo: "label+percent"}], {margin: {l: 10, r: 10, t: 10, b: 10}});
-    plot("ticket-assignee-chart", [{type: "pie", labels: labels(data.assignee || []), values: (data.assignee || []).map(x => x.total), hole: .45, marker: {colors}, textinfo: "label+value"}], {margin: {l: 8, r: 8, t: 8, b: 8}});
-    ["category", "product", "project"].forEach((name) => {
-      const rows = data[name] || [];
-      plot("ticket-" + name + "-chart", [{type: "bar", orientation: "h", y: labels(rows).reverse(), x: rows.map(x => x.total).reverse(), marker: {color: name === "category" ? "#147A50" : name === "product" ? "#2563EB" : "#7357C7", cornerradius: 4}, hovertemplate: "%{y}: %{x}<extra></extra>"}], {margin: {l: 120, r: 20, t: 10, b: 35}});
+    const primary = cssColor("--color-primary", "#147A50");
+    const secondary = cssColor("--color-secondary", "#2563EB");
+    const accent = cssColor("--color-accent", "#7357C7");
+    const info = cssColor("--color-info", "#2563EB");
+    const warning = cssColor("--color-warning", "#D99400");
+    const error = cssColor("--color-error", "#C2413B");
+    const success = cssColor("--color-success", "#3CA37A");
+    const neutral = cssColor("--color-neutral", "#6B7280");
+    const colors = [primary, secondary, warning, error, accent, success, neutral];
+    plot("ticket-status-chart", [{type:"pie",labels:labels(data.status||[],"status"),values:(data.status||[]).map(x=>x.total),hole:.55,marker:{colors},textinfo:"label+percent",hovertemplate:"%{label}: %{value}<extra></extra>"}], {margin:{l:10,r:10,t:10,b:10}});
+    plot("ticket-priority-chart", [{type:"pie",labels:labels(data.priority||[],"priority"),values:(data.priority||[]).map(x=>x.total),hole:.55,marker:{colors:[success,info,warning,error]},textinfo:"label+percent"}], {margin:{l:10,r:10,t:10,b:10}});
+    plot("ticket-assignee-chart", [{type:"pie",labels:labels(data.assignee||[]),values:(data.assignee||[]).map(x=>x.total),hole:.45,marker:{colors},textinfo:"label+value"}], {margin:{l:8,r:8,t:8,b:8}});
+    ["category","product","project"].forEach((name) => {
+      const rows=data[name]||[];
+      plot("ticket-"+name+"-chart", [{type:"bar",orientation:"h",y:labels(rows).reverse(),x:rows.map(x=>x.total).reverse(),marker:{color:name==="category"?primary:name==="product"?secondary:accent,cornerradius:4},hovertemplate:"%{y}: %{x}<extra></extra>"}], {margin:{l:120,r:20,t:10,b:35}});
     });
-    const daily = data.daily_open || [];
-    plot("ticket-daily-chart", [{type: "scatter", mode: "lines+markers", x: daily.map(x => x.day), y: daily.map(x => x.total), line: {color: "#147A50", width: 3, shape: "spline"}, marker: {size: 7, color: "#147A50"}, fill: "tozeroy", fillcolor: "rgba(20,122,80,.10)", hovertemplate: "%{x}: %{y}<extra></extra>"}]);
+    const daily=data.daily_open||[];
+    plot("ticket-daily-chart", [{type:"scatter",mode:"lines+markers",x:daily.map(x=>x.day),y:daily.map(x=>x.total),line:{color:primary,width:3,shape:"spline"},marker:{size:7,color:primary},hovertemplate:"%{x}: %{y}<extra></extra>"}]);
   };
 
   const setupSidebar = () => {
     const button = document.getElementById("sidebar-toggle");
-    if (!button) return;
-    const modes = ["mini", "full"];
-    const currentMode = () => modes.find(mode => document.body.classList.contains("sidebar-mode-" + mode)) || "mini";
-    const applyMode = (mode) => {
-      modes.forEach(value => document.body.classList.toggle("sidebar-mode-" + value, value === mode));
-      button.setAttribute("aria-expanded", String(mode === "full"));
-      button.setAttribute("aria-label", mode === "full" ? "Collapse navigation" : "Expand navigation");
-      button.dataset.mode = mode;
-      button.querySelector("i").className = "bi " + (mode === "full" ? "bi-layout-sidebar-inset-reverse" : "bi-layout-sidebar-inset");
+    const sidebar = document.getElementById("portal-sidebar");
+    const stage = document.getElementById("portal-stage");
+    if (!button || !sidebar || !stage) return;
+    let mode = "mini";
+    const labels = () => sidebar.querySelectorAll("[data-sidebar-label]");
+    const applyMode = (nextMode) => {
+      mode = nextMode === "full" ? "full" : "mini";
+      const expanded = mode === "full";
+      sidebar.style.width = expanded ? "18rem" : "5rem";
+      labels().forEach((label) => label.classList.toggle("tw:hidden", !expanded));
+      stage.style.paddingInlineStart = window.innerWidth >= 1024 ? (expanded ? "18rem" : "5rem") : "0";
+      button.setAttribute("aria-expanded", String(expanded));
+      button.setAttribute("aria-label", expanded ? "Collapse navigation" : "Expand navigation");
+      button.querySelector("i").className = "bi " + (expanded ? "bi-layout-sidebar-inset-reverse" : "bi-layout-sidebar-inset");
     };
-    // Each navigation starts icon-only, regardless of the saved account preference.
-    applyMode(currentMode());
+    applyMode("mini");
+    window.addEventListener("resize", () => applyMode(mode));
     button.addEventListener("click", async () => {
-      const mode = modes[(modes.indexOf(currentMode()) + 1) % modes.length];
-      applyMode(mode);
+      applyMode(mode === "mini" ? "full" : "mini");
       const token = document.querySelector('[name="csrfmiddlewaretoken"]')?.value || "";
       try {
         await fetch(document.body.dataset.sidebarPreferenceUrl, {
-          method: "POST",
-          headers: {"X-CSRFToken": token, "X-Requested-With": "XMLHttpRequest", "Content-Type": "application/x-www-form-urlencoded"},
-          body: new URLSearchParams({mode})
+          method:"POST",
+          headers:{"X-CSRFToken":token,"X-Requested-With":"XMLHttpRequest","Content-Type":"application/x-www-form-urlencoded"},
+          body:new URLSearchParams({mode})
         });
-      } catch (_) { /* The profile form remains a fallback for saving this preference. */ }
+      } catch (_) { /* Profile preference is a fallback. */ }
     });
   };
 
@@ -204,8 +256,8 @@
       source.dataset.editorReady = "true";
       source.hidden = true;
       const wrapper = document.createElement("div");
-      wrapper.className = "richtext-editor";
-      wrapper.innerHTML = '<div class="richtext-toolbar"><button type="button" data-cmd="bold" title="Bold"><i class="bi bi-type-bold"></i></button><button type="button" data-cmd="italic" title="Italic"><i class="bi bi-type-italic"></i></button><button type="button" data-cmd="underline" title="Underline"><i class="bi bi-type-underline"></i></button><button type="button" data-cmd="insertUnorderedList" title="Bullets"><i class="bi bi-list-ul"></i></button><button type="button" data-cmd="insertOrderedList" title="Numbered list"><i class="bi bi-list-ol"></i></button><button type="button" data-cmd="createLink" title="Link"><i class="bi bi-link-45deg"></i></button><button type="button" data-image-button title="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span>Paste or upload images</span></div><div class="richtext-canvas" contenteditable="true"></div>';
+      wrapper.className = "richtext-editor tw:d-card tw:border tw:border-base-300 tw:bg-base-100";
+      wrapper.innerHTML = '<div class="richtext-toolbar tw:flex tw:flex-wrap tw:items-center tw:gap-1 tw:border-b tw:border-base-300 tw:p-2"><button class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" type="button" data-cmd="bold" title="Bold"><i class="bi bi-type-bold"></i></button><button class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" type="button" data-cmd="italic" title="Italic"><i class="bi bi-type-italic"></i></button><button class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" type="button" data-cmd="underline" title="Underline"><i class="bi bi-type-underline"></i></button><button class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" type="button" data-cmd="insertUnorderedList" title="Bullets"><i class="bi bi-list-ul"></i></button><button class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" type="button" data-cmd="insertOrderedList" title="Numbered list"><i class="bi bi-list-ol"></i></button><button class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" type="button" data-cmd="createLink" title="Link"><i class="bi bi-link-45deg"></i></button><button class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" type="button" data-image-button title="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span class="tw:ms-auto tw:text-xs tw:text-base-content/45">Paste or upload images</span></div><div class="richtext-canvas tw:min-h-40 tw:p-4 tw:leading-7 tw:focus:outline-none" contenteditable="true"></div>';
       source.insertAdjacentElement("afterend", wrapper);
       const editor = wrapper.querySelector(".richtext-canvas");
       editor.innerHTML = source.value || "";
@@ -238,8 +290,8 @@
       zone.dataset.ready = "true";
       const input = zone.querySelector('input[type="file"]');
       zone.addEventListener("click", (event) => { if (zone.matches("[data-dropzone]") && !event.target.closest("button")) input.click(); });
-      ["dragenter", "dragover"].forEach(name => zone.addEventListener(name, event => { event.preventDefault(); zone.classList.add("is-dragging"); }));
-      ["dragleave", "drop"].forEach(name => zone.addEventListener(name, event => { event.preventDefault(); zone.classList.remove("is-dragging"); }));
+      ["dragenter", "dragover"].forEach(name => zone.addEventListener(name, event => { event.preventDefault(); zone.classList.add("tw:border-primary", "tw:bg-primary/5"); }));
+      ["dragleave", "drop"].forEach(name => zone.addEventListener(name, event => { event.preventDefault(); zone.classList.remove("tw:border-primary", "tw:bg-primary/5"); }));
       zone.addEventListener("drop", event => {
         const transfer = new DataTransfer();
         Array.from(event.dataTransfer.files).forEach(file => transfer.items.add(file));
@@ -251,221 +303,126 @@
   };
 
   const setupVanna = () => {
-    const form = document.getElementById("vanna-form");
-    if (!form) return;
-    const workbench = document.getElementById("vanna-workbench");
-    const question = document.getElementById("vanna-question");
-    const sessionInput = document.getElementById("vanna-session");
-    const conversation = document.getElementById("vanna-conversation");
-    const welcome = document.getElementById("vanna-welcome");
-    const historyLoading = document.getElementById("vanna-history-loading");
-    const error = document.getElementById("vanna-error");
-    const send = document.getElementById("vanna-send");
-    const sessionList = document.getElementById("vanna-session-list");
-    const diagnostics = document.getElementById("vanna-diagnostic-log");
-    let chartSequence = 0;
+    const form=document.getElementById("vanna-form");
+    if(!form) return;
+    const workbench=document.getElementById("vanna-workbench");
+    const question=document.getElementById("vanna-question");
+    const sessionInput=document.getElementById("vanna-session");
+    const conversation=document.getElementById("vanna-conversation");
+    const welcome=document.getElementById("vanna-welcome");
+    const historyLoading=document.getElementById("vanna-history-loading");
+    const error=document.getElementById("vanna-error");
+    const send=document.getElementById("vanna-send");
+    const sessionList=document.getElementById("vanna-session-list");
+    const diagnostics=document.getElementById("vanna-diagnostic-log");
+    let chartSequence=0;
 
-    const bindPrompt = (button) => button.addEventListener("click", () => { question.value = button.dataset.vannaPrompt || button.textContent; question.focus(); });
+    const bindPrompt=(button)=>button.addEventListener("click",()=>{question.value=button.dataset.vannaPrompt||button.textContent;question.focus();});
     document.querySelectorAll("[data-vanna-prompt]").forEach(bindPrompt);
-    document.querySelectorAll("[data-auto-submit]").forEach(select => select.addEventListener("change", () => select.form.submit()));
+    document.querySelectorAll("[data-auto-submit]").forEach(select=>select.addEventListener("change",()=>select.form.submit()));
+    const scrollToLatest=()=>{conversation.scrollTop=conversation.scrollHeight;};
+    const formatTime=value=>{const date=value?new Date(value):new Date();return Number.isNaN(date.getTime())?"":date.toLocaleString([],{dateStyle:"medium",timeStyle:"short"});};
 
-    const scrollToLatest = () => { conversation.scrollTop = conversation.scrollHeight; };
-    const formatTime = value => {
-      const date = value ? new Date(value) : new Date();
-      return Number.isNaN(date.getTime()) ? "" : date.toLocaleString([], {dateStyle: "medium", timeStyle: "short"});
+    const addQuestion=(text,createdAt=null)=>{
+      const article=document.createElement("article");
+      article.dataset.vannaMessage="1";
+      article.className="tw:d-card tw:ms-auto tw:max-w-3xl tw:bg-primary tw:text-primary-content tw:shadow-sm";
+      const body=document.createElement("div"); body.className="tw:d-card-body tw:p-4";
+      const message=document.createElement("p"); message.textContent=text;
+      const time=document.createElement("time"); time.className="tw:mt-2 tw:text-end tw:text-xs tw:text-primary-content/60"; time.textContent=formatTime(createdAt);
+      body.append(message,time); article.appendChild(body); conversation.appendChild(article); scrollToLatest();
     };
-    const addQuestion = (text, createdAt = null) => {
-      const article = document.createElement("article");
-      article.className = "ai-message ai-message-user";
-      const bubble = document.createElement("div");
-      bubble.className = "ai-message-bubble";
-      bubble.textContent = text;
-      const time = document.createElement("time");
-      time.textContent = formatTime(createdAt);
-      article.append(bubble, time);
-      conversation.appendChild(article);
-      scrollToLatest();
-    };
-    const buildTable = rows => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "table-responsive ai-result-table";
-      const table = document.createElement("table");
-      table.className = "table portal-table";
-      wrapper.appendChild(table);
-      if (!rows.length) return wrapper;
-      const keys = Object.keys(rows[0]);
-      const head = table.createTHead().insertRow();
-      keys.forEach(key => { const th = document.createElement("th"); th.textContent = key; head.appendChild(th); });
-      const body = table.createTBody();
-      rows.forEach(row => { const tr = body.insertRow(); keys.forEach(key => { const td = tr.insertCell(); td.textContent = row[key] ?? ""; }); });
+
+    const buildTable=rows=>{
+      const wrapper=document.createElement("div"); wrapper.className="tw:mt-4 tw:overflow-x-auto";
+      const table=document.createElement("table"); table.className="tw:d-table tw:d-table-zebra tw:d-table-sm"; wrapper.appendChild(table);
+      if(!rows.length) return wrapper;
+      const keys=Object.keys(rows[0]); const head=table.createTHead().insertRow();
+      keys.forEach(key=>{const th=document.createElement("th");th.textContent=key;head.appendChild(th);});
+      const body=table.createTBody();
+      rows.forEach(row=>{const tr=body.insertRow();keys.forEach(key=>{const td=tr.insertCell();td.textContent=row[key]??"";});});
       return wrapper;
     };
-    const drawQueryChart = (id, rows, spec) => {
-      if (!rows.length || !window.Plotly) return;
-      const keys = Object.keys(rows[0]), x = spec.x || keys[0], y = spec.y || keys[1];
+
+    const drawQueryChart=(id,rows,spec)=>{
+      if(!rows.length||!window.Plotly)return;
+      const keys=Object.keys(rows[0]),x=spec.x||keys[0],y=spec.y||keys[1],primary=cssColor("--color-primary","#147A50");
       let trace;
-      if (spec.type === "pie") trace = {type: "pie", labels: rows.map(row => row[x]), values: rows.map(row => row[y]), hole: .45, textinfo: "label+percent"};
-      else if (spec.type === "line") trace = {type: "scatter", mode: "lines+markers", x: rows.map(row => row[x]), y: rows.map(row => row[y]), line: {color: "#147A50", width: 3}, marker: {color: "#147A50", size: 7}};
-      else trace = {type: "bar", x: rows.map(row => row[x]), y: rows.map(row => row[y]), marker: {color: "#147A50", cornerradius: 4}};
-      plot(id, [trace], {title: {text: spec.title || "", font: {size: 14}}, margin: {l: 44, r: 16, t: spec.title ? 46 : 18, b: 48}});
+      if(spec.type==="pie") trace={type:"pie",labels:rows.map(row=>row[x]),values:rows.map(row=>row[y]),hole:.45,textinfo:"label+percent"};
+      else if(spec.type==="line") trace={type:"scatter",mode:"lines+markers",x:rows.map(row=>row[x]),y:rows.map(row=>row[y]),line:{color:primary,width:3},marker:{color:primary,size:7}};
+      else trace={type:"bar",x:rows.map(row=>row[x]),y:rows.map(row=>row[y]),marker:{color:primary,cornerradius:4}};
+      plot(id,[trace],{title:{text:spec.title||"",font:{size:14}},margin:{l:44,r:16,t:spec.title?46:18,b:48}});
     };
-    const setDiagnostics = queryData => {
-      diagnostics.innerHTML = "";
-      const timestamp = new Date().toLocaleTimeString([], {hour12: false});
-      const events = [
-        ["bi-inbox", "Received query request"],
-        ["bi-shield-check", "Applied domain and row-access policies"],
-        ["bi-database-check", queryData.chroma_memories ? `Retrieved ${queryData.chroma_memories} ChromaDB memories` : "Loaded governed business context"],
+
+    const setDiagnostics=queryData=>{
+      diagnostics.innerHTML="";
+      const timestamp=new Date().toLocaleTimeString([],{hour12:false});
+      const events=[
+        ["bi-inbox","Received query request"],
+        ["bi-shield-check","Applied domain and row-access policies"],
+        ["bi-database-check",queryData.chroma_memories?`Retrieved ${queryData.chroma_memories} ChromaDB memories`:"Loaded governed business context"],
       ];
-      if (queryData.execution_mode) events.push(["bi-cpu", queryData.execution_mode.replaceAll("_", " ")]);
-      if (queryData.status === "completed") {
-        events.push(["bi-code-square", "Executed read-only SQL through Vanna RunSqlTool"]);
-        events.push(["bi-check2-circle", `Returned ${queryData.row_count || 0} rows in ${queryData.duration_ms || 0}ms`]);
-      } else events.push(["bi-exclamation-octagon", queryData.summary || queryData.error_code || "Query failed"]);
-      events.forEach(([icon, label]) => {
-        const row = document.createElement("div"), time = document.createElement("time"), marker = document.createElement("i"), text = document.createElement("span");
-        time.textContent = timestamp; marker.className = "bi " + icon; text.textContent = label; row.append(time, marker, text); diagnostics.appendChild(row);
-      });
-      document.getElementById("vanna-diagnostic-count").textContent = `${events.length} events`;
+      if(queryData.execution_mode) events.push(["bi-cpu",queryData.execution_mode.replaceAll("_"," ")]);
+      if(queryData.status==="completed"){events.push(["bi-code-square","Executed read-only SQL through Vanna RunSqlTool"]);events.push(["bi-check2-circle",`Returned ${queryData.row_count||0} rows in ${queryData.duration_ms||0}ms`]);}
+      else events.push(["bi-exclamation-octagon",queryData.summary||queryData.error_code||"Query failed"]);
+      events.forEach(([icon,label])=>{const row=document.createElement("div"),time=document.createElement("time"),marker=document.createElement("i"),text=document.createElement("span");time.textContent=timestamp;marker.className="bi "+icon;text.textContent=label;row.append(time,marker,text);diagnostics.appendChild(row);});
+      document.getElementById("vanna-diagnostic-count").textContent=`${events.length} events`;
     };
-    const addAnswer = queryData => {
-      const article = document.createElement("article");
-      article.className = "ai-message ai-message-assistant" + (queryData.status !== "completed" ? " ai-message-error" : "");
-      const card = document.createElement("div");
-      card.className = "ai-answer-card";
-      const header = document.createElement("header");
-      const label = document.createElement("span");
-      label.innerHTML = '<i class="bi bi-stars"></i> Vanna';
-      const meta = document.createElement("small");
-      meta.textContent = queryData.status === "completed" ? `${queryData.row_count || 0} rows · ${queryData.duration_ms || 0} ms` : (queryData.error_code || "Failed");
-      header.append(label, meta); card.appendChild(header);
-      const summary = document.createElement("p");
-      summary.className = "ai-answer-summary";
-      summary.textContent = queryData.summary || (queryData.status === "completed" ? "The query completed successfully." : "The query could not be completed.");
-      card.appendChild(summary);
-      if (queryData.sql) {
-        const details = document.createElement("details");
-        details.className = "sql-preview";
-        const detailsLabel = document.createElement("summary");
-        detailsLabel.textContent = "Generated SQL";
-        const pre = document.createElement("pre"), code = document.createElement("code");
-        code.textContent = queryData.sql; pre.appendChild(code); details.append(detailsLabel, pre); card.appendChild(details);
+
+    const addAnswer=queryData=>{
+      const article=document.createElement("article"); article.dataset.vannaMessage="1"; article.className="tw:d-card tw:max-w-5xl tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm";
+      const body=document.createElement("div"); body.className="tw:d-card-body tw:p-5";
+      const header=document.createElement("div"); header.className="tw:flex tw:items-center tw:justify-between tw:gap-3";
+      const label=document.createElement("span"); label.className="tw:d-badge tw:d-badge-primary tw:d-badge-soft"; label.innerHTML='<i class="bi bi-stars"></i> Vanna';
+      const meta=document.createElement("small"); meta.className="tw:text-base-content/45"; meta.textContent=queryData.status==="completed"?`${queryData.row_count||0} rows · ${queryData.duration_ms||0} ms`:(queryData.error_code||"Failed");
+      header.append(label,meta); body.appendChild(header);
+      const summary=document.createElement("p"); summary.className="tw:mt-3 tw:leading-7"; summary.textContent=queryData.summary||(queryData.status==="completed"?"The query completed successfully.":"The query could not be completed."); body.appendChild(summary);
+      if(queryData.sql){
+        const details=document.createElement("details"); details.className="tw:d-collapse tw:d-collapse-arrow tw:mt-4 tw:border tw:border-base-300 tw:bg-base-200/40";
+        const title=document.createElement("summary"); title.className="tw:d-collapse-title tw:font-semibold"; title.textContent="Generated SQL";
+        const content=document.createElement("div"); content.className="tw:d-collapse-content";
+        const pre=document.createElement("pre"); pre.className="tw:overflow-x-auto tw:rounded-box tw:bg-neutral tw:p-4 tw:text-sm tw:text-neutral-content"; const code=document.createElement("code"); code.textContent=queryData.sql; pre.appendChild(code); content.appendChild(pre); details.append(title,content); body.appendChild(details);
       }
-      const rows = queryData.data || [], spec = queryData.chart || {};
-      let chartId = "";
-      if (rows.length && spec.type) {
-        chartId = `vanna-chart-${queryData.id || ++chartSequence}-${++chartSequence}`;
-        const chart = document.createElement("div"); chart.id = chartId; chart.className = "ai-result-chart"; card.appendChild(chart);
-      }
-      if (rows.length) card.appendChild(buildTable(rows));
-      const footer = document.createElement("footer");
-      const followups = document.createElement("div"); followups.className = "prompt-chips ai-followups";
-      (queryData.followups || []).forEach(text => { const button = document.createElement("button"); button.type = "button"; button.textContent = text; button.dataset.vannaPrompt = text; bindPrompt(button); followups.appendChild(button); });
-      footer.appendChild(followups);
-      if (queryData.export_url) {
-        const link = document.createElement("a"); link.className = "btn btn-sm btn-outline-primary"; link.href = queryData.export_url; link.innerHTML = '<i class="bi bi-download me-1"></i> Export CSV'; footer.appendChild(link);
-      }
-      if (footer.childElementCount) card.appendChild(footer);
-      article.appendChild(card);
-      const time = document.createElement("time"); time.textContent = formatTime(queryData.created_at); article.appendChild(time);
-      conversation.appendChild(article);
-      if (chartId) setTimeout(() => drawQueryChart(chartId, rows, spec), 10);
-      setDiagnostics(queryData);
-      scrollToLatest();
+      const rows=queryData.data||[],spec=queryData.chart||{}; let chartId="";
+      if(rows.length&&spec.type){chartId=`vanna-chart-${queryData.id||++chartSequence}-${++chartSequence}`;const chart=document.createElement("div");chart.id=chartId;chart.className="tw:mt-4 tw:min-h-72";body.appendChild(chart);}
+      if(rows.length) body.appendChild(buildTable(rows));
+      const actions=document.createElement("div"); actions.className="tw:d-card-actions tw:mt-4";
+      (queryData.followups||[]).forEach(text=>{const button=document.createElement("button");button.type="button";button.className="tw:d-btn tw:d-btn-ghost tw:d-btn-sm";button.textContent=text;button.dataset.vannaPrompt=text;bindPrompt(button);actions.appendChild(button);});
+      if(queryData.export_url){const link=document.createElement("a");link.className="tw:d-btn tw:d-btn-outline tw:d-btn-sm";link.href=queryData.export_url;link.innerHTML='<i class="bi bi-download"></i> Export CSV';actions.appendChild(link);}
+      if(actions.childElementCount) body.appendChild(actions);
+      article.appendChild(body); conversation.appendChild(article);
+      if(chartId)setTimeout(()=>drawQueryChart(chartId,rows,spec),10); setDiagnostics(queryData); scrollToLatest();
     };
-    const showWelcome = () => {
-      conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
-      historyLoading.classList.add("d-none"); welcome.classList.remove("d-none");
+
+    const clearMessages=()=>conversation.querySelectorAll("[data-vanna-message]").forEach(item=>item.remove());
+    const showWelcome=()=>{clearMessages();historyLoading.classList.add("tw:hidden");welcome.classList.remove("tw:hidden");};
+    const renderHistory=queries=>{clearMessages();historyLoading.classList.add("tw:hidden");welcome.classList.toggle("tw:hidden",Boolean(queries.length));queries.forEach(item=>{addQuestion(item.question,item.created_at);addAnswer(item);});if(queries.length)setDiagnostics(queries[queries.length-1]);};
+    const setActiveSession=id=>{sessionInput.value=id||"";sessionList.querySelectorAll("[data-session-id]").forEach(item=>item.classList.toggle("tw:bg-base-200",item.dataset.sessionId===id));const url=new URL(window.location.href);if(id)url.searchParams.set("session",id);else url.searchParams.delete("session");history.replaceState({},"",url);};
+    const loadSession=async id=>{
+      if(!id){setActiveSession("");showWelcome();return;}
+      historyLoading.classList.remove("tw:hidden");welcome.classList.add("tw:hidden");error.classList.add("tw:hidden");
+      try{const endpoint=workbench.dataset.sessionDetailTemplate.replace("00000000-0000-0000-0000-000000000000",id);const response=await fetch(endpoint,{headers:{"X-Requested-With":"XMLHttpRequest"}});const payload=await response.json();if(!response.ok)throw new Error(payload.error||"Conversation could not be loaded.");setActiveSession(id);renderHistory(payload.queries||[]);}
+      catch(exception){historyLoading.classList.add("tw:hidden");error.textContent=exception.message;error.classList.remove("tw:hidden");}
     };
-    const renderHistory = queries => {
-      conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
-      historyLoading.classList.add("d-none"); welcome.classList.toggle("d-none", Boolean(queries.length));
-      queries.forEach(item => { addQuestion(item.question, item.created_at); addAnswer(item); });
-      if (queries.length) setDiagnostics(queries[queries.length - 1]);
+    const upsertSession=session=>{
+      if(!session)return;document.getElementById("vanna-session-empty")?.remove();
+      let item=sessionList.querySelector(`[data-session-id="${session.id}"]`);
+      if(!item){item=document.createElement("button");item.type="button";item.className="tw:d-btn tw:d-btn-ghost tw:h-auto tw:w-full tw:justify-start tw:gap-3 tw:py-3 tw:text-start";item.dataset.sessionId=session.id;item.innerHTML='<i class="bi bi-chat-left-text"></i><span class="tw:min-w-0 tw:flex-1"><strong class="tw:block tw:truncate"></strong><small class="tw:block tw:text-xs tw:text-base-content/45"></small></span>';sessionList.prepend(item);}
+      item.querySelector("strong").textContent=session.title;item.querySelector("small").textContent=`${session.question_count} questions · just now`;setActiveSession(session.id);
     };
-    const setActiveSession = id => {
-      sessionInput.value = id || "";
-      sessionList.querySelectorAll("[data-session-id]").forEach(item => item.classList.toggle("active", item.dataset.sessionId === id));
-      const url = new URL(window.location.href);
-      if (id) url.searchParams.set("session", id); else url.searchParams.delete("session");
-      history.replaceState({}, "", url);
-    };
-    const loadSession = async id => {
-      if (!id) { setActiveSession(""); showWelcome(); return; }
-      historyLoading.classList.remove("d-none"); welcome.classList.add("d-none"); error.classList.add("d-none");
-      try {
-        const endpoint = workbench.dataset.sessionDetailTemplate.replace("00000000-0000-0000-0000-000000000000", id);
-        const response = await fetch(endpoint, {headers: {"X-Requested-With": "XMLHttpRequest"}});
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error || "Conversation could not be loaded.");
-        setActiveSession(id); renderHistory(payload.queries || []);
-      } catch (exception) {
-        historyLoading.classList.add("d-none"); error.textContent = exception.message; error.classList.remove("d-none");
-      }
-    };
-    const upsertSession = session => {
-      if (!session) return;
-      document.getElementById("vanna-session-empty")?.remove();
-      let item = sessionList.querySelector(`[data-session-id="${session.id}"]`);
-      if (!item) {
-        item = document.createElement("button"); item.type = "button"; item.className = "ai-session-item"; item.dataset.sessionId = session.id;
-        item.innerHTML = '<i class="bi bi-chat-left-text"></i><span><strong></strong><small></small></span>';
-        sessionList.prepend(item);
-      }
-      item.querySelector("strong").textContent = session.title;
-      item.querySelector("small").textContent = `${session.question_count} questions · just now`;
-      setActiveSession(session.id);
-    };
-    sessionList.addEventListener("click", event => { const item = event.target.closest("[data-session-id]"); if (item) loadSession(item.dataset.sessionId); });
-    document.getElementById("vanna-new-session")?.addEventListener("click", () => { setActiveSession(""); showWelcome(); question.focus(); });
-    question.addEventListener("keydown", event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); } });
 
-
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      const text = question.value.trim();
-      if (!text || send.disabled) return;
-
-      const formData = new FormData(form);
-      formData.set("question", text);
-
-      welcome.classList.add("d-none");
-      historyLoading.classList.add("d-none");
-      error.classList.add("d-none");
-      send.disabled = true;
-
-      addQuestion(text);
-      question.value = "";
-
-      try {
-        const response = await fetch(form.action, {
-          method: "POST",
-          body: formData,
-          headers: {
-            "X-Requested-With": "XMLHttpRequest"
-          }
-        });
-
-        const payload = await response.json();
-
-        if (payload.session_id) setActiveSession(payload.session_id);
-        if (payload.session) upsertSession(payload.session);
-        if (payload.query) addAnswer(payload.query);
-
-        if (!response.ok) {
-          throw new Error(payload.error || "Analysis failed");
-        }
-      } catch (exception) {
-        error.textContent = exception.message;
-        error.classList.remove("d-none");
-      } finally {
-        send.disabled = false;
-        question.focus();
-      }
-    });    
-
-    if (sessionInput.value) loadSession(sessionInput.value); else showWelcome();
+    sessionList.addEventListener("click",event=>{const item=event.target.closest("[data-session-id]");if(item)loadSession(item.dataset.sessionId);});
+    document.getElementById("vanna-new-session")?.addEventListener("click",()=>{setActiveSession("");showWelcome();question.focus();});
+    question.addEventListener("keydown",event=>{if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();form.requestSubmit();}});
+    form.addEventListener("submit",async event=>{
+      event.preventDefault();const text=question.value.trim();if(!text||send.disabled)return;
+      const formData=new FormData(form);formData.set("question",text);
+      welcome.classList.add("tw:hidden");historyLoading.classList.add("tw:hidden");error.classList.add("tw:hidden");send.disabled=true;addQuestion(text);question.value="";
+      try{const response=await fetch(form.action,{method:"POST",body:formData,headers:{"X-Requested-With":"XMLHttpRequest"}});const payload=await response.json();if(payload.session_id)setActiveSession(payload.session_id);if(payload.session)upsertSession(payload.session);if(payload.query)addAnswer(payload.query);if(!response.ok)throw new Error(payload.error||"Analysis failed");}
+      catch(exception){error.textContent=exception.message;error.classList.remove("tw:hidden");}
+      finally{send.disabled=false;question.focus();}
+    });
+    if(sessionInput.value)loadSession(sessionInput.value);else showWelcome();
   };
 
   const setupNotifications = () => {
@@ -497,7 +454,7 @@
     setupDropzones(scope);
   };
   document.addEventListener("DOMContentLoaded", () => {
-    init(); setupSidebar(); setupMobileNav(); setupVanna(); setupNotifications(); setTimeout(renderCharts, 120);
+    init(); setupThemePicker(); setupSidebar(); setupMobileNav(); setupVanna(); setupNotifications(); setTimeout(renderCharts, 120);
   });
   document.addEventListener("glis:theme", () => setTimeout(renderCharts, 30));
   document.body.addEventListener("htmx:afterSwap", (event) => init(event.detail.target));

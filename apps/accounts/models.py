@@ -29,7 +29,45 @@ class UserProfile(TimeStampedModel):
     avatar = models.ImageField(upload_to="profiles/%Y/%m/", blank=True)
     reporting_manager = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="direct_reports", on_delete=models.SET_NULL)
     preferred_language = models.CharField(max_length=5, default="en", choices=[("en", "English"), ("ar", "العربية")])
-    theme = models.CharField(max_length=10, default="system", choices=[("system", "System"), ("light", "Light"), ("dark", "Dark")])
+    THEME_CHOICES = [
+        ("system", "System"),
+        ("light", "Light"),
+        ("dark", "Dark"),
+        ("cupcake", "Cupcake"),
+        ("bumblebee", "Bumblebee"),
+        ("emerald", "Emerald"),
+        ("corporate", "Corporate"),
+        ("synthwave", "Synthwave"),
+        ("retro", "Retro"),
+        ("cyberpunk", "Cyberpunk"),
+        ("valentine", "Valentine"),
+        ("halloween", "Halloween"),
+        ("garden", "Garden"),
+        ("forest", "Forest"),
+        ("aqua", "Aqua"),
+        ("lofi", "Lo-fi"),
+        ("pastel", "Pastel"),
+        ("fantasy", "Fantasy"),
+        ("wireframe", "Wireframe"),
+        ("black", "Black"),
+        ("luxury", "Luxury"),
+        ("dracula", "Dracula"),
+        ("cmyk", "CMYK"),
+        ("autumn", "Autumn"),
+        ("business", "Business"),
+        ("acid", "Acid"),
+        ("lemonade", "Lemonade"),
+        ("night", "Night"),
+        ("coffee", "Coffee"),
+        ("winter", "Winter"),
+        ("dim", "Dim"),
+        ("nord", "Nord"),
+        ("sunset", "Sunset"),
+        ("caramellatte", "Caramellatte"),
+        ("abyss", "Abyss"),
+        ("silk", "Silk"),
+    ]
+    theme = models.CharField(max_length=20, default="system", choices=THEME_CHOICES)
     sidebar_mode = models.CharField(max_length=10, choices=SidebarMode.choices, default=SidebarMode.MINI)
     is_external = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=True)

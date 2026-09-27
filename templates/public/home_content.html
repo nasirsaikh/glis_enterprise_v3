@@ -2,7 +2,7 @@
 {% get_current_language as LANGUAGE_CODE %}
 
 <div class="tw:overflow-hidden tw:bg-base-100 tw:text-base-content">
-  <section class="public-ambient tw:relative tw:min-h-[88svh] tw:overflow-hidden tw:border-b tw:border-base-300">
+  <section class="tw:relative tw:min-h-[88svh] tw:overflow-hidden tw:border-b tw:border-base-300">
     <div class="tw:absolute tw:inset-x-0 tw:top-0 tw:h-40 tw:bg-gradient-to-b tw:from-primary/8 tw:to-transparent" aria-hidden="true"></div>
     <div class="tw:relative tw:mx-auto tw:grid tw:min-h-[88svh] tw:max-w-7xl tw:items-center tw:gap-14 tw:px-6 tw:py-20 tw:lg:grid-cols-[1.08fr_.92fr] tw:lg:py-24">
       <div class="tw:relative tw:z-10" data-reveal>
@@ -59,7 +59,7 @@
       </div>
 
         <div class="tw:relative tw:mx-auto tw:w-full tw:max-w-xl" data-reveal>
-        <div class="public-hero-art tw:d-card tw:overflow-hidden tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
+        <div class="tw:d-card tw:overflow-hidden tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
           {% if hero.hero_image %}
           <figure class="tw:bg-base-200/50 tw:p-3">
             <img src="{{ hero.hero_image.url }}" alt="{% if LANGUAGE_CODE == 'ar' %}{{ hero.hero_title_ar|default:hero.hero_title_en }}{% else %}{{ hero.hero_title_en }}{% endif %}" class="tw:w-full tw:object-contain">
@@ -87,9 +87,6 @@
       </div>
     </div>
 
-    <div class="tw:absolute tw:bottom-5 tw:start-1/2 tw:-translate-x-1/2 tw:text-center tw:text-xs tw:font-black tw:uppercase tw:tracking-[.22em] tw:text-base-content/40">
-      <i class="bi bi-mouse tw:me-2"></i>{% translate "Scroll to explore" %}
-    </div>
   </section>
 
   <section class="tw:border-b tw:border-base-300 tw:bg-base-200/70">
@@ -116,7 +113,7 @@
       <div class="tw:mt-12 tw:grid tw:gap-6 tw:md:grid-cols-2 tw:xl:grid-cols-3">
         {% for service in services %}
         <a href="{{ service.link|default:'#' }}" class="tw:d-hover-3d tw:block tw:h-full tw:cursor-pointer tw:no-underline" data-reveal>
-          <article class="public-service-card tw:d-card tw:h-full tw:min-h-[20rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl">
+          <article class="tw:d-card tw:h-full tw:min-h-[20rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl">
             <div class="tw:d-card-body tw:p-7">
               <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
                 <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-primary/10 tw:text-2xl tw:text-primary"><i class="bi {{ service.icon|default:'bi-stars' }}"></i></span>
@@ -127,6 +124,7 @@
               <div class="tw:d-card-actions tw:mt-auto tw:pt-6 tw:font-bold tw:text-primary">{% translate "Explore service" %}<i class="bi bi-arrow-up-right"></i></div>
             </div>
           </article>
+          <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
         </a>
         {% empty %}
         <div class="tw:d-alert tw:d-alert-info tw:md:col-span-2 tw:xl:col-span-3"><i class="bi bi-info-circle"></i><span>{% translate "No services currently available." %}</span></div>

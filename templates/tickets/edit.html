@@ -2,12 +2,12 @@
 {% block content %}
 <div class="tw:mx-auto tw:max-w-5xl tw:space-y-5">
   <div class="tw:d-breadcrumbs tw:text-sm tw:text-base-content/50"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li><a href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a></li><li>{% translate "Edit" %}</li></ul></div>
-  <section class="tw:d-card tw:rounded-[1.5rem] tw:border tw:border-base-300 tw:bg-base-100 tw:p-6 tw:shadow-sm" data-reveal>
+  <section class="tw:d-card tw:rounded-[1.5rem] tw:border tw:border-base-300 tw:bg-base-100 tw:p-6 tw:shadow-sm">
     <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-3"><i class="bi bi-shield-lock tw:me-1"></i>{% translate "Permission controlled" %}</span>
     <h1 class="tw:text-3xl tw:font-black tw:tracking-[-.04em] tw:sm:text-4xl">{% translate "Edit ticket" %}</h1>
     <p class="tw:mt-2 tw:text-base-content/55">{% translate "Update core details and administrator-defined fields." %}</p>
   </section>
-  <form class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm" method="post" data-reveal>{% csrf_token %}
+  <form class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm" method="post">{% csrf_token %}
     <div class="tw:d-card-body tw:p-5 tw:sm:p-7">
       <div class="tw:grid tw:gap-5 tw:md:grid-cols-12">
         <label class="tw:d-fieldset {% if form.priority %}tw:md:col-span-8{% else %}tw:md:col-span-12{% endif %}"><span class="tw:d-fieldset-legend">{% translate "Subject" %}</span>{{ form.subject }}{{ form.subject.errors }}</label>

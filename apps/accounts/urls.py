@@ -5,4 +5,5 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("profile/password/", views.change_password, name="change_password"),
     path("profile/sidebar/", views.sidebar_preference, name="sidebar_preference"),
+    path("profile/theme/", views.theme_preference, name="theme_preference"),
 ]

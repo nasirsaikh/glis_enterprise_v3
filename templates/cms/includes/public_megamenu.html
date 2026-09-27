@@ -1,31 +1,45 @@
 {% load menu_tags i18n %}
-<div class="megamenu megamenu-wide tw:border tw:border-base-300 tw:bg-base-100 tw:p-1 tw:shadow-sm" id="glis-public-megamenu">
-  <span class="megamenu-active"></span>
-  {% for child in children %}
-    {% if child.children %}
-      <button type="button" popovertarget="glis-mega-{{ forloop.counter }}" class="{% if child.selected or child.ancestor %}tw:text-primary tw:font-black{% else %}tw:font-semibold{% endif %}">
-        {{ child.get_menu_title }}
-      </button>
-      <div id="glis-mega-{{ forloop.counter }}" popover class="tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-4 tw:shadow-2xl">
-        <ul class="menu tw:w-72">
-          <li class="menu-title">{{ child.get_menu_title }}</li>
-          <li><a class="tw:font-bold" href="{{ child.get_absolute_url }}">{% translate "Overview" %}</a></li>
-          {% for subchild in child.children %}
-          <li><a{% if subchild.selected %} class="menu-active"{% endif %} href="{{ subchild.get_absolute_url }}">{{ subchild.get_menu_title }}</a></li>
-          {% endfor %}
-        </ul>
+<nav class="tw:w-full" aria-label="{% translate 'Main navigation' %}">
+  <ul class="tw:d-menu tw:flex tw:flex-col tw:gap-1 tw:p-0 tw:text-sm tw:font-semibold tw:lg:flex-row">
+    {% for child in children %}
+      {% if child.children %}
+      <li class="tw:relative tw:group">
+        <button type="button" class="tw:flex tw:items-center tw:gap-2 tw:rounded-full tw:px-4 tw:py-2.5 tw:transition-colors tw:hover:bg-primary/8 {% if child.selected or child.ancestor %}tw:text-primary{% endif %}" aria-haspopup="true">
+          {{ child.get_menu_title }}<i class="bi bi-chevron-down tw:text-[.65rem] tw:transition-transform tw:group-hover:rotate-180"></i>
+        </button>
+        <div class="tw:absolute tw:start-0 tw:top-full tw:z-50 tw:hidden tw:w-[min(34rem,90vw)] tw:pt-3 tw:group-hover:block tw:group-focus-within:block">
+          <div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl tw:shadow-primary/10">
+            <div class="tw:d-card-body tw:p-5">
+              <div class="tw:flex tw:items-center tw:justify-between tw:border-b tw:border-base-300 tw:pb-4">
+                <div><p class="tw:text-xs tw:font-bold tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Explore" %}</p><h2 class="tw:mt-1 tw:text-xl tw:font-black">{{ child.get_menu_title }}</h2></div>
+                <span class="tw:grid tw:h-11 tw:w-11 tw:place-items-center tw:rounded-2xl tw:bg-primary/10 tw:text-primary"><i class="bi bi-grid-1x2 tw:text-lg"></i></span>
+              </div>
+              <ul class="tw:grid tw:grid-cols-2 tw:gap-2 tw:pt-2">
+                <li><a class="tw:flex tw:items-center tw:gap-2 tw:rounded-xl tw:bg-base-200/70 tw:px-3 tw:py-3 tw:font-bold tw:hover:bg-primary/10" href="{{ child.get_absolute_url }}"><i class="bi bi-arrow-up-right tw:text-primary"></i>{% translate "Overview" %}</a></li>
+                {% for subchild in child.children %}
+                <li><a class="tw:flex tw:items-center tw:gap-2 tw:rounded-xl tw:px-3 tw:py-3 tw:transition-colors tw:hover:bg-primary/10 {% if subchild.selected %}tw:bg-primary/10 tw:text-primary{% endif %}" href="{{ subchild.get_absolute_url }}"><i class="bi bi-arrow-{% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %}-short tw:text-primary"></i>{{ subchild.get_menu_title }}</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </li>
+      {% else %}
+      <li><a href="{{ child.get_absolute_url }}" class="tw:rounded-full tw:px-4 tw:py-2.5 tw:transition-colors tw:hover:bg-primary/8 {% if child.selected %}tw:text-primary{% endif %}">{{ child.get_menu_title }}</a></li>
+      {% endif %}
+    {% endfor %}
+    <li class="tw:relative tw:group">
+      <button type="button" class="tw:flex tw:items-center tw:gap-2 tw:rounded-full tw:px-4 tw:py-2.5 tw:font-semibold tw:transition-colors tw:hover:bg-primary/8" aria-haspopup="true"><i class="bi bi-shield-lock tw:text-primary"></i>{% translate "ClaimsLive" %}<i class="bi bi-chevron-down tw:text-[.65rem]"></i></button>
+      <div class="tw:absolute tw:end-0 tw:top-full tw:z-50 tw:hidden tw:w-80 tw:pt-3 tw:group-hover:block tw:group-focus-within:block">
+        <div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
+          <div class="tw:d-card-body tw:gap-1 tw:p-4">
+            <p class="tw:px-3 tw:pb-2 tw:text-xs tw:font-bold tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "ClaimsLive Services" %}</p>
+            <a class="tw:flex tw:items-center tw:gap-3 tw:rounded-xl tw:px-3 tw:py-3 tw:hover:bg-primary/10" href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fIntranet%2fIntranetHome%3fType%3dIntranet&Type=Intranet" target="_blank" rel="noopener"><i class="bi bi-shield-check tw:text-primary"></i>{% translate "Claims Services" %}<i class="bi bi-box-arrow-up-right tw:ms-auto tw:text-xs"></i></a>
+            <a class="tw:flex tw:items-center tw:gap-3 tw:rounded-xl tw:px-3 tw:py-3 tw:hover:bg-primary/10" href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fProviders%2fProviderHome%3fType%3dProvider&Type=Provider" target="_blank" rel="noopener"><i class="bi bi-hospital tw:text-primary"></i>{% translate "Provider Services" %}<i class="bi bi-box-arrow-up-right tw:ms-auto tw:text-xs"></i></a>
+            <a class="tw:flex tw:items-center tw:gap-3 tw:rounded-xl tw:px-3 tw:py-3 tw:hover:bg-primary/10" href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fCorporate%2fCorporateHome%3fType%3dCorporate&Type=Corporate" target="_blank" rel="noopener"><i class="bi bi-people tw:text-primary"></i>{% translate "Member Services" %}<i class="bi bi-box-arrow-up-right tw:ms-auto tw:text-xs"></i></a>
+          </div>
+        </div>
       </div>
-    {% else %}
-      <a href="{{ child.get_absolute_url }}" class="tw:px-4 tw:py-2 tw:font-semibold tw:no-underline{% if child.selected %} tw:text-primary{% endif %}">{{ child.get_menu_title }}</a>
-    {% endif %}
-  {% endfor %}
-  <button type="button" popovertarget="glis-mega-claims" class="tw:font-semibold"><i class="bi bi-shield-lock tw:me-2"></i>{% translate "ClaimsLive" %}</button>
-  <div id="glis-mega-claims" popover class="tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-4 tw:shadow-2xl">
-    <ul class="menu tw:w-80">
-      <li class="menu-title">{% translate "ClaimsLive Services" %}</li>
-      <li><a href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fIntranet%2fIntranetHome%3fType%3dIntranet&Type=Intranet" target="_blank" rel="noopener"><i class="bi bi-shield-check"></i>{% translate "Claims Services" %}</a></li>
-      <li><a href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fProviders%2fProviderHome%3fType%3dProvider&Type=Provider" target="_blank" rel="noopener"><i class="bi bi-hospital"></i>{% translate "Provider Services" %}</a></li>
-      <li><a href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fCorporate%2fCorporateHome%3fType%3dCorporate&Type=Corporate" target="_blank" rel="noopener"><i class="bi bi-people"></i>{% translate "Member Services" %}</a></li>
-    </ul>
-  </div>
-</div>
+    </li>
+  </ul>
+</nav>

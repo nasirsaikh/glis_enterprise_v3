@@ -137,6 +137,7 @@ TEMPLATES = [{
             "django.contrib.messages.context_processors.messages",
             "sekizai.context_processors.sekizai",
             "cms.context_processors.cms_settings",
+            "apps.core.context_processors.glis_site_context",
             "apps.accounts.context_processors.auth_provider_context",
             "apps.tickets.context_processors.notification_context",
         ],

@@ -2,22 +2,22 @@
 {% get_current_language as LANGUAGE_CODE %}
 <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
   <div class="tw:mx-auto tw:max-w-3xl tw:text-center" data-reveal>
-    <span class="badge badge-primary badge-soft tw:mb-4"><i class="bi bi-download tw:me-2"></i>{% translate "Resources" %}</span>
+    <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-download tw:me-2"></i>{% translate "Resources" %}</span>
     <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Forms & downloads" %}</h2>
     <p class="tw:mt-4 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Access claim forms, reimbursement documents, provider network files and member guides." %}</p>
   </div>
-  <ul class="list tw:mx-auto tw:mt-10 tw:max-w-5xl tw:rounded-box tw:bg-base-100 tw:p-2 tw:shadow-xl">
+  <ul class="tw:d-list tw:mx-auto tw:mt-10 tw:max-w-5xl tw:rounded-box tw:bg-base-100 tw:p-2 tw:shadow-xl">
     {% for item in medical_downloads %}
-    <li class="list-row tw:rounded-box tw:border-b tw:border-base-200" data-reveal>
+    <li class="tw:d-list-row tw:rounded-box tw:border-b tw:border-base-200 tw:transition tw:hover:bg-success/5" data-reveal>
       <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-primary/10 tw:text-primary"><i class="bi bi-file-earmark-arrow-down tw:text-xl"></i></span>
-      <div class="list-col-grow">
-        <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2"><strong>{% if LANGUAGE_CODE == "ar" %}{{ item.title_ar|default:item.title_en }}{% else %}{{ item.title_en }}{% endif %}</strong><span class="badge badge-outline badge-sm">{{ item.get_document_type_display }}</span></div>
+      <div class="tw:d-list-col-grow">
+        <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2"><strong>{% if LANGUAGE_CODE == "ar" %}{{ item.title_ar|default:item.title_en }}{% else %}{{ item.title_en }}{% endif %}</strong><span class="tw:d-badge tw:d-badge-outline tw:d-badge-sm">{{ item.get_document_type_display }}</span></div>
         <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{% if LANGUAGE_CODE == "ar" %}{{ item.description_ar|default:item.description_en }}{% else %}{{ item.description_en }}{% endif %}</p>
       </div>
-      <a href="{{ item.file.url }}" class="btn btn-primary btn-sm" download><i class="bi bi-download"></i><span class="tw:hidden tw:sm:inline">{% translate "Download" %}</span></a>
+      <a href="{{ item.file.url }}" class="tw:d-btn tw:d-btn-primary tw:d-btn-sm tw:transition tw:hover:shadow-md" download><i class="bi bi-download"></i><span class="tw:hidden tw:sm:inline">{% translate "Download" %}</span></a>
     </li>
     {% empty %}
-    <li class="list-row"><span>{% translate "No downloads configured." %}</span></li>
+    <li class="tw:d-list-row"><span>{% translate "No downloads configured." %}</span></li>
     {% endfor %}
   </ul>
 </div>

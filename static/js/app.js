@@ -113,6 +113,14 @@
   };
 
   const setupMobileNav = () => {
+    const publicToggle = document.querySelector("[data-public-nav-toggle]");
+    const publicNav = document.getElementById("public-mobile-nav");
+    if (publicToggle && publicNav) {
+      publicToggle.addEventListener("click", () => {
+        publicNav.hidden = !publicNav.hidden;
+        publicToggle.setAttribute("aria-expanded", String(!publicNav.hidden));
+      });
+    }
     const dialog = document.getElementById("mobilePortalNav");
     if (!dialog || dialog.dataset.ready === "true") return;
     dialog.dataset.ready = "true";
@@ -161,9 +169,11 @@
     const applyMode = (mode) => {
       modes.forEach(value => document.body.classList.toggle("sidebar-mode-" + value, value === mode));
       button.setAttribute("aria-expanded", String(mode === "full"));
+      button.setAttribute("aria-label", mode === "full" ? "Collapse navigation" : "Expand navigation");
       button.dataset.mode = mode;
       button.querySelector("i").className = "bi " + (mode === "full" ? "bi-layout-sidebar-inset-reverse" : "bi-layout-sidebar-inset");
     };
+    // Each navigation starts icon-only, regardless of the saved account preference.
     applyMode(currentMode());
     button.addEventListener("click", async () => {
       const mode = modes[(modes.indexOf(currentMode()) + 1) % modes.length];

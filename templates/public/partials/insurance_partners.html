@@ -2,23 +2,23 @@
 {% get_current_language as LANGUAGE_CODE %}
 <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
   <div class="tw:mx-auto tw:max-w-3xl tw:text-center" data-reveal>
-    <span class="badge badge-success badge-soft tw:mb-4"><i class="bi bi-shield-check tw:me-2"></i>{% translate "Our Health Insurance Partners" %}</span>
+    <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:mb-4"><i class="bi bi-shield-check tw:me-2"></i>{% translate "Our Health Insurance Partners" %}</span>
     <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Trusted insurance partnerships" %}</h2>
     <p class="tw:mt-4 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "We collaborate with insurers to deliver connected healthcare administration and reliable member support." %}</p>
   </div>
-  <div class="carousel tw:mt-10 tw:w-full tw:gap-4 tw:rounded-box">
+  <div class="tw:d-carousel tw:mt-10 tw:w-full tw:gap-4 tw:rounded-box" aria-label="{% translate 'Insurance partners' %}">
     {% for partner in insurance_partners %}
-    <div class="carousel-item tw:w-64">
-      <div class="card tw:w-full tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg">
-        <div class="card-body tw:grid tw:min-h-40 tw:place-items-center tw:p-6">
-          {% if partner.website_url %}<a href="{{ partner.website_url }}" target="_blank" rel="noopener" class="tw:grid tw:h-full tw:w-full tw:place-items-center">{% endif %}
+    <div class="tw:d-carousel-item tw:w-64">
+      <div class="tw:d-card tw:w-full tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg tw:transition tw:duration-200 tw:hover:-translate-y-1 tw:hover:shadow-xl">
+        <div class="tw:d-card-body tw:grid tw:min-h-40 tw:place-items-center tw:p-6">
+          {% if partner.website_url %}<a href="{{ partner.website_url }}" target="_blank" rel="noopener" class="tw:grid tw:h-full tw:w-full tw:place-items-center tw:rounded-lg tw:focus-visible:outline tw:focus-visible:outline-2 tw:focus-visible:outline-offset-4 tw:focus-visible:outline-primary">{% endif %}
           {% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name_en }}" class="tw:max-h-20 tw:max-w-full tw:object-contain">{% else %}<strong class="tw:text-center">{% if LANGUAGE_CODE == "ar" %}{{ partner.name_ar|default:partner.name_en }}{% else %}{{ partner.name_en }}{% endif %}</strong>{% endif %}
           {% if partner.website_url %}</a>{% endif %}
         </div>
       </div>
     </div>
     {% empty %}
-    <div class="alert tw:w-full"><i class="bi bi-info-circle"></i><span>{% translate "No insurance partners configured." %}</span></div>
+    <div class="tw:d-alert tw:d-alert-info tw:w-full"><i class="bi bi-info-circle"></i><span>{% translate "No insurance partners configured." %}</span></div>
     {% endfor %}
   </div>
 </div>

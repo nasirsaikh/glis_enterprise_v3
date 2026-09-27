@@ -1,0 +1,31 @@
+{% load menu_tags i18n %}
+<div class="megamenu megamenu-wide tw:border tw:border-base-300 tw:bg-base-100 tw:p-1 tw:shadow-sm" id="glis-public-megamenu">
+  <span class="megamenu-active"></span>
+  {% for child in children %}
+    {% if child.children %}
+      <button type="button" popovertarget="glis-mega-{{ forloop.counter }}" class="{% if child.selected or child.ancestor %}tw:text-primary tw:font-black{% else %}tw:font-semibold{% endif %}">
+        {{ child.get_menu_title }}
+      </button>
+      <div id="glis-mega-{{ forloop.counter }}" popover class="tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-4 tw:shadow-2xl">
+        <ul class="menu tw:w-72">
+          <li class="menu-title">{{ child.get_menu_title }}</li>
+          <li><a class="tw:font-bold" href="{{ child.get_absolute_url }}">{% translate "Overview" %}</a></li>
+          {% for subchild in child.children %}
+          <li><a{% if subchild.selected %} class="menu-active"{% endif %} href="{{ subchild.get_absolute_url }}">{{ subchild.get_menu_title }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% else %}
+      <a href="{{ child.get_absolute_url }}" class="tw:px-4 tw:py-2 tw:font-semibold tw:no-underline{% if child.selected %} tw:text-primary{% endif %}">{{ child.get_menu_title }}</a>
+    {% endif %}
+  {% endfor %}
+  <button type="button" popovertarget="glis-mega-claims" class="tw:font-semibold"><i class="bi bi-shield-lock tw:me-2"></i>{% translate "ClaimsLive" %}</button>
+  <div id="glis-mega-claims" popover class="tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-4 tw:shadow-2xl">
+    <ul class="menu tw:w-80">
+      <li class="menu-title">{% translate "ClaimsLive Services" %}</li>
+      <li><a href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fIntranet%2fIntranetHome%3fType%3dIntranet&Type=Intranet" target="_blank" rel="noopener"><i class="bi bi-shield-check"></i>{% translate "Claims Services" %}</a></li>
+      <li><a href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fProviders%2fProviderHome%3fType%3dProvider&Type=Provider" target="_blank" rel="noopener"><i class="bi bi-hospital"></i>{% translate "Provider Services" %}</a></li>
+      <li><a href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fCorporate%2fCorporateHome%3fType%3dCorporate&Type=Corporate" target="_blank" rel="noopener"><i class="bi bi-people"></i>{% translate "Member Services" %}</a></li>
+    </ul>
+  </div>
+</div>

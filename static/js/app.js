@@ -470,7 +470,7 @@
         const response = await fetch("/portal/notifications/feed/", {headers: {"X-Requested-With": "XMLHttpRequest"}});
         if (!response.ok) return;
         const data = await response.json(), previous = Number(count.textContent || 0);
-        count.textContent = data.unread; count.classList.toggle("d-none", !data.unread);
+        count.textContent = data.unread; count.classList.toggle("tw:hidden", !data.unread);
         if (browserEnabled && data.unread > previous && "Notification" in window && Notification.permission === "granted" && data.items.length) new Notification(data.items[0].title, {body: data.items[0].body});
       } catch (_) { /* Network interruptions should not affect portal use. */ }
     };

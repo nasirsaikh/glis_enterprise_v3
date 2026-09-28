@@ -73,6 +73,34 @@
     </div>
   </section>
 
+  {% if tpa_services %}
+  <section id="medical-services" class="gl-tpa-section">
+    <div class="gl-home-container">
+      <div class="gl-section-heading gl-section-heading-center" data-reveal>
+        <span class="gl-section-kicker"><i class="bi bi-heart-pulse"></i>{% translate "Medical TPA Services" %}</span>
+        <h2>{% translate "Healthcare management" %} <span>{% translate "made easier" %}</span></h2>
+        <p>{% translate "Integrated health administration services connecting members, healthcare providers and insurance partners." %}</p>
+      </div>
+      <div class="gl-tpa-grid">
+        {% for service in tpa_services %}
+        <article class="gl-tpa-card" data-reveal data-tilt>
+          {% if service.image %}<figure class="tw:h-40 tw:overflow-hidden"><img class="tw:h-full tw:w-full tw:object-cover" src="{{ service.image.url }}" alt=""></figure>{% endif %}
+          <div class="gl-tpa-card-body">
+            <div class="tw:flex tw:items-start tw:justify-between tw:gap-3">
+              <span class="gl-tpa-icon"><i class="bi {{ service.icon|default:'bi-heart-pulse' }}"></i></span>
+              {% if service.is_featured %}<span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft">{% translate "Featured" %}</span>{% endif %}
+            </div>
+            <h3 class="gl-tpa-title">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3>
+            <p class="gl-tpa-copy">{% if LANGUAGE_CODE == "ar" %}{{ service.short_description_ar|default:service.short_description_en }}{% else %}{{ service.short_description_en }}{% endif %}</p>
+            {% if service.url %}<div class="tw:d-card-actions tw:mt-auto tw:pt-4"><a class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:text-secondary" href="{{ service.url }}">{% translate "Learn more" %}<i class="bi bi-arrow-up-right"></i></a></div>{% endif %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <section class="tw:bg-neutral tw:py-20 tw:text-neutral-content">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
       <div class="tw:flex tw:flex-col tw:gap-6 tw:lg:flex-row tw:lg:items-end tw:lg:justify-between" data-reveal>
@@ -114,34 +142,6 @@
             </div>
             <h3 class="tw:d-card-title tw:mt-5 tw:text-2xl tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ feature.title_ar|default:feature.title_en }}{% else %}{{ feature.title_en }}{% endif %}</h3>
             <p class="tw:leading-7 tw:text-base-content/60">{% if LANGUAGE_CODE == "ar" %}{{ feature.description_ar|default:feature.description_en }}{% else %}{{ feature.description_en }}{% endif %}</p>
-          </div>
-        </article>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-  {% endif %}
-
-  {% if tpa_services %}
-  <section id="medical-services" class="gl-tpa-section">
-    <div class="gl-home-container">
-      <div class="gl-section-heading gl-section-heading-center" data-reveal>
-        <span class="gl-section-kicker"><i class="bi bi-heart-pulse"></i>{% translate "Medical TPA Services" %}</span>
-        <h2>{% translate "Healthcare management" %} <span>{% translate "made easier" %}</span></h2>
-        <p>{% translate "Integrated health administration services connecting members, healthcare providers and insurance partners." %}</p>
-      </div>
-      <div class="gl-tpa-grid">
-        {% for service in tpa_services %}
-        <article class="gl-tpa-card" data-reveal data-tilt>
-          {% if service.image %}<figure class="tw:h-40 tw:overflow-hidden"><img class="tw:h-full tw:w-full tw:object-cover" src="{{ service.image.url }}" alt=""></figure>{% endif %}
-          <div class="gl-tpa-card-body">
-            <div class="tw:flex tw:items-start tw:justify-between tw:gap-3">
-              <span class="gl-tpa-icon"><i class="bi {{ service.icon|default:'bi-heart-pulse' }}"></i></span>
-              {% if service.is_featured %}<span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft">{% translate "Featured" %}</span>{% endif %}
-            </div>
-            <h3 class="gl-tpa-title">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3>
-            <p class="gl-tpa-copy">{% if LANGUAGE_CODE == "ar" %}{{ service.short_description_ar|default:service.short_description_en }}{% else %}{{ service.short_description_en }}{% endif %}</p>
-            {% if service.url %}<div class="tw:d-card-actions tw:mt-auto tw:pt-4"><a class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:text-secondary" href="{{ service.url }}">{% translate "Learn more" %}<i class="bi bi-arrow-up-right"></i></a></div>{% endif %}
           </div>
         </article>
         {% endfor %}

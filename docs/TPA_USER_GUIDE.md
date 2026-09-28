@@ -91,9 +91,10 @@ If your account has create authority:
 4. Enter the effective date.
 5. Enter remarks if required.
 6. Save the transaction.
-7. Add member rows manually or upload a **CSV/XLSX** spreadsheet.
-8. Review row-level validation, premium impact, success/error KPIs and the quality/error charts.
-9. Submit the draft.
+7. Add member rows manually or upload a **CSV/XLSX** spreadsheet. The transaction screen provides **Valid Sample XLSX**, **Valid Sample CSV**, **Validation Error Sample**, and an on-screen file-format reference.
+8. For any relationship other than **PRINCIPAL**, select/reference the parent principal. In manual entry the Principal list contains active principals on the policy plus principal rows already added to the same transaction. In spreadsheets use `principal_employee_id` for a principal in the same upload or `principal_member_id` for an existing TPA principal.
+9. Review row-level validation, premium impact, success/error KPIs and the quality/error charts.
+10. Submit the draft.
 
 Submission now creates/links the GLIS operational ticket **and immediately runs deterministic validation**.
 
@@ -213,3 +214,25 @@ For member additions/enrollments, processing creates the Member and active Membe
 ## 13. Recommended operational sequence
 
 **Configure organization → configure policy → configure benefit plans → grant permissions/policy access → create transaction → add/upload members → submit & validate → correct errors if any → STP/approval → process → complete/audit through linked GLIS ticket.**
+
+
+## Sample member upload format
+
+The policy-aware sample download uses these columns:
+
+| Column | Required | Example / rule |
+|---|---|---|
+| employee_id | Recommended | SAMPLE-1001 |
+| first_name | Yes | Ahmed |
+| middle_name | No | Ali |
+| last_name | Yes | Al Harthi |
+| date_of_birth | Yes | 1988-05-12 |
+| gender | Yes | Male / Female |
+| relationship | Yes | PRINCIPAL / SPOUSE / CHILD / OTHER |
+| plan_code | Yes | Must match an active plan on the selected policy |
+| national_id | Optional | TEST-CID-1001 |
+| passport_number | Optional | TEST-P-1001 |
+| principal_employee_id | Dependent only | SAMPLE-1001; may point to a principal in the same upload |
+| principal_member_id | Dependent only | Existing TPA principal member ID |
+
+A dependent without a valid parent principal is rejected with `PARENT_PRINCIPAL_REQUIRED` or `INVALID_PARENT_PRINCIPAL`.

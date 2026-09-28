@@ -137,11 +137,18 @@ def sync_from_ticket_approval(tx, actor=None):
         tx.save(update_fields=["status", "rejection_reason", "updated_at"])
         _event(tx, actor, "approval_rejected", "Linked GLIS approval rejected")
     elif tx.ticket.approval_state == "approved" and tx.status == tx.Status.PENDING_APPROVAL:
+        last_approval = (
+            tx.ticket.approvals.filter(status="approved")
+            .select_related("approver")
+            .order_by("-decided_at", "-pk")
+            .first()
+        )
+        approver = last_approval.approver if last_approval else actor
         tx.status = tx.Status.APPROVED
-        tx.approved_at = timezone.now()
-        tx.approved_by = actor
+        tx.approved_at = (last_approval.decided_at if last_approval else timezone.now())
+        tx.approved_by = approver
         tx.save(update_fields=["status", "approved_at", "approved_by", "updated_at"])
-        _event(tx, actor, "approved", "Linked GLIS approval completed")
+        _event(tx, approver or actor, "approved", "Linked GLIS approval completed")
     return tx
 
 

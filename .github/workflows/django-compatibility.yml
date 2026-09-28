@@ -1,0 +1,66 @@
+name: Django 6.1 compatibility
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "requirements.txt"
+      - "glis/**"
+      - "apps/**"
+      - "services/**"
+      - ".github/workflows/django-compatibility.yml"
+  pull_request:
+    paths:
+      - "requirements.txt"
+      - "glis/**"
+      - "apps/**"
+      - "services/**"
+      - ".github/workflows/django-compatibility.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  django-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install pinned dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Verify dependency resolver
+        run: python -m pip check
+
+      - name: Verify Python syntax
+        run: python -m compileall -q glis apps services
+
+      - name: Verify Django version
+        run: |
+          python - <<'PY'
+          import django
+          assert django.VERSION[:2] == (6, 1), django.get_version()
+          print("Django", django.get_version())
+          PY
+
+      - name: Django system checks
+        run: python -Wd manage.py check
+
+      - name: Verify migration state
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run test suite
+        run: python manage.py test

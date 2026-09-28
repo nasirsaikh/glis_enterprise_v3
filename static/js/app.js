@@ -14,6 +14,10 @@
     root.setAttribute("data-theme", resolved);
     root.setAttribute("data-bs-theme", resolved);
     document.querySelectorAll("[data-theme-select]").forEach((select) => { select.value = normalized; });
+    document.querySelectorAll("[data-theme-icon]").forEach((icon) => {
+      icon.classList.remove("bi-sun", "bi-moon-stars");
+      icon.classList.add(resolved === "dark" ? "bi-sun" : "bi-moon-stars");
+    });
     document.dispatchEvent(new CustomEvent("glis:theme", {detail: {theme: resolved}}));
   };
   const saveThemeChoice = async (choice) => {
@@ -93,6 +97,31 @@
         layer.style.setProperty("--glis-parallax-x", "0px");
         layer.style.setProperty("--glis-parallax-y", "0px");
       }));
+    });
+  };
+
+  const setupThemeToggles = (scope = document) => {
+    scope.querySelectorAll("[data-theme-toggle]:not([data-theme-toggle-ready])").forEach((button) => {
+      button.dataset.themeToggleReady = "true";
+      button.addEventListener("click", async () => {
+        const choice = resolvedTheme(preferredTheme()) === "dark" ? "light" : "dark";
+        localStorage.setItem("glis-theme", choice);
+        applyTheme(choice);
+        await saveThemeChoice(choice);
+      });
+    });
+  };
+
+  const setupPublicDropdowns = (scope = document) => {
+    const details = Array.from(scope.querySelectorAll(".glis-nav-dropdown"));
+    details.forEach((item) => {
+      if (item.dataset.dropdownReady === "true") return;
+      item.dataset.dropdownReady = "true";
+      item.addEventListener("toggle", () => {
+        if (!item.open) return;
+        details.forEach((other) => { if (other !== item) other.open = false; });
+      });
+      item.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => { item.open = false; }));
     });
   };
 
@@ -600,11 +629,16 @@
     setupRichText(scope);
     setupDropzones(scope);
     setupThemeSelects(scope);
+    setupThemeToggles(scope);
+    setupPublicDropdowns(scope);
     setupMultiSelectFilters(scope);
     setupParallaxScenes(scope);
   };
   document.addEventListener("DOMContentLoaded", () => {
     init(); setupSidebar(); setupMobileNav(); setupVanna(); setupNotifications(); setTimeout(renderCharts, 120);
+    const media = matchMedia("(prefers-color-scheme: dark)");
+    const syncSystemTheme = () => { if (preferredTheme() === "system") applyTheme("system"); };
+    if (media.addEventListener) media.addEventListener("change", syncSystemTheme);
   });
   document.addEventListener("glis:theme", () => setTimeout(renderCharts, 30));
   document.body.addEventListener("htmx:afterSwap", (event) => init(event.detail.target));

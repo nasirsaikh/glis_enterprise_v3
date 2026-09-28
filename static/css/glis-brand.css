@@ -1,0 +1,390 @@
+/* GLIS / Greenline final brand layer
+   Loaded after Tailwind + daisyUI so these brand decisions win without an npm rebuild. */
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f4f8f5;
+  --color-base-300: #dce7e0;
+  --color-base-content: #16251e;
+  --color-primary: #0b8a5f;
+  --color-primary-content: #ffffff;
+  --color-secondary: #0f9f8f;
+  --color-secondary-content: #ffffff;
+  --color-accent: #d6a42a;
+  --color-accent-content: #201702;
+  --color-neutral: #0a1c15;
+  --color-neutral-content: #f2fbf6;
+  --color-info: #0b79b7;
+  --color-info-content: #ffffff;
+  --color-success: #15965e;
+  --color-success-content: #ffffff;
+  --color-warning: #cf7b16;
+  --color-warning-content: #ffffff;
+  --color-error: #c74343;
+  --color-error-content: #ffffff;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-base-100: #10231b;
+  --color-base-200: #0b1813;
+  --color-base-300: #20382d;
+  --color-base-content: #e8f5ee;
+  --color-primary: #39d39a;
+  --color-primary-content: #052018;
+  --color-secondary: #33c8ba;
+  --color-secondary-content: #041d19;
+  --color-accent: #e7b84c;
+  --color-accent-content: #231900;
+  --color-neutral: #06110d;
+  --color-neutral-content: #effbf5;
+  --color-info: #5cb8e6;
+  --color-info-content: #08202d;
+  --color-success: #45d494;
+  --color-success-content: #052018;
+  --color-warning: #f0ae56;
+  --color-warning-content: #2d1900;
+  --color-error: #ef7777;
+  --color-error-content: #2a0707;
+}
+
+html[data-theme="light"] body,
+html[data-theme="dark"] body {
+  background: var(--color-base-100) !important;
+  color: var(--color-base-content) !important;
+}
+
+/* Public header */
+.glis-topbar {
+  background: #07140f !important;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.glis-public-nav-shell {
+  background: color-mix(in oklab, var(--color-base-100) 92%, transparent) !important;
+  border-bottom: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent) !important;
+  box-shadow: 0 12px 38px color-mix(in oklab, var(--color-neutral) 8%, transparent);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
+html[data-theme="dark"] .glis-public-nav-shell {
+  background: color-mix(in oklab, var(--color-base-100) 88%, #06110d) !important;
+  border-bottom-color: color-mix(in oklab, var(--color-primary) 16%, var(--color-base-300)) !important;
+}
+.glis-public-navbar {
+  min-height: 4.65rem;
+}
+.glis-public-navbar > a:first-child {
+  border-radius: 1rem;
+}
+.glis-public-navbar nav > ul {
+  margin: 0;
+}
+.glis-public-navbar nav > ul > li {
+  position: relative;
+}
+.glis-public-navbar nav > ul > li > a,
+.glis-public-navbar .glis-nav-trigger {
+  color: color-mix(in oklab, var(--color-base-content) 78%, var(--color-primary)) !important;
+}
+.glis-public-navbar nav > ul > li > a:hover,
+.glis-public-navbar .glis-nav-trigger:hover,
+.glis-public-navbar details[open] > .glis-nav-trigger {
+  color: var(--color-primary) !important;
+  background: color-mix(in oklab, var(--color-primary) 9%, transparent) !important;
+}
+
+.glis-nav-dropdown {
+  position: relative;
+}
+.glis-nav-dropdown > summary {
+  list-style: none !important;
+  cursor: pointer;
+}
+.glis-nav-dropdown > summary::-webkit-details-marker {
+  display: none !important;
+}
+.glis-nav-dropdown > summary::marker {
+  content: "" !important;
+  display: none !important;
+}
+.glis-nav-dropdown .glis-nav-chevron {
+  transition: transform .18s ease;
+}
+.glis-nav-dropdown[open] .glis-nav-chevron {
+  transform: rotate(180deg);
+}
+.glis-nav-panel {
+  position: absolute !important;
+  inset-block-start: calc(100% + .65rem) !important;
+  inset-inline-start: 0 !important;
+  margin: 0 !important;
+  min-width: 25rem;
+  max-width: min(36rem, 92vw);
+  background: var(--color-base-100) !important;
+  color: var(--color-base-content) !important;
+  border: 1px solid var(--color-base-300) !important;
+  border-radius: 1.15rem !important;
+  box-shadow: 0 24px 70px color-mix(in oklab, var(--color-neutral) 18%, transparent) !important;
+  overflow: hidden;
+  transform-origin: top;
+  animation: glis-nav-open .16s ease-out both;
+}
+.glis-nav-dropdown.glis-nav-dropdown-end .glis-nav-panel {
+  inset-inline-start: auto !important;
+  inset-inline-end: 0 !important;
+  min-width: 19rem;
+}
+.glis-nav-panel .tw\:d-menu a {
+  border-radius: .8rem;
+}
+.glis-nav-panel .tw\:d-menu a:hover {
+  background: color-mix(in oklab, var(--color-primary) 9%, transparent) !important;
+  color: var(--color-primary) !important;
+}
+
+/* Hero: fix daisy card position overrides and give the composition real depth. */
+.glis-brand-hero {
+  background:
+    radial-gradient(circle at 12% 20%, color-mix(in oklab, var(--color-primary) 14%, transparent), transparent 30rem),
+    radial-gradient(circle at 88% 12%, color-mix(in oklab, var(--color-secondary) 10%, transparent), transparent 26rem),
+    linear-gradient(145deg, var(--color-base-100), var(--color-base-200)) !important;
+}
+html[data-theme="dark"] .glis-brand-hero {
+  background:
+    radial-gradient(circle at 12% 18%, color-mix(in oklab, var(--color-primary) 16%, transparent), transparent 30rem),
+    radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--color-secondary) 10%, transparent), transparent 28rem),
+    linear-gradient(145deg, #0a1712, var(--color-base-200)) !important;
+}
+.glis-brand-mesh {
+  opacity: .34;
+}
+.glis-brand-title {
+  text-wrap: balance;
+  text-shadow: none;
+}
+.glis-trust-chip {
+  min-height: 3.05rem;
+  background: color-mix(in oklab, var(--color-base-100) 85%, transparent) !important;
+  border: 1px solid color-mix(in oklab, var(--color-base-content) 9%, transparent) !important;
+}
+.glis-hero-scene {
+  min-height: 35rem !important;
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+.glis-hero-scene .glis-hero-visual {
+  position: relative !important;
+  z-index: 3 !important;
+  width: min(100%, 31rem) !important;
+  border-radius: 1.65rem !important;
+  overflow: hidden;
+  box-shadow: 0 34px 90px color-mix(in oklab, var(--color-neutral) 20%, transparent) !important;
+}
+.glis-hero-scene .glis-float-card {
+  position: absolute !important;
+  z-index: 6 !important;
+  width: 12.25rem !important;
+  border-radius: 1.2rem !important;
+  translate: var(--glis-parallax-x,0px) var(--glis-parallax-y,0px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.glis-hero-scene .glis-float-card-one {
+  inset-inline-start: -2.75rem !important;
+  inset-block-start: 5rem !important;
+}
+.glis-hero-scene .glis-float-card-two {
+  inset-inline-end: -2.8rem !important;
+  inset-block-start: 10.5rem !important;
+}
+.glis-hero-scene .glis-float-card-three {
+  inset-inline-end: .75rem !important;
+  inset-block-end: 1.7rem !important;
+}
+.glis-hero-orbit {
+  pointer-events: none;
+}
+.glis-service-chip,
+.glis-card-lift {
+  will-change: transform;
+}
+.glis-service-chip:hover {
+  transform: translateY(-5px);
+}
+.glis-card-lift:not(.glis-tilt):hover {
+  transform: translateY(-6px);
+}
+
+/* Keep the journey compact and brand-led rather than purple. */
+.glis-journey-section {
+  background:
+    linear-gradient(180deg, var(--color-base-100), color-mix(in oklab, var(--color-base-200) 72%, var(--color-base-100))) !important;
+}
+.glis-journey-section .tw\:d-timeline hr {
+  background: color-mix(in oklab, var(--color-primary) 45%, var(--color-base-300)) !important;
+}
+.glis-journey-section .tw\:d-timeline-middle > span {
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-primary) 12%, transparent);
+}
+
+/* CTA */
+.glis-cta-panel {
+  background:
+    radial-gradient(circle at 12% 24%, color-mix(in oklab, var(--color-primary) 12%, transparent), transparent 20rem),
+    radial-gradient(circle at 88% 70%, color-mix(in oklab, var(--color-secondary) 9%, transparent), transparent 20rem),
+    var(--color-base-100) !important;
+  border-color: color-mix(in oklab, var(--color-primary) 22%, var(--color-base-300)) !important;
+}
+
+/* Footer */
+.glis-site-footer {
+  position: relative;
+  background:
+    radial-gradient(circle at 15% -20%, rgba(35, 190, 128, .16), transparent 27rem),
+    linear-gradient(145deg, #07150f 0%, #091d15 54%, #07140f 100%) !important;
+  color: #edf8f2 !important;
+  overflow: hidden;
+}
+.glis-footer-accent {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #24c486 20%, #45d9a1 50%, #24c486 80%, transparent);
+}
+.glis-footer-heading {
+  margin: 0;
+  color: #f4fbf7;
+  font-size: .75rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.glis-footer-links {
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: .75rem;
+}
+.glis-footer-links a,
+.glis-site-footer a {
+  color: rgba(237,248,242,.64);
+  text-decoration: none;
+  transition: color .18s ease, transform .18s ease;
+}
+.glis-footer-links a:hover,
+.glis-site-footer a:hover {
+  color: #62dda8;
+}
+.glis-footer-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: .7rem;
+  color: #54d9a2;
+  background: rgba(84,217,162,.08);
+  border: 1px solid rgba(84,217,162,.12);
+}
+
+/* Portal: keep the nav and cards themed in both modes. */
+.glis-portal-shell {
+  background:
+    radial-gradient(circle at 92% 0%, color-mix(in oklab, var(--color-primary) 9%, transparent), transparent 32rem),
+    var(--color-base-200) !important;
+  color: var(--color-base-content) !important;
+}
+.glis-portal-header {
+  background: color-mix(in oklab, var(--color-base-100) 88%, transparent) !important;
+  border-color: var(--color-base-300) !important;
+}
+.glis-portal-sidebar {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(51,211,154,.15), transparent 18rem),
+    linear-gradient(165deg, #0a291d, #071b14 64%, #06150f) !important;
+}
+.glis-portal-card,
+.glis-portal-hero,
+.glis-command-card {
+  background-color: var(--color-base-100) !important;
+}
+html[data-theme="dark"] .glis-portal-card,
+html[data-theme="dark"] .glis-portal-hero,
+html[data-theme="dark"] .glis-command-card {
+  border-color: color-mix(in oklab, var(--color-base-content) 11%, transparent) !important;
+}
+
+/* Auth */
+.glis-auth-shell {
+  background:
+    radial-gradient(circle at 12% 18%, color-mix(in oklab, var(--color-primary) 11%, transparent), transparent 24rem),
+    radial-gradient(circle at 90% 75%, color-mix(in oklab, var(--color-secondary) 8%, transparent), transparent 24rem),
+    var(--color-base-200) !important;
+}
+.glis-auth-card {
+  background: color-mix(in oklab, var(--color-base-100) 94%, transparent) !important;
+}
+
+/* The public site still loads Bootstrap for legacy CMS fragments. Keep it from repainting the brand shell. */
+.public-shell .glis-public-nav-shell,
+.public-shell .glis-site-footer,
+.public-shell .glis-brand-hero,
+.public-shell .glis-cta-panel {
+  color: inherit;
+}
+.public-shell .tw\:d-btn-primary {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary-content) !important;
+}
+.public-shell .tw\:d-btn-outline {
+  border-color: color-mix(in oklab, var(--color-base-content) 45%, transparent);
+}
+.public-shell .tw\:d-badge-primary {
+  --badge-color: var(--color-primary);
+}
+
+/* Compact mobile behavior */
+@media (max-width: 767.98px) {
+  .glis-hero-scene {
+    min-height: 28rem !important;
+  }
+  .glis-hero-scene .glis-hero-visual {
+    width: min(100%, 27rem) !important;
+  }
+  .glis-hero-scene .glis-float-card {
+    width: 10.5rem !important;
+  }
+  .glis-hero-scene .glis-float-card-one {
+    inset-inline-start: 0 !important;
+    inset-block-start: 1rem !important;
+  }
+  .glis-hero-scene .glis-float-card-two {
+    display: none !important;
+  }
+  .glis-hero-scene .glis-float-card-three {
+    inset-inline-end: 0 !important;
+    inset-block-end: .75rem !important;
+  }
+  .glis-nav-panel {
+    min-width: min(25rem, 90vw);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glis-hero-orbit,
+  .glis-float-card,
+  .glis-service-chip,
+  .glis-card-lift,
+  .glis-command-card {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    translate: none !important;
+  }
+}
+
+@keyframes glis-nav-open {
+  from { opacity: 0; transform: translateY(-5px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import BenefitPlan, Member, MemberAction, MemberPolicyEnrollment, MemberTransaction, Policy, PolicyAccess, TPAOrganization, TransactionEvent
+from .models import BenefitPlan, Member, MemberAction, MemberPolicyEnrollment, MemberTransaction, Policy, PolicyAccess, SourceDocument, InboundEmail, TPAOrganization, TransactionEvent
 
 @admin.register(TPAOrganization)
 class OrganizationAdmin(admin.ModelAdmin):
@@ -28,3 +28,18 @@ class PolicyAccessAdmin(admin.ModelAdmin):
 @admin.register(TransactionEvent)
 class EventAdmin(admin.ModelAdmin):
     list_display=("created_at","transaction","event_type","actor","summary"); list_filter=("event_type",); readonly_fields=("transaction","actor","event_type","summary","details","created_at","updated_at")
+
+
+@admin.register(SourceDocument)
+class SourceDocumentAdmin(admin.ModelAdmin):
+    list_display=("original_name","transaction","document_kind","extraction_method","processed","extraction_confidence")
+    list_filter=("processed","document_kind","extraction_method")
+    search_fields=("original_name","transaction__reference","source_hash")
+    readonly_fields=("source_hash","extracted_payload","processing_error")
+
+@admin.register(InboundEmail)
+class InboundEmailAdmin(admin.ModelAdmin):
+    list_display=("received_at","sender","subject","provider","processing_state","transaction")
+    list_filter=("provider","processing_state")
+    search_fields=("provider_message_id","sender","recipient","subject","transaction__reference")
+    readonly_fields=("provider_message_id","body_text","attachment_metadata","processing_error")

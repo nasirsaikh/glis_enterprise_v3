@@ -206,7 +206,7 @@ html[data-theme="light"] .gl-public-secondary { color: var(--gl-green-deep); bor
   background: transparent!important;
   color: var(--gl-text)!important;
   font-size: .9rem!important;
-  font-weight: 750!important;
+  font-weight: 600!important;
   text-decoration: none!important;
   box-shadow: none!important;
 }
@@ -368,7 +368,7 @@ html[data-theme="light"] .gl-btn-primary { background:var(--gl-green); color:#ff
 .gl-quick-card:hover { transform:translateY(-5px); border-color:color-mix(in oklab,var(--gl-green-bright) 34%,var(--gl-border)); }
 .gl-quick-card > span { width:56px; height:56px; display:grid; place-items:center; border-radius:18px; background:color-mix(in oklab,var(--gl-green-bright) 12%,transparent)!important; color:var(--gl-green-bright)!important; font-size:1.35rem; }
 html[data-theme="light"] .gl-quick-card > span { color:var(--gl-green)!important; }
-.gl-quick-card a { font-weight:850; text-decoration:none; color:var(--gl-text); }
+.gl-quick-card a { font-weight:700; text-decoration:none; color:var(--gl-text); }
 .gl-quick-card div div { color:var(--gl-muted)!important; }
 
 /* Section headings */
@@ -437,7 +437,7 @@ html[data-theme="light"] .gl-section-heading h2 span {
 html[data-theme="light"] .gl-service-icon { color:var(--gl-green); }
 .gl-service-title { margin:1.4rem 0 .75rem; font-size:1.35rem; line-height:1.2; font-weight:700; color:var(--gl-text); }
 .gl-service-copy { color:var(--gl-muted); line-height:1.65; font-size:.95rem; }
-.gl-service-action { margin-top:auto; padding-top:1.5rem; color:var(--gl-green-bright); font-weight:850; display:flex; align-items:center; gap:.65rem; }
+.gl-service-action { margin-top:auto; padding-top:1.5rem; color:var(--gl-green-bright); font-weight:700; display:flex; align-items:center; gap:.65rem; }
 html[data-theme="light"] .gl-service-action { color:var(--gl-green); }
 
 /* TPA cards */

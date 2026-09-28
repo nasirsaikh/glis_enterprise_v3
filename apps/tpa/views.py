@@ -151,6 +151,17 @@ def transaction_detail(request, reference):
         tx = sync_from_ticket_approval(tx, actor=request.user)
 
     actions = list(tx.member_actions.all().order_by("row_number", "pk"))
+    for action in actions:
+        display_data = {
+            **(action.submitted_data or {}),
+            **(action.extracted_data or {}),
+            **(action.corrected_data or {}),
+        }
+        action.display_first_name = display_data.get("first_name") or "—"
+        action.display_last_name = display_data.get("last_name") or ""
+        action.display_employee_id = display_data.get("employee_id") or "—"
+        action.display_plan_code = display_data.get("plan_code") or "—"
+
     valid_count = sum(a.validation_status == MemberAction.Result.VALID for a in actions)
     warning_count = sum(a.validation_status == MemberAction.Result.WARNING for a in actions)
     error_count = sum(a.validation_status == MemberAction.Result.ERROR for a in actions)

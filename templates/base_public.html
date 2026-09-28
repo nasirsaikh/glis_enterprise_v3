@@ -1,7 +1,7 @@
 {% load static i18n cms_tags menu_tags sekizai_tags %}
 {% get_current_language as LANGUAGE_CODE %}
 <!doctype html>
-<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}" data-bs-theme="light" data-theme="glis">
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}" data-bs-theme="light" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -57,11 +57,9 @@
           {% show_menu 0 100 100 100 "cms/includes/public_megamenu.html" %}
         </div>
         <div class="tw:ms-auto tw:flex tw:shrink-0 tw:items-center tw:gap-1.5">
-          {% if glis_site.public_theme_switcher_enabled or not glis_site %}
-          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" type="button" x-on:click="toggleTheme" aria-label="{% translate 'Change theme' %}" title="{% translate 'Theme' %}">
+          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" type="button" x-on:click="toggleTheme" aria-label="{% translate 'Toggle light and dark mode' %}" title="{% translate 'Light / dark mode' %}">
             <i class="bi tw:text-lg" x-bind:class="themeIcon"></i>
           </button>
-          {% endif %}
           <form action="{% url 'switch_language' %}" method="post" class="tw:m-0">
             {% csrf_token %}
             <input name="next" type="hidden" value="{{ request.get_full_path }}">

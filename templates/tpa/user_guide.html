@@ -1,0 +1,150 @@
+{% extends "base_portal.html" %}{% load i18n %}
+{% block title %}{% translate "TPA User Guide" %}{% endblock %}
+{% block content %}
+<div class="tw:mx-auto tw:max-w-6xl tw:space-y-6">
+  <section class="tw:d-card tw:overflow-hidden tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl">
+    <div class="tw:d-card-body tw:gap-5">
+      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-4">
+        <div>
+          <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">{% translate "TPA Operations" %}</span>
+          <h1 class="tw:mt-3 tw:text-4xl tw:font-black">{% translate "TPA Member Management — User Guide" %}</h1>
+          <p class="tw:mt-2 tw:max-w-3xl tw:text-base-content/60">{% translate "Use this workspace to manage policy-scoped member enrollment and endorsement transactions while GLIS keeps the operational ticket, approval trail and audit history connected." %}</p>
+        </div>
+        <a class="tw:d-btn tw:d-btn-outline tw:rounded-full" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "Back to TPA Dashboard" %}</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="tw:grid tw:gap-6 tw:lg:grid-cols-[18rem_minmax(0,1fr)]">
+    <aside class="tw:h-fit tw:lg:sticky tw:lg:top-24">
+      <div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+        <div class="tw:d-card-body tw:p-4">
+          <h2 class="tw:font-black">{% translate "Guide contents" %}</h2>
+          <ul class="tw:d-menu tw:mt-2 tw:w-full tw:p-0">
+            <li><a href="#access"><i class="bi bi-shield-check"></i>{% translate "Access & permissions" %}</a></li>
+            <li><a href="#setup"><i class="bi bi-sliders"></i>{% translate "Initial setup" %}</a></li>
+            <li><a href="#dashboard"><i class="bi bi-grid-1x2"></i>{% translate "Dashboard" %}</a></li>
+            <li><a href="#transaction"><i class="bi bi-arrow-left-right"></i>{% translate "Create an endorsement" %}</a></li>
+            <li><a href="#statuses"><i class="bi bi-signpost-split"></i>{% translate "Statuses" %}</a></li>
+            <li><a href="#premium"><i class="bi bi-cash-stack"></i>{% translate "Premium calculation" %}</a></li>
+            <li><a href="#ai"><i class="bi bi-stars"></i>{% translate "AI & document intake" %}</a></li>
+            <li><a href="#email"><i class="bi bi-envelope"></i>{% translate "Email intake" %}</a></li>
+            <li><a href="#admin"><i class="bi bi-gear"></i>{% translate "Administrator checklist" %}</a></li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <div class="tw:space-y-6">
+      <section id="access" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+        <div class="tw:d-card-body">
+          <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-shield-check tw:text-primary"></i>{% translate "1. Access and permissions" %}</h2>
+          <p>{% translate "The TPA menu is shown only when your account is authorized. Authorization can come from a TPA Django permission, superuser access, or an active policy-level Policy Access record." %}</p>
+          <div class="tw:overflow-x-auto">
+            <table class="tw:d-table tw:d-table-sm">
+              <thead><tr><th>{% translate "Permission" %}</th><th>{% translate "Purpose" %}</th></tr></thead>
+              <tbody>
+                <tr><td><code>tpa.view_tpa_dashboard</code></td><td>{% translate "Open the TPA workspace." %}</td></tr>
+                <tr><td><code>tpa.create_enrollment</code></td><td>{% translate "Create enrollment transactions." %}</td></tr>
+                <tr><td><code>tpa.create_endorsement</code></td><td>{% translate "Create member endorsement transactions." %}</td></tr>
+                <tr><td><code>tpa.approve_endorsement</code></td><td>{% translate "Approval authority for endorsement workflow." %}</td></tr>
+                <tr><td><code>tpa.process_endorsement</code></td><td>{% translate "TPA processing authority." %}</td></tr>
+                <tr><td><code>tpa.configure_tpa</code></td><td>{% translate "Administrative access across TPA configuration." %}</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="tw:d-alert tw:d-alert-info"><i class="bi bi-info-circle"></i><span>{% translate "Policy Access additionally limits which policies and transactions a user can see. A menu permission does not automatically grant access to every policy." %}</span></div>
+        </div>
+      </section>
+
+      <section id="setup" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+        <div class="tw:d-card-body">
+          <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-sliders tw:text-primary"></i>{% translate "2. Initial setup" %}</h2>
+          <ol class="tw:list-decimal tw:space-y-3 tw:ps-6">
+            <li>{% translate "Create the Sponsor/Corporate organization and Insurance Company in TPA Organizations." %}</li>
+            <li>{% translate "Create the Policy with its start/expiry dates, status, backdating limit, STP setting and premium setting." %}</li>
+            <li>{% translate "Create one or more Benefit Plans under the policy and configure annual premium, sum insured and premium method." %}</li>
+            <li>{% translate "Create Policy Access records for users who should see or act on that policy." %}</li>
+            <li>{% translate "Assign the relevant TPA permissions to users or groups for dashboard, creation, approval, processing and configuration." %}</li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="dashboard" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+        <div class="tw:d-card-body">
+          <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-grid-1x2 tw:text-primary"></i>{% translate "3. Using the TPA dashboard" %}</h2>
+          <p>{% translate "Open TPA Member Management from the portal sidebar. The dashboard summarizes Active Sponsors, Active Policies, Active Members, Open Transactions, Needs Information, Pending Approval and STP Rate for records you are authorized to see." %}</p>
+          <p>{% translate "Recent Transactions provides the TPA reference, linked GLIS ticket, sponsor, policy, transaction type, source, validation score, STP eligibility and current status." %}</p>
+        </div>
+      </section>
+
+      <section id="transaction" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+        <div class="tw:d-card-body">
+          <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-arrow-left-right tw:text-primary"></i>{% translate "4. Create and submit an endorsement" %}</h2>
+          <ol class="tw:list-decimal tw:space-y-3 tw:ps-6">
+            <li>{% translate "Select New Endorsement. The button appears only when your account can create TPA transactions." %}</li>
+            <li>{% translate "Choose a policy from the policies available to your account." %}</li>
+            <li>{% translate "Choose the transaction type: New Policy Enrollment, Member Addition, Member Termination, Member Deletion/Void or Policy Cancellation." %}</li>
+            <li>{% translate "Enter the requested effective date and remarks, then save the draft." %}</li>
+            <li>{% translate "Review the generated TPA transaction reference and transaction details." %}</li>
+            <li>{% translate "Submit the draft. GLIS moves it to Pending Validation and creates/links the operational GLIS ticket." %}</li>
+            <li>{% translate "Use the linked GLIS ticket for SLA, approval, assignment, notifications and operational collaboration." %}</li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="statuses" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+        <div class="tw:d-card-body">
+          <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-signpost-split tw:text-primary"></i>{% translate "5. Transaction statuses" %}</h2>
+          <div class="tw:grid tw:gap-3 tw:sm:grid-cols-2">
+            <div class="tw:d-alert"><span><strong>{% translate "Draft" %}</strong> — {% translate "Saved but not yet submitted." %}</span></div>
+            <div class="tw:d-alert"><span><strong>{% translate "Pending Validation" %}</strong> — {% translate "Submitted for deterministic validation." %}</span></div>
+            <div class="tw:d-alert"><span><strong>{% translate "Needs Information" %}</strong> — {% translate "More or corrected information is required." %}</span></div>
+            <div class="tw:d-alert"><span><strong>{% translate "Pending Approval" %}</strong> — {% translate "Waiting for configured approval." %}</span></div>
+            <div class="tw:d-alert"><span><strong>{% translate "Auto Approved" %}</strong> — {% translate "Eligible for rules-based straight-through approval." %}</span></div>
+            <div class="tw:d-alert"><span><strong>{% translate "Processed" %}</strong> — {% translate "Operational processing completed." %}</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="premium" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+        <div class="tw:d-card-body">
+          <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-cash-stack tw:text-primary"></i>{% translate "6. Premium calculation" %}</h2>
+          <p>{% translate "Premium calculation is deterministic. Benefit Plan configuration supports Full, Lump Sum, Partial and Prorata calculation methods. Monetary values are calculated with Decimal arithmetic and rounded to three decimal places for OMR-style precision." %}</p>
+          <p>{% translate "The transaction and member action retain calculation snapshots so the basis used for the amount can be audited later." %}</p>
+        </div>
+      </section>
+
+      <section id="ai" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+        <div class="tw:d-card-body">
+          <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-stars tw:text-primary"></i>{% translate "7. AI and document intake" %}</h2>
+          <p>{% translate "The TPA data layer includes source-document tracking and the shared GLIS AI configuration supports text/vision provider selection, extraction profiles, training examples and a strict canonical member JSON contract." %}</p>
+          <div class="tw:d-alert tw:d-alert-warning"><i class="bi bi-cone-striped"></i><span>{% translate "The current portal screen does not yet expose the full upload/OCR correction workspace. Configure providers in Administration only when the corresponding intake workflow is enabled." %}</span></div>
+        </div>
+      </section>
+
+      <section id="email" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+        <div class="tw:d-card-body">
+          <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-envelope tw:text-primary"></i>{% translate "8. Email intake" %}</h2>
+          <p>{% translate "Inbound email records are designed to retain provider message ID, sender, recipient, subject, received time, body, attachment metadata, processing state and linked TPA transaction. Duplicate provider message IDs are prevented." %}</p>
+          <div class="tw:d-alert tw:d-alert-warning"><i class="bi bi-cone-striped"></i><span>{% translate "Automatic mailbox polling and attachment-to-transaction processing are foundation components at this stage; they are not yet a complete end-user portal workflow." %}</span></div>
+        </div>
+      </section>
+
+      <section id="admin" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+        <div class="tw:d-card-body">
+          <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-gear tw:text-primary"></i>{% translate "9. Administrator checklist" %}</h2>
+          <ul class="tw:list-disc tw:space-y-2 tw:ps-6">
+            <li>{% translate "Confirm organizations, policies and benefit plans are active and dated correctly." %}</li>
+            <li>{% translate "Assign TPA permissions through Django users/groups." %}</li>
+            <li>{% translate "Create Policy Access for the correct user and organization." %}</li>
+            <li>{% translate "Configure policy backdating, STP and premium rules." %}</li>
+            <li>{% translate "Configure AI providers and extraction profiles only for enabled document workflows." %}</li>
+            <li>{% translate "Use the linked GLIS ticket to monitor SLA, approvals, assignment, notifications and audit events." %}</li>
+          </ul>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

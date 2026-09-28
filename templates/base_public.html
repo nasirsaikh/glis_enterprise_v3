@@ -24,6 +24,7 @@
   <link href="{% static 'css/glis-tailwind.css' %}" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
   <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css">
+  <link href="{% static 'css/glis-brand.css' %}" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@10.10.0/ol.css">
 
   {% render_block "css" %}
@@ -35,7 +36,7 @@
   {% cms_toolbar %}
   <a class="skip-link" href="#main-content">{% translate "Skip to content" %}</a>
 
-  <div class="tw:hidden tw:lg:block tw:bg-neutral tw:text-neutral-content">
+  <div class="glis-topbar tw:hidden tw:lg:block tw:bg-neutral tw:text-neutral-content">
     <div class="tw:mx-auto tw:flex tw:max-w-7xl tw:items-center tw:justify-between tw:px-6 tw:py-2 tw:text-xs">
       <span class="tw:flex tw:items-center tw:gap-2 tw:font-semibold tw:tracking-wide"><i class="bi bi-shield-check tw:text-success"></i>{% translate "Secure insurance service coordination" %}</span>
       <div class="tw:flex tw:items-center tw:gap-6 tw:text-neutral-content/75">
@@ -57,8 +58,8 @@
           {% show_menu 0 100 100 100 "cms/includes/public_megamenu.html" %}
         </div>
         <div class="tw:ms-auto tw:flex tw:shrink-0 tw:items-center tw:gap-1.5">
-          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" type="button" x-on:click="toggleTheme" aria-label="{% translate 'Toggle light and dark mode' %}" title="{% translate 'Light / dark mode' %}">
-            <i class="bi tw:text-lg" x-bind:class="themeIcon"></i>
+          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" type="button" data-theme-toggle aria-label="{% translate 'Toggle light and dark mode' %}" title="{% translate 'Light / dark mode' %}">
+            <i class="bi bi-moon-stars tw:text-lg" data-theme-icon></i>
           </button>
           <form action="{% url 'switch_language' %}" method="post" class="tw:m-0">
             {% csrf_token %}
@@ -81,7 +82,7 @@
               <li class="menu-title"><span>{{ user.get_full_name|default:user.email }}</span></li>
               <li><a href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Open portal" %}</a></li>
               <li><a href="{% url 'accounts:profile' %}"><i class="bi bi-person-gear"></i>{% translate "Profile & security" %}</a></li>
-              <li><form action="{% url 'account_logout' %}" method="post">{% csrf_token %}<button class="tw:w-full tw:text-error" type="submit"><i class="bi bi-box-arrow-right"></i>{% translate "Sign out" %}</button></form></li>
+              <li><form action="{% url 'account_logout' %}" method="post">{% csrf_token %}<button class="tw:d-btn tw:d-btn-ghost tw:w-full tw:justify-start tw:text-error" type="submit"><i class="bi bi-box-arrow-right"></i>{% translate "Sign out" %}</button></form></li>
             </ul>
           </details>
           {% else %}
@@ -132,47 +133,60 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer id="contact" class="glis-brand-footer tw:relative tw:overflow-hidden tw:border-t tw:border-base-300 tw:bg-base-200">
-    <div class="aura aura-dual aura-glow tw:absolute tw:inset-0 tw:pointer-events-none" aria-hidden="true"></div>
-    <div class="tw:relative tw:mx-auto tw:grid tw:max-w-7xl tw:gap-10 tw:px-6 tw:py-16 tw:md:grid-cols-2 tw:lg:grid-cols-12">
-      <div class="tw:lg:col-span-5">
-        {% if glis_site.logo %}<img class="tw:h-12 tw:w-auto tw:max-w-32 tw:object-contain" src="/api/v1/site-logo/" alt="">{% endif %}
-        <strong class="tw:text-2xl tw:font-black tw:text-primary">{{ glis_site.short_name|default:'GLIS' }}</strong>
-        <p class="tw:mt-5 tw:max-w-md tw:text-base-content/65 tw:leading-7">{% translate "A secure service layer connecting customers, providers, insurers and support teams across every request." %}</p>
-        <div class="tw:mt-6 tw:flex tw:flex-wrap tw:gap-2">
-          <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:gap-2"><span class="tw:d-status tw:d-status-success"></span>{% translate "Service online" %}</span>
-          <span class="tw:d-badge tw:d-badge-outline"><i class="bi bi-shield-check"></i>{% translate "Privacy-aware" %}</span>
+  <footer id="contact" class="glis-site-footer tw:bg-neutral tw:text-neutral-content">
+    <div class="glis-footer-accent" aria-hidden="true"></div>
+    <div class="tw:mx-auto tw:max-w-7xl tw:px-6 tw:py-14 tw:lg:py-16">
+      <div class="tw:grid tw:gap-10 tw:md:grid-cols-2 tw:lg:grid-cols-12">
+        <div class="tw:lg:col-span-5">
+          <a class="tw:inline-flex tw:items-center tw:gap-3 tw:no-underline" href="/">
+            {% if glis_site.logo %}
+            <span class="tw:grid tw:h-14 tw:w-28 tw:place-items-center tw:rounded-2xl tw:bg-white tw:p-2"><img class="tw:max-h-10 tw:max-w-24 tw:object-contain" src="/api/v1/site-logo/" alt=""></span>
+            {% else %}
+            <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-success tw:text-success-content"><i class="bi bi-shield-check tw:text-xl"></i></span>
+            {% endif %}
+            <span><strong class="tw:block tw:text-xl tw:font-black tw:text-neutral-content">{{ glis_site.short_name|default:'GLIS' }}</strong><small class="tw:text-neutral-content/45">{% translate "Greenline Insurance Services" %}</small></span>
+          </a>
+          <p class="tw:mt-5 tw:max-w-lg tw:text-sm tw:leading-7 tw:text-neutral-content/60">{% translate "A secure digital service layer connecting customers, healthcare providers, insurers and support teams across every request." %}</p>
+          <div class="tw:mt-5 tw:flex tw:flex-wrap tw:gap-2">
+            <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:gap-2"><span class="tw:d-status tw:d-status-success"></span>{% translate "Service online" %}</span>
+            <span class="tw:d-badge tw:border-neutral-content/15 tw:bg-neutral-content/5 tw:text-neutral-content/65"><i class="bi bi-shield-lock"></i>{% translate "Secure access" %}</span>
+          </div>
         </div>
-      </div>
 
-      <div class="tw:lg:col-span-2">
-        <h2 class="tw:text-sm tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Company" %}</h2>
-        <ul class="tw:mt-5 tw:space-y-3">{% show_menu 0 1 0 1 "cms/includes/footer_menu.html" %}</ul>
-      </div>
+        <div class="tw:lg:col-span-2">
+          <h2 class="glis-footer-heading">{% translate "Company" %}</h2>
+          <ul class="glis-footer-links">{% show_menu 0 1 0 1 "cms/includes/footer_menu.html" %}</ul>
+        </div>
 
-      <div class="tw:lg:col-span-2">
-        <h2 class="tw:text-sm tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Support" %}</h2>
-        <ul class="tw:mt-5 tw:space-y-3">
-          <li><a class="tw:link tw:link-hover tw:text-base-content/70" href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}</a></li>
-          <li><a class="tw:link tw:link-hover tw:text-base-content/70" href="{% url 'portal:ticket_list' %}">{% translate "Track requests" %}</a></li>
-          <li><a class="tw:link tw:link-hover tw:text-base-content/70" href="{% url 'knowledge:list' %}">{% translate "Knowledge Base" %}</a></li>
-        </ul>
-      </div>
+        <div class="tw:lg:col-span-2">
+          <h2 class="glis-footer-heading">{% translate "Support" %}</h2>
+          <ul class="glis-footer-links">
+            <li><a href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}</a></li>
+            <li><a href="{% url 'portal:ticket_list' %}">{% translate "Track requests" %}</a></li>
+            <li><a href="{% url 'knowledge:list' %}">{% translate "Knowledge Base" %}</a></li>
+            {% if user.is_authenticated %}
+            <li><a href="{% url 'portal:dashboard' %}">{% translate "Open portal" %}</a></li>
+            {% else %}
+            <li><a href="{% url 'account_login' %}">{% translate "Sign in" %}</a></li>
+            {% endif %}
+          </ul>
+        </div>
 
-      <div class="tw:lg:col-span-3">
-        <h2 class="tw:text-sm tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Contact" %}</h2>
-        <ul class="tw:mt-3">
-          <li class="tw:flex tw:gap-3 tw:py-2"><i class="bi bi-geo-alt tw:text-primary"></i><span class="tw:text-sm tw:text-base-content/70">{% if LANGUAGE_CODE == 'ar' %}{{ glis_site.address_ar|default:'مسقط، سلطنة عُمان' }}{% else %}{{ glis_site.address_en|default:'Muscat, Sultanate of Oman' }}{% endif %}</span></li>
-          {% if glis_site.contact_email %}<li class="tw:flex tw:gap-3 tw:py-2"><i class="bi bi-envelope tw:text-primary"></i><a class="tw:text-sm tw:text-base-content/70" href="mailto:{{ glis_site.contact_email }}">{{ glis_site.contact_email }}</a></li>{% endif %}
-          {% if glis_site.contact_phone %}<li class="tw:flex tw:gap-3 tw:py-2"><i class="bi bi-telephone tw:text-primary"></i><a class="tw:text-sm tw:text-base-content/70" href="tel:{{ glis_site.contact_phone }}">{{ glis_site.contact_phone }}</a></li>{% endif %}
-        </ul>
+        <div class="tw:lg:col-span-3">
+          <h2 class="glis-footer-heading">{% translate "Contact" %}</h2>
+          <ul class="tw:mt-5 tw:space-y-4 tw:text-sm tw:text-neutral-content/60">
+            <li class="tw:flex tw:gap-3"><span class="glis-footer-icon"><i class="bi bi-geo-alt"></i></span><span>{% if LANGUAGE_CODE == 'ar' %}{{ glis_site.address_ar|default:'مسقط، سلطنة عُمان' }}{% else %}{{ glis_site.address_en|default:'Muscat, Sultanate of Oman' }}{% endif %}</span></li>
+            {% if glis_site.contact_email %}<li class="tw:flex tw:gap-3"><span class="glis-footer-icon"><i class="bi bi-envelope"></i></span><a href="mailto:{{ glis_site.contact_email }}">{{ glis_site.contact_email }}</a></li>{% endif %}
+            {% if glis_site.contact_phone %}<li class="tw:flex tw:gap-3"><span class="glis-footer-icon"><i class="bi bi-telephone"></i></span><a href="tel:{{ glis_site.contact_phone }}">{{ glis_site.contact_phone }}</a></li>{% endif %}
+          </ul>
+        </div>
       </div>
     </div>
 
-    <div class="tw:border-t tw:border-base-300">
-      <div class="tw:mx-auto tw:flex tw:max-w-7xl tw:flex-col tw:gap-3 tw:px-6 tw:py-5 tw:text-xs tw:text-base-content/55 tw:sm:flex-row tw:sm:items-center tw:sm:justify-between">
+    <div class="tw:border-t tw:border-neutral-content/10">
+      <div class="tw:mx-auto tw:flex tw:max-w-7xl tw:flex-col tw:gap-3 tw:px-6 tw:py-5 tw:text-xs tw:text-neutral-content/45 tw:sm:flex-row tw:sm:items-center tw:sm:justify-between">
         <span>© {% now "Y" %} {{ glis_site.short_name|default:'GLIS' }}. {% translate "All rights reserved." %}</span>
-        <span class="tw:flex tw:gap-5"><a class="tw:hover:text-primary" href="#">{% translate "Privacy" %}</a><a class="tw:hover:text-primary" href="#">{% translate "Terms" %}</a><a class="tw:hover:text-primary" href="#">{% translate "Accessibility" %}</a></span>
+        <span class="tw:flex tw:flex-wrap tw:gap-5"><a href="#">{% translate "Privacy" %}</a><a href="#">{% translate "Terms" %}</a><a href="#">{% translate "Accessibility" %}</a></span>
       </div>
     </div>
   </footer>

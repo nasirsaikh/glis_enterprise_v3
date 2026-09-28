@@ -22,6 +22,18 @@ ALIASES = {
     "plan_code": ("plan code", "plan", "benefit plan"),
     "national_id": ("national id", "civil id", "id number"),
     "passport_number": ("passport number", "passport", "passport no"),
+    "principal_employee_id": (
+        "principal employee id",
+        "principal employee no",
+        "parent employee id",
+        "parent employee no",
+        "principal emp no",
+    ),
+    "principal_member_id": (
+        "principal member id",
+        "parent member id",
+        "principal tpa member id",
+    ),
 }
 
 

@@ -12,7 +12,8 @@ from .models import (
     PolicyAccess,
     TPAOrganization,
 )
-from .forms import MemberRowForm\nfrom .services.access import can_access_tpa, can_create_tpa_transaction
+from .forms import MemberRowForm
+from .services.access import can_access_tpa, can_create_tpa_transaction
 from .services.pricing import calculate_member_premium
 from .services.workflow import approve_transaction, process_transaction, run_validation
 

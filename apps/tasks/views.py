@@ -150,7 +150,9 @@ def task_create(request):
         ticket = create_ticket_for_task(task, actor=request.user)
         _sync_ticket_from_task(task, ticket, form.cleaned_data["status"])
         messages.success(request, f"Task created and linked to {task.ticket.reference}.")
-        return render(request, "tasks/partials/mutation_success.html", _task_context(request))
+        response = render(request, "tasks/partials/mutation_success.html", _task_context(request))
+        response["HX-Trigger"] = "taskChanged"
+        return response
     return render(request, "tasks/partials/form.html", {"form": form, "task": None})
 
 
@@ -189,7 +191,9 @@ def task_edit(request, pk):
                 send_email_message=updated.category.send_update_email,
             )
         messages.success(request, "Task changes were saved.")
-        return render(request, "tasks/partials/mutation_success.html", _task_context(request))
+        response = render(request, "tasks/partials/mutation_success.html", _task_context(request))
+        response["HX-Trigger"] = "taskChanged"
+        return response
     return render(request, "tasks/partials/form.html", {"form": form, "task": task})
 
 

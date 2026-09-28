@@ -23,6 +23,7 @@ urlpatterns += i18n_patterns(
     path("accounts/", include(("apps.accounts.urls", "accounts"), namespace="accounts")),
     path("accounts/", include("allauth.urls")),
     path("portal/tasks/", include(("apps.tasks.urls", "tasks"), namespace="tasks")),
+    path("portal/tpa/", include(("apps.tpa.urls", "tpa"), namespace="tpa")),
     path("portal/", include(("apps.tickets.urls", "portal"), namespace="portal")),
     path("documents/", include(("apps.core.document_urls", "documents"), namespace="documents")),
     path("knowledge/", include(("apps.knowledge.urls", "knowledge"), namespace="knowledge")),

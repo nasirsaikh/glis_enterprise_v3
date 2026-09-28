@@ -86,7 +86,8 @@
             <li>{% translate "Choose a policy from the policies available to your account." %}</li>
             <li>{% translate "Choose the transaction type: New Policy Enrollment, Member Addition, Member Termination, Member Deletion/Void or Policy Cancellation." %}</li>
             <li>{% translate "Enter the requested effective date and remarks, then save the draft." %}</li>
-            <li>{% translate "Add members manually or upload a CSV/XLSX spreadsheet. Use Full Name or First/Last Name, DOB, Gender, Relationship, Plan and the available member identifiers." %}</li>
+            <li>{% translate "Add members manually or upload a CSV/XLSX spreadsheet. Use the built-in Valid Sample CSV/XLSX buttons on the transaction screen as the reference format." %}</li>
+            <li>{% translate "For a spouse, child or other dependent, select the Parent Principal. Add the principal row first if the principal is part of the same new enrollment. Spreadsheet dependents can use principal_employee_id to point to a principal row in the same file, or principal_member_id for an existing TPA principal." %}</li>
             <li>{% translate "Review row-level validation, premium impact and the member-quality/error charts." %}</li>
             <li>{% translate "Submit the draft. GLIS creates the operational ticket and runs deterministic validation immediately." %}</li>
             <li>{% translate "If validation fails, correct/remove rows and run validation again. If it passes, the transaction moves to STP auto-approval or approval according to policy and ticket rules." %}</li>
@@ -121,7 +122,7 @@
       <section id="ai" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
         <div class="tw:d-card-body">
           <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-stars tw:text-primary"></i>{% translate "7. AI and document intake" %}</h2>
-          <p>{% translate "The transaction screen now supports structured CSV/XLSX member intake and manual correction. The TPA data layer also includes source-document tracking and the shared GLIS AI configuration for text/vision provider selection, extraction profiles, training examples and strict canonical member JSON." %}</p>
+          <p>{% translate "The transaction screen supports structured CSV/XLSX member intake, downloadable valid/error sample files, an on-screen column reference and manual correction. The TPA data layer also includes source-document tracking and the shared GLIS AI configuration for text/vision provider selection, extraction profiles, training examples and strict canonical member JSON." %}</p>
           <div class="tw:d-alert tw:d-alert-warning"><i class="bi bi-cone-striped"></i><span>{% translate "Spreadsheet intake is operational. Full OCR/vision extraction from PDF, passport/ID images and automatic correction mapping remains a separate AI intake workflow and should only be enabled after the configured provider pipeline is tested." %}</span></div>
         </div>
       </section>

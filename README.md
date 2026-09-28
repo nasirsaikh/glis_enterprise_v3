@@ -1,6 +1,6 @@
 # Greenline Insurance Services (GLIS) Enterprise Platform
 
-GLIS is a bilingual Django 5.2.17 enterprise service platform for insurance customers, hospitals and providers, brokers, insurers, support teams, managers, auditors and administrators. It combines an original corporate public website with a secure authenticated portal, ticket operations, CMS and theme controls, dynamic JSON forms, executable workflow/SLA automation, a knowledge base, audit history and a governed Vanna analytics console.
+GLIS is a bilingual Django 6.1.1 enterprise service platform for insurance customers, hospitals and providers, brokers, insurers, support teams, managers, auditors and administrators. It combines an original corporate public website with a secure authenticated portal, ticket operations, CMS and theme controls, dynamic JSON forms, executable workflow/SLA automation, a knowledge base, audit history and a governed Vanna analytics console.
 
 The implementation intentionally uses Django templates, HTMX and Alpine.js progressive enhancement. It is not a React, Vue, Next.js or SPA project. Operational charts use Plotly only.
 
@@ -61,7 +61,7 @@ The source is separated by business capability:
 
 ## Quick start
 
-Python 3.12 is recommended.
+Django 6.1 supports Python 3.12, 3.13 and 3.14. This repository keeps Python 3.12 as the deployment baseline in `pyproject.toml`; Python 3.13 is also supported for local development.
 
 ```bash
 python -m venv .venv

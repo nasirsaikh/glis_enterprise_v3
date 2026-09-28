@@ -457,6 +457,30 @@ html[data-theme="light"] .gl-tpa-icon { color:var(--gl-green); }
 .public-shell .tw\:text-primary { color:var(--gl-green-bright)!important; }
 html[data-theme="light"] .public-shell .tw\:text-primary { color:var(--gl-green)!important; }
 
+
+/* Public authentication pages */
+.glis-auth-shell {
+  min-height: calc(100dvh - 120px);
+  background:
+    radial-gradient(circle at 12% 18%, color-mix(in oklab,var(--gl-green-bright) 10%,transparent), transparent 24rem),
+    radial-gradient(circle at 88% 76%, color-mix(in oklab,var(--gl-accent) 8%,transparent), transparent 22rem),
+    var(--gl-bg)!important;
+}
+.glis-auth-story {
+  background:
+    radial-gradient(circle at 16% 10%, rgba(69,207,141,.18), transparent 18rem),
+    linear-gradient(145deg,#071b14,#0b2c20 58%,#0d3b2a)!important;
+  color:#eef9f3!important;
+  border:1px solid #1f4935!important;
+}
+.glis-auth-card {
+  background:var(--gl-surface)!important;
+  color:var(--gl-text)!important;
+  border-color:var(--gl-border)!important;
+}
+.glis-card-lift { transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease; }
+.glis-card-lift:hover { transform:translateY(-5px); box-shadow:var(--gl-shadow)!important; border-color:color-mix(in oklab,var(--gl-green-bright) 26%,var(--gl-border))!important; }
+
 /* footer */
 .gl-public-footer {
   position:relative;

@@ -16,6 +16,7 @@
   <link href="{% static 'css/glis-tailwind.css' %}" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css">
   <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css">
+  <link href="{% static 'css/glis-brand.css' %}" rel="stylesheet">
   {% block extra_head %}{% endblock %}
 </head>
 
@@ -127,8 +128,8 @@
             <i class="bi bi-plus-lg"></i><span class="tw:hidden tw:xl:inline">{% translate "New ticket" %}</span>
           </a>
 
-          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" type="button" x-on:click="toggleTheme" aria-label="{% translate 'Toggle light and dark mode' %}" title="{% translate 'Light / dark mode' %}">
-            <i class="bi tw:text-lg" x-bind:class="themeIcon"></i>
+          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" type="button" data-theme-toggle aria-label="{% translate 'Toggle light and dark mode' %}" title="{% translate 'Light / dark mode' %}">
+            <i class="bi bi-moon-stars tw:text-lg" data-theme-icon></i>
           </button>
 
           <form action="{% url 'switch_language' %}" method="post" class="tw:m-0">

@@ -17,6 +17,6 @@
     </form>
   </div></section>
   <div id="task-form-shell"></div>
-  <div id="task-table">{% include "tasks/partials/table.html" %}</div>
+  <div id="task-table" hx-get="{% url 'tasks:list' %}" hx-trigger="taskChanged from:body" hx-swap="innerHTML">{% include "tasks/partials/table.html" %}</div>
 </div>
 {% endblock %}

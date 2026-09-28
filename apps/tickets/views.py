@@ -111,9 +111,16 @@ def dashboard(request):
     by_category = list(qs.values(label=F("category__name_en")).annotate(total=Count("id")).order_by("-total")[:10])
     by_product = list(qs.values(label=F("product__name_en")).annotate(total=Count("id")).order_by("-total")[:10])
     by_project = list(qs.values(label=F("project__name_en")).annotate(total=Count("id")).order_by("-total")[:10])
-    by_assignee = list(qs.values(label=F("assignees__first_name")).annotate(total=Count("id", distinct=True)).order_by("-total")[:10])
+    by_assignee = list(
+        qs.values("assignees__first_name", "assignees__last_name", "assignees__email")
+        .annotate(total=Count("id", distinct=True))
+        .order_by("-total")[:10]
+    )
     for row in by_assignee:
-        row["label"] = row["label"] or "Unassigned"
+        full_name = " ".join(
+            value for value in (row.get("assignees__first_name"), row.get("assignees__last_name")) if value
+        ).strip()
+        row["label"] = full_name or row.get("assignees__email") or "Unassigned"
     daily_open = list(qs.filter(created_at__gte=now - timedelta(days=13)).annotate(day=TruncDate("created_at")).values("day").annotate(total=Count("id")).order_by("day"))
     chart_data = {"status": by_status, "priority": by_priority, "category": by_category, "product": by_product, "project": by_project, "assignee": by_assignee, "daily_open": daily_open}
     return render(request, "portal/dashboard.html", {"metrics": metrics, "chart_data": chart_data, "recent_tickets": qs[:7], "attention": qs.filter(Q(priority="critical") | Q(resolution_due_at__lt=now + timedelta(hours=2)))[:6]})
@@ -121,7 +128,10 @@ def dashboard(request):
 
 @login_required
 def ticket_list(request):
-    qs = TicketAccessPolicy.visible_queryset(request.user)
+    base_qs = TicketAccessPolicy.visible_queryset(request.user)
+    service_ticket_count = base_qs.filter(task_item__isnull=True).exclude(status=Ticket.Status.CLOSED).count()
+    task_ticket_count = base_qs.filter(task_item__is_deleted=False).exclude(status=Ticket.Status.CLOSED).count()
+    qs = base_qs
     ticket_tab = request.GET.get("tab", "tickets")
     if ticket_tab == "tasks":
         qs = qs.filter(task_item__is_deleted=False).select_related("task_item")
@@ -155,6 +165,8 @@ def ticket_list(request):
             "page_obj": page,
             "ticket_tab": ticket_tab,
             "pagination_query": pagination_query.urlencode(),
+            "service_ticket_count": service_ticket_count,
+            "task_ticket_count": task_ticket_count,
         },
     )
 

@@ -336,7 +336,7 @@
       const wrapper = document.createElement("div");
       wrapper.className = "tw:mt-3 tw:overflow-x-auto tw:rounded-box tw:bg-base-100 tw:text-base-content";
       const table = document.createElement("table");
-      table.className = "tw:d-table tw:d-table-zebra tw:d-table-sm";
+      table.className = "tw:d-table tw:d-table-zebra ";
       wrapper.appendChild(table);
       if (!rows.length) return wrapper;
       const keys = Object.keys(rows[0]);

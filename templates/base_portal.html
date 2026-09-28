@@ -23,7 +23,8 @@
       x-data="siteShell"
       data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}"
       data-theme-preference-url="{% url 'accounts:theme_preference' %}"
-      data-user-theme="{{ user.profile.theme|default:'system' }}">
+      data-user-theme="{{ user.profile.theme|default:'system' }}"
+      data-user-initial="{{ user.first_name|default:user.email|slice:':1'|upper }}">
 
   <a class="tw:sr-only tw:focus:not-sr-only tw:focus:fixed tw:focus:start-4 tw:focus:top-4 tw:focus:z-[100] tw:focus:rounded-lg tw:focus:bg-primary tw:focus:px-4 tw:focus:py-2 tw:focus:text-primary-content" href="#portal-main">{% translate "Skip to content" %}</a>
 
@@ -36,6 +37,13 @@
           <label for="portal-drawer" class="btn btn-ghost btn-circle tw:lg:hidden" aria-label="{% translate 'Open navigation' %}">
             <i class="bi bi-list tw:text-xl"></i>
           </label>
+
+          <button id="sidebar-toggle" class="btn btn-ghost btn-circle tw:hidden tw:lg:inline-flex"
+                  type="button" aria-expanded="false"
+                  aria-label="{% translate 'Expand navigation' %}"
+                  title="{% translate 'Expand or collapse navigation' %}">
+            <i class="bi bi-layout-sidebar-inset"></i>
+          </button>
 
           <a class="btn btn-ghost btn-circle tw:hidden tw:sm:inline-flex" href="/" title="{% translate 'Public website' %}">
             <i class="bi bi-house"></i>
@@ -111,7 +119,7 @@
               {% if user.profile.avatar %}
               <div class="avatar"><div class="tw:w-9 tw:rounded-full"><img src="{{ user.profile.avatar.url }}" alt=""></div></div>
               {% else %}
-              <div class="avatar avatar-placeholder"><div class="tw:w-9 tw:rounded-full tw:bg-primary tw:text-primary-content"><span class="tw:text-sm tw:font-bold">{{ user.first_name|first|default:user.email|first|upper }}</span></div></div>
+              <div class="avatar avatar-placeholder"><div class="tw:w-9 tw:rounded-full tw:bg-primary tw:text-primary-content"><span class="tw:text-sm tw:font-bold">{{ user.first_name|default:user.email|slice:":1"|upper }}</span></div></div>
               {% endif %}
               <span class="tw:hidden tw:max-w-36 tw:text-start tw:xl:block"><strong class="tw:block tw:truncate tw:text-xs">{{ user.get_full_name|default:user.email }}</strong><small class="tw:block tw:truncate tw:text-[.68rem] tw:font-normal tw:text-base-content/45">{{ user.profile.get_role_display|default:'User' }}</small></span>
               <i class="bi bi-chevron-down tw:hidden tw:text-xs tw:xl:block"></i>
@@ -142,46 +150,46 @@
 
     <div class="drawer-side tw:z-50">
       <label for="portal-drawer" aria-label="{% translate 'Close navigation' %}" class="drawer-overlay"></label>
-      <aside class="tw:min-h-full tw:w-72 tw:border-e tw:border-base-300 tw:bg-base-100">
+      <aside id="portal-sidebar" class="tw:min-h-full tw:w-20 tw:border-e tw:border-base-300 tw:bg-base-100 tw:transition-[width] tw:duration-200" data-sidebar-state="collapsed">
         <div class="tw:flex tw:h-20 tw:items-center tw:gap-3 tw:border-b tw:border-base-300 tw:px-4">
           <a class="tw:flex tw:min-w-0 tw:items-center tw:gap-3 tw:no-underline" href="{% url 'portal:dashboard' %}">
             <span class="tw:grid tw:h-11 tw:w-14 tw:shrink-0 tw:place-items-center tw:rounded-xl tw:bg-white tw:p-1 tw:shadow-sm">
               {% if glis_site.logo %}<img class="tw:max-h-9 tw:max-w-12 tw:object-contain" src="/api/v1/site-logo/" alt="GLIS">{% else %}<strong class="tw:text-sm tw:font-black tw:text-primary">GLIS</strong>{% endif %}
             </span>
-            <span class="tw:min-w-0"><strong class="tw:block tw:truncate tw:text-base tw:font-black">GLIS</strong><small class="tw:block tw:truncate tw:text-xs tw:text-base-content/45">{% translate "Service portal" %}</small></span>
+            <span data-sidebar-label class="tw:hidden tw:min-w-0"><strong class="tw:block tw:truncate tw:text-base tw:font-black">GLIS</strong><small class="tw:block tw:truncate tw:text-xs tw:text-base-content/45">{% translate "Service portal" %}</small></span>
           </a>
         </div>
 
         <nav class="tw:h-[calc(100dvh-5rem)] tw:overflow-y-auto tw:p-3" aria-label="{% translate 'Portal navigation' %}">
           {% for section in portal_navigation_sections %}
           <ul class="menu tw:w-full tw:gap-1 tw:p-0">
-            <li class="menu-title"><span>{{ section.label }}</span></li>
+            <li data-sidebar-label class="menu-title tw:hidden"><span>{{ section.label }}</span></li>
             {% for item in section.items %}
             <li>
-              <a class="{% if item.active %}menu-active{% endif %}" href="{{ item.url }}" title="{{ item.label }}" {% if item.new_window %}target="_blank" rel="noopener"{% endif %}>
-                <i class="bi {{ item.icon }}"></i><span>{{ item.label }}</span>{% if item.emphasized %}<span class="badge badge-primary badge-sm tw:ms-auto">{% translate "New" %}</span>{% endif %}
+              <a data-sidebar-link class="tw:justify-center {% if item.active %}menu-active{% endif %}" href="{{ item.url }}" title="{{ item.label }}" {% if item.new_window %}target="_blank" rel="noopener"{% endif %}>
+                <i class="bi {{ item.icon }} tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{{ item.label }}</span>{% if item.emphasized %}<span data-sidebar-label class="badge badge-primary badge-sm tw:ms-auto tw:hidden">{% translate "New" %}</span>{% endif %}
               </a>
             </li>
             {% endfor %}
           </ul>
           {% empty %}
           <ul class="menu tw:w-full tw:p-0">
-            <li class="menu-title"><span>{% translate "Workspace" %}</span></li>
-            <li><a href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Overview" %}</a></li>
-            <li><a href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated"></i>{% translate "Tickets" %}</a></li>
-            <li><a href="{% url 'orchestrator:console' %}"><i class="bi bi-stars"></i>{% translate "Vanna analytics" %}</a></li>
+            <li data-sidebar-label class="menu-title tw:hidden"><span>{% translate "Workspace" %}</span></li>
+            <li><a data-sidebar-link class="tw:justify-center" href="{% url 'portal:dashboard' %}" title="{% translate 'Overview' %}"><i class="bi bi-grid-1x2 tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "Overview" %}</span></a></li>
+            <li><a data-sidebar-link class="tw:justify-center" href="{% url 'portal:ticket_list' %}" title="{% translate 'Tickets' %}"><i class="bi bi-ticket-perforated tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "Tickets" %}</span></a></li>
+            <li><a data-sidebar-link class="tw:justify-center" href="{% url 'orchestrator:console' %}" title="{% translate 'Vanna analytics' %}"><i class="bi bi-stars tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "Vanna analytics" %}</span></a></li>
           </ul>
           {% endfor %}
 
           <ul class="menu tw:mt-3 tw:w-full tw:p-0">
-            <li class="menu-title"><span>{% translate "Productivity" %}</span></li>
-            <li><a class="{% if request.resolver_match.namespace == 'tasks' %}menu-active{% endif %}" href="{% url 'tasks:list' %}"><i class="bi bi-list-task"></i>{% translate "Tasks" %}</a></li>
+            <li data-sidebar-label class="menu-title tw:hidden"><span>{% translate "Productivity" %}</span></li>
+            <li><a data-sidebar-link class="tw:justify-center {% if request.resolver_match.namespace == 'tasks' %}menu-active{% endif %}" href="{% url 'tasks:list' %}" title="{% translate 'Tasks' %}"><i class="bi bi-list-task tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "Tasks" %}</span></a></li>
           </ul>
 
           <div class="card tw:mt-5 tw:border tw:border-base-300 tw:bg-base-200/50">
-            <div class="card-body tw:gap-2 tw:p-4">
-              <div class="tw:flex tw:items-center tw:gap-3"><span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-xl tw:bg-success/15 tw:text-success"><i class="bi bi-headset"></i></span><strong>{% translate "Need help?" %}</strong></div>
-              <p class="tw:text-xs tw:text-base-content/50">{% translate "Contact platform support if you need assistance." %}</p>
+            <div class="card-body tw:items-center tw:gap-2 tw:p-3">
+              <div class="tw:flex tw:items-center tw:gap-3"><span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-xl tw:bg-success/15 tw:text-success"><i class="bi bi-headset"></i></span><strong data-sidebar-label class="tw:hidden">{% translate "Need help?" %}</strong></div>
+              <p data-sidebar-label class="tw:hidden tw:text-xs tw:text-base-content/50">{% translate "Contact platform support if you need assistance." %}</p>
             </div>
           </div>
         </nav>

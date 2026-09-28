@@ -82,7 +82,7 @@
           </summary>
           <div class="glis-nav-panel tw:w-64">
             <ul class="tw:d-menu tw:w-full tw:p-0">
-              <li class="tw:menu-title"><span>{{ user.get_full_name|default:user.email }}</span></li>
+              <li class="menu-title"><span>{{ user.get_full_name|default:user.email }}</span></li>
               <li><a href="{% url 'accounts:profile' %}"><i class="bi bi-person-gear"></i>{% translate "Profile & security" %}</a></li>
               <li><form action="{% url 'account_logout' %}" method="post">{% csrf_token %}<button class="tw:d-btn tw:d-btn-ghost tw:w-full tw:justify-start tw:text-error" type="submit"><i class="bi bi-box-arrow-right"></i>{% translate "Sign out" %}</button></form></li>
             </ul>

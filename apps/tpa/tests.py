@@ -1,19 +1,84 @@
 from datetime import date
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from .models import BenefitPlan, Member, MemberTransaction, Policy, TPAOrganization
+
+from .models import (
+    BenefitPlan,
+    MemberTransaction,
+    Policy,
+    PolicyAccess,
+    TPAOrganization,
+)
+from .services.access import can_access_tpa, can_create_tpa_transaction
 from .services.pricing import calculate_member_premium
+
 
 class TPACoreTests(TestCase):
     def setUp(self):
-        self.user=get_user_model().objects.create_user(username="tpa",password="x")
-        self.sponsor=TPAOrganization.objects.create(code="SP1",name_en="Sponsor",organization_type="CORPORATE")
-        self.insurer=TPAOrganization.objects.create(code="IN1",name_en="Insurer",organization_type="INSURER")
-        self.policy=Policy.objects.create(sponsor=self.sponsor,insurance_company=self.insurer,policy_number="POL-1",start_date=date(2026,1,1),expiry_date=date(2026,12,31),status="active")
-        self.plan=BenefitPlan.objects.create(policy=self.policy,code="GOLD",name="Gold",annual_premium="365.000",premium_configuration={"method":"PRORATA","denominator":365})
+        self.user = get_user_model().objects.create_user(
+            username="tpa",
+            password="x",
+        )
+        self.sponsor = TPAOrganization.objects.create(
+            code="SP1",
+            name_en="Sponsor",
+            organization_type="CORPORATE",
+        )
+        self.insurer = TPAOrganization.objects.create(
+            code="IN1",
+            name_en="Insurer",
+            organization_type="INSURER",
+        )
+        self.policy = Policy.objects.create(
+            sponsor=self.sponsor,
+            insurance_company=self.insurer,
+            policy_number="POL-1",
+            start_date=date(2026, 1, 1),
+            expiry_date=date(2026, 12, 31),
+            status="active",
+        )
+        self.plan = BenefitPlan.objects.create(
+            policy=self.policy,
+            code="GOLD",
+            name="Gold",
+            annual_premium="365.000",
+            premium_configuration={"method": "PRORATA", "denominator": 365},
+        )
+
     def test_prorata_is_decimal_and_snapshotted(self):
-        amount,snapshot=calculate_member_premium(self.policy,self.plan,date(2026,7,1))
-        self.assertEqual(str(amount),"184.000"); self.assertEqual(snapshot["method"],"PRORATA")
+        amount, snapshot = calculate_member_premium(
+            self.policy,
+            self.plan,
+            date(2026, 7, 1),
+        )
+        self.assertEqual(str(amount), "184.000")
+        self.assertEqual(snapshot["method"], "PRORATA")
+
     def test_transaction_reference_generated(self):
-        tx=MemberTransaction.objects.create(sponsor=self.sponsor,insurer=self.insurer,policy=self.policy,transaction_type="MEMBER_ADD",effective_date=date(2026,7,1),requester=self.user,requester_organization=self.sponsor)
+        tx = MemberTransaction.objects.create(
+            sponsor=self.sponsor,
+            insurer=self.insurer,
+            policy=self.policy,
+            transaction_type="MEMBER_ADD",
+            effective_date=date(2026, 7, 1),
+            requester=self.user,
+            requester_organization=self.sponsor,
+        )
         self.assertTrue(tx.reference.startswith("TPA-END-2026-"))
+
+    def test_user_without_permission_or_policy_access_cannot_enter_tpa(self):
+        self.assertFalse(can_access_tpa(self.user))
+        self.assertFalse(can_create_tpa_transaction(self.user))
+
+    def test_policy_access_controls_workspace_and_create_visibility(self):
+        PolicyAccess.objects.create(
+            organization=self.sponsor,
+            policy=self.policy,
+            user=self.user,
+            can_view=True,
+            can_create_endorsement=True,
+            active=True,
+        )
+        self.assertTrue(can_access_tpa(self.user))
+        self.assertTrue(can_create_tpa_transaction(self.user))

@@ -61,7 +61,7 @@ html[data-theme="dark"] body {
   border-bottom: 1px solid rgba(255,255,255,.06);
 }
 .glis-public-nav-shell {
-  background: color-mix(in oklab, var(--color-base-100) 92%, transparent) !important;
+  background: color-mix(in oklab, var(--color-base-100) 94%, var(--color-primary) 3%) !important;
   border-bottom: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent) !important;
   box-shadow: 0 12px 38px color-mix(in oklab, var(--color-neutral) 8%, transparent);
   backdrop-filter: blur(22px) saturate(140%);

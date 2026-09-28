@@ -449,16 +449,35 @@ else:
 
 VANNA_DB_SCHEMA = env("VANNA_DB_SCHEMA", default=default_schema)
 CHROMA_PERSIST_DIRECTORY = env("CHROMA_PERSIST_DIRECTORY", default=str(BASE_DIR / "data" / "chroma"))
-EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
-EMAIL_HOST = env("EMAIL_HOST", default="smtppro.zohomail.com")
-EMAIL_PORT = env.int("EMAIL_PORT", default=465)
-EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=True)
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="mis@greenline.om")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="MIS GreenLine <mis@greenline.om>")
+# Django 6.1 mailer configuration. Keep the existing EMAIL_* environment
+# variable names so deployments do not need secret/config changes.
+_MAIL_BACKEND = env(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.smtp.EmailBackend",
+)
+_MAIL_OPTIONS = {}
+if _MAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+    _MAIL_OPTIONS = {
+        "host": env("EMAIL_HOST", default="smtppro.zohomail.com"),
+        "port": env.int("EMAIL_PORT", default=465),
+        "username": env("EMAIL_HOST_USER", default="mis@greenline.om"),
+        "password": env("EMAIL_HOST_PASSWORD", default=""),
+        "use_ssl": env.bool("EMAIL_USE_SSL", default=True),
+        "use_tls": env.bool("EMAIL_USE_TLS", default=False),
+        "timeout": env.int("EMAIL_TIMEOUT", default=30),
+    }
+
+MAILERS = {
+    "default": {
+        "BACKEND": _MAIL_BACKEND,
+        "OPTIONS": _MAIL_OPTIONS,
+    },
+}
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL",
+    default="MIS GreenLine <mis@greenline.om>",
+)
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=30)
 SITE_URL = env("SITE_URL", default="https://greenline.om")
 
 LOGGING = {

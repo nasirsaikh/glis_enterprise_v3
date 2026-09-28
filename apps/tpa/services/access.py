@@ -14,7 +14,6 @@ TPA_ENTRY_PERMISSIONS = (
 
 
 def can_access_tpa(user):
-    """Return whether a user is authorized to enter the TPA workspace."""
     if not user or not user.is_authenticated:
         return False
     if user.is_superuser or any(user.has_perm(code) for code in TPA_ENTRY_PERMISSIONS):
@@ -31,11 +30,28 @@ def can_create_tpa_transaction(user):
         return True
     if user.has_perm("tpa.create_enrollment") or user.has_perm("tpa.create_endorsement"):
         return True
-    return PolicyAccess.objects.filter(
-        user=user,
-        active=True,
-    ).filter(
+    return PolicyAccess.objects.filter(user=user, active=True).filter(
         Q(can_create_enrollment=True) | Q(can_create_endorsement=True)
+    ).exists()
+
+
+def can_approve_tpa_transaction(user, tx):
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser or user.has_perm("tpa.configure_tpa") or user.has_perm("tpa.approve_endorsement"):
+        return True
+    return PolicyAccess.objects.filter(
+        user=user, policy=tx.policy, active=True, can_approve=True
+    ).exists()
+
+
+def can_process_tpa_transaction(user, tx):
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser or user.has_perm("tpa.configure_tpa") or user.has_perm("tpa.process_endorsement"):
+        return True
+    return PolicyAccess.objects.filter(
+        user=user, policy=tx.policy, active=True, can_process=True
     ).exists()
 
 
@@ -46,11 +62,9 @@ def visible_policies(user):
     if user.is_superuser or user.has_perm("tpa.configure_tpa"):
         return qs
     return qs.filter(
-        Q(
-            access_entries__user=user,
-            access_entries__active=True,
-            access_entries__can_view=True,
-        )
+        access_entries__user=user,
+        access_entries__active=True,
+        access_entries__can_view=True,
     ).distinct()
 
 

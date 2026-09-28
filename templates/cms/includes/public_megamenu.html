@@ -5,45 +5,34 @@
       {% if child.children %}
       <li>
         <details class="glis-nav-dropdown tw:d-dropdown">
-          <summary class="glis-nav-trigger tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:rounded-full {% if child.selected or child.ancestor %}tw:text-primary{% endif %}">
-            <span>{{ child.get_menu_title }}</span><i class="glis-nav-chevron bi bi-chevron-down tw:text-[.65rem]"></i>
+          <summary class="glis-nav-trigger tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:rounded-full tw:gap-2 {% if child.selected or child.ancestor %}tw:text-primary tw:bg-base-200/60{% endif %}">
+            <span>{{ child.get_menu_title }}</span>
+            <i class="glis-nav-chevron bi bi-chevron-down tw:text-[.65rem]"></i>
           </summary>
-          <div class="glis-nav-panel tw:d-dropdown-content tw:z-[90] tw:w-[min(34rem,90vw)] tw:p-4">
-            <div class="tw:flex tw:items-center tw:justify-between tw:gap-4 tw:border-b tw:border-base-300 tw:pb-3">
-              <div>
-                <span class="tw:text-[.68rem] tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Explore" %}</span>
-                <h2 class="tw:mt-1 tw:text-lg tw:font-black">{{ child.get_menu_title }}</h2>
-              </div>
-              <span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-xl tw:bg-primary/10 tw:text-primary"><i class="bi bi-grid"></i></span>
-            </div>
-            <ul class="tw:d-menu tw:mt-2 tw:grid tw:grid-cols-2 tw:gap-1 tw:p-0">
-              <li><a href="{{ child.get_absolute_url }}"><i class="bi bi-arrow-up-right tw:text-primary"></i>{% translate "Overview" %}</a></li>
+          <div class="glis-nav-panel tw:d-dropdown-content tw:z-[90] tw:mt-2 tw:w-[min(32rem,95vw)] tw:rounded-2xl tw:bg-base-100 tw:p-4 tw:shadow-2xl tw:border tw:border-base-200">
+            <div class="tw:grid tw:grid-cols-2 tw:gap-2">
               {% for subchild in child.children %}
-              <li><a class="{% if subchild.selected %}tw:d-menu-active{% endif %}" href="{{ subchild.get_absolute_url }}"><i class="bi bi-arrow-{% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %}-short tw:text-primary"></i>{{ subchild.get_menu_title }}</a></li>
+              <a href="{{ subchild.get_absolute_url }}" class="tw:flex tw:flex-col tw:gap-1 tw:p-3 tw:rounded-xl tw:border tw:border-base-200 tw:bg-base-100 hover:tw:border-primary hover:tw:bg-primary/5 tw:transition-all {% if subchild.selected %}tw:border-primary tw:bg-primary/10{% endif %}">
+                <div class="tw:flex tw:items-center tw:justify-between">
+                  <span class="tw:grid tw:h-8 tw:w-8 tw:place-items-center tw:rounded-lg tw:bg-primary/10 tw:text-primary">
+                    <i class="bi bi-grid-fill tw:text-xs"></i>
+                  </span>
+                  <i class="bi bi-arrow-{% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %} tw:text-xs tw:text-base-content/40"></i>
+                </div>
+                <span class="tw:text-xs tw:font-bold tw:text-base-content tw:mt-1">{{ subchild.get_menu_title }}</span>
+              </a>
               {% endfor %}
-            </ul>
+            </div>
           </div>
         </details>
       </li>
       {% else %}
-      <li><a href="{{ child.get_absolute_url }}" class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:rounded-full {% if child.selected %}tw:text-primary{% endif %}">{{ child.get_menu_title }}</a></li>
+      <li>
+        <a href="{{ child.get_absolute_url }}" class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:rounded-full {% if child.selected %}tw:text-primary tw:bg-base-200/60{% endif %}">
+          {{ child.get_menu_title }}
+        </a>
+      </li>
       {% endif %}
     {% endfor %}
-
-    <li>
-      <details class="glis-nav-dropdown glis-nav-dropdown-end tw:d-dropdown tw:d-dropdown-end">
-        <summary class="glis-nav-trigger tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:rounded-full">
-          <i class="bi bi-shield-lock tw:text-primary"></i><span>{% translate "ClaimsLive" %}</span><i class="glis-nav-chevron bi bi-chevron-down tw:text-[.65rem]"></i>
-        </summary>
-        <div class="glis-nav-panel tw:d-dropdown-content tw:z-[90] tw:w-80 tw:p-3">
-          <p class="tw:px-3 tw:pb-2 tw:text-[.68rem] tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "ClaimsLive Services" %}</p>
-          <ul class="tw:d-menu tw:w-full tw:p-0">
-            <li><a href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fIntranet%2fIntranetHome%3fType%3dIntranet&Type=Intranet" target="_blank" rel="noopener"><i class="bi bi-shield-check"></i>{% translate "Claims Services" %}<i class="bi bi-box-arrow-up-right tw:ms-auto tw:text-xs"></i></a></li>
-            <li><a href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fProviders%2fProviderHome%3fType%3dProvider&Type=Provider" target="_blank" rel="noopener"><i class="bi bi-hospital"></i>{% translate "Provider Services" %}<i class="bi bi-box-arrow-up-right tw:ms-auto tw:text-xs"></i></a></li>
-            <li><a href="https://claimslive.greenline.om/Login/ProviderLogin?ReturnUrl=%2fCorporate%2fCorporateHome%3fType%3dCorporate&Type=Corporate" target="_blank" rel="noopener"><i class="bi bi-people"></i>{% translate "Member Services" %}<i class="bi bi-box-arrow-up-right tw:ms-auto tw:text-xs"></i></a></li>
-          </ul>
-        </div>
-      </details>
-    </li>
   </ul>
 </nav>

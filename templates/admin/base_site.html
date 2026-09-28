@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    /* Force Django CMS / Admin redirect and select widgets to full width */
+    .field-redirect select, 
+    .field-redirect .select2-container, 
+    .field-redirect .select2-selection,
+    .form-row.field-redirect .related-widget-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Trigger a window resize event when 'URL options' or any fieldset is clicked/opened
+        document.querySelectorAll('fieldset, .collapse, legend').forEach(function(el) {
+            el.addEventListener('click', function () {
+                setTimeout(function () {
+                    if (typeof jQuery !== 'undefined') {
+                        jQuery(window).trigger('resize');
+                        jQuery('.select2-container').css('width', '100%');
+                    }
+                }, 150);
+            });
+        });
+    });
+</script>
+{% endblock %}

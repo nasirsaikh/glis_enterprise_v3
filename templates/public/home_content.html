@@ -156,22 +156,9 @@
         <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-signpost-split tw:me-2"></i>{% translate "Step-by-step journey" %}</span>
         <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "From request to resolution, every step stays visible." %}</h2>
       </div>
-      <div class="tw:mt-10 tw:overflow-x-auto tw:pb-4">
-        <ul class="tw:d-timeline tw:d-timeline-horizontal tw:min-w-full">
-          {% for step in process_steps %}
-          <li class="tw:min-w-48">
-            {% if not forloop.first %}<hr class="tw:bg-primary">{% endif %}
-            <div class="tw:d-timeline-start tw:mb-3 tw:text-xs tw:font-black tw:text-primary">0{{ forloop.counter }}</div>
-            <div class="tw:d-timeline-middle"><span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-full tw:bg-primary tw:text-primary-content">{{ forloop.counter }}</span></div>
-            <div class="tw:d-timeline-end tw:mt-3 tw:px-3 tw:text-center tw:font-bold">{% if LANGUAGE_CODE == "ar" %}{{ step.title_ar|default:step.title_en }}{% else %}{{ step.title_en }}{% endif %}</div>
-            {% if not forloop.last %}<hr class="tw:bg-primary">{% endif %}
-          </li>
-          {% empty %}
-          <li><div class="tw:d-timeline-middle"><span class="tw:d-status tw:d-status-primary"></span></div><div class="tw:d-timeline-end">{% translate "Choose service" %}</div></li>
-          {% endfor %}
-        </ul>
-      </div>
+      
       <div class="tw:mt-7 tw:grid tw:gap-5 tw:md:grid-cols-2 tw:xl:grid-cols-4">
+        
         {% for step in process_steps %}
         <article class="glis-card-lift tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg" data-reveal data-tilt>
           <div class="tw:d-card-body tw:p-5">

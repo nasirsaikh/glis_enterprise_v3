@@ -2642,8 +2642,8 @@ msgstr "تجربة واحدة منظمة لدعم المطالبات، خدمة 
 msgid "Medical TPA Services"
 msgstr "خدمات إدارة مطالبات الرعاية الصحية (TPA)"
 
-msgid "Healthcare management made easier"
-msgstr "إدارة الرعاية الصحية بصورة أسهل"
+msgid "Healthcare management"
+msgstr "إدارة الرعاية الصحية"
 
 msgid "Integrated health administration services connecting members, healthcare providers and insurance partners."
 msgstr "خدمات إدارة صحية متكاملة تربط بين الأعضاء، مزودي الرعاية الصحية وشركاء التأمين."
@@ -2693,8 +2693,38 @@ msgstr "المحافظة"
 msgid "Specialty"
 msgstr "التخصص"
 
-msgid "100 providers found"
+msgid "providers found 100"
 msgstr "تم العثور على 100 مزود خدمة"
 
-msgid "ProviderTypeBandAdd"
-msgstr "إضافة فئة نوع المزود"
+msgid "Connected provider network"
+msgstr "شبكة مزودي الخدمة المرتبطة"
+
+msgid "Secure healthcare services"
+msgstr "خدمات الرعاية الصحية الآمنة"
+
+msgid "insurance journey"
+msgstr "رحلة التأمين"
+
+msgid "Explore service"
+msgstr "استكشف الخدمة"
+
+msgid "Address"
+msgstr "العنوان"
+
+msgid "Band"
+msgstr "الفئة"
+
+msgid "Type"
+msgstr "النوع"
+
+msgid "Provider"
+msgstr "مزود الخدمة"
+
+msgid "Bronze"
+msgstr "برونزي"
+
+msgid "Map"
+msgstr "الخريطة"
+
+msgid "made easier"
+msgstr "أصبحت أكثر سهولة"

@@ -1,19 +1,19 @@
 {% extends 'base_public.html' %}{% load i18n %}
 {% block title %}{% translate "Sign in" %} · GLIS{% endblock %}
 {% block content %}
-<section class="tw:relative tw:overflow-hidden tw:bg-base-200/45 tw:py-12 tw:sm:py-16">
+<section class="glis-auth-shell glis-aura tw:relative tw:overflow-hidden tw:bg-base-200/45 tw:py-12 tw:sm:py-16" data-aura>
   <div class="tw:mx-auto tw:max-w-6xl tw:px-6">
     <div class="tw:grid tw:gap-8 tw:lg:grid-cols-2 tw:lg:items-stretch">
-      <div class="tw:d-aura tw:d-aura-holo tw:d-aura-lg" data-aura data-reveal>
-        <article class="tw:d-card tw:h-full tw:bg-neutral tw:text-neutral-content tw:shadow-2xl">
+      <div class="tw:d-aura tw:d-aura-holo tw:d-aura-lg" data-reveal>
+        <article class="glis-auth-story tw:d-card tw:h-full tw:bg-neutral tw:text-neutral-content tw:shadow-2xl" data-tilt>
           <div class="tw:d-card-body tw:justify-between tw:gap-8 tw:p-8 tw:sm:p-10">
             <div>
               <div class="tw:flex tw:flex-wrap tw:gap-2">
                 <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft"><span class="tw:d-status tw:d-status-success"></span>{% translate "Secure service portal" %}</span>
                 <span class="tw:d-badge tw:d-badge-outline tw:border-neutral-content/20 tw:text-neutral-content/70"><i class="bi bi-shield-check"></i>{% translate "Privacy-aware" %}</span>
               </div>
-              <h1 class="tw:mt-6 tw:text-4xl tw:font-black tw:leading-tight tw:tracking-[-.05em] tw:sm:text-5xl">{% translate "Insurance service, built for clear collaboration." %}</h1>
-              <p class="tw:mt-5 tw:max-w-xl tw:text-lg tw:leading-8 tw:text-neutral-content/65">{% translate "Submit requests, exchange documents, follow SLA progress and collaborate with the right team from one secure workspace." %}</p>
+              <h1 class="tw:mt-6 tw:text-4xl tw:font-black tw:leading-tight tw:tracking-[-.05em] tw:sm:text-5xl">{% translate "Connected healthcare and insurance service, designed around people." %}</h1>
+              <p class="tw:mt-5 tw:max-w-xl tw:text-lg tw:leading-8 tw:text-neutral-content/65">{% translate "A secure Greenline workspace to submit requests, exchange documents, follow SLA progress and collaborate with the right team." %}</p>
             </div>
 
             <div class="tw:d-stats tw:d-stats-vertical tw:w-full tw:bg-neutral-content/5 tw:shadow-sm tw:sm:d-stats-horizontal">
@@ -30,7 +30,7 @@
         </article>
       </div>
 
-      <article class="tw:d-card tw:h-full tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl" data-reveal>
+      <article class="glis-auth-card glis-card-lift tw:d-card tw:h-full tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl" data-reveal data-tilt>
         <div class="tw:d-card-body tw:p-7 tw:sm:p-9">
           <div class="tw:flex tw:items-center tw:justify-between tw:gap-4">
             <div class="tw:flex tw:items-center tw:gap-4">

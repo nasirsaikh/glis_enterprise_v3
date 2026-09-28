@@ -4,6 +4,7 @@ from datetime import date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
@@ -23,6 +24,7 @@ from .services.access import (
     visible_transactions,
 )
 from .services.intake import import_member_spreadsheet
+from .services.sample_data import build_sample_csv, build_sample_xlsx, sample_member_rows
 from .services.ticketing import create_ticket_for_transaction
 from .services.validation import validate_action
 from .services.workflow import (
@@ -199,8 +201,33 @@ def transaction_detail(request, reference):
         "success_rate": success_rate,
         "quality_chart": quality_chart,
         "error_chart": error_chart,
+        "sample_rows": sample_member_rows(tx),
     }
     return render(request, "tpa/transaction_detail.html", context)
+
+
+@login_required
+def transaction_sample_file(request, reference, kind, file_format):
+    _require_tpa_access(request.user)
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+
+    if kind not in {"valid", "errors"}:
+        raise PermissionDenied("Unknown sample dataset.")
+    if file_format not in {"csv", "xlsx"}:
+        raise PermissionDenied("Unknown sample file format.")
+
+    rows = sample_member_rows(tx, include_errors=(kind == "errors"))
+    if file_format == "csv":
+        payload = build_sample_csv(rows)
+        content_type = "text/csv; charset=utf-8"
+    else:
+        payload = build_sample_xlsx(rows)
+        content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    filename = f"{tx.policy.policy_number}_tpa_{kind}_sample.{file_format}"
+    response = HttpResponse(payload, content_type=content_type)
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 @login_required

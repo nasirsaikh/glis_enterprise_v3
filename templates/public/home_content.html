@@ -140,7 +140,7 @@
         <p class="tw:max-w-xl tw:text-neutral-content/60">{% translate "Useful signals stay visible without overwhelming the experience." %}</p>
       </div>
 
-      <div class="tw:d-stats tw:d-stats-vertical tw:mt-10 tw:w-full tw:overflow-hidden tw:bg-neutral-content/5 tw:shadow-2xl tw:lg:d-stats-horizontal">
+      <div class="tw:d-stats tw:d-stats-horizontal tw:mt-10 tw:w-full tw:overflow-x-auto tw:bg-neutral-content/5 tw:shadow-2xl">
         {% for stat in statistics %}
         <div class="tw:d-stat tw:border tw:border-neutral-content/10" data-reveal>
           <div class="tw:d-stat-figure tw:text-success"><i class="bi bi-graph-up-arrow tw:text-2xl"></i></div>
@@ -185,17 +185,26 @@
   {% if tpa_services %}
   <section id="medical-services" class="tw:border-y tw:border-base-300 tw:bg-base-200/60 tw:py-24">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
-      <div class="tw:grid tw:gap-10 tw:lg:grid-cols-[.75fr_1.25fr]">
-        <div data-reveal><span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft tw:mb-4"><i class="bi bi-heart-pulse tw:me-2"></i>{% translate "Medical TPA Services" %}</span><h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Healthcare management, connected end-to-end." %}</h2><p class="tw:mt-5 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Member, provider and insurer workflows come together in one coordinated experience." %}</p></div>
-        <ul class="tw:d-list tw:gap-2">
-          {% for service in tpa_services %}
-          <li class="tw:d-list-row tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm" data-reveal>
-            <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-secondary/12 tw:text-secondary"><i class="bi {{ service.icon|default:'bi-heart-pulse' }}"></i></span>
-            <div class="tw:d-list-col-grow"><h3 class="tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3><p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{% if LANGUAGE_CODE == "ar" %}{{ service.short_description_ar|default:service.short_description_en }}{% else %}{{ service.short_description_en }}{% endif %}</p></div>
-            {% if service.url %}<a class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" href="{{ service.url }}" aria-label="{% translate 'Learn more' %}"><i class="bi bi-arrow-up-right"></i></a>{% endif %}
-          </li>
-          {% endfor %}
-        </ul>
+      <div class="tw:mx-auto tw:max-w-3xl tw:text-center" data-reveal>
+        <span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft tw:mb-4"><i class="bi bi-heart-pulse tw:me-2"></i>{% translate "Medical TPA Services" %}</span>
+        <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "Healthcare management, connected end-to-end." %}</h2>
+        <p class="tw:mt-5 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "Member, provider and insurer workflows come together in one coordinated experience." %}</p>
+      </div>
+      <div class="tw:mt-12 tw:grid tw:gap-6 tw:md:grid-cols-2 tw:xl:grid-cols-3">
+        {% for service in tpa_services %}
+        <article class="tw:d-card tw:h-full tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg" data-reveal>
+          {% if service.image %}<figure class="tw:h-40 tw:overflow-hidden"><img class="tw:h-full tw:w-full tw:object-cover" src="{{ service.image.url }}" alt=""></figure>{% endif %}
+          <div class="tw:d-card-body tw:p-6">
+            <div class="tw:flex tw:items-start tw:justify-between tw:gap-3">
+              <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-secondary/12 tw:text-xl tw:text-secondary"><i class="bi {{ service.icon|default:'bi-heart-pulse' }}"></i></span>
+              {% if service.is_featured %}<span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft">{% translate "Featured" %}</span>{% endif %}
+            </div>
+            <h3 class="tw:d-card-title tw:mt-4 tw:text-xl">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3>
+            <p class="tw:leading-7 tw:text-base-content/55">{% if LANGUAGE_CODE == "ar" %}{{ service.short_description_ar|default:service.short_description_en }}{% else %}{{ service.short_description_en }}{% endif %}</p>
+            {% if service.url %}<div class="tw:d-card-actions tw:mt-auto tw:pt-4"><a class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:text-secondary" href="{{ service.url }}">{% translate "Learn more" %}<i class="bi bi-arrow-up-right"></i></a></div>{% endif %}
+          </div>
+        </article>
+        {% endfor %}
       </div>
     </div>
   </section>
@@ -207,15 +216,18 @@
         <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-signpost-split tw:me-2"></i>{% translate "Step-by-step journey" %}</span>
         <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "From request to resolution, every step stays visible." %}</h2>
       </div>
-      <div class="tw:mt-12 tw:overflow-x-auto tw:pb-4">
-        <ul class="tw:d-steps tw:d-steps-vertical tw:w-full tw:lg:d-steps-horizontal">
+      <div class="tw:mt-12 tw:overflow-x-auto tw:pb-5">
+        <ul class="tw:d-timeline tw:d-timeline-horizontal tw:min-w-full">
           {% for step in process_steps %}
-          <li class="tw:d-step tw:d-step-primary" data-content="{{ forloop.counter }}">{% if LANGUAGE_CODE == "ar" %}{{ step.title_ar|default:step.title_en }}{% else %}{{ step.title_en }}{% endif %}</li>
+          <li class="tw:min-w-48">
+            {% if not forloop.first %}<hr class="tw:bg-primary">{% endif %}
+            <div class="tw:d-timeline-start tw:mb-3 tw:text-xs tw:font-black tw:text-primary">0{{ forloop.counter }}</div>
+            <div class="tw:d-timeline-middle"><span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-full tw:bg-primary tw:text-primary-content">{{ forloop.counter }}</span></div>
+            <div class="tw:d-timeline-end tw:mt-3 tw:px-3 tw:text-center tw:font-bold">{% if LANGUAGE_CODE == "ar" %}{{ step.title_ar|default:step.title_en }}{% else %}{{ step.title_en }}{% endif %}</div>
+            {% if not forloop.last %}<hr class="tw:bg-primary">{% endif %}
+          </li>
           {% empty %}
-          <li class="tw:d-step tw:d-step-primary" data-content="1">{% translate "Choose service" %}</li>
-          <li class="tw:d-step tw:d-step-primary" data-content="2">{% translate "Share details" %}</li>
-          <li class="tw:d-step tw:d-step-primary" data-content="3">{% translate "Collaborate" %}</li>
-          <li class="tw:d-step tw:d-step-primary" data-content="4">{% translate "Resolution" %}</li>
+          <li><div class="tw:d-timeline-middle"><span class="tw:d-status tw:d-status-primary"></span></div><div class="tw:d-timeline-end">{% translate "Choose service" %}</div></li>
           {% endfor %}
         </ul>
       </div>

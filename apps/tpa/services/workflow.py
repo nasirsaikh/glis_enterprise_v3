@@ -152,6 +152,53 @@ def sync_from_ticket_approval(tx, actor=None):
     return tx
 
 
+def _resolve_principal_member(tx, action, data):
+    relationship = str(data.get("relationship") or "").upper()
+    if relationship == Member.Relationship.PRINCIPAL:
+        return None
+
+    active = Member.objects.filter(
+        relationship=Member.Relationship.PRINCIPAL,
+        status=Member.Status.ACTIVE,
+        enrollments__policy=tx.policy,
+        enrollments__enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
+    ).distinct()
+
+    member_ref = str(data.get("principal_member_id") or "").strip()
+    if member_ref:
+        member = (
+            active.filter(pk=int(member_ref)).first()
+            if member_ref.isdigit()
+            else active.filter(tpa_member_id=member_ref).first()
+        )
+        if member:
+            return member
+
+    action_ref = str(data.get("principal_action_id") or "").strip()
+    if action_ref.isdigit():
+        principal_action = tx.member_actions.filter(pk=int(action_ref)).select_related("member").first()
+        if principal_action and principal_action.member_id:
+            return principal_action.member
+
+    principal_employee_id = str(data.get("principal_employee_id") or "").strip()
+    if principal_employee_id:
+        member = active.filter(employee_id=principal_employee_id).first()
+        if member:
+            return member
+        for principal_action in tx.member_actions.select_related("member").all():
+            principal_data = _data(principal_action)
+            if (
+                str(principal_data.get("relationship") or "").upper()
+                == Member.Relationship.PRINCIPAL
+                and str(principal_data.get("employee_id") or "").strip()
+                == principal_employee_id
+                and principal_action.member_id
+            ):
+                return principal_action.member
+
+    raise ValueError("Parent principal could not be resolved for this dependent.")
+
+
 def _find_enrollment(tx, data):
     qs = MemberPolicyEnrollment.objects.select_related("member").filter(
         policy=tx.policy,
@@ -175,6 +222,7 @@ def _find_enrollment(tx, data):
 def _process_add(tx, action):
     data = _data(action)
     plan = tx.policy.plans.get(code=data["plan_code"], is_active=True)
+    principal = _resolve_principal_member(tx, action, data)
     member = Member.objects.create(
         sponsor=tx.sponsor,
         employee_id=str(data.get("employee_id") or "").strip(),
@@ -186,6 +234,7 @@ def _process_add(tx, action):
         relationship=str(data["relationship"]).strip().upper(),
         national_id=str(data.get("national_id") or "").strip(),
         passport_number=str(data.get("passport_number") or "").strip(),
+        principal=principal,
         status=Member.Status.ACTIVE,
     )
     enrollment = MemberPolicyEnrollment.objects.create(
@@ -261,7 +310,20 @@ def process_transaction(tx, actor):
             cancellation_date=tx.effective_date,
         )
     else:
-        for action in tx.member_actions.select_for_update().order_by("row_number", "pk"):
+        actions = list(tx.member_actions.select_for_update().order_by("row_number", "pk"))
+        if tx.transaction_type in {
+            tx.Type.NEW_POLICY_ENROLLMENT,
+            tx.Type.MEMBER_ADD,
+        }:
+            actions.sort(
+                key=lambda item: (
+                    str(_data(item).get("relationship") or "").upper()
+                    != Member.Relationship.PRINCIPAL,
+                    item.row_number or item.pk,
+                )
+            )
+
+        for action in actions:
             try:
                 if tx.transaction_type in {
                     tx.Type.NEW_POLICY_ENROLLMENT,

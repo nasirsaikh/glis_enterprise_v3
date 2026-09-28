@@ -116,9 +116,9 @@
               <tr>
                 <td><a class="tw:block tw:min-w-48 tw:no-underline" href="{% url 'portal:ticket_detail' ticket.reference %}"><strong class="tw:block tw:text-primary">{{ ticket.reference }}</strong><small class="tw:block tw:max-w-64 tw:truncate tw:text-base-content/45">{{ ticket.subject|truncatechars:44 }}</small></a></td>
                 <td><span class="tw:block tw:font-semibold">{{ ticket.project.name_en }}</span><small class="tw:text-base-content/45">{{ ticket.category.name_en }}</small></td>
-                <td><span class="priority-chip priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
-                <td><span class="status-chip status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
-                <td><span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span></td>
+                <td><span class="tw:d-badge tw:d-badge-warning tw:d-badge-soft tw:d-badge-sm">{{ ticket.get_priority_display }}</span></td>
+                <td><span class="tw:d-badge tw:d-badge-outline tw:d-badge-sm">{{ ticket.get_status_display }}</span></td>
+                <td><span class="tw:d-badge tw:d-badge-info tw:d-badge-soft tw:d-badge-sm">{{ ticket.sla_state|title }}</span></td>
                 <td><a class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm" href="{% url 'portal:ticket_detail' ticket.reference %}"><i class="bi bi-arrow-up-right"></i></a></td>
               </tr>
               {% empty %}
@@ -142,7 +142,7 @@
             <li class="tw:d-list-row tw:rounded-xl tw:px-2">
               <span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-xl tw:bg-error/10 tw:text-error"><i class="bi bi-exclamation-lg"></i></span>
               <div class="tw:d-list-col-grow tw:min-w-0"><a class="tw:font-black tw:text-base-content tw:no-underline" href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a><small class="tw:block tw:truncate tw:text-base-content/45">{{ ticket.subject|truncatechars:42 }}</small></div>
-              <span class="sla-chip sla-{{ ticket.sla_state }}">{{ ticket.sla_state|title }}</span>
+              <span class="tw:d-badge tw:d-badge-info tw:d-badge-soft tw:d-badge-sm">{{ ticket.sla_state|title }}</span>
             </li>
             {% empty %}
             <li class="tw:py-8 tw:text-center tw:text-base-content/45"><i class="bi bi-check2-circle tw:me-2 tw:text-success"></i>{% translate "Nothing urgent" %}</li>

@@ -273,7 +273,7 @@
             <tr>
               <td>{{ a.row_number|default:forloop.counter }}</td>
               <td>
-                <strong>{{ a.corrected_data.first_name|default:a.extracted_data.first_name }} {{ a.corrected_data.last_name|default:a.extracted_data.last_name }}</strong>
+                <strong>{% firstof a.corrected_data.first_name a.extracted_data.first_name a.submitted_data.first_name "—" %} {% firstof a.corrected_data.last_name a.extracted_data.last_name a.submitted_data.last_name "" %}</strong>
                 {% if a.validation_errors %}
                 <details class="tw:mt-1">
                   <summary class="tw:cursor-pointer tw:text-xs tw:text-error">{% translate "View errors" %}</summary>
@@ -283,8 +283,8 @@
                 </details>
                 {% endif %}
               </td>
-              <td>{{ a.corrected_data.employee_id|default:a.extracted_data.employee_id|default:"—" }}</td>
-              <td>{{ a.corrected_data.plan_code|default:a.extracted_data.plan_code|default:"—" }}</td>
+              <td>{% firstof a.corrected_data.employee_id a.extracted_data.employee_id a.submitted_data.employee_id "—" %}</td>
+              <td>{% firstof a.corrected_data.plan_code a.extracted_data.plan_code a.submitted_data.plan_code "—" %}</td>
               <td>
                 <span class="tw:d-badge {% if a.validation_status == 'VALID' %}tw:d-badge-success{% elif a.validation_status == 'WARNING' %}tw:d-badge-warning{% else %}tw:d-badge-error{% endif %} tw:d-badge-soft">
                   {{ a.validation_status }}

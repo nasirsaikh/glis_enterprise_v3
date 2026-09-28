@@ -25,7 +25,7 @@
       data-theme-preference-url="{% url 'accounts:theme_preference' %}"
       data-user-theme="{{ user.profile.theme|default:'system' }}">
 
-  <a class="tw:sr-only focus:tw:not-sr-only focus:tw:fixed focus:tw:start-4 focus:tw:top-4 focus:tw:z-[100] focus:tw:rounded-lg focus:tw:bg-primary focus:tw:px-4 focus:tw:py-2 focus:tw:text-primary-content" href="#portal-main">{% translate "Skip to content" %}</a>
+  <a class="tw:sr-only tw:focus:not-sr-only tw:focus:fixed tw:focus:start-4 tw:focus:top-4 tw:focus:z-[100] tw:focus:rounded-lg tw:focus:bg-primary tw:focus:px-4 tw:focus:py-2 tw:focus:text-primary-content" href="#portal-main">{% translate "Skip to content" %}</a>
 
   <div class="drawer lg:drawer-open">
     <input id="portal-drawer" type="checkbox" class="drawer-toggle">
@@ -33,7 +33,7 @@
     <div class="drawer-content tw:min-h-screen tw:bg-base-200">
       <header class="navbar tw:sticky tw:top-0 tw:z-40 tw:min-h-20 tw:border-b tw:border-base-300 tw:bg-base-100/95 tw:px-3 tw:shadow-sm tw:backdrop-blur-xl tw:sm:px-5">
         <div class="navbar-start tw:min-w-0 tw:gap-1 tw:sm:gap-2">
-          <label for="portal-drawer" class="btn btn-ghost btn-circle lg:tw:hidden" aria-label="{% translate 'Open navigation' %}">
+          <label for="portal-drawer" class="btn btn-ghost btn-circle tw:lg:hidden" aria-label="{% translate 'Open navigation' %}">
             <i class="bi bi-list tw:text-xl"></i>
           </label>
 
@@ -62,7 +62,7 @@
         </div>
 
         <div class="navbar-end tw:gap-1">
-          <a class="btn btn-primary btn-sm tw:hidden tw:rounded-full tw:sm:inline-flex tw:lg:btn-md" href="{% url 'portal:create_ticket' 1 %}">
+          <a class="btn btn-primary btn-sm tw:hidden tw:rounded-full tw:sm:inline-flex " href="{% url 'portal:create_ticket' 1 %}">
             <i class="bi bi-plus-lg"></i><span class="tw:hidden tw:xl:inline">{% translate "New ticket" %}</span>
           </a>
 
@@ -92,7 +92,7 @@
               </div>
               <div id="notification-items" class="tw:max-h-[28rem] tw:overflow-y-auto">
                 {% for item in header_notifications %}
-                <a class="tw:flex tw:gap-3 tw:border-b tw:border-base-300/70 tw:px-5 tw:py-4 tw:no-underline hover:tw:bg-base-200{% if not item.read_at %} tw:bg-primary/5{% endif %}" href="{{ item.link|default:'#' }}">
+                <a class="tw:flex tw:gap-3 tw:border-b tw:border-base-300/70 tw:px-5 tw:py-4 tw:no-underline tw:hover:bg-base-200{% if not item.read_at %} tw:bg-primary/5{% endif %}" href="{{ item.link|default:'#' }}">
                   <span class="tw:grid tw:h-10 tw:w-10 tw:shrink-0 tw:place-items-center tw:rounded-xl tw:bg-primary/10 tw:text-primary">
                     <i class="bi bi-{% if item.kind == 'sla' %}alarm{% elif item.kind == 'assignment' %}person-check{% elif item.kind == 'approval' %}check2-square{% else %}bell{% endif %}"></i>
                   </span>
@@ -102,7 +102,7 @@
                 <div class="tw:flex tw:flex-col tw:items-center tw:gap-2 tw:px-5 tw:py-10 tw:text-center tw:text-base-content/45"><i class="bi bi-bell-slash tw:text-2xl"></i><strong>{% translate "No notifications" %}</strong></div>
                 {% endfor %}
               </div>
-              <a class="tw:block tw:px-5 tw:py-3 tw:text-center tw:text-sm tw:font-bold tw:text-primary tw:no-underline hover:tw:bg-base-200" href="{% url 'portal:notifications' %}">{% translate "View all notifications" %}</a>
+              <a class="tw:block tw:px-5 tw:py-3 tw:text-center tw:text-sm tw:font-bold tw:text-primary tw:no-underline tw:hover:bg-base-200" href="{% url 'portal:notifications' %}">{% translate "View all notifications" %}</a>
             </div>
           </details>
 

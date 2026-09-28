@@ -264,30 +264,46 @@
 
   const setupSidebar = () => {
     const button = document.getElementById("sidebar-toggle");
-    if (!button) return;
-    const modes = ["mini", "full"];
-    const currentMode = () => modes.find(mode => document.body.classList.contains("sidebar-mode-" + mode)) || "mini";
-    const applyMode = (mode) => {
-      modes.forEach(value => document.body.classList.toggle("sidebar-mode-" + value, value === mode));
-      button.setAttribute("aria-expanded", String(mode === "full"));
-      button.setAttribute("aria-label", mode === "full" ? "Collapse navigation" : "Expand navigation");
-      button.dataset.mode = mode;
-      button.querySelector("i").className = "bi " + (mode === "full" ? "bi-layout-sidebar-inset-reverse" : "bi-layout-sidebar-inset");
+    const sidebar = document.getElementById("portal-sidebar");
+    if (!button || !sidebar) return;
+
+    let desktopMode = "collapsed";
+
+    const render = (mode) => {
+      const expanded = mode === "expanded";
+      sidebar.dataset.sidebarState = mode;
+      sidebar.classList.toggle("tw:w-20", !expanded);
+      sidebar.classList.toggle("tw:w-72", expanded);
+
+      sidebar.querySelectorAll("[data-sidebar-label]").forEach((element) => {
+        element.classList.toggle("tw:hidden", !expanded);
+      });
+      sidebar.querySelectorAll("[data-sidebar-link]").forEach((link) => {
+        link.classList.toggle("tw:justify-center", !expanded);
+      });
+
+      button.setAttribute("aria-expanded", String(expanded));
+      button.setAttribute("aria-label", expanded ? "Collapse navigation" : "Expand navigation");
+      button.setAttribute("title", expanded ? "Collapse navigation" : "Expand navigation");
+      const icon = button.querySelector("i");
+      if (icon) icon.className = "bi " + (expanded ? "bi-layout-sidebar-inset-reverse" : "bi-layout-sidebar-inset");
     };
-    // Each navigation starts icon-only, regardless of the saved account preference.
-    applyMode(currentMode());
-    button.addEventListener("click", async () => {
-      const mode = modes[(modes.indexOf(currentMode()) + 1) % modes.length];
-      applyMode(mode);
-      const token = document.querySelector('[name="csrfmiddlewaretoken"]')?.value || "";
-      try {
-        await fetch(document.body.dataset.sidebarPreferenceUrl, {
-          method: "POST",
-          headers: {"X-CSRFToken": token, "X-Requested-With": "XMLHttpRequest", "Content-Type": "application/x-www-form-urlencoded"},
-          body: new URLSearchParams({mode})
-        });
-      } catch (_) { /* The profile form remains a fallback for saving this preference. */ }
+
+    const syncViewport = () => {
+      if (window.matchMedia("(min-width: 1024px)").matches) render(desktopMode);
+      else render("expanded");
+    };
+
+    // Desktop always lands collapsed; the user can expand it for the current page.
+    render("collapsed");
+    syncViewport();
+
+    button.addEventListener("click", () => {
+      desktopMode = desktopMode === "collapsed" ? "expanded" : "collapsed";
+      render(desktopMode);
     });
+
+    window.addEventListener("resize", syncViewport);
   };
 
   const insertImage = (editor, file) => {
@@ -305,8 +321,8 @@
       source.dataset.editorReady = "true";
       source.hidden = true;
       const wrapper = document.createElement("div");
-      wrapper.className = "richtext-editor";
-      wrapper.innerHTML = '<div class="richtext-toolbar"><button type="button" data-cmd="bold" title="Bold"><i class="bi bi-type-bold"></i></button><button type="button" data-cmd="italic" title="Italic"><i class="bi bi-type-italic"></i></button><button type="button" data-cmd="underline" title="Underline"><i class="bi bi-type-underline"></i></button><button type="button" data-cmd="insertUnorderedList" title="Bullets"><i class="bi bi-list-ul"></i></button><button type="button" data-cmd="insertOrderedList" title="Numbered list"><i class="bi bi-list-ol"></i></button><button type="button" data-cmd="createLink" title="Link"><i class="bi bi-link-45deg"></i></button><button type="button" data-image-button title="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span>Paste or upload images</span></div><div class="richtext-canvas" contenteditable="true"></div>';
+      wrapper.className = "card tw:overflow-hidden tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm";
+      wrapper.innerHTML = '<div class="tw:flex tw:flex-wrap tw:items-center tw:gap-1 tw:border-b tw:border-base-300 tw:bg-base-200/55 tw:p-2"><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="bold" title="Bold" aria-label="Bold"><i class="bi bi-type-bold"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i class="bi bi-type-italic"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="underline" title="Underline" aria-label="Underline"><i class="bi bi-type-underline"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bullets"><i class="bi bi-list-ul"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list"><i class="bi bi-list-ol"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="createLink" title="Link" aria-label="Insert link"><i class="bi bi-link-45deg"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-image-button title="Upload image" aria-label="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span class="badge badge-ghost badge-sm tw:ms-2">Paste or upload images</span></div><div class="textarea textarea-bordered tw:w-full tw:rounded-none tw:border-0 tw:bg-base-100 tw:p-4" style="min-height:10rem;overflow:auto" contenteditable="true" role="textbox" aria-multiline="true"></div>';
       source.insertAdjacentElement("afterend", wrapper);
       const editor = wrapper.querySelector(".richtext-canvas");
       editor.innerHTML = source.value || "";
@@ -365,6 +381,21 @@
     const sessionList = document.getElementById("vanna-session-list");
     const diagnostics = document.getElementById("vanna-diagnostic-log");
     let chartSequence = 0;
+    const currentUserName = document.body.dataset.userName || "You";
+    const currentUserInitial = (document.body.dataset.userInitial || currentUserName || "U").trim().charAt(0).toUpperCase() || "U";
+
+    const userAvatar = () => {
+      const image = document.createElement("div");
+      image.className = "chat-image avatar avatar-placeholder";
+      const circle = document.createElement("div");
+      circle.className = "tw:w-10 tw:rounded-full tw:bg-primary tw:text-primary-content";
+      const initial = document.createElement("span");
+      initial.className = "tw:text-sm tw:font-black";
+      initial.textContent = currentUserInitial;
+      circle.appendChild(initial);
+      image.appendChild(circle);
+      return image;
+    };
 
     const bindPrompt = (button) => button.addEventListener("click", () => { question.value = button.dataset.vannaPrompt || button.textContent; question.focus(); });
     document.querySelectorAll("[data-vanna-prompt]").forEach(bindPrompt);
@@ -380,14 +411,14 @@
       article.className = "chat chat-end ai-message";
       const header = document.createElement("div");
       header.className = "chat-header";
-      header.textContent = "You";
+      header.textContent = currentUserName;
       const bubble = document.createElement("div");
       bubble.className = "chat-bubble chat-bubble-primary tw:max-w-3xl";
       bubble.textContent = text;
       const footer = document.createElement("div");
       footer.className = "chat-footer tw:opacity-50";
       footer.textContent = formatTime(createdAt);
-      article.append(header, bubble, footer);
+      article.append(userAvatar(), header, bubble, footer);
       conversation.appendChild(article);
       scrollToLatest();
     };

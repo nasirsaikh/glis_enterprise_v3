@@ -226,13 +226,13 @@
   </section>
   {% endif %}
 
-  <section id="journey" class="tw:py-24">
+  <section id="journey" class="glis-journey-section tw:border-y tw:border-base-300 tw:py-20">
     <div class="tw:mx-auto tw:max-w-7xl tw:px-6">
       <div class="tw:mx-auto tw:max-w-4xl tw:text-center" data-reveal>
         <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-4"><i class="bi bi-signpost-split tw:me-2"></i>{% translate "Step-by-step journey" %}</span>
         <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "From request to resolution, every step stays visible." %}</h2>
       </div>
-      <div class="tw:mt-12 tw:overflow-x-auto tw:pb-5">
+      <div class="tw:mt-10 tw:overflow-x-auto tw:pb-4">
         <ul class="tw:d-timeline tw:d-timeline-horizontal tw:min-w-full">
           {% for step in process_steps %}
           <li class="tw:min-w-48">
@@ -247,7 +247,7 @@
           {% endfor %}
         </ul>
       </div>
-      <div class="tw:mt-8 tw:grid tw:gap-4 tw:md:grid-cols-2 tw:xl:grid-cols-4">
+      <div class="tw:mt-7 tw:grid tw:gap-5 tw:md:grid-cols-2 tw:xl:grid-cols-4">
         {% for step in process_steps %}
         <article class="glis-card-lift tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg" data-reveal data-tilt>
           <div class="tw:d-card-body tw:p-5">

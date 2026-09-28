@@ -24,6 +24,7 @@
       data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}"
       data-theme-preference-url="{% url 'accounts:theme_preference' %}"
       data-user-theme="{{ user.profile.theme|default:'system' }}"
+      data-user-name="{{ user.get_full_name|default:user.email }}"
       data-user-initial="{{ user.first_name|default:user.email|slice:':1'|upper }}">
 
   <a class="tw:sr-only tw:focus:not-sr-only tw:focus:fixed tw:focus:start-4 tw:focus:top-4 tw:focus:z-[100] tw:focus:rounded-lg tw:focus:bg-primary tw:focus:px-4 tw:focus:py-2 tw:focus:text-primary-content" href="#portal-main">{% translate "Skip to content" %}</a>

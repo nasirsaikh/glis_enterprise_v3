@@ -35,7 +35,10 @@ class UserProfileForm(forms.Form):
     department = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}))
     bio = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": "tw:d-textarea tw:d-textarea-bordered tw:w-full", "rows": 4}))
     preferred_language = forms.ChoiceField(choices=UserProfile._meta.get_field("preferred_language").choices, widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}))
-    theme = forms.ChoiceField(choices=UserProfile._meta.get_field("theme").choices, widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}))
+    theme = forms.ChoiceField(
+        choices=[("system", _("System")), ("light", _("Light")), ("dark", _("Dark"))],
+        widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
+    )
     sidebar_mode = forms.ChoiceField(label=_("Portal navigation"), choices=UserProfile.SidebarMode.choices, widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}))
     avatar = forms.ImageField(required=False, widget=forms.FileInput(attrs={"class": "tw:d-file-input tw:d-file-input-bordered tw:w-full", "accept": "image/png,image/jpeg,image/webp"}))
     remove_avatar = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "tw:d-toggle tw:d-toggle-primary"}))
@@ -49,7 +52,8 @@ class UserProfileForm(forms.Form):
             "first_name": user.first_name, "last_name": user.last_name, "email": user.email,
             "phone": profile.phone, "organization": profile.organization, "job_title": profile.job_title,
             "department": profile.department, "bio": profile.bio, "preferred_language": profile.preferred_language,
-            "theme": profile.theme, "sidebar_mode": profile.sidebar_mode, "email_notifications": profile.email_notifications,
+            "theme": profile.theme if profile.theme in {"system", "light", "dark"} else "system",
+            "sidebar_mode": profile.sidebar_mode, "email_notifications": profile.email_notifications,
             "browser_notifications": profile.browser_notifications,
         })
         super().__init__(*args, **kwargs)

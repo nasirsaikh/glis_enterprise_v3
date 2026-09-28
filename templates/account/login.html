@@ -1,75 +1,116 @@
-{% extends 'base_public.html' %}{% load i18n %}
+{% extends 'base_public.html' %}
+{% load i18n %}
+
 {% block title %}{% translate "Sign in" %} · GLIS{% endblock %}
+
 {% block content %}
-<section class="glis-auth-shell glis-aura tw:relative tw:overflow-hidden tw:bg-base-200/45 tw:py-12 tw:sm:py-16" data-aura>
-  <div class="tw:mx-auto tw:max-w-6xl tw:px-6">
-    <div class="tw:grid tw:gap-8 tw:lg:grid-cols-2 tw:lg:items-stretch">
-      <div class="tw:d-aura tw:d-aura-holo tw:d-aura-lg" data-reveal>
-        <article class="glis-auth-story tw:d-card tw:h-full tw:bg-neutral tw:text-neutral-content tw:shadow-2xl" data-tilt>
-          <div class="tw:d-card-body tw:justify-between tw:gap-8 tw:p-8 tw:sm:p-10">
-            <div>
-              <div class="tw:flex tw:flex-wrap tw:gap-2">
-                <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft"><span class="tw:d-status tw:d-status-success"></span>{% translate "Secure service portal" %}</span>
-                <span class="tw:d-badge tw:d-badge-outline tw:border-neutral-content/20 tw:text-neutral-content/70"><i class="bi bi-shield-check"></i>{% translate "Privacy-aware" %}</span>
-              </div>
-              <h1 class="tw:mt-6 tw:text-4xl tw:font-black tw:leading-tight tw:tracking-[-.05em] tw:sm:text-5xl">{% translate "Connected healthcare and insurance service, designed around people." %}</h1>
-              <p class="tw:mt-5 tw:max-w-xl tw:text-lg tw:leading-8 tw:text-neutral-content/65">{% translate "A secure Greenline workspace to submit requests, exchange documents, follow SLA progress and collaborate with the right team." %}</p>
+<section class="auth-section">
+    <div class="container">
+        <div class="auth-grid">
+
+            <div class="auth-story">
+                <span class="section-kicker light">{% translate "Secure service portal" %}</span>
+                <h1>{% translate "Continue every insurance request with clarity" %}</h1>
+                <p>{% translate "Sign in to submit requests, share documents securely, follow SLA status and collaborate with the responsible team." %}</p>
+
+                <ul>
+                    <li><i class="bi bi-check2-circle"></i>{% translate "Your permitted tickets in one workspace" %}</li>
+                    <li><i class="bi bi-check2-circle"></i>{% translate "English and Arabic experience" %}</li>
+                    <li><i class="bi bi-check2-circle"></i>{% translate "Auditable conversations and attachments" %}</li>
+                </ul>
+
+                <div class="auth-trust">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>
+                        <strong>{% translate "Privacy-aware access" %}</strong>
+                        <small>{% translate "Role and group permissions protect insurance information." %}</small>
+                    </span>
+                </div>
             </div>
 
-            <div class="tw:d-stats tw:d-stats-vertical tw:w-full tw:bg-neutral-content/5 tw:shadow-sm tw:sm:d-stats-horizontal">
-              <div class="tw:d-stat"><div class="tw:d-stat-figure tw:text-success"><i class="bi bi-lightning-charge tw:text-xl"></i></div><div class="tw:d-stat-title tw:text-neutral-content/50">{% translate "Fast" %}</div><div class="tw:d-stat-value tw:text-lg">{% translate "Track" %}</div><div class="tw:d-stat-desc tw:text-neutral-content/45">{% translate "Live progress" %}</div></div>
-              <div class="tw:d-stat"><div class="tw:d-stat-figure tw:text-info"><i class="bi bi-paperclip tw:text-xl"></i></div><div class="tw:d-stat-title tw:text-neutral-content/50">{% translate "Secure" %}</div><div class="tw:d-stat-value tw:text-lg">{% translate "Share" %}</div><div class="tw:d-stat-desc tw:text-neutral-content/45">{% translate "Protected files" %}</div></div>
-              <div class="tw:d-stat"><div class="tw:d-stat-figure tw:text-success"><i class="bi bi-people tw:text-xl"></i></div><div class="tw:d-stat-title tw:text-neutral-content/50">{% translate "Connected" %}</div><div class="tw:d-stat-value tw:text-lg">{% translate "Work" %}</div><div class="tw:d-stat-desc tw:text-neutral-content/45">{% translate "Together" %}</div></div>
+            <div class="auth-card">
+
+                <div class="auth-card-heading">
+                    <img style="height:40px; width:80px;" src="/api/v1/site-logo/" alt="Company Logo">
+                    <div>
+                        <h2>{% translate "Welcome back" %}</h2>
+                        <p>{% translate "Sign in to the GLIS service portal" %}</p>
+                    </div>
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <form method="post" action="{% url 'account_login' %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        {{ form.login }}
+                        {{ form.login.errors }}
+                    </div>
+
+
+                    <div class="mb-3">
+                    <label class="form-label" for="{{ form.username.id_for_label }}">{% translate "Email or username" %}</label>
+                    {{ form.username }}{{ form.username.errors }}
+                    </div>
+
+                
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label class="form-label" for="{{ form.password.id_for_label }}">{% translate "Password" %}</label>
+                            <a href="{% url 'account_reset_password' %}">{% translate "Forgot password?" %}</a>
+                        </div>
+                        {{ form.password }}
+                        {{ form.password.errors }}
+                    </div>
+
+                    {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+                    {% elif next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                    {% endif %}
+
+                    <button class="btn btn-primary btn-lg w-100 mt-3" type="submit">{% translate "Sign in" %}</button>
+                </form>
+
+                <div class="auth-divider">
+                    <span>{% translate "or continue with" %}</span>
+                </div>
+
+                <div class="social-login">
+
+                    {% if google_login_available %}
+                    <form method="post" action="/accounts/google/login/" class="w-100">
+                        {% csrf_token %}
+                        {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% elif next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+                        <button class="btn btn-soft w-100" type="submit"><i class="bi bi-google"></i><span>Google</span></button>
+                    </form>
+                    {% else %}
+                    <button class="btn btn-soft w-100" type="button" disabled><i class="bi bi-google"></i><span>Google</span></button>
+                    {% endif %}
+
+                    {% if microsoft_login_available %}
+                    <form method="post" action="/accounts/microsoft/login/" class="w-100">
+                        {% csrf_token %}
+                        {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% elif next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+                        <button class="btn btn-soft w-100" type="submit"><i class="bi bi-microsoft"></i><span>Microsoft</span></button>
+                    </form>
+                    {% else %}
+                    <button class="btn btn-soft w-100" type="button" disabled><i class="bi bi-microsoft"></i><span>Microsoft</span></button>
+                    {% endif %}
+
+                </div>
+
+                <p class="auth-footer">{% translate "New to GLIS?" %} <a href="{% url 'account_signup' %}">{% translate "Create an account" %}</a></p>
+
+                {% if debug %}
+                <div class="demo-hint"><i class="bi bi-info-circle"></i><span>{% translate "Development environment" %}</span></div>
+                {% endif %}
+
             </div>
-
-            <div class="tw:d-alert tw:border-neutral-content/10 tw:bg-neutral-content/5 tw:text-neutral-content">
-              <i class="bi bi-lock tw:text-success"></i>
-              <div><strong class="tw:block">{% translate "Protected access" %}</strong><span class="tw:text-sm tw:text-neutral-content/55">{% translate "Role and group permissions control access to insurance information." %}</span></div>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      <article class="glis-auth-card glis-card-lift tw:d-card tw:h-full tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl" data-reveal data-tilt>
-        <div class="tw:d-card-body tw:p-7 tw:sm:p-9">
-          <div class="tw:flex tw:items-center tw:justify-between tw:gap-4">
-            <div class="tw:flex tw:items-center tw:gap-4">
-              <span class="tw:grid tw:h-14 tw:w-28 tw:place-items-center tw:rounded-2xl tw:bg-base-200"><img class="tw:max-h-10 tw:max-w-24" src="/api/v1/site-logo/" alt="GLIS"></span>
-              <div><p class="tw:text-xs tw:font-bold tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "GLIS Portal" %}</p><h2 class="tw:mt-1 tw:text-2xl tw:font-black">{% translate "Welcome back" %}</h2></div>
-            </div>
-            <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft"><span class="tw:d-status tw:d-status-success"></span>{% translate "Online" %}</span>
-          </div>
-          <p class="tw:mt-4 tw:text-sm tw:text-base-content/55">{% translate "Sign in to continue to your service workspace." %}</p>
-
-          {% if form.non_field_errors %}<div class="tw:d-alert tw:d-alert-error tw:mt-5"><i class="bi bi-exclamation-octagon"></i><div>{{ form.non_field_errors }}</div></div>{% endif %}
-
-          <form class="tw:mt-6 tw:grid tw:grid-cols-1 tw:gap-4" method="post" action="{% url 'account_login' %}">
-            {% csrf_token %}
-            {% if form.login %}
-            <div class="tw:d-fieldset tw:w-full"><label class="tw:d-fieldset-legend" for="{{ form.login.id_for_label }}">{% translate "Email" %}</label>{{ form.login }}{{ form.login.errors }}</div>
-            {% endif %}
-            {% if form.username %}
-            <div class="tw:d-fieldset tw:w-full"><label class="tw:d-fieldset-legend" for="{{ form.username.id_for_label }}">{% translate "Email or username" %}</label>{{ form.username }}{{ form.username.errors }}</div>
-            {% endif %}
-            <div class="tw:d-fieldset tw:w-full">
-              <div class="tw:flex tw:items-center tw:justify-between tw:gap-3"><label class="tw:d-fieldset-legend" for="{{ form.password.id_for_label }}">{% translate "Password" %}</label><a class="tw:link tw:link-primary tw:text-xs tw:font-semibold" href="{% url 'account_reset_password' %}">{% translate "Forgot password?" %}</a></div>
-              {{ form.password }}{{ form.password.errors }}
-            </div>
-            {% if form.remember %}<label class="tw:flex tw:cursor-pointer tw:items-center tw:gap-3 tw:text-sm">{{ form.remember }}<span>{% translate "Keep me signed in" %}</span></label>{% endif %}
-            {% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% elif next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-            <button class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:w-full" type="submit"><i class="bi bi-box-arrow-in-right"></i>{% translate "Sign in securely" %}</button>
-          </form>
-
-          <div class="tw:d-divider tw:my-5 tw:text-xs">{% translate "or continue with" %}</div>
-          <div class="tw:grid tw:gap-3 tw:sm:grid-cols-2">
-            <form method="post" action="/accounts/google/login/">{% csrf_token %}{% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}<button class="tw:d-btn tw:d-btn-outline tw:w-full" type="submit" {% if not google_login_available %}disabled{% endif %}><i class="bi bi-google"></i>Google</button></form>
-            <form method="post" action="/accounts/microsoft/login/">{% csrf_token %}{% if redirect_field_value %}<input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">{% endif %}<button class="tw:d-btn tw:d-btn-outline tw:w-full" type="submit" {% if not microsoft_login_available %}disabled{% endif %}><i class="bi bi-microsoft"></i>Microsoft</button></form>
-          </div>
-          <div class="tw:d-alert tw:mt-6"><i class="bi bi-shield-check tw:text-primary"></i><span class="tw:text-sm">{% translate "Your session is protected and access is governed by your assigned role and permissions." %}</span></div>
-          <p class="tw:mt-6 tw:text-center tw:text-sm tw:text-base-content/50">{% translate "New to GLIS?" %} <a class="tw:link tw:link-primary tw:font-bold" href="{% url 'account_signup' %}">{% translate "Create an account" %}</a></p>
         </div>
-      </article>
     </div>
-  </div>
 </section>
 {% endblock %}

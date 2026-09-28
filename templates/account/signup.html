@@ -1,20 +1,41 @@
 {% extends 'base_public.html' %}{% load i18n socialaccount %}
 {% block title %}{% translate "Create account" %} · GLIS{% endblock %}
 {% block content %}
-<section class="tw:bg-base-200/45 tw:py-14 tw:sm:py-20">
-  <div class="tw:mx-auto tw:max-w-2xl tw:px-6">
+<section class="tw:bg-base-200/45 tw:py-14 tw:sm:py-5">
+  <div class="tw:mx-auto tw:max-w-2xl tw:px-2">
     <div class="tw:d-aura tw:d-aura-holo tw:d-aura-lg" data-aura data-reveal>
       <article class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
         <div class="tw:d-card-body tw:p-7 tw:sm:p-9">
-          <div class="tw:text-center"><img class="tw:mx-auto tw:max-h-12 tw:max-w-32" src="/api/v1/site-logo/" alt="GLIS"><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mt-5">{% translate "Secure registration" %}</span><h1 class="tw:mt-3 tw:text-3xl tw:font-black">{% translate "Create your GLIS account" %}</h1><p class="tw:mt-2 tw:text-base-content/50">{% translate "Create an account to submit and track your requests." %}</p></div>
-          <div class="tw:mt-6 tw:grid tw:gap-3 tw:sm:grid-cols-2"><form method="post" action="/accounts/microsoft/login/">{% csrf_token %}<button type="submit" class="tw:d-btn tw:d-btn-outline tw:w-full"><i class="bi bi-microsoft"></i>{% translate "Microsoft" %}</button></form><form method="post" action="/accounts/google/login/">{% csrf_token %}<button type="submit" class="tw:d-btn tw:d-btn-outline tw:w-full"><i class="bi bi-google"></i>{% translate "Google" %}</button></form></div>
-          <div class="tw:d-divider tw:my-6">{% translate "OR" %}</div>
-          <form class="tw:grid tw:grid-cols-1 tw:gap-4" method="post" action="{% url 'account_signup' %}">{% csrf_token %}
+          <div class="tw:text-center"><img class="tw:mx-auto tw:max-h-12 tw:max-w-32" src="/api/v1/site-logo/"
+              alt="GLIS"></div>
+          <div class="tw:mt-6 tw:grid tw:gap-3 tw:sm:grid-cols-2">
+            <form method="post" action="/accounts/microsoft/login/">{% csrf_token %}
+              <button type="submit" class="tw:d-btn tw:d-btn-outline tw:w-full"><i class="bi bi-microsoft"></i>{% translate "Microsoft" %}</button></form>
+            <form method="post" action="/accounts/google/login/">
+              {% csrf_token %}
+              <button type="submit" class="tw:d-btn tw:d-btn-outline tw:w-full">
+                <i class="bi bi-google"></i>{% translate "Google" %}
+              </button>
+            </form>
+          </div>
+          <div class="tw:d-divider">{% translate "OR" %}</div>
+          <form class="tw:grid tw:grid-cols-1 tw:gap-2" method="post" action="{% url 'account_signup' %}">{% csrf_token %}
             {% if form.non_field_errors %}<div class="tw:d-alert tw:d-alert-error">{{ form.non_field_errors }}</div>{% endif %}
-            {% for field in form %}<div class="tw:d-fieldset tw:w-full"><label class="tw:d-fieldset-legend" for="{{ field.id_for_label }}">{{ field.label }}</label><input class="tw:d-input tw:d-input-bordered tw:w-full {% if field.errors %}tw:d-input-error{% endif %}" id="{{ field.id_for_label }}" name="{{ field.html_name }}" type="{{ field.field.widget.input_type|default:'text' }}" value="{% if field.value and 'password' not in field.name %}{{ field.value }}{% endif %}" {% if field.field.required %}required{% endif %}>{% if field.help_text %}<span class="tw:d-label tw:text-xs tw:text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}{% if field.errors %}<span class="tw:text-xs tw:text-error">{{ field.errors|striptags }}</span>{% endif %}</div>{% endfor %}
-            <button type="submit" class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:w-full"><i class="bi bi-person-plus"></i>{% translate "Create account" %}</button>
+            {% for field in form %}<div class="tw:d-fieldset tw:w-full"><label class="tw:d-fieldset-legend"
+                for="{{ field.id_for_label }}">{{ field.label }}</label><input
+                class="tw:d-input tw:d-input-bordered tw:w-full {% if field.errors %}tw:d-input-error{% endif %}"
+                id="{{ field.id_for_label }}" name="{{ field.html_name }}"
+                type="{{ field.field.widget.input_type|default:'text' }}"
+                value="{% if field.value and 'password' not in field.name %}{{ field.value }}{% endif %}" 
+                {% if field.field.required %}required{% endif %}>{% if field.help_text %}<span
+                class="tw:d-label tw:text-xs tw:text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}{% if field.errors %}
+                <span class="tw:text-xs tw:text-error">{{ field.errors|striptags }}</span>{% endif %}</div>
+            {% endfor %}
+            <button type="submit" class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:w-full"><i
+                class="bi bi-person-plus"></i>{% translate "Create account" %}</button>
           </form>
-          <p class="tw:mt-6 tw:text-center tw:text-sm tw:text-base-content/50">{% translate "Already registered?" %} <a href="{% url 'account_login' %}" class="tw:link tw:link-primary tw:font-bold">{% translate "Sign in" %}</a></p>
+          <p class="tw:mt-6 tw:text-center tw:text-sm tw:text-base-content/50">{% translate "Already registered?" %} <a
+              href="{% url 'account_login' %}" class="tw:link tw:link-primary tw:font-bold">{% translate "Sign in" %}</a></p>
         </div>
       </article>
     </div>

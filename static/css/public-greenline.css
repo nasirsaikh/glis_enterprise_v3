@@ -136,10 +136,10 @@ html[data-theme="dark"] .public-shell {
   -webkit-backdrop-filter: blur(18px) saturate(135%);
 }
 .gl-public-nav-inner {
-  min-height: 82px;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
+  padding: 5px;
   gap: 2rem;
 }
 .gl-public-logo {
@@ -159,8 +159,7 @@ html[data-theme="dark"] .public-shell {
   background: transparent;
   color: var(--gl-text);
   border-radius: 12px;
-  min-height: 42px;
-  padding: .62rem .9rem;
+  padding: .3rem .5rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;

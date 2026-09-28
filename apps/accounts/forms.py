@@ -37,9 +37,8 @@ class UserProfileForm(forms.Form):
     preferred_language = forms.ChoiceField(choices=UserProfile._meta.get_field("preferred_language").choices, widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}))
     theme = forms.ChoiceField(
         choices=[("system", _("System")), ("light", _("Light")), ("dark", _("Dark"))],
-        widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
+        widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full", "data-theme-select": "true"}),
     )
-    sidebar_mode = forms.ChoiceField(label=_("Portal navigation"), choices=UserProfile.SidebarMode.choices, widget=forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}))
     avatar = forms.ImageField(required=False, widget=forms.FileInput(attrs={"class": "tw:d-file-input tw:d-file-input-bordered tw:w-full", "accept": "image/png,image/jpeg,image/webp"}))
     remove_avatar = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "tw:d-toggle tw:d-toggle-primary"}))
     email_notifications = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "tw:d-toggle tw:d-toggle-primary"}))
@@ -53,7 +52,7 @@ class UserProfileForm(forms.Form):
             "phone": profile.phone, "organization": profile.organization, "job_title": profile.job_title,
             "department": profile.department, "bio": profile.bio, "preferred_language": profile.preferred_language,
             "theme": profile.theme if profile.theme in {"system", "light", "dark"} else "system",
-            "sidebar_mode": profile.sidebar_mode, "email_notifications": profile.email_notifications,
+            "email_notifications": profile.email_notifications,
             "browser_notifications": profile.browser_notifications,
         })
         super().__init__(*args, **kwargs)
@@ -78,7 +77,7 @@ class UserProfileForm(forms.Form):
                 primary.save(update_fields=["email", "verified"])
             else:
                 EmailAddress.objects.create(user=user, email=user.email, primary=True, verified=False)
-        for field in ("phone", "organization", "job_title", "department", "bio", "preferred_language", "theme", "sidebar_mode", "email_notifications", "browser_notifications"):
+        for field in ("phone", "organization", "job_title", "department", "bio", "preferred_language", "theme", "email_notifications", "browser_notifications"):
             setattr(profile, field, self.cleaned_data[field])
         if self.cleaned_data.get("remove_avatar") and profile.avatar:
             profile.avatar.delete(save=False)

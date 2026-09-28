@@ -154,7 +154,7 @@
       <aside id="portal-sidebar" class="tw:min-h-full tw:w-20 tw:border-e tw:border-base-300 tw:bg-base-100 tw:transition-[width] tw:duration-200" data-sidebar-state="collapsed">
         <div class="tw:flex tw:h-20 tw:items-center tw:gap-3 tw:border-b tw:border-base-300 tw:px-4">
           <a class="tw:flex tw:min-w-0 tw:items-center tw:gap-3 tw:no-underline" href="{% url 'portal:dashboard' %}">
-            <span class="tw:grid tw:h-11 tw:w-14 tw:shrink-0 tw:place-items-center tw:rounded-xl tw:bg-white tw:p-1 tw:shadow-sm">
+            <span class="tw:grid tw:h-11 tw:w-11 tw:shrink-0 tw:place-items-center tw:rounded-xl tw:bg-white tw:p-1 tw:shadow-sm">
               {% if glis_site.logo %}<img class="tw:max-h-9 tw:max-w-12 tw:object-contain" src="/api/v1/site-logo/" alt="GLIS">{% else %}<strong class="tw:text-sm tw:font-black tw:text-primary">GLIS</strong>{% endif %}
             </span>
             <span data-sidebar-label class="tw:hidden tw:min-w-0"><strong class="tw:block tw:truncate tw:text-base tw:font-black">GLIS</strong><small class="tw:block tw:truncate tw:text-xs tw:text-base-content/45">{% translate "Service portal" %}</small></span>

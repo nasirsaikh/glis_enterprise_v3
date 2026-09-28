@@ -271,6 +271,11 @@ ACCOUNT_EMAIL_VERIFICATION = env("ALLAUTH_EMAIL_VERIFICATION", default="optional
 ACCOUNT_UNIQUE_EMAIL = True
 AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend", "allauth.account.auth_backends.AuthenticationBackend"]
 SOCIALACCOUNT_AUTO_SIGNUP = True
+# When a trusted provider returns a verified email that already belongs to an
+# existing GLIS user, authenticate that user instead of showing the allauth
+# social-signup completion form. Auto-connect keeps future Google logins
+# independent of later email changes while preserving the existing GLIS role.
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_ADAPTER = "apps.accounts.adapters.GLISSocialAccountAdapter"
 # SOCIALACCOUNT_PROVIDERS = {
 #     "google": {
@@ -285,6 +290,10 @@ SOCIALACCOUNT_ADAPTER = "apps.accounts.adapters.GLISSocialAccountAdapter"
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
+        # Google is trusted as the identity authority for verified Gmail /
+        # Google Workspace email addresses. This lets an existing GLIS account
+        # sign in with Google when the verified provider email matches.
+        "EMAIL_AUTHENTICATION": True,
         "SCOPE": [
             "profile",
             "email",

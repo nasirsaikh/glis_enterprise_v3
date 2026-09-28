@@ -182,8 +182,8 @@ class TicketEditForm(forms.ModelForm):
 
 
 class TicketAssignmentForm(forms.Form):
-    users = forms.ModelMultipleChoiceField(required=False, queryset=get_user_model().objects.none(), widget=forms.SelectMultiple(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full", "size": 7}))
-    groups = forms.ModelMultipleChoiceField(required=False, queryset=SupportGroup.objects.none(), widget=forms.SelectMultiple(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full", "size": 7}))
+    users = forms.ModelMultipleChoiceField(required=False, queryset=get_user_model().objects.none(), widget=forms.CheckboxSelectMultiple(attrs={"class": "tw:d-checkbox tw:d-checkbox-primary"}))
+    groups = forms.ModelMultipleChoiceField(required=False, queryset=SupportGroup.objects.none(), widget=forms.CheckboxSelectMultiple(attrs={"class": "tw:d-checkbox tw:d-checkbox-primary"}))
     replace_existing = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={"class": "tw:d-checkbox tw:d-checkbox-primary"}))
 
     def __init__(self, *args, ticket=None, **kwargs):

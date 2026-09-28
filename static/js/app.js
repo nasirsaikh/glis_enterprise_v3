@@ -50,6 +50,22 @@
     });
   };
 
+  const setupMultiSelectFilters = (scope = document) => {
+    scope.querySelectorAll("[data-multiselect-search]:not([data-multiselect-ready])").forEach((input) => {
+      input.dataset.multiselectReady = "true";
+      const target = document.getElementById(input.dataset.multiselectSearch || "");
+      if (!target) return;
+      const filter = () => {
+        const query = input.value.trim().toLowerCase();
+        target.querySelectorAll("[data-multiselect-option]").forEach((option) => {
+          const haystack = (option.dataset.searchText || option.textContent || "").toLowerCase();
+          option.classList.toggle("tw:hidden", Boolean(query) && !haystack.includes(query));
+        });
+      };
+      input.addEventListener("input", filter);
+    });
+  };
+
   const reveal = (scope = document) => {
     const items = scope.querySelectorAll("[data-reveal]:not(.is-visible)");
     if (!items.length) return;
@@ -302,21 +318,25 @@
     };
     const addQuestion = (text, createdAt = null) => {
       const article = document.createElement("article");
-      article.className = "ai-message ai-message-user";
+      article.className = "chat chat-end ai-message";
+      const header = document.createElement("div");
+      header.className = "chat-header";
+      header.textContent = "You";
       const bubble = document.createElement("div");
-      bubble.className = "ai-message-bubble";
+      bubble.className = "chat-bubble chat-bubble-primary tw:max-w-3xl";
       bubble.textContent = text;
-      const time = document.createElement("time");
-      time.textContent = formatTime(createdAt);
-      article.append(bubble, time);
+      const footer = document.createElement("div");
+      footer.className = "chat-footer tw:opacity-50";
+      footer.textContent = formatTime(createdAt);
+      article.append(header, bubble, footer);
       conversation.appendChild(article);
       scrollToLatest();
     };
     const buildTable = rows => {
       const wrapper = document.createElement("div");
-      wrapper.className = "table-responsive ai-result-table";
+      wrapper.className = "tw:mt-3 tw:overflow-x-auto tw:rounded-box tw:bg-base-100 tw:text-base-content";
       const table = document.createElement("table");
-      table.className = "table portal-table";
+      table.className = "tw:d-table tw:d-table-zebra tw:d-table-sm";
       wrapper.appendChild(table);
       if (!rows.length) return wrapper;
       const keys = Object.keys(rows[0]);
@@ -356,44 +376,72 @@
     };
     const addAnswer = queryData => {
       const article = document.createElement("article");
-      article.className = "ai-message ai-message-assistant" + (queryData.status !== "completed" ? " ai-message-error" : "");
-      const card = document.createElement("div");
-      card.className = "ai-answer-card";
-      const header = document.createElement("header");
-      const label = document.createElement("span");
+      article.className = "chat chat-start ai-message";
+      const header = document.createElement("div");
+      header.className = "chat-header tw:flex tw:items-center tw:gap-2";
+      const label = document.createElement("strong");
       label.innerHTML = '<i class="bi bi-stars"></i> Vanna';
       const meta = document.createElement("small");
+      meta.className = "tw:opacity-50";
       meta.textContent = queryData.status === "completed" ? `${queryData.row_count || 0} rows · ${queryData.duration_ms || 0} ms` : (queryData.error_code || "Failed");
-      header.append(label, meta); card.appendChild(header);
+      header.append(label, meta);
+
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble tw:max-w-5xl";
+      if (queryData.status !== "completed") bubble.classList.add("chat-bubble-error");
+
       const summary = document.createElement("p");
-      summary.className = "ai-answer-summary";
+      summary.className = "tw:leading-6";
       summary.textContent = queryData.summary || (queryData.status === "completed" ? "The query completed successfully." : "The query could not be completed.");
-      card.appendChild(summary);
+      bubble.appendChild(summary);
+
       if (queryData.sql) {
         const details = document.createElement("details");
-        details.className = "sql-preview";
+        details.className = "tw:mt-3 tw:rounded-box tw:bg-base-200 tw:p-3 tw:text-base-content";
         const detailsLabel = document.createElement("summary");
+        detailsLabel.className = "tw:cursor-pointer tw:font-semibold";
         detailsLabel.textContent = "Generated SQL";
         const pre = document.createElement("pre"), code = document.createElement("code");
-        code.textContent = queryData.sql; pre.appendChild(code); details.append(detailsLabel, pre); card.appendChild(details);
+        pre.className = "tw:mt-2 tw:overflow-x-auto tw:text-xs";
+        code.textContent = queryData.sql;
+        pre.appendChild(code); details.append(detailsLabel, pre); bubble.appendChild(details);
       }
+
       const rows = queryData.data || [], spec = queryData.chart || {};
       let chartId = "";
       if (rows.length && spec.type) {
         chartId = `vanna-chart-${queryData.id || ++chartSequence}-${++chartSequence}`;
-        const chart = document.createElement("div"); chart.id = chartId; chart.className = "ai-result-chart"; card.appendChild(chart);
+        const chart = document.createElement("div");
+        chart.id = chartId;
+        chart.className = "tw:mt-3 tw:min-h-64 tw:rounded-box tw:bg-base-100";
+        bubble.appendChild(chart);
       }
-      if (rows.length) card.appendChild(buildTable(rows));
-      const footer = document.createElement("footer");
-      const followups = document.createElement("div"); followups.className = "prompt-chips ai-followups";
-      (queryData.followups || []).forEach(text => { const button = document.createElement("button"); button.type = "button"; button.textContent = text; button.dataset.vannaPrompt = text; bindPrompt(button); followups.appendChild(button); });
-      footer.appendChild(followups);
+      if (rows.length) bubble.appendChild(buildTable(rows));
+
+      const actions = document.createElement("div");
+      actions.className = "tw:mt-3 tw:flex tw:flex-wrap tw:gap-2";
+      (queryData.followups || []).forEach(text => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "tw:d-btn tw:d-btn-ghost tw:d-btn-xs";
+        button.textContent = text;
+        button.dataset.vannaPrompt = text;
+        bindPrompt(button);
+        actions.appendChild(button);
+      });
       if (queryData.export_url) {
-        const link = document.createElement("a"); link.className = "btn btn-sm btn-outline-primary"; link.href = queryData.export_url; link.innerHTML = '<i class="bi bi-download me-1"></i> Export CSV'; footer.appendChild(link);
+        const link = document.createElement("a");
+        link.className = "tw:d-btn tw:d-btn-outline tw:d-btn-sm";
+        link.href = queryData.export_url;
+        link.innerHTML = '<i class="bi bi-download"></i> Export CSV';
+        actions.appendChild(link);
       }
-      if (footer.childElementCount) card.appendChild(footer);
-      article.appendChild(card);
-      const time = document.createElement("time"); time.textContent = formatTime(queryData.created_at); article.appendChild(time);
+      if (actions.childElementCount) bubble.appendChild(actions);
+
+      const footer = document.createElement("div");
+      footer.className = "chat-footer tw:opacity-50";
+      footer.textContent = formatTime(queryData.created_at);
+      article.append(header, bubble, footer);
       conversation.appendChild(article);
       if (chartId) setTimeout(() => drawQueryChart(chartId, rows, spec), 10);
       setDiagnostics(queryData);
@@ -401,24 +449,24 @@
     };
     const showWelcome = () => {
       conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
-      historyLoading.classList.add("d-none"); welcome.classList.remove("d-none");
+      historyLoading.classList.add("tw:hidden"); welcome.classList.remove("tw:hidden");
     };
     const renderHistory = queries => {
       conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
-      historyLoading.classList.add("d-none"); welcome.classList.toggle("d-none", Boolean(queries.length));
+      historyLoading.classList.add("tw:hidden"); welcome.classList.toggle("tw:hidden", Boolean(queries.length));
       queries.forEach(item => { addQuestion(item.question, item.created_at); addAnswer(item); });
       if (queries.length) setDiagnostics(queries[queries.length - 1]);
     };
     const setActiveSession = id => {
       sessionInput.value = id || "";
-      sessionList.querySelectorAll("[data-session-id]").forEach(item => item.classList.toggle("active", item.dataset.sessionId === id));
+      sessionList.querySelectorAll("[data-session-id]").forEach(item => item.classList.toggle("tw:d-btn-active", item.dataset.sessionId === id));
       const url = new URL(window.location.href);
       if (id) url.searchParams.set("session", id); else url.searchParams.delete("session");
       history.replaceState({}, "", url);
     };
     const loadSession = async id => {
       if (!id) { setActiveSession(""); showWelcome(); return; }
-      historyLoading.classList.remove("d-none"); welcome.classList.add("d-none"); error.classList.add("d-none");
+      historyLoading.classList.remove("tw:hidden"); welcome.classList.add("tw:hidden"); error.classList.add("tw:hidden");
       try {
         const endpoint = workbench.dataset.sessionDetailTemplate.replace("00000000-0000-0000-0000-000000000000", id);
         const response = await fetch(endpoint, {headers: {"X-Requested-With": "XMLHttpRequest"}});
@@ -426,7 +474,7 @@
         if (!response.ok) throw new Error(payload.error || "Conversation could not be loaded.");
         setActiveSession(id); renderHistory(payload.queries || []);
       } catch (exception) {
-        historyLoading.classList.add("d-none"); error.textContent = exception.message; error.classList.remove("d-none");
+        historyLoading.classList.add("tw:hidden"); error.textContent = exception.message; error.classList.remove("tw:hidden");
       }
     };
     const upsertSession = session => {
@@ -434,8 +482,8 @@
       document.getElementById("vanna-session-empty")?.remove();
       let item = sessionList.querySelector(`[data-session-id="${session.id}"]`);
       if (!item) {
-        item = document.createElement("button"); item.type = "button"; item.className = "ai-session-item"; item.dataset.sessionId = session.id;
-        item.innerHTML = '<i class="bi bi-chat-left-text"></i><span><strong></strong><small></small></span>';
+        item = document.createElement("button"); item.type = "button"; item.className = "tw:d-btn tw:d-btn-ghost tw:h-auto tw:w-full tw:justify-start tw:gap-3 tw:py-3 tw:text-start"; item.dataset.sessionId = session.id;
+        item.innerHTML = '<i class="bi bi-chat-left-text tw:text-primary"></i><span class="tw:min-w-0 tw:flex-1"><strong class="tw:block tw:truncate"></strong><small class="tw:block tw:truncate tw:font-normal tw:opacity-50"></small></span>';
         sessionList.prepend(item);
       }
       item.querySelector("strong").textContent = session.title;
@@ -456,9 +504,9 @@
       const formData = new FormData(form);
       formData.set("question", text);
 
-      welcome.classList.add("d-none");
-      historyLoading.classList.add("d-none");
-      error.classList.add("d-none");
+      welcome.classList.add("tw:hidden");
+      historyLoading.classList.add("tw:hidden");
+      error.classList.add("tw:hidden");
       send.disabled = true;
 
       addQuestion(text);
@@ -484,7 +532,7 @@
         }
       } catch (exception) {
         error.textContent = exception.message;
-        error.classList.remove("d-none");
+        error.classList.remove("tw:hidden");
       } finally {
         send.disabled = false;
         question.focus();
@@ -522,6 +570,7 @@
     setupRichText(scope);
     setupDropzones(scope);
     setupThemeSelects(scope);
+    setupMultiSelectFilters(scope);
   };
   document.addEventListener("DOMContentLoaded", () => {
     init(); setupSidebar(); setupMobileNav(); setupVanna(); setupNotifications(); setTimeout(renderCharts, 120);

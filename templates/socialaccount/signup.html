@@ -1,0 +1,46 @@
+{% extends "base_public.html" %}
+{% load i18n widget_tweaks %}
+{% block title %}{% translate "Complete sign in" %} · GLIS{% endblock %}
+{% block content %}
+<section class="tw:bg-base-200/45 tw:py-14 tw:sm:py-20">
+  <div class="tw:mx-auto tw:max-w-xl tw:px-6">
+    <article class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
+      <div class="tw:d-card-body tw:p-7 tw:sm:p-9">
+        <div class="tw:text-center">
+          <img class="tw:mx-auto tw:max-h-12 tw:max-w-32" src="/api/v1/site-logo/" alt="GLIS">
+          <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mt-5"><i class="bi bi-shield-check tw:me-1"></i>{% translate "Secure social sign in" %}</span>
+          <h1 class="tw:mt-3 tw:text-3xl tw:font-black">{% translate "Complete your GLIS sign in" %}</h1>
+          <p class="tw:mt-2 tw:text-base-content/55">{% translate "We could not complete this social sign in automatically. Confirm the account information below to continue." %}</p>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="tw:d-alert tw:d-alert-error tw:mt-6">
+          <i class="bi bi-exclamation-octagon"></i>
+          <span>{{ form.non_field_errors|striptags }}</span>
+        </div>
+        {% endif %}
+
+        <form class="tw:mt-6 tw:grid tw:gap-4" method="post" action="{% url 'socialaccount_signup' %}">
+          {% csrf_token %}
+          {% for field in form %}
+          <label class="tw:d-fieldset">
+            <span class="tw:d-fieldset-legend">{{ field.label }}{% if field.field.required %} *{% endif %}</span>
+            {{ field|add_class:"tw:d-input tw:d-input-bordered tw:w-full" }}
+            {% if field.help_text %}<span class="tw:d-label tw:text-xs tw:text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}
+            {% if field.errors %}<span class="tw:text-sm tw:text-error">{{ field.errors|striptags }}</span>{% endif %}
+          </label>
+          {% endfor %}
+          {{ redirect_field }}
+          <button class="tw:d-btn tw:d-btn-primary tw:d-btn-lg tw:mt-2 tw:w-full" type="submit">
+            <i class="bi bi-box-arrow-in-right"></i>{% translate "Continue" %}
+          </button>
+        </form>
+
+        <a class="tw:d-btn tw:d-btn-ghost tw:mt-2 tw:w-full" href="{% url 'account_login' %}">
+          <i class="bi bi-arrow-left"></i>{% translate "Back to sign in" %}
+        </a>
+      </div>
+    </article>
+  </div>
+</section>
+{% endblock %}

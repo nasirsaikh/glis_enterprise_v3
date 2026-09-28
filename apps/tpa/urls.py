@@ -15,6 +15,11 @@ urlpatterns = [
         name="transaction_detail",
     ),
     path(
+        "transactions/<str:reference>/sample/<str:kind>/<str:file_format>/",
+        views.transaction_sample_file,
+        name="transaction_sample_file",
+    ),
+    path(
         "transactions/<str:reference>/members/add/",
         views.transaction_add_member,
         name="transaction_add_member",

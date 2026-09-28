@@ -39,14 +39,14 @@
     {% endif %}
   </aside>
 
-  <section class="tw:flex tw:min-h-[70vh] tw:min-w-0 tw:flex-col">
+  <section class="tw:flex tw:min-h-0 tw:min-w-0 tw:flex-col">
     <header class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3 tw:border-b tw:border-base-300 tw:px-4 tw:py-3 tw:sm:px-6">
       <div class="tw:flex tw:items-center tw:gap-3"><span class="tw:d-status tw:d-status-success tw:animate-pulse"></span><div><strong class="tw:block">{{ selected_domain.name }}</strong><small class="tw:text-base-content/45">{% translate "Governed analytics workspace" %}</small></div></div>
       <div class="tw:flex tw:flex-wrap tw:gap-2"><span class="tw:d-badge tw:d-badge-outline tw:gap-1"><i class="bi bi-database"></i>{{ selected_domain.collection_name|default:"Tool Memory" }}</span><span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:gap-1"><i class="bi bi-shield-check"></i>{% translate "Governed" %}</span></div>
     </header>
 
     {% if vanna_settings.provider == "ollama_vanna" and not vanna_settings.allow_sql_execution %}
-    <div class="tw:d-alert tw:d-alert-warning tw:roundetw:hidden"><i class="bi bi-exclamation-triangle"></i><span>{% translate "Local Model is selected, but SQL execution is disabled in Settings." %}</span></div>
+    <div class="tw:d-alert tw:d-alert-warning tw:rounded-none"><i class="bi bi-exclamation-triangle"></i><span>{% translate "Local Model is selected, but SQL execution is disabled in Settings." %}</span></div>
     {% endif %}
 
     <div class="tw:flex-1 tw:overflow-y-auto tw:bg-base-200/30 tw:p-4 tw:sm:p-6" id="vanna-conversation" aria-live="polite">

@@ -373,8 +373,18 @@ html[data-theme="light"] .gl-quick-card > span { color:var(--gl-green)!important
 }
 html[data-theme="light"] .gl-section-kicker { color:var(--gl-green-deep); }
 .gl-section-heading h2 { margin:1.15rem 0 0; color:var(--gl-text); font-size:clamp(2.6rem,4.5vw,4.8rem); line-height:1.03; letter-spacing:-.045em; font-weight:900; text-wrap:balance; }
-.gl-section-heading h2 span { color:var(--gl-green-bright); }
-html[data-theme="light"] .gl-section-heading h2 span { color:var(--gl-green); }
+.gl-section-heading h2 span {
+  background:linear-gradient(90deg,var(--gl-green-bright),var(--gl-yellow));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+html[data-theme="light"] .gl-section-heading h2 span {
+  background:linear-gradient(90deg,var(--gl-green),#b69b30);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
 .gl-section-heading p { margin:1.25rem 0 0; color:var(--gl-muted); font-size:1.12rem; line-height:1.8; max-width:820px; }
 
 /* Connected service cards */

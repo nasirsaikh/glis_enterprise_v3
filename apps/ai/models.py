@@ -56,3 +56,55 @@ class AIInteraction(TimeStampedModel):
     duration_ms = models.PositiveIntegerField(default=0)
     succeeded = models.BooleanField(default=True)
     error_code = models.CharField(max_length=50, blank=True)
+
+
+class AIProviderConfig(TimeStampedModel):
+    class Provider(models.TextChoices):
+        MOCK="mock","Mock / Testing"
+        OLLAMA="ollama","Ollama"
+        OPENAI_COMPATIBLE="openai_compatible","OpenAI-compatible"
+        OPENAI="openai","OpenAI"
+        ANTHROPIC="anthropic","Anthropic"
+    name=models.CharField(max_length=120, unique=True)
+    provider=models.CharField(max_length=30, choices=Provider.choices, default=Provider.MOCK)
+    model_name=models.CharField(max_length=120, blank=True)
+    endpoint=models.URLField(blank=True)
+    secret_reference=models.CharField(max_length=160, blank=True, help_text="Environment/secret-manager reference; never store API keys here.")
+    temperature=models.DecimalField(max_digits=3, decimal_places=2, default=0)
+    timeout_seconds=models.PositiveIntegerField(default=120)
+    supports_vision=models.BooleanField(default=False)
+    task_capabilities=models.JSONField(default=list, blank=True)
+    runtime_options=models.JSONField(default=dict, blank=True)
+    allow_sensitive_data=models.BooleanField(default=False)
+    is_active=models.BooleanField(default=True)
+    priority=models.PositiveSmallIntegerField(default=100)
+    def __str__(self): return f"{self.name} · {self.model_name or self.provider}"
+
+class AIExtractionProfile(TimeStampedModel):
+    class Task(models.TextChoices):
+        DOCUMENT_EXTRACTION="DOCUMENT_EXTRACTION","Document extraction"
+        STRUCTURED_HEADER_MAPPING="STRUCTURED_HEADER_MAPPING","Structured header mapping"
+        MEMBER_FIELD_MAPPING="MEMBER_FIELD_MAPPING","Member field mapping"
+        EMAIL_EXTRACTION="EMAIL_EXTRACTION","Email extraction"
+        DOCUMENT_CLASSIFICATION="DOCUMENT_CLASSIFICATION","Document classification"
+    name=models.CharField(max_length=140)
+    task=models.CharField(max_length=40, choices=Task.choices, db_index=True)
+    applicable_product=models.CharField(max_length=80, blank=True)
+    applicable_transaction_type=models.CharField(max_length=40, blank=True)
+    system_prompt=models.TextField(blank=True)
+    instructions=models.TextField(blank=True)
+    field_aliases=models.JSONField(default=dict, blank=True)
+    priority=models.PositiveSmallIntegerField(default=100)
+    is_active=models.BooleanField(default=True)
+    class Meta: ordering=("priority","name")
+    def __str__(self): return f"{self.get_task_display()} · {self.name}"
+
+class AITrainingExample(TimeStampedModel):
+    profile=models.ForeignKey(AIExtractionProfile, related_name="examples", on_delete=models.CASCADE)
+    name=models.CharField(max_length=140)
+    input_text=models.TextField()
+    expected_output=models.JSONField(default=dict)
+    sort_order=models.PositiveSmallIntegerField(default=0)
+    is_active=models.BooleanField(default=True)
+    class Meta: ordering=("sort_order","id")
+    def __str__(self): return self.name

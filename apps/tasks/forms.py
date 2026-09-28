@@ -32,7 +32,7 @@ class TaskForm(forms.ModelForm):
             "category": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
             "priority": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
             "owner": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
-            "tagged_users": forms.SelectMultiple(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full", "size": 6}),
+            "tagged_users": forms.CheckboxSelectMultiple(attrs={"class": "tw:d-checkbox tw:d-checkbox-primary tw:d-checkbox-sm"}),
             "due_date": forms.DateInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full", "type": "date"}),
         }
 

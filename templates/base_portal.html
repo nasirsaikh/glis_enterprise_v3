@@ -19,7 +19,7 @@
   {% block extra_head %}{% endblock %}
 </head>
 
-<body class="portal-shell sidebar-mode-mini tw:min-h-screen tw:bg-base-200 tw:text-base-content tw:antialiased"
+<body class="portal-shell glis-portal-shell sidebar-mode-mini tw:min-h-screen tw:bg-base-200 tw:text-base-content tw:antialiased"
       x-data="siteShell"
       data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}"
       data-sidebar-preference-url="{% url 'accounts:sidebar_preference' %}"
@@ -28,7 +28,7 @@
   <a class="skip-link" href="#portal-main">{% translate "Skip to content" %}</a>
 
     <aside id="portal-sidebar"
-         class="portal-tw-sidebar tw:fixed tw:inset-y-0 tw:start-0 tw:z-50 tw:hidden tw:flex-col tw:border-e tw:border-base-300 tw:bg-base-100 tw:text-base-content tw:shadow-lg tw:lg:flex"
+         class="portal-tw-sidebar glis-portal-sidebar tw:fixed tw:inset-y-0 tw:start-0 tw:z-50 tw:hidden tw:flex-col tw:border-e tw:border-base-300 tw:bg-base-100 tw:text-base-content tw:shadow-lg tw:lg:flex"
         >
     <a class="tw:flex tw:h-20 tw:items-center tw:gap-3 tw:border-b tw:border-base-content/10 tw:px-4 tw:no-underline"
        href="{% url 'portal:dashboard' %}" title="GLIS">
@@ -91,8 +91,8 @@
   </aside>
 
   <div class="portal-tw-stage tw:min-h-screen">
-    <header class="tw:sticky tw:top-0 tw:z-40 tw:border-b tw:border-base-300 tw:bg-base-100/95 tw:backdrop-blur-xl">
-      <div class="tw:d-navbar tw:min-h-20 tw:w-full tw:px-4 tw:sm:px-6">
+    <header class="glis-portal-header tw:sticky tw:top-0 tw:z-40 tw:border-b tw:border-base-300 tw:bg-base-100/95 tw:backdrop-blur-xl">
+      <div class="glis-portal-navbar tw:d-navbar tw:min-h-20 tw:w-full tw:px-4 tw:sm:px-6">
         <div class="tw:d-navbar-start tw:min-w-0 tw:gap-1 tw:sm:gap-2">
           <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:hidden tw:lg:inline-flex"
                   id="sidebar-toggle" type="button" aria-controls="portal-sidebar"
@@ -127,32 +127,9 @@
             <i class="bi bi-plus-lg"></i><span class="tw:hidden tw:xl:inline">{% translate "New ticket" %}</span>
           </a>
 
-          <details class="tw:d-dropdown tw:d-dropdown-end">
-            <summary class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" aria-label="{% translate 'Change theme' %}" title="{% translate 'Theme' %}">
-              <i class="bi bi-palette tw:text-lg"></i>
-            </summary>
-            <div class="tw:d-dropdown-content tw:z-[90] tw:mt-3 tw:w-72 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-4 tw:shadow-xl">
-              <label class="tw:d-fieldset">
-                <span class="tw:d-fieldset-legend">{% translate "Theme" %}</span>
-                <select class="tw:d-select tw:d-select-bordered tw:w-full" data-theme-select>
-                  <option value="system">{% translate "System" %}</option>
-                  <option value="light">Light</option><option value="dark">Dark</option><option value="cupcake">Cupcake</option>
-                  <option value="bumblebee">Bumblebee</option><option value="emerald">Emerald</option><option value="corporate">Corporate</option>
-                  <option value="synthwave">Synthwave</option><option value="retro">Retro</option><option value="cyberpunk">Cyberpunk</option>
-                  <option value="valentine">Valentine</option><option value="halloween">Halloween</option><option value="garden">Garden</option>
-                  <option value="forest">Forest</option><option value="aqua">Aqua</option><option value="lofi">Lo-fi</option>
-                  <option value="pastel">Pastel</option><option value="fantasy">Fantasy</option><option value="wireframe">Wireframe</option>
-                  <option value="black">Black</option><option value="luxury">Luxury</option><option value="dracula">Dracula</option>
-                  <option value="cmyk">CMYK</option><option value="autumn">Autumn</option><option value="business">Business</option>
-                  <option value="acid">Acid</option><option value="lemonade">Lemonade</option><option value="night">Night</option>
-                  <option value="coffee">Coffee</option><option value="winter">Winter</option><option value="dim">Dim</option>
-                  <option value="nord">Nord</option><option value="sunset">Sunset</option><option value="caramellatte">Caramellatte</option>
-                  <option value="abyss">Abyss</option><option value="silk">Silk</option>
-                </select>
-              </label>
-              <p class="tw:mt-2 tw:text-xs tw:text-base-content/50">{% translate "Saved to your profile and reused on future visits." %}</p>
-            </div>
-          </details>
+          <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle" type="button" x-on:click="toggleTheme" aria-label="{% translate 'Toggle light and dark mode' %}" title="{% translate 'Light / dark mode' %}">
+            <i class="bi tw:text-lg" x-bind:class="themeIcon"></i>
+          </button>
 
           <form action="{% url 'switch_language' %}" method="post" class="tw:m-0">
             {% csrf_token %}
@@ -232,7 +209,7 @@
   </div>
 
   <dialog id="mobilePortalNav" class="tw:d-modal tw:d-modal-start tw:lg:hidden">
-    <div class="tw:d-modal-box tw:m-0 tw:h-dvh tw:max-h-none tw:w-[min(88vw,22rem)] tw:rounded-none tw:bg-neutral tw:p-0 tw:text-base-content">
+    <div class="glis-portal-mobile-nav tw:d-modal-box tw:m-0 tw:h-dvh tw:max-h-none tw:w-[min(88vw,22rem)] tw:rounded-none tw:bg-neutral tw:p-0 tw:text-neutral-content">
       <div class="tw:flex tw:h-20 tw:items-center tw:justify-between tw:border-b tw:border-base-content/10 tw:px-4">
         <a class="tw:flex tw:items-center tw:gap-3 tw:no-underline" href="{% url 'portal:dashboard' %}">
            <span class="tw:grid tw:h-11 tw:w-14 tw:place-items-center tw:rounded-xl tw:bg-white">{% if glis_site.logo %}<img class="tw:max-h-8 tw:max-w-12" src="/api/v1/site-logo/" alt="GLIS">{% else %}<strong class="tw:text-sm tw:font-black tw:text-primary">GLIS</strong>{% endif %}</span>

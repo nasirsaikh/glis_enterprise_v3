@@ -1,28 +1,54 @@
 (function () {
   "use strict";
   const root = document.documentElement;
-  const preferredTheme = () => localStorage.getItem("glis-theme") || "system";
-  const resolvedTheme = (choice) => choice === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : choice;
-  const daisyTheme = (choice) => resolvedTheme(choice) === "dark" ? "glis-dark" : "glis";
+  const DARK_THEMES = new Set(["dark","synthwave","halloween","forest","black","luxury","dracula","business","night","coffee","dim","sunset","abyss"]);
+  const userTheme = () => document.body?.dataset.userTheme || "system";
+  const preferredTheme = () => localStorage.getItem("glis-theme") || userTheme();
+  const resolvedTheme = (choice) => choice === "system"
+    ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+    : choice;
   const applyTheme = (choice) => {
     const resolved = resolvedTheme(choice);
-    root.setAttribute("data-bs-theme", resolved);
-    root.setAttribute("data-theme", daisyTheme(choice));
-    document.dispatchEvent(new CustomEvent("glis:theme", {detail: {theme: resolved, daisyTheme: daisyTheme(choice)}}));
+    root.setAttribute("data-theme", resolved);
+    root.setAttribute("data-bs-theme", DARK_THEMES.has(resolved) ? "dark" : "light");
+    document.querySelectorAll("[data-theme-select]").forEach((select) => { select.value = choice; });
+    document.dispatchEvent(new CustomEvent("glis:theme", {detail: {theme: resolved}}));
   };
   applyTheme(preferredTheme());
 
   document.addEventListener("alpine:init", () => {
     Alpine.data("siteShell", () => ({
       theme: preferredTheme(),
-      get themeIcon() { return resolvedTheme(this.theme) === "dark" ? "bi-sun" : "bi-moon-stars"; },
+      get themeIcon() { return DARK_THEMES.has(resolvedTheme(this.theme)) ? "bi-sun" : "bi-moon-stars"; },
       toggleTheme() {
-        this.theme = resolvedTheme(this.theme) === "dark" ? "light" : "dark";
+        this.theme = DARK_THEMES.has(resolvedTheme(this.theme)) ? "light" : "dark";
         localStorage.setItem("glis-theme", this.theme);
         applyTheme(this.theme);
       }
     }));
   });
+
+  const setupThemeSelects = (scope = document) => {
+    scope.querySelectorAll("[data-theme-select]:not([data-theme-ready])").forEach((select) => {
+      select.dataset.themeReady = "true";
+      select.value = preferredTheme();
+      select.addEventListener("change", async () => {
+        const choice = select.value || "system";
+        localStorage.setItem("glis-theme", choice);
+        applyTheme(choice);
+        const endpoint = document.body?.dataset.themePreferenceUrl;
+        if (!endpoint) return;
+        const token = document.querySelector('[name="csrfmiddlewaretoken"]')?.value || "";
+        try {
+          await fetch(endpoint, {
+            method: "POST",
+            headers: {"X-CSRFToken": token, "X-Requested-With": "XMLHttpRequest", "Content-Type": "application/x-www-form-urlencoded"},
+            body: new URLSearchParams({theme: choice})
+          });
+        } catch (_) { /* Local preference remains active if profile save is unavailable. */ }
+      });
+    });
+  };
 
   const reveal = (scope = document) => {
     const items = scope.querySelectorAll("[data-reveal]:not(.is-visible)");
@@ -495,6 +521,7 @@
     setupCounters(scope);
     setupRichText(scope);
     setupDropzones(scope);
+    setupThemeSelects(scope);
   };
   document.addEventListener("DOMContentLoaded", () => {
     init(); setupSidebar(); setupMobileNav(); setupVanna(); setupNotifications(); setTimeout(renderCharts, 120);

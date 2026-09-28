@@ -29,7 +29,9 @@
   {% render_block "css" %}
   {% block extra_head %}{% endblock %}
 </head>
-<body class="public-shell tw:min-h-screen tw:bg-base-100 tw:text-base-content tw:antialiased" x-data="siteShell">
+<body class="public-shell tw:min-h-screen tw:bg-base-100 tw:text-base-content tw:antialiased" x-data="siteShell"
+      data-theme-preference-url="{% if user.is_authenticated %}{% url 'accounts:theme_preference' %}{% endif %}"
+      data-user-theme="{% if user.is_authenticated %}{{ user.profile.theme|default:'system' }}{% else %}system{% endif %}">
   {% cms_toolbar %}
   <a class="skip-link" href="#main-content">{% translate "Skip to content" %}</a>
 
@@ -78,7 +80,7 @@
               <i class="bi bi-chevron-down tw:text-[.65rem]"></i>
             </summary>
             <ul class="tw:d-menu tw:d-dropdown-content tw:z-[90] tw:mt-3 tw:w-64 tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:p-2 tw:shadow-2xl">
-              <li class="tw:menu-title"><span>{{ user.get_full_name|default:user.email }}</span></li>
+              <li class="menu-title"><span>{{ user.get_full_name|default:user.email }}</span></li>
               <li><a href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Open portal" %}</a></li>
               <li><a href="{% url 'accounts:profile' %}"><i class="bi bi-person-gear"></i>{% translate "Profile & security" %}</a></li>
               <li><form action="{% url 'account_logout' %}" method="post">{% csrf_token %}<button class="tw:w-full tw:text-error" type="submit"><i class="bi bi-box-arrow-right"></i>{% translate "Sign out" %}</button></form></li>
@@ -109,7 +111,7 @@
             {% endif %}
           </li>
           {% if user.is_authenticated %}
-          <li><form action="{% url 'account_logout' %}" method="post">{% csrf_token %}<button class="tw:w-full tw:text-start tw:text-error" type="submit"><i class="bi bi-box-arrow-right"></i>{% translate "Sign out" %}</button></form></li>
+          <li><form action="{% url 'account_logout' %}" method="post">{% csrf_token %}<button class="tw:d-btn tw:d-btn-ghost tw:w-full tw:justify-start tw:text-error" type="submit"><i class="bi bi-box-arrow-right"></i>{% translate "Sign out" %}</button></form></li>
           {% endif %}
         </ul>
       </nav>

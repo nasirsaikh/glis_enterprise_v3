@@ -215,3 +215,39 @@ class TransactionEvent(TimeStampedModel):
     summary=models.CharField(max_length=255)
     details=models.JSONField(default=dict, blank=True)
     class Meta: ordering=["created_at"]
+
+
+class SourceDocument(TimeStampedModel):
+    transaction=models.ForeignKey(MemberTransaction, related_name="source_documents", on_delete=models.CASCADE)
+    ticket_attachment=models.ForeignKey("tickets.TicketAttachment", null=True, blank=True, related_name="tpa_source_documents", on_delete=models.SET_NULL)
+    original_name=models.CharField(max_length=255)
+    document_kind=models.CharField(max_length=50, blank=True)
+    extraction_method=models.CharField(max_length=50, blank=True)
+    processed=models.BooleanField(default=False)
+    processing_error=models.TextField(blank=True)
+    extracted_payload=models.JSONField(default=dict, blank=True)
+    extraction_confidence=models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    ai_profile=models.ForeignKey("ai.AIExtractionProfile", null=True, blank=True, on_delete=models.SET_NULL)
+    source_hash=models.CharField(max_length=64, blank=True, db_index=True)
+    uploaded_by=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+
+class InboundEmail(TimeStampedModel):
+    class State(models.TextChoices):
+        RECEIVED="RECEIVED","Received"
+        PROCESSING="PROCESSING","Processing"
+        REVIEW="REVIEW","Needs review"
+        PROCESSED="PROCESSED","Processed"
+        FAILED="FAILED","Failed"
+    provider=models.CharField(max_length=40, blank=True)
+    provider_message_id=models.CharField(max_length=255)
+    sender=models.EmailField()
+    recipient=models.EmailField()
+    subject=models.CharField(max_length=500, blank=True)
+    received_at=models.DateTimeField()
+    body_text=models.TextField(blank=True)
+    attachment_metadata=models.JSONField(default=list, blank=True)
+    processing_state=models.CharField(max_length=20, choices=State.choices, default=State.RECEIVED, db_index=True)
+    transaction=models.ForeignKey(MemberTransaction, null=True, blank=True, related_name="source_emails", on_delete=models.SET_NULL)
+    processing_error=models.TextField(blank=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=["provider","provider_message_id"], name="tpa_unique_inbound_email")]

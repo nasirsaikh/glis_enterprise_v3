@@ -172,6 +172,50 @@
             <i class="bi bi-cloud-arrow-up"></i>{% translate "Upload & Check Rows" %}
           </button>
         </form>
+
+        <div class="tw:mt-4 tw:flex tw:flex-wrap tw:gap-2">
+          <a class="tw:d-btn tw:d-btn-outline tw:d-btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'xlsx' %}">
+            <i class="bi bi-file-earmark-excel"></i>{% translate "Valid Sample XLSX" %}
+          </a>
+          <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}">
+            <i class="bi bi-filetype-csv"></i>{% translate "Valid Sample CSV" %}
+          </a>
+          <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs tw:text-warning" href="{% url 'tpa:transaction_sample_file' tx.reference 'errors' 'xlsx' %}">
+            <i class="bi bi-bug"></i>{% translate "Validation Error Sample" %}
+          </a>
+        </div>
+
+        <details class="tw:d-collapse tw:d-collapse-arrow tw:mt-4 tw:border tw:border-base-300 tw:bg-base-200/40">
+          <summary class="tw:d-collapse-title tw:min-h-0 tw:py-3 tw:text-sm tw:font-bold">{% translate "View sample file format" %}</summary>
+          <div class="tw:d-collapse-content tw:space-y-3">
+            <p class="tw:text-xs tw:text-base-content/60">{% translate "Dependents must reference their principal using principal_employee_id or principal_member_id. A principal in the same upload can be referenced by employee_id." %}</p>
+            <div class="tw:overflow-x-auto">
+              <table class="tw:d-table tw:d-table-xs">
+                <thead>
+                  <tr>
+                    <th>employee_id</th><th>first_name</th><th>last_name</th><th>date_of_birth</th>
+                    <th>gender</th><th>relationship</th><th>plan_code</th><th>national_id</th>
+                    <th>principal_employee_id</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in sample_rows %}
+                  <tr>
+                    <td>{{ row.employee_id }}</td><td>{{ row.first_name }}</td><td>{{ row.last_name }}</td>
+                    <td>{{ row.date_of_birth }}</td><td>{{ row.gender }}</td><td>{{ row.relationship }}</td>
+                    <td>{{ row.plan_code }}</td><td>{{ row.national_id }}</td><td>{{ row.principal_employee_id|default:"—" }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <div class="tw:text-xs tw:text-base-content/60">
+              <strong>{% translate "Required:" %}</strong>
+              first_name, last_name, date_of_birth, gender, relationship, plan_code.
+              {% translate "For SPOUSE / CHILD / OTHER, a principal reference is also required." %}
+            </div>
+          </div>
+        </details>
       </div>
     </section>
 
@@ -182,9 +226,10 @@
         <form class="tw:mt-4 tw:grid tw:gap-3 tw:md:grid-cols-2" method="post" action="{% url 'tpa:transaction_add_member' tx.reference %}">
           {% csrf_token %}
           {% for field in member_form %}
-          <label class="tw:d-form-control">
+          <label class="tw:d-form-control" {% if field.name == "principal_reference" %}id="principal-reference-field"{% endif %}>
             <span class="tw:d-label-text tw:mb-1 tw:text-xs tw:font-semibold">{{ field.label }}</span>
             {{ field }}
+            {% if field.help_text %}<span class="tw:mt-1 tw:text-xs tw:text-base-content/50">{{ field.help_text }}</span>{% endif %}
           </label>
           {% endfor %}
           <div class="tw:md:col-span-2">
@@ -313,6 +358,22 @@
 {% block extra_js %}
 <script>
 window.addEventListener("load", function () {
+  const relationship = document.querySelector('[name="relationship"]');
+  const principalField = document.getElementById("principal-reference-field");
+  const principalSelect = document.querySelector('[name="principal_reference"]');
+
+  function syncPrincipalField() {
+    if (!relationship || !principalField) return;
+    const needsPrincipal = relationship.value && relationship.value !== "PRINCIPAL";
+    principalField.style.display = needsPrincipal ? "" : "none";
+    if (!needsPrincipal && principalSelect) principalSelect.value = "";
+  }
+
+  if (relationship) {
+    relationship.addEventListener("change", syncPrincipalField);
+    syncPrincipalField();
+  }
+
   if (!window.Plotly) return;
 
   const quality = JSON.parse(document.getElementById("tpa-quality-data").textContent || "[]");

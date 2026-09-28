@@ -13,40 +13,8 @@
           <span class="badge badge-outline"><i class="bi bi-calendar3"></i>{% now "d M Y" %}</span>
           <span class="badge badge-primary badge-soft"><i class="bi bi-shield-check"></i>{% translate "Secure workspace" %}</span>
         </div>
-        <p class="tw:mt-5 tw:text-xs tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "GLIS command center" %}</p>
         <h1 class="tw:mt-2 tw:text-3xl tw:font-black tw:tracking-[-.04em] tw:sm:text-4xl tw:lg:text-5xl">{% blocktranslate with name=user.first_name|default:user.email %}Welcome back, {{ name }}{% endblocktranslate %}</h1>
-        <p class="tw:mt-3 tw:max-w-3xl tw:text-base tw:leading-7 tw:text-base-content/55">{% translate "Tickets, tasks, SLA performance, documents and analytics stay connected in one operational view." %}</p>
-        <div class="tw:mt-6 tw:flex tw:flex-wrap tw:gap-2">
-          <a class="btn btn-primary tw:rounded-full" href="{% url 'portal:create_ticket' 1 %}"><i class="bi bi-plus-lg"></i>{% translate "New ticket" %}</a>
-          <a class="btn btn-outline tw:rounded-full" href="{% url 'tasks:list' %}"><i class="bi bi-list-task"></i>{% translate "Tasks" %}</a>
-          <a class="btn btn-ghost tw:rounded-full" href="{% url 'orchestrator:console' %}"><i class="bi bi-stars"></i>{% translate "Ask Vanna" %}</a>
-          <a class="btn btn-ghost tw:rounded-full" href="{% url 'portal:export_tickets' %}"><i class="bi bi-download"></i>{% translate "Export" %}</a>
-        </div>
       </div>
-
-      <!-- <div class="tw:grid tw:gap-3">
-        <div class="card tw:border tw:border-base-300 tw:bg-base-200/45">
-          <div class="card-body tw:flex-row tw:items-center tw:gap-4 tw:p-4">
-            <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-primary/10 tw:text-primary"><i class="bi bi-inbox tw:text-xl"></i></span>
-            <div><small class="tw:text-base-content/45">{% translate "Open tickets" %}</small><strong class="tw:block tw:text-2xl">{{ metrics.open }}</strong></div>
-            <span class="badge badge-primary badge-soft tw:ms-auto">{% translate "Live" %}</span>
-          </div>
-        </div>
-        <div class="card tw:border tw:border-base-300 tw:bg-base-200/45">
-          <div class="card-body tw:flex-row tw:items-center tw:gap-4 tw:p-4">
-            <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-error/10 tw:text-error"><i class="bi bi-exclamation-triangle tw:text-xl"></i></span>
-            <div><small class="tw:text-base-content/45">{% translate "Overdue" %}</small><strong class="tw:block tw:text-2xl">{{ metrics.overdue }}</strong></div>
-            <span class="badge badge-error badge-soft tw:ms-auto">{% translate "Action" %}</span>
-          </div>
-        </div>
-        <div class="card tw:border tw:border-base-300 tw:bg-neutral tw:text-neutral-content">
-          <div class="card-body tw:flex-row tw:items-center tw:gap-4 tw:p-4">
-            <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-success/15 tw:text-success"><i class="bi bi-bullseye tw:text-xl"></i></span>
-            <div><small class="tw:text-neutral-content/50">{% translate "SLA attainment" %}</small><strong class="tw:block tw:text-2xl">{{ metrics.sla_attainment }}%</strong></div>
-            <span class="badge badge-success badge-soft tw:ms-auto">{% translate "Tracked" %}</span>
-          </div>
-        </div>
-      </div> -->
     </div>
   </section>
 

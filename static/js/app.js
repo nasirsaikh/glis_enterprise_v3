@@ -1,29 +1,44 @@
 (function () {
   "use strict";
   const root = document.documentElement;
-  const DARK_THEMES = new Set(["dark","synthwave","halloween","forest","black","luxury","dracula","business","night","coffee","dim","sunset","abyss"]);
-  const userTheme = () => document.body?.dataset.userTheme || "system";
-  const preferredTheme = () => localStorage.getItem("glis-theme") || userTheme();
-  const resolvedTheme = (choice) => choice === "system"
+  const THEME_CHOICES = new Set(["system", "light", "dark"]);
+  const normalizeTheme = (choice) => THEME_CHOICES.has(choice) ? choice : "system";
+  const userTheme = () => normalizeTheme(document.body?.dataset.userTheme || "system");
+  const preferredTheme = () => normalizeTheme(localStorage.getItem("glis-theme") || userTheme());
+  const resolvedTheme = (choice) => normalizeTheme(choice) === "system"
     ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-    : choice;
+    : normalizeTheme(choice);
   const applyTheme = (choice) => {
-    const resolved = resolvedTheme(choice);
+    const normalized = normalizeTheme(choice);
+    const resolved = resolvedTheme(normalized);
     root.setAttribute("data-theme", resolved);
-    root.setAttribute("data-bs-theme", DARK_THEMES.has(resolved) ? "dark" : "light");
-    document.querySelectorAll("[data-theme-select]").forEach((select) => { select.value = choice; });
+    root.setAttribute("data-bs-theme", resolved);
+    document.querySelectorAll("[data-theme-select]").forEach((select) => { select.value = normalized; });
     document.dispatchEvent(new CustomEvent("glis:theme", {detail: {theme: resolved}}));
+  };
+  const saveThemeChoice = async (choice) => {
+    const endpoint = document.body?.dataset.themePreferenceUrl;
+    if (!endpoint) return;
+    const token = document.querySelector('[name="csrfmiddlewaretoken"]')?.value || "";
+    try {
+      await fetch(endpoint, {
+        method: "POST",
+        headers: {"X-CSRFToken": token, "X-Requested-With": "XMLHttpRequest", "Content-Type": "application/x-www-form-urlencoded"},
+        body: new URLSearchParams({theme: normalizeTheme(choice)})
+      });
+    } catch (_) { /* Local preference remains active if profile save is unavailable. */ }
   };
   applyTheme(preferredTheme());
 
   document.addEventListener("alpine:init", () => {
     Alpine.data("siteShell", () => ({
       theme: preferredTheme(),
-      get themeIcon() { return DARK_THEMES.has(resolvedTheme(this.theme)) ? "bi-sun" : "bi-moon-stars"; },
+      get themeIcon() { return resolvedTheme(this.theme) === "dark" ? "bi-sun" : "bi-moon-stars"; },
       toggleTheme() {
-        this.theme = DARK_THEMES.has(resolvedTheme(this.theme)) ? "light" : "dark";
+        this.theme = resolvedTheme(this.theme) === "dark" ? "light" : "dark";
         localStorage.setItem("glis-theme", this.theme);
         applyTheme(this.theme);
+        saveThemeChoice(this.theme);
       }
     }));
   });
@@ -36,16 +51,7 @@
         const choice = select.value || "system";
         localStorage.setItem("glis-theme", choice);
         applyTheme(choice);
-        const endpoint = document.body?.dataset.themePreferenceUrl;
-        if (!endpoint) return;
-        const token = document.querySelector('[name="csrfmiddlewaretoken"]')?.value || "";
-        try {
-          await fetch(endpoint, {
-            method: "POST",
-            headers: {"X-CSRFToken": token, "X-Requested-With": "XMLHttpRequest", "Content-Type": "application/x-www-form-urlencoded"},
-            body: new URLSearchParams({theme: choice})
-          });
-        } catch (_) { /* Local preference remains active if profile save is unavailable. */ }
+        await saveThemeChoice(choice);
       });
     });
   };
@@ -63,6 +69,30 @@
         });
       };
       input.addEventListener("input", filter);
+    });
+  };
+
+  const setupParallaxScenes = (scope = document) => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    scope.querySelectorAll("[data-parallax-scene]:not([data-parallax-ready])").forEach((scene) => {
+      scene.dataset.parallaxReady = "true";
+      const layers = Array.from(scene.querySelectorAll("[data-depth]")).filter(layer => !layer.hasAttribute("data-tilt"));
+      if (!layers.length) return;
+      scene.addEventListener("pointermove", (event) => {
+        if (window.innerWidth < 768) return;
+        const rect = scene.getBoundingClientRect();
+        const nx = ((event.clientX - rect.left) / Math.max(rect.width, 1)) - .5;
+        const ny = ((event.clientY - rect.top) / Math.max(rect.height, 1)) - .5;
+        layers.forEach((layer) => {
+          const depth = Math.max(1, Number(layer.dataset.depth || 1));
+          layer.style.setProperty("--glis-parallax-x", (nx * depth * 7).toFixed(2) + "px");
+          layer.style.setProperty("--glis-parallax-y", (ny * depth * 6).toFixed(2) + "px");
+        });
+      });
+      scene.addEventListener("pointerleave", () => layers.forEach((layer) => {
+        layer.style.setProperty("--glis-parallax-x", "0px");
+        layer.style.setProperty("--glis-parallax-y", "0px");
+      }));
     });
   };
 
@@ -571,6 +601,7 @@
     setupDropzones(scope);
     setupThemeSelects(scope);
     setupMultiSelectFilters(scope);
+    setupParallaxScenes(scope);
   };
   document.addEventListener("DOMContentLoaded", () => {
     init(); setupSidebar(); setupMobileNav(); setupVanna(); setupNotifications(); setTimeout(renderCharts, 120);

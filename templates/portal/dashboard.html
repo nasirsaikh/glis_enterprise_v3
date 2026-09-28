@@ -24,55 +24,54 @@
     </div>
   </section>
 
-  <section class="tw:d-stats tw:d-stats-vertical tw:w-full tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:lg:d-stats-horizontal" aria-label="{% translate 'Primary metrics' %}">
-    <div class="tw:d-stat">
-      <div class="tw:d-stat-figure tw:text-primary"><i class="bi bi-inbox tw:text-2xl"></i></div>
-      <div class="tw:d-stat-title">{% translate "Open tickets" %}</div>
-      <div class="tw:d-stat-value tw:text-primary">{{ metrics.open }}</div>
-      <div class="tw:d-stat-desc">{% translate "Active workload" %}</div>
-    </div>
-    <div class="tw:d-stat">
-      <div class="tw:d-stat-figure tw:text-info"><i class="bi bi-person-check tw:text-2xl"></i></div>
-      <div class="tw:d-stat-title">{% translate "Assigned to me" %}</div>
-      <div class="tw:d-stat-value">{{ metrics.assigned }}</div>
-      <div class="tw:d-stat-desc">{% translate "Direct and shared" %}</div>
-    </div>
-    <div class="tw:d-stat">
-      <div class="tw:d-stat-figure tw:text-error"><i class="bi bi-exclamation-triangle tw:text-2xl"></i></div>
-      <div class="tw:d-stat-title">{% translate "Overdue" %}</div>
-      <div class="tw:d-stat-value tw:text-error">{{ metrics.overdue }}</div>
-      <div class="tw:d-stat-desc">{% translate "Requires action" %}</div>
-    </div>
-    <div class="tw:d-stat">
-      <div class="tw:d-stat-figure tw:text-success"><i class="bi bi-check2-circle tw:text-2xl"></i></div>
-      <div class="tw:d-stat-title">{% translate "Resolved" %}</div>
-      <div class="tw:d-stat-value">{{ metrics.resolved_month }}</div>
-      <div class="tw:d-stat-desc">{% translate "This month" %}</div>
+  <section class="tw:overflow-x-auto" aria-label="{% translate 'Key metrics' %}">
+    <div class="tw:d-stats tw:d-stats-horizontal tw:min-w-max tw:w-full tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
+      <div class="tw:d-stat tw:min-w-52">
+        <div class="tw:d-stat-figure tw:text-primary"><i class="bi bi-inbox tw:text-2xl"></i></div>
+        <div class="tw:d-stat-title">{% translate "Open tickets" %}</div>
+        <div class="tw:d-stat-value tw:text-primary">{{ metrics.open }}</div>
+        <div class="tw:d-stat-desc">{% translate "Active workload" %}</div>
+      </div>
+      <div class="tw:d-stat tw:min-w-52">
+        <div class="tw:d-stat-figure tw:text-info"><i class="bi bi-person-check tw:text-2xl"></i></div>
+        <div class="tw:d-stat-title">{% translate "Assigned to me" %}</div>
+        <div class="tw:d-stat-value">{{ metrics.assigned }}</div>
+        <div class="tw:d-stat-desc">{% translate "Direct and shared" %}</div>
+      </div>
+      <div class="tw:d-stat tw:min-w-52">
+        <div class="tw:d-stat-figure tw:text-error"><i class="bi bi-exclamation-triangle tw:text-2xl"></i></div>
+        <div class="tw:d-stat-title">{% translate "Overdue" %}</div>
+        <div class="tw:d-stat-value tw:text-error">{{ metrics.overdue }}</div>
+        <div class="tw:d-stat-desc">{% translate "Requires action" %}</div>
+      </div>
+      <div class="tw:d-stat tw:min-w-52">
+        <div class="tw:d-stat-figure tw:text-success"><i class="bi bi-check2-circle tw:text-2xl"></i></div>
+        <div class="tw:d-stat-title">{% translate "Resolved" %}</div>
+        <div class="tw:d-stat-value">{{ metrics.resolved_month }}</div>
+        <div class="tw:d-stat-desc">{% translate "This month" %}</div>
+      </div>
+      <div class="tw:d-stat tw:min-w-52">
+        <div class="tw:d-stat-figure tw:text-secondary"><i class="bi bi-reply tw:text-2xl"></i></div>
+        <div class="tw:d-stat-title">{% translate "First response" %}</div>
+        <div class="tw:d-stat-value">{{ metrics.first_response_tat }}h</div>
+        <div class="tw:d-stat-desc">{% translate "Average TAT" %}</div>
+      </div>
+      <div class="tw:d-stat tw:min-w-52">
+        <div class="tw:d-stat-figure tw:text-accent"><i class="bi bi-stopwatch tw:text-2xl"></i></div>
+        <div class="tw:d-stat-title">{% translate "Resolution TAT" %}</div>
+        <div class="tw:d-stat-value">{{ metrics.resolution_tat }}h</div>
+        <div class="tw:d-stat-desc">{% translate "Average TAT" %}</div>
+      </div>
+      <div class="tw:d-stat tw:min-w-52">
+        <div class="tw:d-stat-figure tw:text-primary"><i class="bi bi-bullseye tw:text-2xl"></i></div>
+        <div class="tw:d-stat-title">{% translate "SLA attainment" %}</div>
+        <div class="tw:d-stat-value">{{ metrics.sla_attainment }}%</div>
+        <div class="tw:d-stat-desc">{% translate "Within target" %}</div>
+      </div>
     </div>
   </section>
 
-  <section class="tw:grid tw:gap-4 tw:md:grid-cols-3">
-    <article class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
-      <div class="tw:d-card-body tw:flex-row tw:items-center tw:gap-4 tw:p-5">
-        <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-secondary/10 tw:text-secondary"><i class="bi bi-reply tw:text-xl"></i></span>
-        <div><div class="tw:text-sm tw:text-base-content/45">{% translate "First response TAT" %}</div><div class="tw:text-2xl tw:font-black">{{ metrics.first_response_tat }}h</div></div>
-      </div>
-    </article>
-    <article class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
-      <div class="tw:d-card-body tw:flex-row tw:items-center tw:gap-4 tw:p-5">
-        <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-accent/15 tw:text-accent-content"><i class="bi bi-stopwatch tw:text-xl"></i></span>
-        <div><div class="tw:text-sm tw:text-base-content/45">{% translate "Resolution TAT" %}</div><div class="tw:text-2xl tw:font-black">{{ metrics.resolution_tat }}h</div></div>
-      </div>
-    </article>
-    <article class="tw:d-card tw:border tw:border-primary/20 tw:bg-primary tw:text-primary-content tw:shadow-sm">
-      <div class="tw:d-card-body tw:flex-row tw:items-center tw:gap-4 tw:p-5">
-        <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-primary-content/10"><i class="bi bi-bullseye tw:text-xl"></i></span>
-        <div><div class="tw:text-sm tw:text-primary-content/65">{% translate "SLA attainment" %}</div><div class="tw:text-2xl tw:font-black">{{ metrics.sla_attainment }}%</div></div>
-      </div>
-    </article>
-  </section>
-
-  <section class="tw:grid tw:gap-5 tw:xl:grid-cols-12">
+  <section class="tw:grid tw:gap-6 tw:xl:grid-cols-12">
     <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-8">
       <div class="tw:d-card-body tw:p-5 tw:sm:p-6">
         <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
@@ -90,18 +89,18 @@
     </article>
   </section>
 
-  <section class="tw:grid tw:gap-5 tw:md:grid-cols-2 tw:xl:grid-cols-3">
+  <section class="tw:grid tw:gap-6 tw:md:grid-cols-2 tw:xl:grid-cols-3">
     <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-lg">{% translate "Priority" %}</h2><div id="ticket-priority-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
     <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-lg">{% translate "Assignee" %}</h2><div id="ticket-assignee-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
     <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:md:col-span-2 tw:xl:col-span-1"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-lg">{% translate "Category" %}</h2><div id="ticket-category-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
   </section>
 
-  <section class="tw:grid tw:gap-5 tw:xl:grid-cols-2">
+  <section class="tw:grid tw:gap-6 tw:xl:grid-cols-2">
     <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><div class="tw:flex tw:items-center tw:justify-between"><h2 class="tw:d-card-title tw:text-lg">{% translate "Workload by product" %}</h2><i class="bi bi-box-seam tw:text-xl tw:text-primary"></i></div><div id="ticket-product-chart" class="dashboard-chart tw:min-h-[18rem]"></div></div></article>
     <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><div class="tw:flex tw:items-center tw:justify-between"><h2 class="tw:d-card-title tw:text-lg">{% translate "Workload by project" %}</h2><i class="bi bi-kanban tw:text-xl tw:text-secondary"></i></div><div id="ticket-project-chart" class="dashboard-chart tw:min-h-[18rem]"></div></div></article>
   </section>
 
-  <section class="tw:grid tw:gap-5 tw:xl:grid-cols-12">
+  <section class="tw:grid tw:gap-6 tw:xl:grid-cols-12">
     <article class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-8">
       <div class="tw:d-card-body tw:p-0">
         <div class="tw:flex tw:items-center tw:justify-between tw:gap-3 tw:px-5 tw:pt-5 tw:sm:px-6">
@@ -154,12 +153,12 @@
       <article class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
         <div class="tw:d-card-body tw:p-5">
           <h2 class="tw:d-card-title tw:text-lg">{% translate "Quick access" %}</h2>
-          <div class="tw:grid tw:grid-cols-2 tw:gap-2">
-            <a class="tw:d-btn tw:d-btn-outline tw:h-auto tw:flex-col tw:gap-2 tw:py-4" href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated tw:text-xl"></i><span>{% translate "Tickets" %}</span></a>
-            <a class="tw:d-btn tw:d-btn-outline tw:h-auto tw:flex-col tw:gap-2 tw:py-4" href="{% url 'tasks:list' %}"><i class="bi bi-list-task tw:text-xl"></i><span>{% translate "Tasks" %}</span></a>
-            <a class="tw:d-btn tw:d-btn-outline tw:h-auto tw:flex-col tw:gap-2 tw:py-4" href="{% url 'documents:center' %}"><i class="bi bi-folder2-open tw:text-xl"></i><span>{% translate "Documents" %}</span></a>
-            <a class="tw:d-btn tw:d-btn-outline tw:h-auto tw:flex-col tw:gap-2 tw:py-4" href="{% url 'orchestrator:console' %}"><i class="bi bi-stars tw:text-xl"></i><span>{% translate "Analytics" %}</span></a>
-          </div>
+          <ul class="tw:d-menu tw:mt-2 tw:w-full tw:gap-2 tw:p-0">
+            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated tw:text-primary"></i><span>{% translate "Tickets" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
+            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'tasks:list' %}"><i class="bi bi-list-task tw:text-primary"></i><span>{% translate "Tasks" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
+            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'documents:center' %}"><i class="bi bi-folder2-open tw:text-primary"></i><span>{% translate "Documents" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
+            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'orchestrator:console' %}"><i class="bi bi-stars tw:text-primary"></i><span>{% translate "Analytics" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
+          </ul>
         </div>
       </article>
     </div>

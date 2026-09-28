@@ -49,26 +49,32 @@
         <span class="tw:d-badge tw:d-badge-ghost tw:gap-1"><i class="bi bi-paperclip"></i>{{ ticket.attachments.count }} {% translate "files" %}</span>
       </div>
 
-      <article class="tw:border-b tw:border-base-300 tw:p-5 tw:sm:p-6">
-        <div class="tw:flex tw:gap-4">
-          <div class="tw:d-avatar tw:d-avatar-placeholder tw:shrink-0"><div class="tw:w-11 tw:rounded-2xl tw:bg-primary tw:text-primary-content"><span class="tw:font-bold">{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span></div></div>
-          <div class="tw:min-w-0 tw:flex-1">
-            <div class="tw:flex tw:flex-wrap tw:justify-between tw:gap-2"><div><strong class="tw:block">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong><small class="tw:text-base-content/45">{% translate "Requester" %}</small></div><time class="tw:text-xs tw:text-base-content/40">{{ ticket.created_at|date:"d M Y, h:i A" }}</time></div>
-            <div class="rich-content tw:mt-4 tw:leading-7 tw:text-base-content/75 tw:[&_p]:mb-4">{{ ticket.description|safe }}</div>
+      <div class="tw:border-b tw:border-base-300 tw:p-5 tw:sm:p-6">
+        <div class="chat chat-start">
+          <div class="chat-image avatar placeholder">
+            <div class="tw:w-10 tw:rounded-full tw:bg-primary tw:text-primary-content"><span class="tw:text-sm tw:font-bold">{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span></div>
+          </div>
+          <div class="chat-header">
+            <strong>{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong>
+            <time class="tw:ms-2 tw:text-xs tw:opacity-50">{{ ticket.created_at|date:"d M Y, h:i A" }}</time>
+          </div>
+          <div class="chat-bubble tw:max-w-3xl">
+            <div class="rich-content tw:leading-7">{{ ticket.description|safe }}</div>
             {% if ticket.attachments.all %}
             <ul class="tw:d-list tw:mt-4">
               {% for attachment in ticket.attachments.all %}{% if not attachment.comment_id %}
-              <li><a class="tw:d-list-row tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-200/45 tw:no-underline tw:transition tw:hover:border-primary/40" href="{% url 'portal:download_attachment' attachment.pk %}"><span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-xl tw:bg-primary/10 tw:text-primary"><i class="bi bi-file-earmark"></i></span><span class="tw:d-list-col-grow tw:min-w-0"><strong class="tw:block tw:truncate">{{ attachment.original_name }}</strong><small class="tw:text-base-content/45">{{ attachment.size|filesizeformat }} · {{ attachment.created_at|date:"d M Y, h:i A" }} · {{ attachment.scan_status|title }}</small></span><i class="bi bi-download tw:text-primary"></i></a></li>
+              <li><a class="tw:d-list-row tw:rounded-xl tw:bg-base-100/90 tw:text-base-content tw:no-underline" href="{% url 'portal:download_attachment' attachment.pk %}"><span class="tw:grid tw:h-9 tw:w-9 tw:place-items-center tw:rounded-lg tw:bg-primary/10 tw:text-primary"><i class="bi bi-file-earmark"></i></span><span class="tw:d-list-col-grow tw:min-w-0"><strong class="tw:block tw:truncate tw:text-sm">{{ attachment.original_name }}</strong><small class="tw:text-xs tw:opacity-60">{{ attachment.size|filesizeformat }} · {{ attachment.scan_status|title }}</small></span><i class="bi bi-download tw:text-primary"></i></a></li>
               {% endif %}{% endfor %}
             </ul>
             {% endif %}
           </div>
+          <div class="chat-footer tw:opacity-50">{% translate "Requester" %}</div>
         </div>
-      </article>
+      </div>
 
-      <div id="comment-list" class="comment-list tw:space-y-3 tw:p-5 tw:sm:p-6">
+      <div id="comment-list" class="comment-list tw:p-4 tw:sm:p-6">
         {% for comment in comments %}{% include "tickets/partials/comment.html" %}{% empty %}
-        <div id="no-comments" class="tw:flex tw:flex-col tw:items-center tw:gap-2 tw:py-12 tw:text-center tw:text-base-content/45"><i class="bi bi-chat-square tw:text-3xl"></i><strong class="tw:text-base-content">{% translate "No conversation yet" %}</strong><span class="tw:text-sm">{% translate "Add the first update below." %}</span></div>
+        <div id="no-comments" class="tw:flex tw:flex-col tw:items-center tw:gap-2 tw:py-6 tw:text-center tw:text-base-content/45"><i class="bi bi-chat-square tw:text-3xl"></i><strong class="tw:text-base-content">{% translate "No conversation yet" %}</strong><span class="tw:text-sm">{% translate "Add the first update below." %}</span></div>
         {% endfor %}
       </div>
       <div id="comment-composer">{% if ticket.status != "closed" %}<div class="tw:border-t tw:border-base-300 tw:p-5 tw:sm:p-6">{% include "tickets/partials/comment_form.html" %}</div>{% endif %}</div>
@@ -102,7 +108,24 @@
       <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg" data-reveal><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-base"><i class="bi bi-person tw:text-primary"></i>{% translate "Requester" %}</h2><div class="tw:flex tw:items-center tw:gap-3"><div class="tw:d-avatar tw:d-avatar-placeholder"><div class="tw:w-11 tw:rounded-2xl tw:bg-primary tw:text-primary-content"><span>{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span></div></div><div class="tw:min-w-0"><strong class="tw:block tw:truncate tw:text-sm">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong><small class="tw:block tw:truncate tw:text-base-content/45">{{ ticket.requester.email }}</small></div></div></div></section>
 
       {% if ticket.ai_summary or ticket.ai_recommendations %}
-      <div class="tw:d-aura tw:d-aura-holo tw:d-aura-sm"><section class="tw:d-card tw:border tw:border-primary/20 tw:bg-neutral tw:text-neutral-content tw:shadow-lg" data-reveal><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-base"><i class="bi bi-stars"></i>{% translate "AI Insights" %}</h2>{% if ticket.ai_summary %}<p class="tw:text-sm tw:leading-6 tw:text-neutral-content/65">{{ ticket.ai_summary }}</p>{% endif %}{% if ticket.ai_recommendations %}<dl class="tw:space-y-2 tw:text-sm"><div class="tw:flex tw:justify-between"><dt class="tw:text-neutral-content/45">{% translate "Priority" %}</dt><dd>{{ ticket.ai_recommendations.suggested_priority|title|default:"—" }}</dd></div><div class="tw:flex tw:justify-between"><dt class="tw:text-neutral-content/45">{% translate "Group" %}</dt><dd>{{ ticket.ai_recommendations.suggested_group|default:"—" }}</dd></div><div class="tw:flex tw:justify-between"><dt class="tw:text-neutral-content/45">{% translate "Confidence" %}</dt><dd>{{ ticket.ai_recommendations.confidence|default:"—" }}</dd></div></dl>{% endif %}</div></section></div>
+      <div class="tw:d-aura tw:d-aura-holo tw:d-aura-lg" data-aura data-reveal>
+        <section class="tw:d-card tw:border tw:border-primary/25 tw:bg-primary tw:text-primary-content tw:shadow-xl">
+          <div class="tw:d-card-body tw:gap-4 tw:p-5">
+            <div class="tw:flex tw:items-center tw:justify-between tw:gap-3">
+              <h2 class="tw:d-card-title tw:text-base"><i class="bi bi-stars"></i>{% translate "AI Insights" %}</h2>
+              <span class="tw:d-badge tw:border-primary-content/20 tw:bg-primary-content/10 tw:text-primary-content">{% translate "Assistive" %}</span>
+            </div>
+            {% if ticket.ai_summary %}<p class="tw:text-sm tw:leading-6 tw:text-primary-content/75">{{ ticket.ai_summary }}</p>{% endif %}
+            {% if ticket.ai_recommendations %}
+            <div class="tw:d-stats tw:d-stats-vertical tw:bg-primary-content/10 tw:text-primary-content">
+              <div class="tw:d-stat tw:p-3"><div class="tw:d-stat-title tw:text-primary-content/55">{% translate "Priority" %}</div><div class="tw:d-stat-value tw:text-base">{{ ticket.ai_recommendations.suggested_priority|title|default:"—" }}</div></div>
+              <div class="tw:d-stat tw:p-3"><div class="tw:d-stat-title tw:text-primary-content/55">{% translate "Group" %}</div><div class="tw:d-stat-value tw:text-base">{{ ticket.ai_recommendations.suggested_group|default:"—" }}</div></div>
+              <div class="tw:d-stat tw:p-3"><div class="tw:d-stat-title tw:text-primary-content/55">{% translate "Confidence" %}</div><div class="tw:d-stat-value tw:text-base">{{ ticket.ai_recommendations.confidence|default:"—" }}</div></div>
+            </div>
+            {% endif %}
+          </div>
+        </section>
+      </div>
       {% endif %}
     </aside>
   </div>
@@ -110,9 +133,42 @@
 
 {% if can_assign %}
 <dialog id="assignmentModal" class="tw:d-modal">
-  <div class="tw:d-modal-box tw:max-w-3xl">
-    <div class="tw:flex tw:items-start tw:justify-between tw:gap-4"><div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-2">{% translate "Assignment" %}</span><h2 class="tw:text-2xl tw:font-black">{% translate "Assign groups and staff" %}</h2><p class="tw:mt-1 tw:text-sm tw:text-base-content/50">{% translate "A ticket may have multiple groups and multiple staff members." %}</p></div><button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm" type="button" onclick="document.getElementById('assignmentModal').close()"><i class="bi bi-x-lg"></i></button></div>
-    <form class="tw:mt-5" action="{% url 'portal:assign_ticket' ticket.reference %}" method="post">{% csrf_token %}<div class="tw:grid tw:gap-4 tw:md:grid-cols-2"><label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Staff members" %}</span>{{ assignment_form.users }}</label><label class="tw:d-fieldset"><span class="tw:d-fieldset-legend">{% translate "Support groups" %}</span>{{ assignment_form.groups }}</label></div><label class="tw:mt-4 tw:flex tw:items-center tw:gap-3">{{ assignment_form.replace_existing }}<span class="tw:text-sm">{% translate "Replace current assignment" %}</span></label><div class="tw:mt-6 tw:flex tw:justify-end tw:gap-2"><button class="tw:d-btn tw:d-btn-ghost" type="button" onclick="document.getElementById('assignmentModal').close()">{% translate "Cancel" %}</button><button class="tw:d-btn tw:d-btn-primary" type="submit">{% translate "Save assignment" %}</button></div></form>
+  <div class="tw:d-modal-box tw:max-w-4xl">
+    <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
+      <div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-2">{% translate "Assignment" %}</span><h2 class="tw:text-2xl tw:font-black">{% translate "Assign groups and staff" %}</h2><p class="tw:mt-1 tw:text-sm tw:text-base-content/50">{% translate "Select any number of staff members and support groups." %}</p></div>
+      <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm" type="button" onclick="document.getElementById('assignmentModal').close()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <form class="tw:mt-5" action="{% url 'portal:assign_ticket' ticket.reference %}" method="post">
+      {% csrf_token %}
+      <div class="tw:grid tw:gap-6 tw:md:grid-cols-2">
+        <fieldset class="tw:d-fieldset tw:min-w-0">
+          <legend class="tw:d-fieldset-legend">{% translate "Staff members" %}</legend>
+          <input class="tw:d-input tw:d-input-bordered tw:mb-2 tw:w-full" type="search" placeholder="{% translate 'Search staff' %}" data-multiselect-search="assignment-users">
+          <div id="assignment-users" class="tw:max-h-64 tw:overflow-y-auto tw:rounded-box tw:border tw:border-base-300 tw:bg-base-200/35 tw:p-2">
+            {% for member in assignment_form.users.field.queryset %}
+            <label class="tw:flex tw:cursor-pointer tw:items-center tw:gap-3 tw:rounded-xl tw:px-3 tw:py-2 tw:hover:bg-base-100" data-multiselect-option data-search-text="{{ member.get_full_name|default:member.email|lower }} {{ member.email|lower }}">
+              <input class="tw:d-checkbox tw:d-checkbox-primary tw:d-checkbox-sm" type="checkbox" name="users" value="{{ member.pk }}" {% if member in ticket.assignees.all %}checked{% endif %}>
+              <span class="tw:min-w-0"><strong class="tw:block tw:truncate tw:text-sm">{{ member.get_full_name|default:member.email }}</strong><small class="tw:block tw:truncate tw:text-xs tw:text-base-content/45">{{ member.email }}</small></span>
+            </label>
+            {% empty %}<div class="tw:p-4 tw:text-sm tw:text-base-content/45">{% translate "No active staff members." %}</div>{% endfor %}
+          </div>
+        </fieldset>
+        <fieldset class="tw:d-fieldset tw:min-w-0">
+          <legend class="tw:d-fieldset-legend">{% translate "Support groups" %}</legend>
+          <input class="tw:d-input tw:d-input-bordered tw:mb-2 tw:w-full" type="search" placeholder="{% translate 'Search groups' %}" data-multiselect-search="assignment-groups">
+          <div id="assignment-groups" class="tw:max-h-64 tw:overflow-y-auto tw:rounded-box tw:border tw:border-base-300 tw:bg-base-200/35 tw:p-2">
+            {% for group in assignment_form.groups.field.queryset %}
+            <label class="tw:flex tw:cursor-pointer tw:items-center tw:gap-3 tw:rounded-xl tw:px-3 tw:py-2 tw:hover:bg-base-100" data-multiselect-option data-search-text="{{ group.name|lower }}">
+              <input class="tw:d-checkbox tw:d-checkbox-primary tw:d-checkbox-sm" type="checkbox" name="groups" value="{{ group.pk }}" {% if group in ticket.groups.all %}checked{% endif %}>
+              <span class="tw:min-w-0"><strong class="tw:block tw:truncate tw:text-sm">{{ group.name }}</strong>{% if group.description %}<small class="tw:block tw:truncate tw:text-xs tw:text-base-content/45">{{ group.description }}</small>{% endif %}</span>
+            </label>
+            {% empty %}<div class="tw:p-4 tw:text-sm tw:text-base-content/45">{% translate "No active support groups." %}</div>{% endfor %}
+          </div>
+        </fieldset>
+      </div>
+      <label class="tw:mt-5 tw:flex tw:cursor-pointer tw:items-center tw:gap-3 tw:rounded-xl tw:bg-base-200/55 tw:p-3">{{ assignment_form.replace_existing }}<span class="tw:text-sm tw:font-semibold">{% translate "Replace current assignment" %}</span></label>
+      <div class="tw:mt-6 tw:flex tw:justify-end tw:gap-2"><button class="tw:d-btn tw:d-btn-ghost" type="button" onclick="document.getElementById('assignmentModal').close()">{% translate "Cancel" %}</button><button class="tw:d-btn tw:d-btn-primary" type="submit"><i class="bi bi-check2"></i>{% translate "Save assignment" %}</button></div>
+    </form>
   </div>
   <form method="dialog" class="tw:d-modal-backdrop"><button>{% translate "Close" %}</button></form>
 </dialog>

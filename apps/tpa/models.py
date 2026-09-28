@@ -1,0 +1,217 @@
+from decimal import Decimal
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models
+from apps.core.models import TimeStampedModel
+
+class TPAOrganization(TimeStampedModel):
+    class Type(models.TextChoices):
+        INDIVIDUAL="INDIVIDUAL","Individual"
+        CORPORATE="CORPORATE","Corporate / Sponsor"
+        INSURER="INSURER","Insurance Company"
+        TPA="TPA","TPA"
+        BROKER="BROKER","Broker"
+        AGENT="AGENT","Agent"
+        OTHER="OTHER","Other"
+    code=models.CharField(max_length=40, unique=True)
+    name_en=models.CharField(max_length=180)
+    name_ar=models.CharField(max_length=180, blank=True)
+    organization_type=models.CharField(max_length=20, choices=Type.choices)
+    commercial_registration=models.CharField(max_length=80, blank=True)
+    contact_name=models.CharField(max_length=160, blank=True)
+    contact_email=models.EmailField(blank=True)
+    contact_phone=models.CharField(max_length=60, blank=True)
+    is_active=models.BooleanField(default=True)
+    def __str__(self): return f"{self.code} · {self.name_en}"
+
+class Policy(TimeStampedModel):
+    class Status(models.TextChoices):
+        DRAFT="draft","Draft"; ACTIVE="active","Active"; SUSPENDED="suspended","Suspended"; EXPIRED="expired","Expired"; CANCELLED="cancelled","Cancelled"
+    sponsor=models.ForeignKey(TPAOrganization, related_name="sponsored_policies", on_delete=models.PROTECT, limit_choices_to={"organization_type":"CORPORATE"})
+    insurance_company=models.ForeignKey(TPAOrganization, related_name="insured_policies", on_delete=models.PROTECT, limit_choices_to={"organization_type":"INSURER"})
+    policy_number=models.CharField(max_length=80, unique=True, db_index=True)
+    policy_name=models.CharField(max_length=180, blank=True)
+    start_date=models.DateField()
+    expiry_date=models.DateField()
+    status=models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT, db_index=True)
+    product_type=models.CharField(max_length=80, default="MEDICAL")
+    insurer_reference=models.CharField(max_length=100, blank=True)
+    tpa_reference=models.CharField(max_length=100, blank=True)
+    cancellation_effective_date=models.DateField(null=True, blank=True)
+    currency=models.CharField(max_length=3, default="OMR")
+    stp_enabled=models.BooleanField(default=False)
+    premium_calculation_enabled=models.BooleanField(default=True)
+    allowed_backdating_days=models.PositiveSmallIntegerField(default=30)
+    validation_bypass_allowed=models.BooleanField(default=False)
+    configuration=models.JSONField(default=dict, blank=True)
+    notes=models.TextField(blank=True)
+    def clean(self):
+        if self.expiry_date and self.start_date and self.expiry_date < self.start_date:
+            raise ValidationError({"expiry_date":"Expiry date cannot be before start date."})
+    def __str__(self): return self.policy_number
+
+class BenefitPlan(TimeStampedModel):
+    policy=models.ForeignKey(Policy, related_name="plans", on_delete=models.CASCADE)
+    code=models.CharField(max_length=50)
+    name=models.CharField(max_length=160)
+    description=models.TextField(blank=True)
+    annual_premium=models.DecimalField(max_digits=14, decimal_places=3, default=Decimal("0"))
+    default_sum_insured=models.DecimalField(max_digits=16, decimal_places=3, null=True, blank=True)
+    premium_configuration=models.JSONField(default=dict, blank=True)
+    is_active=models.BooleanField(default=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=["policy","code"], name="tpa_unique_policy_plan")]
+    def __str__(self): return f"{self.policy.policy_number} · {self.code}"
+
+class Member(TimeStampedModel):
+    class Status(models.TextChoices):
+        ACTIVE="active","Active"; TERMINATED="terminated","Terminated"; VOIDED="voided","Deleted / Voided"; CANCELLED="cancelled","Cancelled"
+    class Relationship(models.TextChoices):
+        PRINCIPAL="PRINCIPAL","Principal"; SPOUSE="SPOUSE","Spouse"; CHILD="CHILD","Child"; OTHER="OTHER","Other"
+    tpa_member_id=models.CharField(max_length=40, unique=True, null=True, blank=True, editable=False)
+    sponsor=models.ForeignKey(TPAOrganization, related_name="members", on_delete=models.PROTECT)
+    employee_id=models.CharField(max_length=80, blank=True, db_index=True)
+    first_name=models.CharField(max_length=100)
+    middle_name=models.CharField(max_length=100, blank=True)
+    last_name=models.CharField(max_length=100)
+    date_of_birth=models.DateField()
+    gender=models.CharField(max_length=20)
+    relationship=models.CharField(max_length=20, choices=Relationship.choices)
+    national_id=models.CharField(max_length=80, blank=True, db_index=True)
+    passport_number=models.CharField(max_length=80, blank=True, db_index=True)
+    principal=models.ForeignKey("self", null=True, blank=True, related_name="dependents", on_delete=models.PROTECT)
+    status=models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE, db_index=True)
+    @property
+    def full_name(self): return " ".join(x for x in [self.first_name,self.middle_name,self.last_name] if x)
+    def save(self,*args,**kwargs):
+        new=self.pk is None
+        super().save(*args,**kwargs)
+        if new and not self.tpa_member_id:
+            self.tpa_member_id=f"TPA-{self.created_at:%Y}-{self.pk:06d}"
+            super().save(update_fields=["tpa_member_id"])
+    def __str__(self): return f"{self.tpa_member_id or 'New'} · {self.full_name}"
+
+class MemberPolicyEnrollment(TimeStampedModel):
+    class Status(models.TextChoices):
+        PENDING="pending","Pending"; ACTIVE="active","Active"; TERMINATED="terminated","Terminated"; VOIDED="voided","Voided"; CANCELLED="cancelled","Cancelled"
+    member=models.ForeignKey(Member, related_name="enrollments", on_delete=models.PROTECT)
+    policy=models.ForeignKey(Policy, related_name="enrollments", on_delete=models.PROTECT)
+    benefit_plan=models.ForeignKey(BenefitPlan, related_name="enrollments", on_delete=models.PROTECT)
+    coverage_start_date=models.DateField()
+    coverage_end_date=models.DateField(null=True, blank=True)
+    enrollment_status=models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True)
+    premium_amount=models.DecimalField(max_digits=14, decimal_places=3, default=Decimal("0"))
+    premium_calculation_basis=models.JSONField(default=dict, blank=True)
+    termination_reason=models.TextField(blank=True)
+    termination_date=models.DateField(null=True, blank=True)
+    voided_at=models.DateTimeField(null=True, blank=True)
+    cancellation_date=models.DateField(null=True, blank=True)
+
+class MemberTransaction(TimeStampedModel):
+    class Type(models.TextChoices):
+        NEW_POLICY_ENROLLMENT="NEW_POLICY_ENROLLMENT","New Policy Enrollment"
+        MEMBER_ADD="MEMBER_ADD","Member Addition"
+        MEMBER_TERMINATE="MEMBER_TERMINATE","Member Termination"
+        MEMBER_DELETE="MEMBER_DELETE","Member Deletion / Void"
+        POLICY_CANCEL="POLICY_CANCEL","Policy Cancellation"
+    class Source(models.TextChoices):
+        PORTAL="PORTAL","Portal"; EMAIL="EMAIL","Email"; API="API","API"; ADMIN="ADMIN","Admin"; IMPORT="IMPORT","Import"
+    class Status(models.TextChoices):
+        DRAFT="draft","Draft"; EXTRACTING="extracting","Extracting"; PENDING_VALIDATION="pending_validation","Pending Validation"
+        NEEDS_INFORMATION="needs_information","Needs Information"; VALIDATION_FAILED="validation_failed","Validation Failed"
+        PENDING_APPROVAL="pending_approval","Pending Approval"; APPROVED="approved","Approved"; AUTO_APPROVED="auto_approved","Auto Approved"
+        PROCESSING="processing","Processing"; PROCESSED="processed","Processed"; REJECTED="rejected","Rejected"; FAILED="failed","Failed"; CANCELLED="cancelled","Cancelled"
+    reference=models.CharField(max_length=40, unique=True, null=True, blank=True, editable=False)
+    sponsor=models.ForeignKey(TPAOrganization, related_name="transactions", on_delete=models.PROTECT)
+    insurer=models.ForeignKey(TPAOrganization, related_name="insurer_transactions", on_delete=models.PROTECT)
+    policy=models.ForeignKey(Policy, related_name="transactions", on_delete=models.PROTECT)
+    transaction_type=models.CharField(max_length=30, choices=Type.choices, db_index=True)
+    source=models.CharField(max_length=20, choices=Source.choices, default=Source.PORTAL)
+    request_date=models.DateTimeField(auto_now_add=True)
+    effective_date=models.DateField()
+    status=models.CharField(max_length=30, choices=Status.choices, default=Status.DRAFT, db_index=True)
+    requester=models.ForeignKey(settings.AUTH_USER_MODEL, related_name="tpa_transactions", on_delete=models.PROTECT)
+    requester_organization=models.ForeignKey(TPAOrganization, related_name="requested_transactions", on_delete=models.PROTECT)
+    ticket=models.OneToOneField("tickets.Ticket", related_name="tpa_transaction", null=True, blank=True, on_delete=models.SET_NULL)
+    premium_before=models.DecimalField(max_digits=16, decimal_places=3, default=Decimal("0"))
+    premium_adjustment=models.DecimalField(max_digits=16, decimal_places=3, default=Decimal("0"))
+    premium_after=models.DecimalField(max_digits=16, decimal_places=3, default=Decimal("0"))
+    currency=models.CharField(max_length=3, default="OMR")
+    validation_score=models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0"))
+    stp_eligible=models.BooleanField(default=False)
+    stp_blockers=models.JSONField(default=list, blank=True)
+    ai_summary=models.TextField(blank=True)
+    ai_extraction_status=models.CharField(max_length=30, blank=True)
+    validation_bypassed=models.BooleanField(default=False)
+    validation_bypass_reason=models.TextField(blank=True)
+    validation_bypassed_by=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="tpa_validation_bypasses", on_delete=models.SET_NULL)
+    validation_bypassed_at=models.DateTimeField(null=True, blank=True)
+    remarks=models.TextField(blank=True)
+    submitted_at=models.DateTimeField(null=True, blank=True)
+    processed_at=models.DateTimeField(null=True, blank=True)
+    approved_at=models.DateTimeField(null=True, blank=True)
+    approved_by=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="approved_tpa_transactions", on_delete=models.SET_NULL)
+    rejection_reason=models.TextField(blank=True)
+    metadata=models.JSONField(default=dict, blank=True)
+    class Meta:
+        permissions=[
+            ("view_tpa_dashboard","Can view TPA dashboard"),("create_enrollment","Can create TPA enrollment"),
+            ("create_endorsement","Can create TPA endorsement"),("terminate_member","Can terminate TPA member"),
+            ("delete_member","Can delete/void TPA member"),("cancel_policy","Can cancel TPA policy"),
+            ("approve_endorsement","Can approve TPA endorsement"),("process_endorsement","Can process TPA endorsement"),
+            ("bypass_validation","Can bypass TPA validation"),("override_premium","Can override TPA premium"),
+            ("view_sensitive_member_data","Can view sensitive TPA member data"),("view_ai_source_data","Can view TPA AI source data"),
+            ("configure_tpa","Can configure TPA"),("export_tpa_data","Can export TPA data"),
+        ]
+    def save(self,*args,**kwargs):
+        new=self.pk is None
+        super().save(*args,**kwargs)
+        if new and not self.reference:
+            self.reference=f"TPA-END-{self.created_at:%Y}-{self.pk:06d}"
+            super().save(update_fields=["reference"])
+    def __str__(self): return self.reference or "New transaction"
+
+class MemberAction(TimeStampedModel):
+    class Result(models.TextChoices):
+        VALID="VALID","Valid"; WARNING="WARNING","Warning"; ERROR="ERROR","Error"; BYPASSED="BYPASSED","Bypassed"
+    transaction=models.ForeignKey(MemberTransaction, related_name="member_actions", on_delete=models.CASCADE)
+    member=models.ForeignKey(Member, null=True, blank=True, related_name="transaction_actions", on_delete=models.PROTECT)
+    action=models.CharField(max_length=30)
+    row_number=models.PositiveIntegerField(null=True, blank=True)
+    submitted_data=models.JSONField(default=dict, blank=True)
+    extracted_data=models.JSONField(default=dict, blank=True)
+    corrected_data=models.JSONField(default=dict, blank=True)
+    before_data=models.JSONField(default=dict, blank=True)
+    after_data=models.JSONField(default=dict, blank=True)
+    extraction_confidence=models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    validation_status=models.CharField(max_length=12, choices=Result.choices, default=Result.ERROR)
+    validation_errors=models.JSONField(default=list, blank=True)
+    warnings=models.JSONField(default=list, blank=True)
+    calculated_premium=models.DecimalField(max_digits=14, decimal_places=3, default=Decimal("0"))
+    calculation_snapshot=models.JSONField(default=dict, blank=True)
+    processing_status=models.CharField(max_length=30, blank=True)
+    processing_message=models.TextField(blank=True)
+    processed_at=models.DateTimeField(null=True, blank=True)
+
+class PolicyAccess(TimeStampedModel):
+    organization=models.ForeignKey(TPAOrganization, related_name="policy_access", on_delete=models.CASCADE)
+    policy=models.ForeignKey(Policy, related_name="access_entries", on_delete=models.CASCADE)
+    user=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="tpa_policy_access", on_delete=models.CASCADE)
+    can_view=models.BooleanField(default=True)
+    can_view_members=models.BooleanField(default=False)
+    can_create_enrollment=models.BooleanField(default=False)
+    can_create_endorsement=models.BooleanField(default=False)
+    can_view_premium=models.BooleanField(default=False)
+    can_approve=models.BooleanField(default=False)
+    can_process=models.BooleanField(default=False)
+    active=models.BooleanField(default=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=["organization","policy","user"], name="tpa_unique_policy_access")]
+
+class TransactionEvent(TimeStampedModel):
+    transaction=models.ForeignKey(MemberTransaction, related_name="events", on_delete=models.CASCADE)
+    actor=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    event_type=models.CharField(max_length=50, db_index=True)
+    summary=models.CharField(max_length=255)
+    details=models.JSONField(default=dict, blank=True)
+    class Meta: ordering=["created_at"]

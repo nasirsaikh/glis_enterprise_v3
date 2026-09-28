@@ -355,3 +355,317 @@ html[data-bs-theme="dark"] .portal-shell .skip-link { background: #257a54; }
   .portal-shell [data-reveal] { opacity: 1; transform: none; }
   .glis-tilt { transform: none; }
 }
+
+/* Greenline brand redesign 2026-09-28 */
+:root {
+  --glis-brand-green: #10b981;
+  --glis-brand-green-deep: #0f6b4a;
+  --glis-brand-teal: #14b8a6;
+  --glis-brand-ink: #071b14;
+  --glis-brand-glow: rgba(16, 185, 129, .18);
+}
+
+.glis-public-nav-shell {
+  border-bottom: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
+  background: color-mix(in oklab, var(--color-base-100) 84%, transparent);
+  box-shadow: 0 14px 42px color-mix(in oklab, var(--color-neutral) 8%, transparent);
+  backdrop-filter: blur(22px) saturate(135%);
+  -webkit-backdrop-filter: blur(22px) saturate(135%);
+}
+.glis-public-navbar {
+  min-height: 4.7rem;
+}
+.glis-public-navbar .tw\:d-menu form button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: .75rem;
+  border: 0;
+  background: transparent;
+  padding: .65rem .8rem;
+  text-align: start;
+  border-radius: .75rem;
+}
+.glis-public-navbar .tw\:d-menu form button:hover {
+  background: color-mix(in oklab, var(--color-error) 9%, transparent);
+}
+
+.glis-brand-hero {
+  background:
+    radial-gradient(circle at 12% 18%, color-mix(in oklab, var(--color-primary) 18%, transparent), transparent 28rem),
+    radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--color-secondary) 15%, transparent), transparent 26rem),
+    linear-gradient(145deg, var(--color-base-100), color-mix(in oklab, var(--color-base-200) 78%, var(--color-base-100)));
+}
+.glis-brand-mesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .42;
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--color-base-content) 6%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--color-base-content) 6%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at 62% 46%, #000 0 35%, transparent 76%);
+}
+.glis-brand-title {
+  text-wrap: balance;
+  text-shadow: 0 18px 60px color-mix(in oklab, var(--color-primary) 12%, transparent);
+}
+.glis-trust-chip {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  gap: .65rem;
+  padding: .75rem .9rem;
+  border: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in oklab, var(--color-base-100) 74%, transparent);
+  box-shadow: 0 12px 30px color-mix(in oklab, var(--color-neutral) 7%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.glis-hero-scene {
+  min-height: 35rem;
+  display: grid;
+  place-items: center;
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+.glis-hero-visual {
+  position: relative;
+  z-index: 3;
+  width: min(100%, 31rem);
+  transform-style: preserve-3d;
+  border-radius: 2rem;
+  box-shadow:
+    0 36px 100px color-mix(in oklab, var(--color-neutral) 18%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--color-primary) 6%, transparent);
+}
+.glis-hero-visual > * {
+  transform: translateZ(20px);
+}
+.glis-hero-orbit {
+  position: absolute;
+  z-index: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 30%, transparent);
+  pointer-events: none;
+  animation: glis-brand-orbit 18s linear infinite;
+}
+.glis-hero-orbit-a {
+  width: 31rem;
+  height: 31rem;
+}
+.glis-hero-orbit-b {
+  width: 24rem;
+  height: 24rem;
+  border-color: color-mix(in oklab, var(--color-secondary) 28%, transparent);
+  animation-direction: reverse;
+  animation-duration: 14s;
+}
+.glis-float-card {
+  position: absolute;
+  z-index: 4;
+  width: 13rem;
+  translate: var(--glis-parallax-x, 0px) var(--glis-parallax-y, 0px);
+  transition: translate .18s ease, border-color .22s ease, box-shadow .22s ease;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.glis-float-card-one {
+  inset-inline-start: -2rem;
+  inset-block-start: 4.5rem;
+  animation: glis-brand-float 6.5s ease-in-out infinite;
+}
+.glis-float-card-two {
+  inset-inline-end: -2rem;
+  inset-block-start: 9.5rem;
+  animation: glis-brand-float 7.5s ease-in-out -1.5s infinite;
+}
+.glis-float-card-three {
+  inset-inline-end: 1rem;
+  inset-block-end: 2.5rem;
+  animation: glis-brand-float 8s ease-in-out -2.5s infinite;
+}
+.glis-service-chip {
+  border: 1px solid color-mix(in oklab, var(--color-base-content) 9%, transparent);
+  transition: transform .24s cubic-bezier(.2,.8,.2,1), box-shadow .24s ease, border-color .24s ease;
+}
+.glis-service-chip:hover {
+  transform: translateY(-6px);
+  border-color: color-mix(in oklab, var(--color-primary) 34%, transparent);
+  box-shadow: 0 24px 60px color-mix(in oklab, var(--color-primary) 12%, transparent);
+}
+.glis-card-lift {
+  transition: border-color .24s ease, box-shadow .24s ease, filter .24s ease;
+}
+.glis-card-lift:hover {
+  border-color: color-mix(in oklab, var(--color-primary) 32%, transparent) !important;
+  box-shadow: 0 30px 80px color-mix(in oklab, var(--color-primary) 13%, transparent) !important;
+  filter: saturate(1.04);
+}
+.glis-card-lift:not(.glis-tilt):hover {
+  transform: translateY(-7px);
+}
+.glis-stat-strip,
+.glis-kpi-strip {
+  border-radius: 1.5rem;
+  box-shadow: 0 26px 70px color-mix(in oklab, var(--color-neutral) 13%, transparent);
+}
+.glis-stat-strip .tw\:d-stat,
+.glis-kpi-strip .tw\:d-stat {
+  transition: background-color .2s ease, transform .2s ease;
+}
+.glis-stat-strip .tw\:d-stat:hover,
+.glis-kpi-strip .tw\:d-stat:hover {
+  background: color-mix(in oklab, var(--color-primary) 8%, transparent);
+  transform: translateY(-3px);
+}
+.glis-cta-panel {
+  background:
+    radial-gradient(circle at 10% 20%, color-mix(in oklab, var(--color-primary) 15%, transparent), transparent 22rem),
+    radial-gradient(circle at 90% 80%, color-mix(in oklab, var(--color-secondary) 12%, transparent), transparent 20rem),
+    var(--color-base-100);
+}
+.glis-brand-footer {
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in oklab, var(--color-primary) 13%, transparent), transparent 28rem),
+    var(--color-base-200);
+}
+
+/* Portal */
+.glis-portal-shell {
+  background:
+    radial-gradient(circle at 92% 0%, color-mix(in oklab, var(--color-primary) 11%, transparent), transparent 34rem),
+    radial-gradient(circle at 28% 88%, color-mix(in oklab, var(--color-secondary) 8%, transparent), transparent 30rem),
+    var(--color-base-200) !important;
+  transition: background-color .25s ease, color .25s ease;
+}
+.glis-portal-sidebar {
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in oklab, var(--color-primary) 30%, transparent), transparent 17rem),
+    linear-gradient(165deg, color-mix(in oklab, var(--color-neutral) 94%, #052c20), var(--color-neutral)) !important;
+}
+.glis-portal-header {
+  background: color-mix(in oklab, var(--color-base-100) 83%, transparent) !important;
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  box-shadow: 0 12px 36px color-mix(in oklab, var(--color-neutral) 7%, transparent);
+}
+.glis-portal-navbar {
+  max-width: 100%;
+}
+.glis-portal-hero {
+  background:
+    radial-gradient(circle at 8% 20%, color-mix(in oklab, var(--color-primary) 17%, transparent), transparent 24rem),
+    radial-gradient(circle at 92% 10%, color-mix(in oklab, var(--color-secondary) 10%, transparent), transparent 18rem),
+    var(--color-base-100);
+}
+.glis-command-stack {
+  display: grid;
+  gap: .85rem;
+  perspective: 1200px;
+}
+.glis-command-card {
+  translate: var(--glis-parallax-x, 0px) var(--glis-parallax-y, 0px);
+  transition: translate .18s ease, transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.glis-command-card:hover {
+  transform: translateX(-6px) translateZ(12px);
+  border-color: color-mix(in oklab, var(--color-primary) 28%, transparent) !important;
+  box-shadow: 0 22px 60px color-mix(in oklab, var(--color-primary) 12%, transparent) !important;
+}
+html[dir="rtl"] .glis-command-card:hover {
+  transform: translateX(6px) translateZ(12px);
+}
+.glis-portal-card {
+  border-radius: 1.5rem;
+  transition: border-color .22s ease, box-shadow .22s ease, transform .22s ease;
+  box-shadow: 0 16px 42px color-mix(in oklab, var(--color-neutral) 7%, transparent);
+}
+.glis-portal-card:hover {
+  border-color: color-mix(in oklab, var(--color-primary) 24%, transparent) !important;
+  box-shadow: 0 24px 65px color-mix(in oklab, var(--color-primary) 9%, transparent);
+}
+.glis-quick-link {
+  border: 1px solid transparent;
+  transition: transform .2s ease, border-color .2s ease, background-color .2s ease;
+}
+.glis-quick-link:hover {
+  transform: translateX(4px);
+  border-color: color-mix(in oklab, var(--color-primary) 22%, transparent);
+  background: color-mix(in oklab, var(--color-primary) 8%, var(--color-base-200)) !important;
+}
+html[dir="rtl"] .glis-quick-link:hover {
+  transform: translateX(-4px);
+}
+.glis-portal-mobile-nav {
+  background:
+    radial-gradient(circle at 16% 0%, color-mix(in oklab, var(--color-primary) 28%, transparent), transparent 18rem),
+    var(--color-neutral) !important;
+}
+
+/* Auth */
+.glis-auth-shell {
+  min-height: calc(100dvh - 5rem);
+  background:
+    radial-gradient(circle at 10% 20%, color-mix(in oklab, var(--color-primary) 14%, transparent), transparent 24rem),
+    radial-gradient(circle at 92% 70%, color-mix(in oklab, var(--color-secondary) 10%, transparent), transparent 22rem),
+    var(--color-base-200) !important;
+}
+.glis-auth-story {
+  background:
+    radial-gradient(circle at 18% 10%, rgba(16,185,129,.25), transparent 18rem),
+    linear-gradient(150deg, #071b14, #0a2c20 54%, #0b3b2b) !important;
+}
+.glis-auth-card {
+  background: color-mix(in oklab, var(--color-base-100) 88%, transparent);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+}
+
+html[data-theme="dark"] .glis-brand-hero,
+html[data-theme="dark"] .glis-auth-shell,
+html[data-theme="dark"] .glis-portal-shell {
+  background:
+    radial-gradient(circle at 12% 14%, color-mix(in oklab, var(--color-primary) 18%, transparent), transparent 28rem),
+    radial-gradient(circle at 88% 18%, color-mix(in oklab, var(--color-secondary) 12%, transparent), transparent 25rem),
+    var(--color-base-200) !important;
+}
+html[data-theme="dark"] .glis-public-nav-shell {
+  background: color-mix(in oklab, var(--color-base-100) 78%, transparent);
+  border-color: color-mix(in oklab, var(--color-base-content) 13%, transparent);
+}
+html[data-theme="dark"] .glis-portal-card,
+html[data-theme="dark"] .glis-auth-card,
+html[data-theme="dark"] .glis-hero-visual,
+html[data-theme="dark"] .glis-float-card {
+  box-shadow: 0 22px 65px rgba(0,0,0,.28);
+}
+
+@keyframes glis-brand-float {
+  0%, 100% { transform: translateY(0) rotate(-.4deg); }
+  50% { transform: translateY(-12px) rotate(.6deg); }
+}
+@keyframes glis-brand-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 767.98px) {
+  .glis-hero-scene { min-height: 31rem; }
+  .glis-float-card { width: 11rem; }
+  .glis-float-card-one { inset-inline-start: 0; inset-block-start: 1.25rem; }
+  .glis-float-card-two { inset-inline-end: 0; inset-block-start: 7rem; }
+  .glis-float-card-three { inset-inline-end: 1rem; inset-block-end: 1rem; }
+  .glis-brand-title { text-wrap: pretty; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glis-float-card,
+  .glis-hero-orbit,
+  .glis-command-card {
+    animation: none !important;
+    translate: none !important;
+    transform: none !important;
+  }
+}

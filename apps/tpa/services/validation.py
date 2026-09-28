@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from django.utils import timezone
 
-from ..models import MemberAction, MemberPolicyEnrollment, Policy
+from ..models import Member, MemberAction, MemberPolicyEnrollment, Policy
 from .pricing import calculate_member_premium
 
 
@@ -31,6 +31,49 @@ def _payload(action):
         **(action.extracted_data or {}),
         **(action.corrected_data or {}),
     }
+
+
+def _find_principal_reference(tx, data, current_action=None):
+    active = Member.objects.filter(
+        relationship=Member.Relationship.PRINCIPAL,
+        status=Member.Status.ACTIVE,
+        enrollments__policy=tx.policy,
+        enrollments__enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
+    ).distinct()
+
+    member_ref = str(data.get("principal_member_id") or "").strip()
+    if member_ref:
+        if member_ref.isdigit():
+            member = active.filter(pk=int(member_ref)).first()
+        else:
+            member = active.filter(tpa_member_id=member_ref).first()
+        if member:
+            return ("member", member)
+
+    action_ref = str(data.get("principal_action_id") or "").strip()
+    if action_ref.isdigit():
+        principal_action = tx.member_actions.filter(pk=int(action_ref)).first()
+        if principal_action and principal_action.pk != getattr(current_action, "pk", None):
+            principal_data = _payload(principal_action)
+            if str(principal_data.get("relationship") or "").upper() == Member.Relationship.PRINCIPAL:
+                return ("action", principal_action)
+
+    employee_id = str(data.get("principal_employee_id") or "").strip()
+    if employee_id:
+        member = active.filter(employee_id=employee_id).first()
+        if member:
+            return ("member", member)
+        for principal_action in tx.member_actions.all():
+            if principal_action.pk == getattr(current_action, "pk", None):
+                continue
+            principal_data = _payload(principal_action)
+            if (
+                str(principal_data.get("relationship") or "").upper()
+                == Member.Relationship.PRINCIPAL
+                and str(principal_data.get("employee_id") or "").strip() == employee_id
+            ):
+                return ("action", principal_action)
+    return None
 
 
 def _find_active_enrollment(tx, data):
@@ -126,6 +169,33 @@ def validate_action(action):
                     "Plan does not exist or is inactive for this policy.",
                 )
             )
+
+        relationship = str(data.get("relationship") or "").upper()
+        if relationship and relationship != Member.Relationship.PRINCIPAL:
+            has_reference = any(
+                str(data.get(field) or "").strip()
+                for field in (
+                    "principal_member_id",
+                    "principal_action_id",
+                    "principal_employee_id",
+                )
+            )
+            if not has_reference:
+                errors.append(
+                    error(
+                        "PARENT_PRINCIPAL_REQUIRED",
+                        "principal",
+                        "A parent principal must be selected for spouse, child or other dependent.",
+                    )
+                )
+            elif not _find_principal_reference(tx, data, current_action=action):
+                errors.append(
+                    error(
+                        "INVALID_PARENT_PRINCIPAL",
+                        "principal",
+                        "The selected parent principal is not an active principal on this policy or a principal row in this transaction.",
+                    )
+                )
 
         employee_id = str(data.get("employee_id") or "").strip()
         national_id = str(data.get("national_id") or "").strip()

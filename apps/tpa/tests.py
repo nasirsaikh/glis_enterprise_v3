@@ -12,7 +12,7 @@ from .models import (
     PolicyAccess,
     TPAOrganization,
 )
-from .services.access import can_access_tpa, can_create_tpa_transaction
+from .forms import MemberRowForm\nfrom .services.access import can_access_tpa, can_create_tpa_transaction
 from .services.pricing import calculate_member_premium
 from .services.workflow import approve_transaction, process_transaction, run_validation
 
@@ -138,3 +138,114 @@ class TPACoreTests(TestCase):
                 enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
             ).exists()
         )
+
+    def test_dependent_manual_form_requires_parent_principal(self):
+        tx = self._transaction()
+        form = MemberRowForm(
+            data={
+                "employee_id": "E-200",
+                "first_name": "Child",
+                "middle_name": "",
+                "last_name": "Member",
+                "date_of_birth": "2018-01-01",
+                "gender": "Female",
+                "relationship": "CHILD",
+                "principal_reference": "",
+                "plan_code": "GOLD",
+                "national_id": "CID-200",
+                "passport_number": "",
+            },
+            transaction=tx,
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("principal_reference", form.errors)
+
+    def test_same_transaction_principal_is_available_for_manual_dependent(self):
+        tx = self._transaction()
+        principal_action = MemberAction.objects.create(
+            transaction=tx,
+            action=tx.transaction_type,
+            row_number=1,
+            corrected_data={
+                "employee_id": "E-PRINCIPAL",
+                "first_name": "Parent",
+                "last_name": "Member",
+                "date_of_birth": "1985-01-01",
+                "gender": "Male",
+                "relationship": "PRINCIPAL",
+                "plan_code": "GOLD",
+                "national_id": "CID-PARENT",
+            },
+        )
+        form = MemberRowForm(
+            data={
+                "employee_id": "E-CHILD",
+                "first_name": "Child",
+                "middle_name": "",
+                "last_name": "Member",
+                "date_of_birth": "2018-01-01",
+                "gender": "Female",
+                "relationship": "CHILD",
+                "principal_reference": f"action:{principal_action.pk}",
+                "plan_code": "GOLD",
+                "national_id": "CID-CHILD",
+                "passport_number": "",
+            },
+            transaction=tx,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(
+            form.cleaned_data["principal_action_id"],
+            str(principal_action.pk),
+        )
+
+    def test_dependent_is_linked_to_principal_during_processing(self):
+        tx = self._transaction(status=MemberTransaction.Status.PENDING_VALIDATION)
+        MemberAction.objects.create(
+            transaction=tx,
+            action=tx.transaction_type,
+            row_number=1,
+            corrected_data={
+                "employee_id": "E-FAMILY-1",
+                "first_name": "Parent",
+                "last_name": "Member",
+                "date_of_birth": "1985-01-01",
+                "gender": "Male",
+                "relationship": "PRINCIPAL",
+                "plan_code": "GOLD",
+                "national_id": "CID-FAMILY-1",
+            },
+        )
+        MemberAction.objects.create(
+            transaction=tx,
+            action=tx.transaction_type,
+            row_number=2,
+            corrected_data={
+                "employee_id": "E-FAMILY-2",
+                "first_name": "Child",
+                "last_name": "Member",
+                "date_of_birth": "2018-01-01",
+                "gender": "Female",
+                "relationship": "CHILD",
+                "plan_code": "GOLD",
+                "national_id": "CID-FAMILY-2",
+                "principal_employee_id": "E-FAMILY-1",
+            },
+        )
+
+        run_validation(tx, actor=self.user)
+        tx.refresh_from_db()
+        self.assertEqual(tx.status, MemberTransaction.Status.PENDING_APPROVAL)
+        self.assertEqual(str(tx.validation_score), "100.00")
+
+        self.user.is_superuser = True
+        self.user.is_staff = True
+        self.user.save(update_fields=["is_superuser", "is_staff"])
+
+        approve_transaction(tx, self.user)
+        process_transaction(tx, self.user)
+
+        parent = Member.objects.get(employee_id="E-FAMILY-1")
+        child = Member.objects.get(employee_id="E-FAMILY-2")
+        self.assertEqual(child.principal_id, parent.pk)
+\n

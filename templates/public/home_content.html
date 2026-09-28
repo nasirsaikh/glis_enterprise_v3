@@ -65,7 +65,6 @@
               <div class="gl-service-action">{% translate "Explore service" %}<i class="bi bi-arrow-up-right"></i></div>
             </div>
           </article>
-          <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
         </a>
         {% empty %}
         <div class="tw:d-alert tw:d-alert-info tw:md:col-span-2 tw:xl:col-span-3"><i class="bi bi-info-circle"></i><span>{% translate "No services currently available." %}</span></div>
@@ -107,10 +106,10 @@
       </div>
       <div class="tw:mt-12 tw:grid tw:gap-5 tw:md:grid-cols-2 tw:xl:grid-cols-3">
         {% for feature in features %}
-        <article class="glis-card-lift tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" data-reveal data-tilt>
-          <div class="gl-service-card-body">
+        <article class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" data-reveal>
+          <div class="tw:d-card-body tw:p-7">
             <div class="tw:flex tw:items-center tw:justify-between tw:gap-4">
-              <span class="gl-service-icon"><i class="bi {{ feature.icon|default:'bi-stars' }}"></i></span>
+              <span class="tw:grid tw:h-14 tw:w-14 tw:place-items-center tw:rounded-2xl tw:bg-primary/10 tw:text-2xl tw:text-primary"><i class="bi {{ feature.icon|default:'bi-stars' }}"></i></span>
               <span class="tw:d-badge tw:d-badge-ghost">{% translate "Capability" %}</span>
             </div>
             <h3 class="tw:d-card-title tw:mt-5 tw:text-2xl tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ feature.title_ar|default:feature.title_en }}{% else %}{{ feature.title_en }}{% endif %}</h3>
@@ -228,7 +227,7 @@
         {% for testimonial in testimonials %}
         <article class="tw:d-carousel-item tw:w-[88%] tw:sm:w-[60%] tw:lg:w-[38%]">
           <div class="tw:d-card tw:w-full tw:border tw:border-neutral-content/10 tw:bg-neutral-content/5 tw:text-neutral-content tw:shadow-xl">
-            <div class="gl-service-card-body"><div class="tw:text-6xl tw:font-black tw:text-success/35">“</div><p class="tw:text-lg tw:leading-8 tw:text-neutral-content/75">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.quote_ar|default:testimonial.quote_en }}{% else %}{{ testimonial.quote_en }}{% endif %}</p><div class="tw:mt-5 tw:flex tw:items-center tw:gap-3">{% if testimonial.photo %}<div class="tw:d-avatar"><div class="tw:w-12 tw:rounded-2xl"><img src="{{ testimonial.photo.url }}" alt="{{ testimonial.name }}"></div></div>{% else %}<div class="tw:d-avatar tw:d-avatar-placeholder"><div class="tw:w-12 tw:rounded-2xl tw:bg-success tw:text-success-content"><span>{{ testimonial.name|first }}</span></div></div>{% endif %}<div><strong class="tw:block">{{ testimonial.name }}</strong><small class="tw:text-neutral-content/50">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.role_ar|default:testimonial.role_en }}{% else %}{{ testimonial.role_en }}{% endif %}</small></div></div></div>
+            <div class="tw:d-card-body tw:p-7"><div class="tw:text-6xl tw:font-black tw:text-success/35">“</div><p class="tw:text-lg tw:leading-8 tw:text-neutral-content/75">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.quote_ar|default:testimonial.quote_en }}{% else %}{{ testimonial.quote_en }}{% endif %}</p><div class="tw:mt-5 tw:flex tw:items-center tw:gap-3">{% if testimonial.photo %}<div class="tw:d-avatar"><div class="tw:w-12 tw:rounded-2xl"><img src="{{ testimonial.photo.url }}" alt="{{ testimonial.name }}"></div></div>{% else %}<div class="tw:d-avatar tw:d-avatar-placeholder"><div class="tw:w-12 tw:rounded-2xl tw:bg-success tw:text-success-content"><span>{{ testimonial.name|first }}</span></div></div>{% endif %}<div><strong class="tw:block">{{ testimonial.name }}</strong><small class="tw:text-neutral-content/50">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.role_ar|default:testimonial.role_en }}{% else %}{{ testimonial.role_en }}{% endif %}</small></div></div></div>
           </div>
         </article>
         {% endfor %}

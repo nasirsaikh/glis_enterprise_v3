@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     "apps.knowledge",
     "apps.ai",
     "apps.orchestrator",
+    "apps.tpa.apps.TPAConfig",
 
     "django_json_widget",
     "django_ckeditor_5",

@@ -4,9 +4,11 @@
 <div class="tw:space-y-6">
 <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl"><div class="tw:d-card-body">
 <div class="tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-4"><div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">{% translate "TPA Operations" %}</span><h1 class="tw:mt-3 tw:text-4xl tw:font-black">{% translate "TPA Member Management" %}</h1><p class="tw:mt-2 tw:text-base-content/60">{% translate "Corporate enrollment, member lifecycle and endorsement operations." %}</p></div>
-<a class="tw:d-btn tw:d-btn-primary tw:rounded-full" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a></div></div></section>
+<div class="tw:flex tw:flex-wrap tw:gap-2">
+<a class="tw:d-btn tw:d-btn-ghost tw:rounded-full" href="{% url 'tpa:user_guide' %}"><i class="bi bi-book"></i>{% translate "User Guide" %}</a>
+{% if can_create_tpa_transaction %}<a class="tw:d-btn tw:d-btn-primary tw:rounded-full" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>{% endif %}
+</div></div></div></section>
 <div class="tw:grid tw:gap-4 tw:md:grid-cols-2 tw:xl:grid-cols-4">
-{% for label,value,icon in dashboard_cards %}{% endfor %}
 <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100"><div class="tw:d-stat-title">Active Sponsors</div><div class="tw:d-stat-value">{{ active_sponsors }}</div></div>
 <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100"><div class="tw:d-stat-title">Active Policies</div><div class="tw:d-stat-value">{{ active_policies }}</div></div>
 <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100"><div class="tw:d-stat-title">Active Members</div><div class="tw:d-stat-value">{{ active_members }}</div></div>

@@ -1,14 +1,72 @@
 from django.db.models import Q
-from ..models import MemberTransaction, Policy
+
+from ..models import MemberTransaction, Policy, PolicyAccess
+
+
+TPA_ENTRY_PERMISSIONS = (
+    "tpa.view_tpa_dashboard",
+    "tpa.configure_tpa",
+    "tpa.create_enrollment",
+    "tpa.create_endorsement",
+    "tpa.approve_endorsement",
+    "tpa.process_endorsement",
+)
+
+
+def can_access_tpa(user):
+    """Return whether a user is authorized to enter the TPA workspace."""
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser or any(user.has_perm(code) for code in TPA_ENTRY_PERMISSIONS):
+        return True
+    if PolicyAccess.objects.filter(user=user, active=True, can_view=True).exists():
+        return True
+    return MemberTransaction.objects.filter(requester=user).exists()
+
+
+def can_create_tpa_transaction(user):
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser or user.has_perm("tpa.configure_tpa"):
+        return True
+    if user.has_perm("tpa.create_enrollment") or user.has_perm("tpa.create_endorsement"):
+        return True
+    return PolicyAccess.objects.filter(
+        user=user,
+        active=True,
+    ).filter(
+        Q(can_create_enrollment=True) | Q(can_create_endorsement=True)
+    ).exists()
+
 
 def visible_policies(user):
-    qs=Policy.objects.select_related("sponsor","insurance_company")
-    if not user.is_authenticated: return qs.none()
-    if user.is_superuser or user.has_perm("tpa.configure_tpa"): return qs
-    return qs.filter(Q(access_entries__user=user, access_entries__active=True, access_entries__can_view=True)).distinct()
+    qs = Policy.objects.select_related("sponsor", "insurance_company")
+    if not user.is_authenticated:
+        return qs.none()
+    if user.is_superuser or user.has_perm("tpa.configure_tpa"):
+        return qs
+    return qs.filter(
+        Q(
+            access_entries__user=user,
+            access_entries__active=True,
+            access_entries__can_view=True,
+        )
+    ).distinct()
+
 
 def visible_transactions(user):
-    qs=MemberTransaction.objects.select_related("policy","sponsor","insurer","ticket")
-    if not user.is_authenticated: return qs.none()
-    if user.is_superuser or user.has_perm("tpa.configure_tpa"): return qs
-    return qs.filter(Q(requester=user)|Q(policy__access_entries__user=user,policy__access_entries__active=True,policy__access_entries__can_view=True)).distinct()
+    qs = MemberTransaction.objects.select_related(
+        "policy", "sponsor", "insurer", "ticket"
+    )
+    if not user.is_authenticated:
+        return qs.none()
+    if user.is_superuser or user.has_perm("tpa.configure_tpa"):
+        return qs
+    return qs.filter(
+        Q(requester=user)
+        | Q(
+            policy__access_entries__user=user,
+            policy__access_entries__active=True,
+            policy__access_entries__can_view=True,
+        )
+    ).distinct()

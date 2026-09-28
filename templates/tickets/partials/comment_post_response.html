@@ -1,6 +1,6 @@
 {% include "tickets/partials/comment.html" %}
 <span id="ticket-status-header" class="tw:d-badge tw:d-badge-outline tw:d-badge-sm" hx-swap-oob="outerHTML">{{ ticket.get_status_display }}</span>
 <span id="ticket-sla-header" class="tw:d-badge tw:d-badge-info tw:d-badge-soft tw:d-badge-sm" hx-swap-oob="outerHTML">{{ ticket.sla_state|title }}</span>
-<span id="ticket-status-sidebar" class="tw:d-badge tw:d-badge-outline tw:d-badge-sm ticket.status }} tw:ms-auto" hx-swap-oob="outerHTML">{{ ticket.get_status_display }}</span>
+<span id="ticket-status-sidebar" class="tw:d-badge tw:d-badge-outline tw:d-badge-sm tw:ms-auto" hx-swap-oob="outerHTML">{{ ticket.get_status_display }}</span>
 <span id="ticket-sla-sidebar" class="tw:d-badge tw:d-badge-info tw:d-badge-soft tw:d-badge-sm" hx-swap-oob="outerHTML">{{ ticket.sla_state|title }} - {{ ticket.elapsed_time }}</span>
 <div id="comment-composer" hx-swap-oob="outerHTML">{% if ticket.status != "closed" %}<div class="tw:border-t tw:border-base-300 tw:p-5 tw:sm:p-6">{% include "tickets/partials/comment_form.html" %}</div>{% endif %}</div>

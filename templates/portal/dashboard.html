@@ -3,7 +3,7 @@
 {% block title %}{% translate "Overview" %}{% endblock %}
 
 {% block content %}
-<div class="tw:mx-auto tw:max-w-[100rem] tw:space-y-6">
+<div class="tw:mx-auto tw:max-w-[100rem] tw:space-y-7">
 
   <section class="card tw:overflow-hidden tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg">
     <div class="card-body tw:grid tw:gap-6 tw:p-6 tw:lg:grid-cols-[1.35fr_.65fr] tw:lg:items-center">
@@ -18,33 +18,33 @@
     </div>
   </section>
 
-  <section class="tw:overflow-x-auto" aria-label="{% translate 'Key metrics' %}">
-    <div class="stats stats-horizontal tw:w-full tw:min-w-[72rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
-      <div class="stat">
+  <section class="tw:overflow-x-auto tw:pb-1" aria-label="{% translate 'Key metrics' %}">
+    <div class="tw:grid tw:min-w-[80rem] tw:grid-cols-7 tw:gap-3">
+      <div class="stat tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
         <div class="stat-figure tw:text-primary"><i class="bi bi-inbox tw:text-2xl"></i></div>
         <div class="stat-title">{% translate "Open tickets" %}</div><div class="stat-value tw:text-primary">{{ metrics.open }}</div><div class="stat-desc">{% translate "Active workload" %}</div>
       </div>
-      <div class="stat">
+      <div class="stat tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
         <div class="stat-figure tw:text-info"><i class="bi bi-person-check tw:text-2xl"></i></div>
         <div class="stat-title">{% translate "Assigned to me" %}</div><div class="stat-value">{{ metrics.assigned }}</div><div class="stat-desc">{% translate "Direct and shared" %}</div>
       </div>
-      <div class="stat">
+      <div class="stat tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
         <div class="stat-figure tw:text-error"><i class="bi bi-exclamation-triangle tw:text-2xl"></i></div>
         <div class="stat-title">{% translate "Overdue" %}</div><div class="stat-value tw:text-error">{{ metrics.overdue }}</div><div class="stat-desc">{% translate "Requires action" %}</div>
       </div>
-      <div class="stat">
+      <div class="stat tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
         <div class="stat-figure tw:text-success"><i class="bi bi-check2-circle tw:text-2xl"></i></div>
         <div class="stat-title">{% translate "Resolved" %}</div><div class="stat-value">{{ metrics.resolved_month }}</div><div class="stat-desc">{% translate "This month" %}</div>
       </div>
-      <div class="stat">
+      <div class="stat tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
         <div class="stat-figure tw:text-secondary"><i class="bi bi-reply tw:text-2xl"></i></div>
         <div class="stat-title">{% translate "First response" %}</div><div class="stat-value">{{ metrics.first_response_tat }}h</div><div class="stat-desc">{% translate "Average TAT" %}</div>
       </div>
-      <div class="stat">
+      <div class="stat tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
         <div class="stat-figure tw:text-accent"><i class="bi bi-stopwatch tw:text-2xl"></i></div>
         <div class="stat-title">{% translate "Resolution TAT" %}</div><div class="stat-value">{{ metrics.resolution_tat }}h</div><div class="stat-desc">{% translate "Average TAT" %}</div>
       </div>
-      <div class="stat">
+      <div class="stat tw:rounded-box tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
         <div class="stat-figure tw:text-primary"><i class="bi bi-bullseye tw:text-2xl"></i></div>
         <div class="stat-title">{% translate "SLA attainment" %}</div><div class="stat-value">{{ metrics.sla_attainment }}%</div><div class="stat-desc">{% translate "Within target" %}</div>
       </div>

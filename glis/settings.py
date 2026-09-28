@@ -6,7 +6,7 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(DJANGO_DEBUG=(bool, True), SECURE_SSL_REDIRECT=(bool, False))
-environ.Env.read_env(BASE_DIR / ".env")
+environ.Env.read_env(BASE_DIR / ".env", encoding="utf-8-sig")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="unsafe-development-key-change-me")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)

@@ -174,6 +174,22 @@
           </ul>
           {% endfor %}
 
+          {% if can_access_tpa %}
+          <ul class="menu tw:mt-3 tw:w-full tw:gap-1 tw:p-0">
+            <li data-sidebar-label class="menu-title tw:hidden"><span>{% translate "TPA Operations" %}</span></li>
+            <li>
+              <a data-sidebar-link class="tw:justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name != 'user_guide' %}menu-active{% endif %}" href="{% url 'tpa:dashboard' %}" title="{% translate 'TPA Member Management' %}">
+                <i class="bi bi-people tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "TPA Member Management" %}</span>
+              </a>
+            </li>
+            <li>
+              <a data-sidebar-link class="tw:justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name == 'user_guide' %}menu-active{% endif %}" href="{% url 'tpa:user_guide' %}" title="{% translate 'TPA User Guide' %}">
+                <i class="bi bi-book tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "TPA User Guide" %}</span>
+              </a>
+            </li>
+          </ul>
+          {% endif %}
+
           <ul class="menu tw:mt-3 tw:w-full tw:p-0">
             <li data-sidebar-label class="menu-title tw:hidden"><span>{% translate "Productivity" %}</span></li>
             <li><a data-sidebar-link class="tw:justify-center {% if request.resolver_match.namespace == 'tasks' %}menu-active{% endif %}" href="{% url 'tasks:list' %}" title="{% translate 'Tasks' %}"><i class="bi bi-list-task tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "Tasks" %}</span></a></li>

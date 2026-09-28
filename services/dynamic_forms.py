@@ -59,7 +59,7 @@ class DynamicTicketForm(forms.Form):
             if source.get("registry"):
                 choices = DataSourceRegistry.choices(source["registry"], user=self.user)
             if control == "multiselect":
-                return forms.MultipleChoiceField(choices=choices, widget=forms.SelectMultiple(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}), **common)
+                return forms.MultipleChoiceField(choices=choices, widget=forms.CheckboxSelectMultiple(attrs={"class": "tw:d-checkbox tw:d-checkbox-primary"}), **common)
             widget = forms.RadioSelect(attrs={"class": "tw:d-radio tw:d-radio-primary"}) if control == "radio" else forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"})
             return forms.ChoiceField(choices=choices, widget=widget, **common)
         if control in {"checkbox", "switch"}:

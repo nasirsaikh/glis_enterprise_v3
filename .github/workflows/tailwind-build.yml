@@ -77,4 +77,4 @@ jobs:
               raise SystemExit("Invalid prefixed Tailwind syntax:\n" + "\n".join(invalid))
 
       - name: Validate Python syntax
-        run: python -m compileall -q apps services
+        run: python -m compileall -q glis apps services

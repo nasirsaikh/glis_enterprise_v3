@@ -143,7 +143,8 @@ TEMPLATES = [{
             "cms.context_processors.cms_settings",
             "apps.core.context_processors.glis_site_context",
             "apps.accounts.context_processors.auth_provider_context",
-            "apps.tickets.context_processors.notification_context",\n            "apps.tpa.context_processors.tpa_access_context",
+            "apps.tickets.context_processors.notification_context",
+            "apps.tpa.context_processors.tpa_access_context",
         ],
     },
 }]

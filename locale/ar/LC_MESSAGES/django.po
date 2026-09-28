@@ -113,65 +113,6 @@ msgstr ""
 msgid "Content"
 msgstr "اتصل بنا"
 
-#: .\apps\cms_plugins\models.py:37 .\apps\cms_plugins\models.py:46
-#: .\apps\cms_plugins\models.py:101
-msgid "Button text"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:38 .\apps\cms_plugins\models.py:47
-#: .\apps\cms_plugins\models.py:102
-msgid "Button URL"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:43 .\apps\cms_plugins\models.py:53
-#: .\apps\cms_plugins\models.py:61 .\apps\cms_plugins\models.py:68
-msgid "Bootstrap icon"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:45
-msgid "Summary"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:48
-msgid "Featured"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:60
-msgid "Step number"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:69
-msgid "Value"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:70
-msgid "Suffix"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:71
-msgid "Label"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:76 .\apps\cms_plugins\models.py:91
-msgid "Name"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:77
-msgid "Role"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:78
-msgid "Quote"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:79
-msgid "Photo"
-msgstr ""
-
-#: .\apps\cms_plugins\models.py:80
-msgid "Rating"
-msgstr ""
-
 #: .\apps\cms_plugins\models.py:85
 #, fuzzy
 #| msgid "Resolution"
@@ -529,11 +470,6 @@ msgstr "فتح البوابة"
 msgid "Create request"
 msgstr "إنشاء طلب"
 
-#: ⁨.\templates\base_public copy.html⁩:91 .\templates\base_public.html:169
-msgid ""
-"A secure service layer connecting customers, providers, insurers and support "
-"teams across every request."
-msgstr ""
 
 #: ⁨.\templates\base_public copy.html⁩:94 .\templates\base_public.html:176
 #: ⁨.\templates\cms\glis_home copy.html⁩:528 .\templates\cms\home_content.html:68
@@ -1764,21 +1700,11 @@ msgstr "خدمات التأمين"
 msgid "Support across the insurance journey"
 msgstr "دعم عبر رحلة التأمين"
 
-#: .\templates\public\home.html:66
-msgid ""
-"A single, structured experience for claims support, policy servicing, "
-"provider requests, payments and customer care."
-msgstr ""
 
 #: .\templates\public\home.html:81
 msgid "Insurance services"
 msgstr "خدمات التأمين"
 
-#: .\templates\public\home.html:83
-msgid ""
-"Structured requests, secure documents, transparent ownership and timely "
-"status updates."
-msgstr ""
 
 #: .\templates\public\home.html:84
 msgid "Start a request"
@@ -1792,11 +1718,6 @@ msgstr "كيف نساعدك"
 msgid "From question to clear outcome"
 msgstr "من السؤال إلى نتيجة واضحة"
 
-#: .\templates\public\home.html:96
-msgid ""
-"Every request moves through a visible, accountable workflow—with the right "
-"information captured at the start."
-msgstr ""
 
 #: .\templates\public\home.html:97
 #, fuzzy
@@ -1808,47 +1729,21 @@ msgstr "طلب خدمة موجه"
 msgid "Choose your service"
 msgstr "اختر خدمتك"
 
-#: .\templates\public\home.html:104
-msgid "Select the relevant project, product and request category."
-msgstr ""
 
 #: .\templates\public\home.html:109
 msgid "Share the essentials"
 msgstr "شارك المعلومات الأساسية"
 
-#: .\templates\public\home.html:110
-msgid "A smart form asks only for information needed by that service."
-msgstr ""
 
 #: .\templates\public\home.html:115
 msgid "Collaborate securely"
 msgstr "تعاون بأمان"
 
-#: .\templates\public\home.html:116
-msgid "Follow updates, add documents and respond in one protected thread."
-msgstr ""
 
 #: .\templates\public\home.html:121
 msgid "See the outcome"
 msgstr "اطّلع على النتيجة"
 
-#: .\templates\public\home.html:122
-msgid "Track resolution, service commitments and a complete activity history."
-msgstr ""
-
-#: .\templates\public\home.html:136
-msgid "Built for connected insurance"
-msgstr ""
-
-#: .\templates\public\home.html:137
-msgid "One platform. Many service relationships."
-msgstr ""
-
-#: .\templates\public\home.html:138
-msgid ""
-"Customers, hospitals, brokers, insurers and internal teams each receive the "
-"access, context and workflow appropriate to them."
-msgstr ""
 
 #: .\templates\public\home.html:139 .\templates\public\home.html:200
 msgid "Claims"
@@ -1976,17 +1871,6 @@ msgstr ""
 msgid "Ready when you are"
 msgstr "جاهزون عندما تكون جاهزاً"
 
-#: .\templates\public\home.html:228
-msgid "Tell us what you need. We’ll make the next step clear."
-msgstr ""
-
-#: .\templates\public\home.html:229
-msgid "Start a secure request or sign in to continue an existing conversation."
-msgstr ""
-
-#: .\templates\public\page.html:5
-msgid "Staff preview — this page may not be published"
-msgstr ""
 
 #: .\templates\tickets\detail.html:32
 #: .\templates\tickets\partials\table.html:33
@@ -2626,9 +2510,6 @@ msgstr "تقديم الطلب"
 #~ msgid "Group tickets"
 #~ msgstr "طلبات المجموعة"
 
-#~ msgid "Resources"
-#~ msgstr "المصادر"
-
 #~ msgid "AI assistant"
 #~ msgstr "مساعد الذكاء الاصطناعي"
 
@@ -2652,3 +2533,168 @@ msgstr "تقديم الطلب"
 
 #~ msgid "Human review required"
 #~ msgstr "تتطلب مراجعة بشرية"
+
+
+msgid "How It Works"
+msgstr "كيف تعمل الخدمة"
+
+msgid "A clear medical service journey"
+msgstr "رحلة خدمة طبية واضحة"
+
+msgid "From eligibility verification and pre-authorization to treatment and claim settlement, each step is structured and transparent."
+msgstr "من التحقق من الأهلية والموافقة المسبقة وحتى العلاج وتسوية المطالبات، كل خطوة منظمة وشفافة."
+
+msgid "Member-first process"
+msgstr "عملية تتمحور حول العضو أولاً"
+
+msgid "Designed to reduce administrative friction for members, providers and insurers."
+msgstr "مصممة لتقليل الاحتكاك الإداري للأعضاء، المزودين وشركات التأمين."
+
+msgid "Medical Claim"
+msgstr "مطالبة طبية"
+
+msgid "Our Health Insurance Partners"
+msgstr "شركاؤنا في التأمين الصحي"
+
+msgid "Trusted insurance partnerships"
+msgstr "شراكات تأمينية موثوقة"
+
+msgid "We collaborate with insurers to deliver connected healthcare administration and reliable member support."
+msgstr "نتعاون مع شركات التأمين لتقديم إدارة رعاية صحية مترابطة ودعم موثوق للأعضاء."
+
+msgid "Leadership"
+msgstr "الإدارة"
+
+msgid "Meet our management team"
+msgstr "تعرف على فريق الإدارة لدينا"
+
+msgid "Experienced leadership focused on healthcare quality, operational excellence and member service."
+msgstr "قيادة ذات خبرة تركز على جودة الرعاية الصحية، التميز التشغيلي وخدمة الأعضاء."
+
+msgid "Resources"
+msgstr "الموارد"
+
+msgid "Forms & downloads"
+msgstr "النماذج والتحميلات"
+
+msgid "Access claim forms, reimbursement documents, provider network files and member guides."
+msgstr "الوصول إلى نماذج المطالبات، مستندات استرداد المصاريف، ملفات شبكة المزودين وأدلة الأعضاء."
+
+msgid "No downloads configured."
+msgstr "لا توجد ملفات متاحة للتحميل."
+
+msgid "Need Assistance?"
+msgstr "تحتاج إلى مساعدة؟"
+
+msgid "We're here to help"
+msgstr "نحن هنا لمساعدتك"
+
+msgid "Contact the appropriate team for claims, approvals, provider support or emergencies."
+msgstr "تواصل مع الفريق المختص بالمطالبات، الموافقات، دعم المزودين أو الحالات الطارئة."
+
+msgid "Help Center"
+msgstr "مركز المساعدة"
+
+msgid "Questions, answered without friction."
+msgstr "الأسئلة، مُجابة بكل سهولة ويسر."
+
+msgid "Tell us what you need. We’ll make the next step clear."
+msgstr "أخبرنا بما تحتاج إليه. سنبلي بلاغك ونوضح الخطوة التالية."
+
+msgid "Start a secure request or sign in to continue an existing conversation."
+msgstr "ابدأ طلبًا آمنًا أو سجل الدخول لمتابعة محادثة حالية."
+
+msgid "A secure service layer connecting customers, healthcare providers, insurers and support teams across every request."
+msgstr "طبقة خدمة آمنة تربط بين العملاء، مزودي الرعاية الصحية، شركات التأمين وفرق الدعم عبر كل طلب."
+
+# Healthcare Network & Portal Translations (Arabic)
+
+msgid "Healthcare Network"
+msgstr "شبكة الرعاية الصحية"
+
+msgid "Find a Provider"
+msgstr "ابحث عن مزود خدمة"
+
+msgid "Hospitals, clinics and pharmacies"
+msgstr "المستشفيات، العيادات والصيدليات"
+
+msgid "Pre-Authorization"
+msgstr "الموافقة المسبقة"
+
+msgid "Medical approval guidance"
+msgstr "إرشادات الموافقات الطبية"
+
+msgid "Reimbursement"
+msgstr "استرداد المصاريف"
+
+msgid "Forms and claim guidance"
+msgstr "النماذج وإرشادات المطالبات"
+
+msgid "Need Help?"
+msgstr "تحتاج المساعدة؟"
+
+msgid "Contact our support team"
+msgstr "تواصل مع فريق الدعم لدينا"
+
+msgid "A single, structured experience for claims support, policy servicing, provider requests, payments and customer care."
+msgstr "تجربة واحدة منظمة لدعم المطالبات، خدمة الوثائق، طلبات المزودين، المدفوعات وخدمة العملاء."
+
+msgid "Medical TPA Services"
+msgstr "خدمات إدارة مطالبات الرعاية الصحية (TPA)"
+
+msgid "Healthcare management made easier"
+msgstr "إدارة الرعاية الصحية بصورة أسهل"
+
+msgid "Integrated health administration services connecting members, healthcare providers and insurance partners."
+msgstr "خدمات إدارة صحية متكاملة تربط بين الأعضاء، مزودي الرعاية الصحية وشركاء التأمين."
+
+msgid "Featured"
+msgstr "مُميّز"
+
+msgid "Live service intelligence"
+msgstr "ذكاء الخدمات المباشر"
+
+msgid "Operational clarity you can feel at a glance."
+msgstr "وضوح تشغيلي تلاحظه بنظرة واحدة."
+
+msgid "Useful signals stay visible without overwhelming the experience."
+msgstr "تظل المؤشرات المفيدة مرئية دون تعقيد التجربة."
+
+msgid "Interactive gallery"
+msgstr "معرض تفاعلي"
+
+msgid "Explore what makes the experience different."
+msgstr "استكشف ما يجعل التجربة مختلفة."
+
+msgid "Capability"
+msgstr "القدرات"
+
+msgid "Step-by-step journey"
+msgstr "رحلة خطوة بخطوة"
+
+msgid "From request to resolution, every step stays visible."
+msgstr "من الطلب وحتى التسوية، كل خطوة تظل واضحة."
+
+msgid "Find a network provider"
+msgstr "ابحث عن مزود خدمة في الشبكة"
+
+msgid "Search hospitals, clinics, pharmacies and other healthcare providers in our medical network."
+msgstr "ابحث عن المستشفيات، العيادات، الصيدليات وغيرهم من مزودي الرعاية الصحية في شبكتنا الطبية."
+
+msgid "Provider Type"
+msgstr "نوع المزود"
+
+msgid "Insurance Partner"
+msgstr "شريك التأمين"
+
+msgid "Governorate"
+msgstr "المحافظة"
+
+msgid "Specialty"
+msgstr "التخصص"
+
+msgid "100 providers found"
+msgstr "تم العثور على 100 مزود خدمة"
+
+msgid "ProviderTypeBandAdd"
+msgstr "إضافة فئة نوع المزود"

@@ -12,42 +12,43 @@
   </div>
 
   <form hx-get="{% url 'home_network_providers' %}" hx-target="#network-provider-results" hx-swap="outerHTML" hx-trigger="submit, change delay:300ms">
-    <div class="tw:grid tw:gap-4 tw:md:grid-cols-2">
-      <label class="tw:d-fieldset">
-        <span class="tw:d-fieldset-legend">{% translate "Search" %}</span>
+    <!-- Compact Single-Line Filter Grid -->
+    <div class="tw:grid tw:grid-cols-1 tw:gap-3 tw:sm:grid-cols-2 tw:lg:grid-cols-5">
+      <label class="tw:d-fieldset tw:m-0">
+        <span class="tw:d-fieldset-legend tw:text-xs">{% translate "Search" %}</span>
         <div class="tw:relative">
-          <i class="bi bi-search tw:pointer-events-none tw:absolute tw:start-4 tw:top-1/2 tw:z-10 tw:-translate-y-1/2 tw:text-base-content/40"></i>
-          <input type="search" name="search" class="tw:d-input tw:w-full tw:ps-11 tw:transition tw:focus:border-primary tw:focus:outline-primary" placeholder="{% translate 'Hospital, clinic, pharmacy, area...' %}" value="{{ request.GET.search }}" hx-trigger="input changed delay:400ms, search">
+          <i class="bi bi-search tw:pointer-events-none tw:absolute tw:start-3 tw:top-1/2 tw:z-10 tw:-translate-y-1/2 tw:text-base-content/40"></i>
+          <input type="search" name="search" class="tw:d-input tw:d-input-sm tw:w-full tw:ps-9 tw:transition tw:focus:border-primary tw:focus:outline-primary" placeholder="{% translate 'Hospital, clinic...' %}" value="{{ request.GET.search }}" hx-trigger="input changed delay:400ms, search">
         </div>
       </label>
 
-      <label class="tw:d-fieldset">
-        <span class="tw:d-fieldset-legend">{% translate "Provider Type" %}</span>
-        <select name="provider_type" class="tw:d-select tw:w-full">
-          <option value="">{% translate "All provider types" %}</option>
+      <label class="tw:d-fieldset tw:m-0">
+        <span class="tw:d-fieldset-legend tw:text-xs">{% translate "Provider Type" %}</span>
+        <select name="provider_type" class="tw:d-select tw:d-select-sm tw:w-full">
+          <option value="">{% translate "All types" %}</option>
           {% for item in provider_types %}<option value="{{ item.pk }}"{% if request.GET.provider_type == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
         </select>
       </label>
 
-      <label class="tw:d-fieldset">
-        <span class="tw:d-fieldset-legend">{% translate "Governorate" %}</span>
-        <select name="governorate" class="tw:d-select tw:w-full">
+      <label class="tw:d-fieldset tw:m-0">
+        <span class="tw:d-fieldset-legend tw:text-xs">{% translate "Governorate" %}</span>
+        <select name="governorate" class="tw:d-select tw:d-select-sm tw:w-full">
           <option value="">{% translate "All governorates" %}</option>
           {% for item in governorates %}<option value="{{ item.pk }}"{% if request.GET.governorate == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
         </select>
       </label>
 
-      <label class="tw:d-fieldset">
-        <span class="tw:d-fieldset-legend">{% translate "Insurance Partner" %}</span>
-        <select name="insurer" class="tw:d-select tw:w-full">
-          <option value="">{% translate "All insurance partners" %}</option>
+      <label class="tw:d-fieldset tw:m-0">
+        <span class="tw:d-fieldset-legend tw:text-xs">{% translate "Insurance Partner" %}</span>
+        <select name="insurer" class="tw:d-select tw:d-select-sm tw:w-full">
+          <option value="">{% translate "All insurers" %}</option>
           {% for item in insurance_partners %}<option value="{{ item.pk }}"{% if request.GET.insurer == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
         </select>
       </label>
 
-      <label class="tw:d-fieldset">
-        <span class="tw:d-fieldset-legend">{% translate "Specialty" %}</span>
-        <select name="specialty" class="tw:d-select tw:w-full">
+      <label class="tw:d-fieldset tw:m-0">
+        <span class="tw:d-fieldset-legend tw:text-xs">{% translate "Specialty" %}</span>
+        <select name="specialty" class="tw:d-select tw:d-select-sm tw:w-full">
           <option value="">{% translate "All specialties" %}</option>
           {% for item in specialties %}<option value="{{ item.pk }}"{% if request.GET.specialty == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
         </select>
@@ -84,25 +85,17 @@
               </div>
             </td>
             <td>
-              {% if provider.network_level %}
-                {% if LANGUAGE_CODE == "ar" %}
-                  {% with band_label=provider.network_level.name_ar|default:provider.network_level.name_en|default:provider.network_level %}
-                    {% if band_label|upper == "BASIC" %}<span class="tw:d-badge tw:d-badge-warning tw:d-badge-outline">{% translate "Bronze" %}</span>
-                    {% elif band_label|upper == "A" %}<span class="tw:d-badge tw:d-badge-warning">{{ band_label }}</span>
-                    {% elif band_label|upper == "B" %}<span class="tw:d-badge tw:d-badge-outline">{{ band_label }}</span>
-                    {% elif band_label|upper == "C" %}<span class="tw:d-badge tw:d-badge-secondary tw:d-badge-outline">{{ band_label }}</span>
-                    {% else %}<span class="tw:d-badge tw:d-badge-primary tw:d-badge-outline">{{ band_label }}</span>{% endif %}
-                  {% endwith %}
-                {% else %}
-                  {% with band_label=provider.network_level.name_en|default:provider.network_level %}
-                    {% if band_label|upper == "BASIC" %}<span class="tw:d-badge tw:d-badge-warning tw:d-badge-outline">{% translate "Bronze" %}</span>
-                    {% elif band_label|upper == "A" %}<span class="tw:d-badge tw:d-badge-warning">{{ band_label }}</span>
-                    {% elif band_label|upper == "B" %}<span class="tw:d-badge tw:d-badge-outline">{{ band_label }}</span>
-                    {% elif band_label|upper == "C" %}<span class="tw:d-badge tw:d-badge-secondary tw:d-badge-outline">{{ band_label }}</span>
-                    {% else %}<span class="tw:d-badge tw:d-badge-primary tw:d-badge-outline">{{ band_label }}</span>{% endif %}
-                  {% endwith %}
-                {% endif %}
-              {% else %}<span class="tw:text-base-content/40">—</span>{% endif %}
+             {% if provider.network_level %}
+              {% with band_label=provider.network_level %}
+                {% if band_label|upper == "BASIC" %}<span class="tw:d-badge tw:d-badge-warning tw:d-badge-outline">{% translate "Bronze" %}</span>
+                {% elif band_label|upper == "A" %}<span class="tw:d-badge tw:d-badge-warning">{{ band_label }}</span>
+                {% elif band_label|upper == "B" %}<span class="tw:d-badge tw:d-badge-outline">{{ band_label }}</span>
+                {% elif band_label|upper == "C" %}<span class="tw:d-badge tw:d-badge-secondary tw:d-badge-outline">{{ band_label }}</span>
+                {% else %}<span class="tw:d-badge tw:d-badge-primary tw:d-badge-outline">{{ band_label }}</span>{% endif %}
+              {% endwith %}
+             {% else %}
+              <span class="tw:text-base-content/40">—</span>
+             {% endif %}
             </td>
             <td><span class="tw:flex tw:items-start tw:gap-2 tw:text-sm tw:text-base-content/65"><i class="bi bi-geo-alt tw:mt-1 tw:text-primary"></i><span>{% if LANGUAGE_CODE == "ar" %}{{ provider.address_ar|default:provider.address_en }}{% else %}{{ provider.address_en }}{% endif %}</span></span></td>
             <td>{% if provider.phone %}<a href="tel:{{ provider.phone }}" class="tw:d-btn tw:d-btn-outline tw:d-btn-xs tw:text-success"><i class="bi bi-telephone"></i>{{ provider.phone }}</a>{% else %}<span class="tw:text-base-content/40">—</span>{% endif %}</td>

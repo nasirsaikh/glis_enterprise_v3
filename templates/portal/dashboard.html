@@ -5,27 +5,57 @@
 {% block content %}
 <div class="tw:mx-auto tw:max-w-[100rem] tw:space-y-6">
 
-  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm" data-reveal>
-    <div class="tw:d-card-body tw:flex tw:flex-col tw:gap-6 tw:p-6 tw:lg:flex-row tw:lg:items-center tw:lg:justify-between">
+  <section class="glis-portal-hero glis-aura tw:d-card tw:overflow-hidden tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl" data-reveal data-aura>
+    <div class="tw:d-card-body tw:grid tw:gap-6 tw:p-6 tw:lg:grid-cols-[1.25fr_.75fr] tw:lg:items-center tw:sm:p-7">
       <div class="tw:min-w-0">
         <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-          <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:gap-2"><span class="tw:d-status tw:d-status-success"></span>{% translate "Operations online" %}</span>
+          <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:gap-2"><span class="tw:d-status tw:d-status-success tw:animate-pulse"></span>{% translate "Operations online" %}</span>
           <span class="tw:d-badge tw:d-badge-outline"><i class="bi bi-calendar3"></i>{% now "d M Y" %}</span>
+          <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft"><i class="bi bi-shield-check"></i>{% translate "Secure workspace" %}</span>
         </div>
-        <h1 class="tw:mt-4 tw:text-3xl tw:font-black tw:tracking-[-.04em] tw:sm:text-4xl">
+
+        <p class="tw:mt-5 tw:text-xs tw:font-black tw:uppercase tw:tracking-[.18em] tw:text-primary">{% translate "Greenline command center" %}</p>
+        <h1 class="tw:mt-2 tw:text-3xl tw:font-black tw:tracking-[-.04em] tw:sm:text-4xl tw:lg:text-5xl">
           {% blocktranslate with name=user.first_name|default:user.email %}Welcome back, {{ name }}{% endblocktranslate %}
         </h1>
-        <p class="tw:mt-2 tw:max-w-3xl tw:text-base-content/55">{% translate "Your operational workspace for tickets, tasks, SLA performance, documents and analytics." %}</p>
+        <p class="tw:mt-3 tw:max-w-3xl tw:text-base tw:leading-7 tw:text-base-content/55">{% translate "Tickets, tasks, SLA performance, documents and governed analytics stay connected in one operational view." %}</p>
+
+        <div class="tw:mt-6 tw:flex tw:flex-wrap tw:gap-2">
+          <a class="tw:d-btn tw:d-btn-primary glis-shine tw:rounded-full" href="{% url 'portal:create_ticket' 1 %}"><i class="bi bi-plus-lg"></i>{% translate "New ticket" %}</a>
+          <a class="tw:d-btn tw:d-btn-outline tw:rounded-full" href="{% url 'tasks:list' %}"><i class="bi bi-list-task"></i>{% translate "Tasks" %}</a>
+          <a class="tw:d-btn tw:d-btn-ghost tw:rounded-full" href="{% url 'orchestrator:console' %}"><i class="bi bi-stars"></i>{% translate "Ask Vanna" %}</a>
+          <a class="tw:d-btn tw:d-btn-ghost tw:rounded-full" href="{% url 'portal:export_tickets' %}"><i class="bi bi-download"></i>{% translate "Export" %}</a>
+        </div>
       </div>
-      <div class="tw:flex tw:flex-wrap tw:gap-2">
-        <a class="tw:d-btn tw:d-btn-outline" href="{% url 'portal:export_tickets' %}"><i class="bi bi-download"></i>{% translate "Export" %}</a>
-        <a class="tw:d-btn tw:d-btn-primary" href="{% url 'portal:create_ticket' 1 %}"><i class="bi bi-plus-lg"></i>{% translate "New ticket" %}</a>
+
+      <div class="glis-command-stack" data-parallax-scene>
+        <div class="glis-command-card tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg" data-depth="1">
+          <div class="tw:d-card-body tw:flex-row tw:items-center tw:gap-4 tw:p-4">
+            <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-primary/10 tw:text-primary"><i class="bi bi-inbox tw:text-xl"></i></span>
+            <div class="tw:min-w-0"><small class="tw:text-base-content/45">{% translate "Active workload" %}</small><strong class="tw:block tw:text-2xl tw:font-black">{{ metrics.open }}</strong></div>
+            <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:ms-auto">{% translate "Open" %}</span>
+          </div>
+        </div>
+        <div class="glis-command-card tw:d-card tw:border tw:border-error/20 tw:bg-base-100 tw:shadow-lg" data-depth="2">
+          <div class="tw:d-card-body tw:flex-row tw:items-center tw:gap-4 tw:p-4">
+            <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-error/10 tw:text-error"><i class="bi bi-exclamation-triangle tw:text-xl"></i></span>
+            <div class="tw:min-w-0"><small class="tw:text-base-content/45">{% translate "Needs attention" %}</small><strong class="tw:block tw:text-2xl tw:font-black">{{ metrics.overdue }}</strong></div>
+            <span class="tw:d-badge tw:d-badge-error tw:d-badge-soft tw:ms-auto">{% translate "Overdue" %}</span>
+          </div>
+        </div>
+        <div class="glis-command-card tw:d-card tw:border tw:border-success/20 tw:bg-neutral tw:text-neutral-content tw:shadow-lg" data-depth="3">
+          <div class="tw:d-card-body tw:flex-row tw:items-center tw:gap-4 tw:p-4">
+            <span class="tw:grid tw:h-12 tw:w-12 tw:place-items-center tw:rounded-2xl tw:bg-success/15 tw:text-success"><i class="bi bi-bullseye tw:text-xl"></i></span>
+            <div class="tw:min-w-0"><small class="tw:text-neutral-content/50">{% translate "SLA attainment" %}</small><strong class="tw:block tw:text-2xl tw:font-black">{{ metrics.sla_attainment }}%</strong></div>
+            <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft tw:ms-auto">{% translate "Live" %}</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="tw:overflow-x-auto" aria-label="{% translate 'Key metrics' %}">
-    <div class="tw:d-stats tw:d-stats-horizontal tw:w-full tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
+    <div class="glis-kpi-strip tw:d-stats tw:d-stats-horizontal tw:w-full tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
       <div class="tw:d-stat tw:min-w-52">
         <div class="tw:d-stat-figure tw:text-primary"><i class="bi bi-inbox tw:text-2xl"></i></div>
         <div class="tw:d-stat-title">{% translate "Open tickets" %}</div>
@@ -72,7 +102,7 @@
   </section>
 
   <section class="tw:grid tw:gap-6 tw:xl:grid-cols-12">
-    <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-8">
+    <article class="glis-portal-card tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-8">
       <div class="tw:d-card-body tw:p-5 tw:sm:p-6">
         <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
           <div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-2">{% translate "14 day pulse" %}</span><h2 class="tw:d-card-title tw:text-xl">{% translate "Opened ticket trend" %}</h2><p class="tw:text-sm tw:text-base-content/45">{% translate "Daily workload created during the last two weeks" %}</p></div>
@@ -81,7 +111,7 @@
         <div id="ticket-daily-chart" class="dashboard-chart tw:min-h-[20rem]"></div>
       </div>
     </article>
-    <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-4">
+    <article class="glis-portal-card tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-4">
       <div class="tw:d-card-body tw:p-5 tw:sm:p-6">
         <div><span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft tw:mb-2">{% translate "Current mix" %}</span><h2 class="tw:d-card-title tw:text-xl">{% translate "Status distribution" %}</h2><p class="tw:text-sm tw:text-base-content/45">{% translate "Where active work stands now" %}</p></div>
         <div id="ticket-status-chart" class="dashboard-chart compact tw:min-h-[20rem]"></div>
@@ -90,18 +120,18 @@
   </section>
 
   <section class="tw:grid tw:gap-6 tw:md:grid-cols-2 tw:xl:grid-cols-3">
-    <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-lg">{% translate "Priority" %}</h2><div id="ticket-priority-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
-    <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-lg">{% translate "Assignee" %}</h2><div id="ticket-assignee-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
-    <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:md:col-span-2 tw:xl:col-span-1"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-lg">{% translate "Category" %}</h2><div id="ticket-category-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
+    <article class="glis-portal-card tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-lg">{% translate "Priority" %}</h2><div id="ticket-priority-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
+    <article class="glis-portal-card tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-lg">{% translate "Assignee" %}</h2><div id="ticket-assignee-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
+    <article class="glis-portal-card tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:md:col-span-2 tw:xl:col-span-1"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title tw:text-lg">{% translate "Category" %}</h2><div id="ticket-category-chart" class="dashboard-chart compact tw:min-h-[16rem]"></div></div></article>
   </section>
 
   <section class="tw:grid tw:gap-6 tw:xl:grid-cols-2">
-    <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><div class="tw:flex tw:items-center tw:justify-between"><h2 class="tw:d-card-title tw:text-lg">{% translate "Workload by product" %}</h2><i class="bi bi-box-seam tw:text-xl tw:text-primary"></i></div><div id="ticket-product-chart" class="dashboard-chart tw:min-h-[18rem]"></div></div></article>
-    <article class="tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><div class="tw:flex tw:items-center tw:justify-between"><h2 class="tw:d-card-title tw:text-lg">{% translate "Workload by project" %}</h2><i class="bi bi-kanban tw:text-xl tw:text-secondary"></i></div><div id="ticket-project-chart" class="dashboard-chart tw:min-h-[18rem]"></div></div></article>
+    <article class="glis-portal-card tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><div class="tw:flex tw:items-center tw:justify-between"><h2 class="tw:d-card-title tw:text-lg">{% translate "Workload by product" %}</h2><i class="bi bi-box-seam tw:text-xl tw:text-primary"></i></div><div id="ticket-product-chart" class="dashboard-chart tw:min-h-[18rem]"></div></div></article>
+    <article class="glis-portal-card tw:d-card glis-chart-shell tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="tw:d-card-body tw:p-5"><div class="tw:flex tw:items-center tw:justify-between"><h2 class="tw:d-card-title tw:text-lg">{% translate "Workload by project" %}</h2><i class="bi bi-kanban tw:text-xl tw:text-secondary"></i></div><div id="ticket-project-chart" class="dashboard-chart tw:min-h-[18rem]"></div></div></article>
   </section>
 
   <section class="tw:grid tw:gap-6 tw:xl:grid-cols-12">
-    <article class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-8">
+    <article class="glis-portal-card tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-8">
       <div class="tw:d-card-body tw:p-0">
         <div class="tw:flex tw:items-center tw:justify-between tw:gap-3 tw:px-5 tw:pt-5 tw:sm:px-6">
           <div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-2">{% translate "Recent activity" %}</span><h2 class="tw:d-card-title tw:text-xl">{% translate "Recent tickets" %}</h2></div>
@@ -130,7 +160,7 @@
     </article>
 
     <div class="tw:space-y-5 tw:xl:col-span-4">
-      <article class="tw:d-card tw:border tw:border-error/20 tw:bg-base-100 tw:shadow-sm">
+      <article class="glis-portal-card tw:d-card tw:border tw:border-error/20 tw:bg-base-100 tw:shadow-sm">
         <div class="tw:d-card-body tw:p-5">
           <div class="tw:flex tw:items-start tw:justify-between tw:gap-3">
             <div><span class="tw:d-badge tw:d-badge-error tw:d-badge-soft tw:mb-2">{% translate "Attention" %}</span><h2 class="tw:d-card-title tw:text-xl">{% translate "Needs action" %}</h2></div>
@@ -150,14 +180,14 @@
         </div>
       </article>
 
-      <article class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
+      <article class="glis-portal-card tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
         <div class="tw:d-card-body tw:p-5">
           <h2 class="tw:d-card-title tw:text-lg">{% translate "Quick access" %}</h2>
           <ul class="tw:d-menu tw:mt-2 tw:w-full tw:gap-2 tw:p-0">
-            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated tw:text-primary"></i><span>{% translate "Tickets" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
-            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'tasks:list' %}"><i class="bi bi-list-task tw:text-primary"></i><span>{% translate "Tasks" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
-            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'documents:center' %}"><i class="bi bi-folder2-open tw:text-primary"></i><span>{% translate "Documents" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
-            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'orchestrator:console' %}"><i class="bi bi-stars tw:text-primary"></i><span>{% translate "Analytics" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
+            <li><a class="glis-quick-link tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated tw:text-primary"></i><span>{% translate "Tickets" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
+            <li><a class="glis-quick-link tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'tasks:list' %}"><i class="bi bi-list-task tw:text-primary"></i><span>{% translate "Tasks" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
+            <li><a class="glis-quick-link tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'documents:center' %}"><i class="bi bi-folder2-open tw:text-primary"></i><span>{% translate "Documents" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
+            <li><a class="glis-quick-link tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'orchestrator:console' %}"><i class="bi bi-stars tw:text-primary"></i><span>{% translate "Analytics" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
           </ul>
         </div>
       </article>

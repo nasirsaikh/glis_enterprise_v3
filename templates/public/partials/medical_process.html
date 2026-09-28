@@ -5,28 +5,32 @@
     <span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft tw:mb-4"><i class="bi bi-diagram-3 tw:me-2"></i>{% translate "How It Works" %}</span>
     <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "A clear medical service journey" %}</h2>
     <p class="tw:mt-5 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "From eligibility verification and pre-authorization to treatment and claim settlement, each step is structured and transparent." %}</p>
-    <div class="tw:d-alert tw:d-alert-success tw:mt-6 tw:items-start">
-      <i class="bi bi-shield-check tw:text-xl"></i>
-      <div><h3 class="tw:font-black">{% translate "Member-first process" %}</h3><p class="tw:text-sm">{% translate "Designed to reduce administrative friction for members, providers and insurers." %}</p></div>
+    <div class="tw:d-aura tw:d-aura-holo tw:d-aura-sm tw:mt-6">
+      <div class="tw:d-alert tw:d-alert-success tw:items-start">
+        <i class="bi bi-shield-check tw:text-xl"></i>
+        <div><h3 class="tw:font-black">{% translate "Member-first process" %}</h3><p class="tw:text-sm">{% translate "Designed to reduce administrative friction for members, providers and insurers." %}</p></div>
+      </div>
     </div>
   </div>
-  <div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" data-reveal>
-    <div class="tw:d-card-body tw:p-5">
-      <ul class="tw:d-steps tw:d-steps-vertical tw:w-full">
+
+  <div class="tw:d-card tw:min-w-0 tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl" data-reveal>
+    <div class="tw:d-card-body tw:p-5 tw:sm:p-6">
+      <ul class="tw:d-timeline tw:d-timeline-vertical tw:d-timeline-compact tw:w-full">
         {% for item in medical_process_steps %}
-        <li class="tw:d-step tw:d-step-primary" data-content="{{ item.step_number }}">
-          <div class="tw:d-card tw:my-2 tw:w-full tw:border tw:border-base-300 tw:bg-base-200/45 tw:text-start">
-            <div class="tw:d-card-body tw:p-4">
-              <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
-                <h3 class="tw:d-card-title tw:text-base">{% if LANGUAGE_CODE == "ar" %}{{ item.title_ar|default:item.title_en }}{% else %}{{ item.title_en }}{% endif %}</h3>
-                <span class="tw:d-badge tw:d-badge-primary tw:d-badge-outline">{{ item.get_process_type_display }}</span>
-              </div>
-              <p class="tw:text-sm tw:leading-6 tw:text-base-content/60">{% if LANGUAGE_CODE == "ar" %}{{ item.description_ar|default:item.description_en }}{% else %}{{ item.description_en }}{% endif %}</p>
+        <li>
+          {% if not forloop.first %}<hr class="tw:bg-primary">{% endif %}
+          <div class="tw:d-timeline-middle"><span class="tw:grid tw:h-9 tw:w-9 tw:place-items-center tw:rounded-full tw:bg-primary tw:text-sm tw:font-black tw:text-primary-content">{{ item.step_number }}</span></div>
+          <div class="tw:d-timeline-end tw:d-timeline-box tw:mb-5 tw:w-full tw:max-w-none tw:border tw:border-base-300 tw:bg-base-200/45 tw:text-start">
+            <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
+              <h3 class="tw:font-black">{% if LANGUAGE_CODE == "ar" %}{{ item.title_ar|default:item.title_en }}{% else %}{{ item.title_en }}{% endif %}</h3>
+              <span class="tw:d-badge tw:d-badge-primary tw:d-badge-outline tw:d-badge-sm">{{ item.get_process_type_display }}</span>
             </div>
+            <p class="tw:mt-2 tw:text-sm tw:leading-6 tw:text-base-content/60">{% if LANGUAGE_CODE == "ar" %}{{ item.description_ar|default:item.description_en }}{% else %}{{ item.description_en }}{% endif %}</p>
           </div>
+          {% if not forloop.last %}<hr class="tw:bg-primary">{% endif %}
         </li>
         {% empty %}
-        <li class="tw:d-step">{% translate "No medical process steps configured." %}</li>
+        <li><div class="tw:d-timeline-middle"><span class="tw:d-status"></span></div><div class="tw:d-timeline-end">{% translate "No medical process steps configured." %}</div></li>
         {% endfor %}
       </ul>
     </div>

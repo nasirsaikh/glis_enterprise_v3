@@ -91,10 +91,15 @@ If your account has create authority:
 4. Enter the effective date.
 5. Enter remarks if required.
 6. Save the transaction.
-7. Review the generated reference, for example `TPA-END-2026-000001`.
-8. Submit the draft.
+7. Add member rows manually or upload a **CSV/XLSX** spreadsheet.
+8. Review row-level validation, premium impact, success/error KPIs and the quality/error charts.
+9. Submit the draft.
 
-After submission, the transaction moves to **Pending Validation** and GLIS creates/links the operational ticket. Use that ticket for SLA tracking, approval, assignment, notification and collaboration.
+Submission now creates/links the GLIS operational ticket **and immediately runs deterministic validation**.
+
+For New Policy Enrollment and Member Addition, the member intake expects First Name, Last Name, DOB, Gender, Relationship and Benefit Plan. Employee No., Civil/National ID and Passport are supported identifiers. Spreadsheet headers such as **Full Name**, **DOB**, **Gender**, **Relationship**, **Plan**, **Employee No.**, **Civil ID** and **Passport** are recognized.
+
+If blocking errors exist, the transaction moves to **Validation Failed**. Correct/remove the affected rows and use **Run Validation** again. If all rows pass, GLIS evaluates STP and approval requirements.
 
 ## 6. Transaction statuses
 
@@ -148,7 +153,7 @@ The shared GLIS AI layer contains:
 - source-document records;
 - canonical member JSON normalization.
 
-The current portal release does **not yet expose the complete upload/OCR correction workspace**. Configure AI providers in Administration only for workflows that are enabled in the deployment.
+Structured spreadsheet upload is now exposed in the transaction workspace. Full OCR/vision processing of PDF, passport/ID images and other unstructured documents remains a separate AI intake workflow; do not treat that part as complete until the configured provider pipeline has been tested end-to-end.
 
 ## 10. Email intake
 
@@ -194,6 +199,17 @@ Confirm that an active `PolicyAccess` record exists for the user and policy. Sup
 
 Check that annual premium and premium configuration values are numeric. The service normalizes configured values to `Decimal` before calculation.
 
-## 12. Recommended operational sequence
+## 12. Approval and processing
 
-**Configure organization → configure policy → configure benefit plans → grant permissions/policy access → create transaction → review → submit → validation → approval/STP → process → complete/audit through linked GLIS ticket.**
+After validation succeeds:
+
+- if the policy is STP-enabled and there are no STP blockers, the transaction becomes **Auto Approved**;
+- if the linked GLIS ticket has a configured approval workflow, the transaction waits in **Pending Approval** until that approval completes;
+- if no ticket approval workflow applies and STP is not available, a user with `tpa.approve_endorsement` or policy-level `can_approve` can approve from the TPA transaction;
+- after **Approved** or **Auto Approved**, a user with `tpa.process_endorsement` or policy-level `can_process` selects **Process Transaction**.
+
+For member additions/enrollments, processing creates the Member and active MemberPolicyEnrollment records. Termination/deletion actions update the matching active enrollment. Policy Cancellation cancels the policy and its active enrollments.
+
+## 13. Recommended operational sequence
+
+**Configure organization → configure policy → configure benefit plans → grant permissions/policy access → create transaction → add/upload members → submit & validate → correct errors if any → STP/approval → process → complete/audit through linked GLIS ticket.**

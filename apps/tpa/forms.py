@@ -16,9 +16,7 @@ class TransactionForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["policy"].queryset = (
-            visible_policies(user) if user else Policy.objects.none()
-        )
+        self.fields["policy"].queryset = visible_policies(user) if user else Policy.objects.none()
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
@@ -45,6 +43,12 @@ class MemberRowForm(forms.Form):
         choices=(("", "Select relationship"), *Member.Relationship.choices),
         required=True,
     )
+    principal_reference = forms.ChoiceField(
+        required=False,
+        label="Parent Principal",
+        choices=(("", "Select principal member"),),
+        help_text="Required for spouse, child and other dependents.",
+    )
     plan_code = forms.ChoiceField(required=True, label="Benefit plan")
     national_id = forms.CharField(required=False, label="Civil / National ID")
     passport_number = forms.CharField(required=False)
@@ -52,11 +56,57 @@ class MemberRowForm(forms.Form):
     def __init__(self, *args, transaction=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.transaction = transaction
+
         plans = transaction.policy.plans.filter(is_active=True).order_by("code") if transaction else []
         self.fields["plan_code"].choices = [
             ("", "Select benefit plan"),
             *[(plan.code, f"{plan.code} · {plan.name}") for plan in plans],
         ]
+
+        principal_choices = [("", "Select principal member")]
+        if transaction:
+            active_principals = (
+                Member.objects.filter(
+                    relationship=Member.Relationship.PRINCIPAL,
+                    status=Member.Status.ACTIVE,
+                    enrollments__policy=transaction.policy,
+                    enrollments__enrollment_status="active",
+                )
+                .distinct()
+                .order_by("first_name", "last_name", "pk")
+            )
+            principal_choices.extend(
+                (
+                    f"member:{member.pk}",
+                    f"{member.tpa_member_id} · {member.full_name}"
+                    + (f" · {member.employee_id}" if member.employee_id else ""),
+                )
+                for member in active_principals
+            )
+
+            for action in transaction.member_actions.all().order_by("row_number", "pk"):
+                data = {
+                    **(action.submitted_data or {}),
+                    **(action.extracted_data or {}),
+                    **(action.corrected_data or {}),
+                }
+                if str(data.get("relationship") or "").upper() != Member.Relationship.PRINCIPAL:
+                    continue
+                full_name = " ".join(
+                    value for value in [
+                        str(data.get("first_name") or "").strip(),
+                        str(data.get("middle_name") or "").strip(),
+                        str(data.get("last_name") or "").strip(),
+                    ] if value
+                ) or f"Principal row {action.row_number or action.pk}"
+                employee_id = str(data.get("employee_id") or "").strip()
+                label = f"Current transaction · {full_name}"
+                if employee_id:
+                    label += f" · {employee_id}"
+                principal_choices.append((f"action:{action.pk}", label))
+
+        self.fields["principal_reference"].choices = principal_choices
+
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
@@ -64,6 +114,33 @@ class MemberRowForm(forms.Form):
                 if isinstance(field.widget, forms.Select)
                 else "tw:d-input tw:d-input-bordered tw:w-full",
             )
+
+    def clean(self):
+        data = super().clean()
+        relationship = data.get("relationship")
+        reference = data.get("principal_reference") or ""
+
+        data["principal_member_id"] = ""
+        data["principal_action_id"] = ""
+        data["principal_employee_id"] = ""
+
+        if relationship == Member.Relationship.PRINCIPAL:
+            data["principal_reference"] = ""
+            return data
+
+        if relationship and not reference:
+            self.add_error(
+                "principal_reference",
+                "Select the parent principal for a spouse, child or other dependent.",
+            )
+            return data
+
+        if reference.startswith("member:"):
+            data["principal_member_id"] = reference.split(":", 1)[1]
+        elif reference.startswith("action:"):
+            data["principal_action_id"] = reference.split(":", 1)[1]
+
+        return data
 
 
 class MemberLookupRowForm(forms.Form):
@@ -80,9 +157,7 @@ class MemberLookupRowForm(forms.Form):
     def clean(self):
         data = super().clean()
         if not any(data.get(name) for name in self.fields):
-            raise forms.ValidationError(
-                "Provide at least one member identifier."
-            )
+            raise forms.ValidationError("Provide at least one member identifier.")
         return data
 
 

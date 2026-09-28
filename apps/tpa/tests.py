@@ -249,4 +249,4 @@ class TPACoreTests(TestCase):
         parent = Member.objects.get(employee_id="E-FAMILY-1")
         child = Member.objects.get(employee_id="E-FAMILY-2")
         self.assertEqual(child.principal_id, parent.pk)
-\n
+

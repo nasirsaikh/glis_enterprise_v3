@@ -230,36 +230,114 @@
     dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
   };
 
-  const chartLayout = () => {
-    const isDark = root.getAttribute("data-bs-theme") === "dark";
-    return {
-      paper_bgcolor: "transparent", plot_bgcolor: "transparent",
-      font: {family: "Inter, Cairo, sans-serif", size: 11, color: isDark ? "#dce9e2" : "#4c5c54"},
-      margin: {l: 45, r: 18, t: 18, b: 48}, showlegend: false,
-      xaxis: {gridcolor: isDark ? "#2d3d34" : "#edf1ef", automargin: true},
-      yaxis: {gridcolor: isDark ? "#2d3d34" : "#edf1ef", rangemode: "tozero", automargin: true}
-    };
+  const chartInstances = new Map();
+  const cssColor = (name, fallback) => {
+    const value = getComputedStyle(root).getPropertyValue(name).trim();
+    return value || fallback;
   };
-  const plot = (id, traces, layout = {}) => {
+  const chartTheme = () => root.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  const chartColors = () => [
+    cssColor("--color-primary", "#147A50"),
+    cssColor("--color-info", "#2563EB"),
+    cssColor("--color-warning", "#D99400"),
+    cssColor("--color-error", "#C2413B"),
+    cssColor("--color-secondary", "#7357C7"),
+    cssColor("--color-success", "#3CA37A"),
+    cssColor("--color-neutral", "#6B7280")
+  ];
+  const baseChartOptions = (type, height = 300) => ({
+    chart: {
+      type,
+      height,
+      background: "transparent",
+      foreColor: cssColor("--color-base-content", "#4c5c54"),
+      fontFamily: "Inter, Cairo, sans-serif",
+      toolbar: {show: false},
+      zoom: {enabled: false},
+      animations: {enabled: true, speed: 260}
+    },
+    theme: {mode: chartTheme()},
+    grid: {
+      borderColor: cssColor("--color-base-300", "#edf1ef"),
+      strokeDashArray: 3
+    },
+    dataLabels: {enabled: false},
+    tooltip: {theme: chartTheme()},
+    noData: {text: "No data"}
+  });
+  const apex = (id, options) => {
     const element = document.getElementById(id);
-    if (!element || !window.Plotly) return;
-    Plotly.newPlot(element, traces, {...chartLayout(), ...layout}, {displayModeBar: false, responsive: true});
+    if (!element || !window.ApexCharts) return;
+    const previous = chartInstances.get(id);
+    if (previous) previous.destroy();
+    const chart = new ApexCharts(element, options);
+    chartInstances.set(id, chart);
+    chart.render();
   };
   const labels = (rows, key = "label") => rows.map((row) => String(row[key] || "Unassigned").replaceAll("_", " "));
   const renderCharts = () => {
     const source = document.getElementById("dashboard-data");
-    if (!source || !window.Plotly) return;
+    if (!source || !window.ApexCharts) return;
     const data = JSON.parse(source.textContent);
-    const colors = ["#147A50", "#2563EB", "#D99400", "#C2413B", "#7357C7", "#3CA37A", "#6B7280"];
-    plot("ticket-status-chart", [{type: "pie", labels: labels(data.status || [], "status"), values: (data.status || []).map(x => x.total), hole: .55, marker: {colors}, textinfo: "label+percent", hovertemplate: "%{label}: %{value}<extra></extra>"}], {margin: {l: 10, r: 10, t: 10, b: 10}});
-    plot("ticket-priority-chart", [{type: "pie", labels: labels(data.priority || [], "priority"), values: (data.priority || []).map(x => x.total), hole: .55, marker: {colors: ["#7ACFA5", "#2563EB", "#D99400", "#C2413B"]}, textinfo: "label+percent"}], {margin: {l: 10, r: 10, t: 10, b: 10}});
-    plot("ticket-assignee-chart", [{type: "pie", labels: labels(data.assignee || []), values: (data.assignee || []).map(x => x.total), hole: .45, marker: {colors}, textinfo: "label+value"}], {margin: {l: 8, r: 8, t: 8, b: 8}});
-    ["category", "product", "project"].forEach((name) => {
+    const colors = chartColors();
+
+    const donut = (id, rows, key, donutSize = "62%", customColors = colors) => {
+      const options = baseChartOptions("donut", 300);
+      Object.assign(options, {
+        series: rows.map(row => Number(row.total || 0)),
+        labels: labels(rows, key),
+        colors: customColors,
+        stroke: {width: 2, colors: [cssColor("--color-base-100", "#ffffff")]},
+        legend: {position: "bottom", fontSize: "11px"},
+        plotOptions: {
+          pie: {
+            donut: {
+              size: donutSize,
+              labels: {
+                show: true,
+                total: {show: true, label: "TOTAL"}
+              }
+            }
+          }
+        }
+      });
+      apex(id, options);
+    };
+
+    donut("ticket-status-chart", data.status || [], "status");
+    donut("ticket-priority-chart", data.priority || [], "priority", "62%", [
+      cssColor("--color-success", "#7ACFA5"),
+      cssColor("--color-info", "#2563EB"),
+      cssColor("--color-warning", "#D99400"),
+      cssColor("--color-error", "#C2413B")
+    ]);
+    donut("ticket-assignee-chart", data.assignee || [], "label", "55%");
+
+    ["category", "product", "project"].forEach((name, index) => {
       const rows = data[name] || [];
-      plot("ticket-" + name + "-chart", [{type: "bar", orientation: "h", y: labels(rows).reverse(), x: rows.map(x => x.total).reverse(), marker: {color: name === "category" ? "#147A50" : name === "product" ? "#2563EB" : "#7357C7", cornerradius: 4}, hovertemplate: "%{y}: %{x}<extra></extra>"}], {margin: {l: 120, r: 20, t: 10, b: 35}});
+      const options = baseChartOptions("bar", 280);
+      Object.assign(options, {
+        series: [{name: "Tickets", data: rows.map(row => Number(row.total || 0))}],
+        colors: [colors[[0, 1, 4][index]]],
+        plotOptions: {bar: {horizontal: true, borderRadius: 4, barHeight: "52%"}},
+        xaxis: {categories: labels(rows), forceNiceScale: true},
+        legend: {show: false}
+      });
+      apex("ticket-" + name + "-chart", options);
     });
+
     const daily = data.daily_open || [];
-    plot("ticket-daily-chart", [{type: "scatter", mode: "lines+markers", x: daily.map(x => x.day), y: daily.map(x => x.total), line: {color: "#147A50", width: 3, shape: "spline"}, marker: {size: 7, color: "#147A50"}, fill: "tozeroy", fillcolor: "rgba(20,122,80,.10)", hovertemplate: "%{x}: %{y}<extra></extra>"}]);
+    const dailyOptions = baseChartOptions("area", 320);
+    Object.assign(dailyOptions, {
+      series: [{name: "Opened", data: daily.map(row => Number(row.total || 0))}],
+      colors: [colors[0]],
+      stroke: {curve: "smooth", width: 3},
+      fill: {type: "gradient", gradient: {shadeIntensity: .2, opacityFrom: .28, opacityTo: .03}},
+      markers: {size: 4, strokeWidth: 0},
+      xaxis: {categories: daily.map(row => row.day), labels: {rotate: -35}},
+      legend: {show: false}
+    });
+    apex("ticket-daily-chart", dailyOptions);
   };
 
   const setupSidebar = () => {

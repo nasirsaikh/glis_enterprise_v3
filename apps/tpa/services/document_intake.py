@@ -2,6 +2,8 @@ import csv
 import hashlib
 import io
 import mimetypes
+from email import policy as email_policy
+from email.parser import BytesParser
 from pathlib import Path
 
 from django.core.exceptions import ValidationError
@@ -9,9 +11,10 @@ from django.core.exceptions import ValidationError
 from apps.ai.models import AIExtractionProfile, AIInteraction
 from apps.ai.runtime import generate_json, generate_text
 
-from ..models import MemberAction, SourceDocument
+from ..models import ExtractionAttempt, MemberAction, SourceDocument
 from .extraction import normalize_ai_payload, select_profile, select_provider
 from .intake import normalize_member_row
+from .member_merge import merge_member_rows
 
 
 SUPPORTED_EXTENSIONS = {
@@ -23,6 +26,7 @@ SUPPORTED_EXTENSIONS = {
     ".jpg",
     ".jpeg",
     ".webp",
+    ".eml",
 }
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
@@ -243,54 +247,13 @@ def _pdf_text_or_ocr(tx, content):
     return "\n\n".join(page_text), "PDF_VISION_OCR", len(doc)
 
 
-def _create_actions(tx, rows, *, confidence=None):
-    last_row = (
-        tx.member_actions.order_by("-row_number")
-        .values_list("row_number", flat=True)
-        .first()
-        or 0
+def _create_actions(tx, rows, *, confidence=None, source="document"):
+    return merge_member_rows(
+        tx,
+        rows,
+        source=source,
+        confidence=_confidence_percent(confidence),
     )
-    created = []
-    for offset, row in enumerate(rows, start=1):
-        normalized = normalize_member_row(row)
-        if row.get("member_id") and not normalized.get("tpa_member_id"):
-            normalized["tpa_member_id"] = str(row.get("member_id")).strip()
-        for key in (
-            "employee_id",
-            "first_name",
-            "middle_name",
-            "last_name",
-            "date_of_birth",
-            "gender",
-            "relationship",
-            "plan_code",
-            "national_id",
-            "passport_number",
-            "principal_employee_id",
-            "principal_member_id",
-        ):
-            if key in row and row.get(key) not in (None, ""):
-                normalized[key] = str(row.get(key)).strip()
-
-        row_confidence = _confidence_percent(
-            row.get("confidence", confidence)
-        )
-
-        if not any(value not in (None, "") for value in normalized.values()):
-            continue
-
-        created.append(
-            MemberAction.objects.create(
-                transaction=tx,
-                action=tx.transaction_type,
-                row_number=last_row + offset,
-                extracted_data=normalized,
-                corrected_data=normalized,
-                extraction_confidence=row_confidence,
-            )
-        )
-    return created
-
 
 def create_source_documents(tx, uploaded_files, actor=None):
     documents = []
@@ -308,21 +271,27 @@ def create_source_documents(tx, uploaded_files, actor=None):
             digest.update(chunk)
         uploaded.seek(0)
 
-        document = SourceDocument.objects.create(
+        source_hash = digest.hexdigest()
+        document = SourceDocument.objects.filter(
             transaction=tx,
-            file=uploaded,
-            original_name=uploaded.name,
-            content_type=getattr(uploaded, "content_type", "")
-            or mimetypes.guess_type(uploaded.name)[0]
-            or "",
-            size=uploaded.size,
-            document_kind="MEMBER_SOURCE",
-            extraction_method="",
-            processing_state=SourceDocument.State.RECEIVED,
-            processed=False,
-            source_hash=digest.hexdigest(),
-            uploaded_by=actor,
-        )
+            source_hash=source_hash,
+        ).order_by("-pk").first()
+        if document is None:
+            document = SourceDocument.objects.create(
+                transaction=tx,
+                file=uploaded,
+                original_name=uploaded.name,
+                content_type=getattr(uploaded, "content_type", "")
+                or mimetypes.guess_type(uploaded.name)[0]
+                or "",
+                size=uploaded.size,
+                document_kind="MEMBER_SOURCE",
+                extraction_method="",
+                processing_state=SourceDocument.State.RECEIVED,
+                processed=False,
+                source_hash=source_hash,
+                uploaded_by=actor,
+            )
         documents.append(document)
     return documents
 
@@ -349,7 +318,12 @@ def process_source_bundle(tx, documents, actor=None):
         try:
             if suffix in {".csv", ".xlsx", ".xls"}:
                 raw_rows = _structured_rows(document.original_name, content)
-                actions = _create_actions(tx, raw_rows, confidence=100)
+                actions = _create_actions(
+                    tx,
+                    raw_rows,
+                    confidence=100,
+                    source=f"structured:{document.pk}:{document.original_name}",
+                )
                 created_actions.extend(actions)
                 document.extraction_method = "STRUCTURED_IMPORT"
                 document.extracted_payload = {
@@ -359,6 +333,66 @@ def process_source_bundle(tx, documents, actor=None):
                 document.extraction_confidence = 100
                 document.processing_state = SourceDocument.State.PROCESSED
                 document.processed = True
+
+            elif suffix == ".eml":
+                message = BytesParser(policy=email_policy.default).parsebytes(content)
+                chunks = []
+                if message.is_multipart():
+                    for part in message.walk():
+                        if part.get_content_disposition() == "attachment":
+                            continue
+                        if part.get_content_type() in {"text/plain", "text/html"}:
+                            try:
+                                value = part.get_content()
+                            except Exception:
+                                value = ""
+                            if value:
+                                chunks.append(str(value))
+                else:
+                    try:
+                        chunks.append(str(message.get_content()))
+                    except Exception:
+                        chunks.append(content.decode("utf-8", errors="replace"))
+                text = "\n\n".join(chunks)
+                evidence.append(
+                    f"--- SOURCE EMAIL: {document.original_name} ---\n{text}"
+                )
+                document.extraction_method = "EMAIL_MIME"
+                document.extracted_payload = {
+                    "email_subject": str(message.get("Subject") or ""),
+                    "email_from": str(message.get("From") or ""),
+                    "email_to": str(message.get("To") or ""),
+                    "body_text": text,
+                }
+                document.processing_state = SourceDocument.State.PROCESSED
+                document.processed = True
+
+                for part in message.iter_attachments():
+                    raw = part.get_payload(decode=True) or b""
+                    if not raw:
+                        continue
+                    name = str(part.get_filename() or "attachment")
+                    inner_suffix = Path(name).suffix.lower()
+                    if inner_suffix in {".csv", ".xlsx", ".xls"}:
+                        rows = _structured_rows(name, raw)
+                        actions = _create_actions(
+                            tx,
+                            rows,
+                            confidence=100,
+                            source=f"eml:{document.pk}:{name}",
+                        )
+                        created_actions.extend(actions)
+                    elif inner_suffix == ".pdf":
+                        inner_text, _, _ = _pdf_text_or_ocr(tx, raw)
+                        evidence.append(f"--- EMAIL ATTACHMENT: {name} ---\n{inner_text}")
+                    elif inner_suffix in {".png", ".jpg", ".jpeg", ".webp"}:
+                        inner_text, provider, _ = _ocr_image(
+                            tx,
+                            raw,
+                            part.get_content_type() or "image/jpeg",
+                        )
+                        ai_provider = provider
+                        evidence.append(f"--- EMAIL ATTACHMENT: {name} ---\n{inner_text}")
 
             elif suffix == ".pdf":
                 text, method, pages = _pdf_text_or_ocr(tx, content)
@@ -425,12 +459,13 @@ def process_source_bundle(tx, documents, actor=None):
                 tx,
                 mapped.get("members") or [],
                 confidence=mapped.get("confidence"),
+                source="document_bundle:" + ",".join(str(document.pk) for document in documents),
             )
             created_actions.extend(actions)
             for document in documents:
                 if (
                     document.processed
-                    and document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR"}
+                    and document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME"}
                 ):
                     payload = dict(document.extracted_payload or {})
                     payload["bundle_members_created"] = len(actions)
@@ -451,7 +486,7 @@ def process_source_bundle(tx, documents, actor=None):
                     )
         except Exception as exc:
             for document in documents:
-                if document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR"}:
+                if document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME"}:
                     document.processing_state = SourceDocument.State.REVIEW
                     document.processed = False
                     document.processing_error = (

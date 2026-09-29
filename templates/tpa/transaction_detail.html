@@ -13,13 +13,13 @@
       </div>
       <div class="tw:mt-1 tw:flex tw:flex-wrap tw:items-center tw:gap-1.5">
         {% if initial_setup %}
-        <span class="badge badge-primary tw:d-badge-primary badge-soft tw:d-badge-soft">{% translate "Initial Policy Setup" %}</span>
+        <span class="badge badge-primary tw:d-badge-primary badge-soft tw:d-badge-soft tw:d-badge-soft">{% translate "Initial Policy Setup" %}</span>
         {% else %}
-        <span class="badge badge-primary tw:d-badge-primary badge-soft tw:d-badge-soft">{{ tx.get_transaction_type_display }}</span>
+        <span class="badge badge-primary tw:d-badge-primary badge-soft tw:d-badge-soft tw:d-badge-soft">{{ tx.get_transaction_type_display }}</span>
         {% endif %}
-        <span class="badge tw:d-badge {% if tx.status == 'completed' %}badge-success badge-soft{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' %}badge-warning badge-soft{% elif tx.status == 'rejected' or tx.status == 'failed' %}badge-error badge-soft{% elif tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' %}badge-info badge-soft{% else %}badge-outline{% endif %}">{{ tx.get_status_display }}</span>
-        {% if tx.source != "PORTAL" %}<span class="badge badge-info tw:d-badge-info badge-soft tw:d-badge-soft">{{ tx.get_source_display }}</span>{% endif %}
-        {% if tx.ai_extraction_status %}<span class="badge badge-secondary tw:d-badge-secondary badge-soft tw:d-badge-soft"><i class="bi bi-stars"></i>AI {{ tx.ai_extraction_status }}</span>{% endif %}
+        <span class="badge tw:d-badge {% if tx.status == 'completed' %}badge-success tw:d-badge-success badge-soft tw:d-badge-soft{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' %}badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft{% elif tx.status == 'rejected' or tx.status == 'failed' %}badge-error tw:d-badge-error badge-soft tw:d-badge-soft{% elif tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' %}badge-info tw:d-badge-info badge-soft tw:d-badge-soft{% else %}badge-outline tw:d-badge-outline{% endif %}">{{ tx.get_status_display }}</span>
+        {% if tx.source != "PORTAL" %}<span class="badge badge-info tw:d-badge-info tw:d-badge-info badge-soft tw:d-badge-soft tw:d-badge-soft">{{ tx.get_source_display }}</span>{% endif %}
+        {% if tx.ai_extraction_status %}<span class="badge badge-secondary tw:d-badge-secondary badge-soft tw:d-badge-soft tw:d-badge-soft"><i class="bi bi-stars"></i>AI {{ tx.ai_extraction_status }}</span>{% endif %}
         {% if tx.ticket %}<span class="badge badge-ghost tw:d-badge-ghost tpa-mono"><i class="bi bi-ticket-perforated"></i>{{ tx.ticket.reference }}</span>{% endif %}
       </div>
       <h1 class="tpa-title">{{ tx.reference }}</h1>
@@ -42,7 +42,7 @@
 
       {% if tx.status == "pending_approval" %}
         {% if ticket_approval_pending %}
-        <span class="badge badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft"><i class="bi bi-hourglass-split"></i>{% translate "GLIS Approval Pending" %}</span>
+        <span class="badge badge-warning tw:d-badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft tw:d-badge-soft"><i class="bi bi-hourglass-split"></i>{% translate "GLIS Approval Pending" %}</span>
         {% elif can_approve %}
         <form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}">{% csrf_token %}
           <button class="btn btn-success tw:d-btn-success btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-check-lg"></i>{% translate "Approve & Dispatch" %}</button>
@@ -60,11 +60,11 @@
 
   <section class="tpa-workflow">
     <ul class="steps steps-horizontal tw:d-steps-horizontal tw:w-full">
-      <li class="step step-primary tw:d-step-primary">{% if initial_setup %}{% translate "Policy & Census" %}{% else %}{% translate "Intake & Correction" %}{% endif %}</li>
-      <li class="step tw:d-step {% if tx.status != 'draft' and tx.status != 'extracting' %}step-primary{% endif %}">{% translate "Validation" %}</li>
-      <li class="step tw:d-step {% if tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' or tx.status == 'processed' %}step-primary{% endif %}">{% translate "Approval" %}</li>
-      <li class="step tw:d-step {% if tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' %}step-primary{% endif %}">{% translate "TPA Processing" %}</li>
-      <li class="step tw:d-step {% if tx.status == 'completed' or tx.status == 'processed' %}step-primary{% endif %}">{% translate "Complete" %}</li>
+      <li class="step step-primary tw:d-step-primary tw:d-step-primary">{% if initial_setup %}{% translate "Policy & Census" %}{% else %}{% translate "Intake & Correction" %}{% endif %}</li>
+      <li class="step tw:d-step {% if tx.status != 'draft' and tx.status != 'extracting' %}step-primary tw:d-step-primary{% endif %}">{% translate "Validation" %}</li>
+      <li class="step tw:d-step {% if tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' or tx.status == 'processed' %}step-primary tw:d-step-primary{% endif %}">{% translate "Approval" %}</li>
+      <li class="step tw:d-step {% if tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' %}step-primary tw:d-step-primary{% endif %}">{% translate "TPA Processing" %}</li>
+      <li class="step tw:d-step {% if tx.status == 'completed' or tx.status == 'processed' %}step-primary tw:d-step-primary{% endif %}">{% translate "Complete" %}</li>
     </ul>
   </section>
 
@@ -83,7 +83,7 @@
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Opening policy setup" %}</div><h2 class="tpa-section-title">{% translate "POLICY & BENEFIT PLANS" %}</h2></div>
-      <span class="badge tw:d-badge {% if tx.policy.status == 'active' %}badge-success badge-soft{% else %}badge-warning badge-soft{% endif %}">{{ tx.policy.get_status_display }}</span>
+      <span class="badge tw:d-badge {% if tx.policy.status == 'active' %}badge-success tw:d-badge-success badge-soft tw:d-badge-soft{% else %}badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft{% endif %}">{{ tx.policy.get_status_display }}</span>
     </div>
     <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "This setup must complete before the policy appears in New Endorsement." %}</p>
@@ -160,7 +160,7 @@
             <tr>
               <td>{% if doc.file %}<a class="link link-primary tw:d-link-primary" href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.original_name }}</a>{% else %}{{ doc.original_name }}{% endif %}</td>
               <td>{{ doc.extraction_method|default:"—" }}</td>
-              <td><span class="badge tw:d-badge {% if doc.processing_state == 'PROCESSED' %}badge-success{% elif doc.processing_state == 'REVIEW' or doc.processing_state == 'FAILED' %}badge-warning{% else %}badge-outline{% endif %}">{{ doc.get_processing_state_display }}</span></td>
+              <td><span class="badge tw:d-badge {% if doc.processing_state == 'PROCESSED' %}badge-success tw:d-badge-success{% elif doc.processing_state == 'REVIEW' or doc.processing_state == 'FAILED' %}badge-warning tw:d-badge-warning{% else %}badge-outline tw:d-badge-outline{% endif %}">{{ doc.get_processing_state_display }}</span></td>
               <td>{% if doc.extraction_confidence is not None %}{{ doc.extraction_confidence }}%{% else %}—{% endif %}</td>
               <td class="tw:max-w-md tw:text-xs">{% if doc.processing_error %}<span class="tw:text-warning">{{ doc.processing_error }}</span>{% else %}{{ doc.extracted_payload.bundle_members_created|default:doc.extracted_payload.rows_created|default:"Processed" }}{% endif %}</td>
             </tr>
@@ -197,7 +197,7 @@
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Normalized records" %}</div><h2 class="tpa-section-title">{% translate "INTAKE & CORRECTION / MEMBER MATRIX" %}</h2></div>
-      <span class="badge badge-outline tw:d-badge-outline">{{ actions|length }} {% translate "ROWS" %}</span>
+      <span class="badge badge-outline tw:d-badge-outline tw:d-badge-outline">{{ actions|length }} {% translate "ROWS" %}</span>
     </div>
     <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "Review extracted/manual values here before validation and downstream processing." %}</p>
@@ -217,7 +217,7 @@
               </td>
               <td>{{ a.display_employee_id }}</td>
               <td>{{ a.display_plan_code }}</td>
-              <td><span class="badge {% if a.validation_status == 'VALID' %}badge-success{% elif a.validation_status == 'WARNING' %}badge-warning{% else %}badge-error{% endif %} badge-soft tw:d-badge-soft">{{ a.validation_status }}</span></td>
+              <td><span class="badge {% if a.validation_status == 'VALID' %}badge-success tw:d-badge-success{% elif a.validation_status == 'WARNING' %}badge-warning tw:d-badge-warning{% else %}badge-error tw:d-badge-error{% endif %} badge-soft tw:d-badge-soft tw:d-badge-soft">{{ a.validation_status }}</span></td>
               <td>{% if a.extraction_confidence is not None %}{{ a.extraction_confidence }}%{% else %}{% translate "Manual" %}{% endif %}</td>
               <td>{{ tx.currency }} {{ a.calculated_premium }}</td>
               {% if can_edit_intake %}
@@ -277,13 +277,13 @@
   </div>
 
   {% if tx.stp_blockers %}
-  <div class="alert alert-warning tw:d-alert-warning"><i class="bi bi-signpost-split"></i><div><strong>{% translate "STP blockers" %}</strong><div class="tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for blocker in tx.stp_blockers %}<span class="badge badge-outline tw:d-badge-outline">{{ blocker }}</span>{% endfor %}</div></div></div>
+  <div class="alert alert-warning tw:d-alert-warning"><i class="bi bi-signpost-split"></i><div><strong>{% translate "STP blockers" %}</strong><div class="tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for blocker in tx.stp_blockers %}<span class="badge badge-outline tw:d-badge-outline tw:d-badge-outline">{{ blocker }}</span>{% endfor %}</div></div></div>
   {% endif %}
 
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Step 04 / TPA Operations" %}</div><h2 class="tpa-section-title">{% translate "TPA PROCESSING & CASE CONVERSATION" %}</h2></div>
-      <span class="badge tw:d-badge {% if tx.status == 'tpa_query' %}badge-warning badge-soft{% elif tx.status == 'completed' %}badge-success badge-soft{% else %}badge-info badge-soft{% endif %}">{{ tx.get_status_display }}</span>
+      <span class="badge tw:d-badge {% if tx.status == 'tpa_query' %}badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft{% elif tx.status == 'completed' %}badge-success tw:d-badge-success badge-soft tw:d-badge-soft{% else %}badge-info tw:d-badge-info badge-soft tw:d-badge-soft{% endif %}">{{ tx.get_status_display }}</span>
     </div>
     <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "TPA processing and requester communication stay inside this case. GLIS tickets remain the underlying SLA and audit record." %}</p>
@@ -331,7 +331,7 @@
         <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
           <div>
             <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-              <span class="badge badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft">{% translate "Open Query" %}</span>
+              <span class="badge badge-warning tw:d-badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft tw:d-badge-soft">{% translate "Open Query" %}</span>
               {% if open_query.ticket %}<span class="badge badge-ghost tw:d-badge-ghost">{{ open_query.ticket.reference }}</span>{% endif %}
             </div>
             <h3 class="tw:mt-1 tw:font-black">{{ open_query.subject }}</h3>
@@ -343,11 +343,11 @@
 
         <div class="tw:mt-4 tw:max-h-[28rem] tw:space-y-3 tw:overflow-y-auto tw:rounded-xl tw:bg-base-100 tw:p-4">
           {% for msg in open_query.messages.all %}
-          <div class="chat tw:d-chat {% if msg.sender_id == request.user.id %}chat-end{% else %}chat-start{% endif %}">
+          <div class="chat tw:d-chat {% if msg.sender_id == request.user.id %}chat-end tw:d-chat-end{% else %}chat-start tw:d-chat-start{% endif %}">
             <div class="chat-header tw:d-chat-header tw:text-xs">{{ msg.sender.get_full_name|default:msg.sender.username }} <time class="tw:opacity-50">{{ msg.created_at|date:"d-M-Y H:i" }}</time></div>
-            <div class="chat-bubble tw:d-chat-bubble {% if msg.kind == 'QUERY' %}chat-bubble-warning{% endif %}">{{ msg.ticket_comment.body|linebreaksbr }}</div>
+            <div class="chat-bubble tw:d-chat-bubble {% if msg.kind == 'QUERY' %}chat-bubble-warning tw:d-chat-bubble-warning{% endif %}">{{ msg.ticket_comment.body|linebreaksbr }}</div>
             {% if msg.ticket_comment.attachments.all %}
-            <div class="chat-footer tw:d-chat-footer tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for file in msg.ticket_comment.attachments.all %}<a class="badge badge-outline tw:d-badge-outline tw:text-xs" href="{{ file.file.url }}" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i>{{ file.original_name }}</a>{% endfor %}</div>
+            <div class="chat-footer tw:d-chat-footer tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for file in msg.ticket_comment.attachments.all %}<a class="badge badge-outline tw:d-badge-outline tw:d-badge-outline tw:text-xs" href="{{ file.file.url }}" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i>{{ file.original_name }}</a>{% endfor %}</div>
             {% endif %}
           </div>
           {% endfor %}
@@ -383,11 +383,11 @@
             <div class="tw:rounded-xl tw:border tw:border-base-300 tw:p-4">
               <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
                 <div><strong>{{ q.subject }}</strong>{% if q.ticket %}<span class="badge badge-ghost tw:d-badge-ghost tw:ms-2">{{ q.ticket.reference }}</span>{% endif %}</div>
-                <span class="badge badge-success tw:d-badge-success badge-soft tw:d-badge-soft">{% translate "Resolved" %}</span>
+                <span class="badge badge-success tw:d-badge-success tw:d-badge-success badge-soft tw:d-badge-soft tw:d-badge-soft">{% translate "Resolved" %}</span>
               </div>
               <div class="tw:mt-3 tw:space-y-2">
                 {% for msg in q.messages.all %}
-                <div class="chat tw:d-chat {% if msg.sender_id == request.user.id %}chat-end{% else %}chat-start{% endif %}">
+                <div class="chat tw:d-chat {% if msg.sender_id == request.user.id %}chat-end tw:d-chat-end{% else %}chat-start tw:d-chat-start{% endif %}">
                   <div class="chat-header tw:d-chat-header tw:text-xs">{{ msg.sender.get_full_name|default:msg.sender.username }} · {{ msg.created_at|date:"d-M-Y H:i" }}</div>
                   <div class="chat-bubble tw:d-chat-bubble">{{ msg.ticket_comment.body|linebreaksbr }}</div>
                 </div>

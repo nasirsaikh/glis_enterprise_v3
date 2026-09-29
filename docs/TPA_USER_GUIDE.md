@@ -1,281 +1,193 @@
-# TPA Member Management — User Guide
+# GLIS TPA Member Management — SmartEndorse-style User Guide
 
-## 1. Purpose
+## Operating model
 
-The TPA workspace is available under **Portal → TPA Member Management**. It is designed for policy-scoped member enrollment and endorsement operations while reusing GLIS tickets for SLA, approval, assignment, notification and audit workflow.
+The GLIS TPA module follows the SmartEndorse operating pattern while keeping GLIS tickets, SLA, approvals, notifications and audit infrastructure underneath the workflow.
 
-Portal URL: `/portal/tpa/`
+Flow:
 
-User guide URL: `/portal/tpa/guide/`
+Intake & Correction → Validation → Approval → TPA Processing / Query → Complete
 
-## 2. Who can see the TPA menu?
+AI is limited to extraction and semantic mapping. Policy/member eligibility, plan validation, dependent-principal rules, premium/refund calculation, STP, approval and final member updates are deterministic GLIS logic.
 
-The sidebar menu is shown only when the signed-in user is authorized through at least one of these paths:
+## Initial Policy Enrollment
 
-- superuser access;
-- a TPA Django permission such as `tpa.view_tpa_dashboard`, `tpa.create_enrollment`, `tpa.create_endorsement`, `tpa.approve_endorsement`, `tpa.process_endorsement` or `tpa.configure_tpa`;
-- an active `PolicyAccess` row with `can_view=True`;
-- an existing TPA transaction requested by that user.
+A brand-new policy is created from:
 
-The same authorization is enforced in the TPA views, so manually entering a TPA URL does not bypass the sidebar rule.
+Portal → TPA Operations → Initial Policy Enrollment
 
-## 3. Administrator setup
+This is intentionally separate from endorsements. Initial setup creates a Draft policy together with the Sponsor, Insurance Company, optional TPA route, policy dates, currency/STP/backdating settings, first Benefit Plan, PolicyAccess for the setup user, and a dedicated NEW_POLICY_ENROLLMENT transaction.
 
-Before operational users start:
+Additional plans and the complete opening census are added inside that case. The opening census can be entered manually or loaded through the same Excel/CSV/PDF/image OCR intake used later for endorsements.
 
-1. Create the Sponsor/Corporate organization.
-2. Create the Insurance Company.
-3. Create the Policy and set:
-   - policy number and name;
-   - start and expiry dates;
-   - policy status;
-   - currency;
-   - allowed backdating days;
-   - STP enabled/disabled;
-   - premium calculation enabled/disabled.
-4. Create Benefit Plans for the policy.
-5. Configure annual premium, sum insured and premium method for each plan.
-6. Create `PolicyAccess` records for users who should see or act on the policy.
-7. Assign the required TPA permissions through Django users/groups.
+After validation, approval/STP and TPA processing complete successfully, GLIS activates the policy and records initial_enrollment_completed_at and initial_enrollment_completed_by. Only then is the policy available for New Endorsement, except legacy active policies that already have active member enrollments.
 
-### Main TPA permissions
+## Endorsements
+
+Portal → TPA Member Management → New Endorsement
+
+The endorsement form no longer includes New Policy Enrollment. It supports:
+
+- Member Addition
+- Member Termination
+- Member Deletion / Void
+- Policy Cancellation
+
+For spouse, child or other dependent additions, a parent Principal is mandatory. Manual entry provides a policy-aware Principal selector. File/OCR intake can use principal_employee_id or principal_member_id.
+
+## File upload and AI OCR
+
+The transaction page contains one Source Documents & AI OCR intake zone. Up to 20 related files can be supplied together so ID front/back, passport pages and supporting evidence can be treated as one evidence bundle.
+
+| Source | Processing |
+|---|---|
+| CSV | deterministic structured parsing |
+| XLSX | deterministic structured parsing |
+| XLS | deterministic structured parsing with xlrd |
+| text PDF | pypdf text extraction, then text-model mapping |
+| scanned PDF | PyMuPDF page rendering → vision OCR → text-model mapping |
+| PNG/JPG/JPEG/WEBP | vision OCR → text-model mapping |
+
+Recommended AI configuration uses two providers:
+
+1. Vision/OCR provider, such as GLM-OCR or another vision-capable Ollama model:
+   - supports_vision=True
+   - allow_sensitive_data=True
+   - capability document_extraction
+2. Text mapping provider, such as qwen2.5:7b:
+   - supports_vision=False
+   - allow_sensitive_data=True
+   - capability member_field_mapping
+   - capability email_extraction where required
+
+The mapper uses the MEMBER_FIELD_MAPPING extraction profile and its training examples. AI interaction metadata and SourceDocument processing results remain auditable.
+
+### Intake correction
+
+Submitted/OCR values are preserved. Use the pencil action to edit working values. Save & Revalidate writes corrected_data, records before/after values in TransactionEvent and immediately reruns deterministic validation.
+
+## Validation, pricing and STP
+
+Validation includes policy period/backdating, mandatory fields, plan validity, duplicate identifiers, active-member lookup for termination/deletion and dependent/principal rules.
+
+Premium/refund amounts are calculated with deterministic Decimal arithmetic from Benefit Plan configuration.
+
+If validation is clean and STP rules pass, the case auto-approves and dispatches to TPA. Otherwise it follows the GLIS approval workflow or manual approval authority.
+
+Approval means dispatch to TPA; it no longer immediately changes member records.
+
+## TPA processing
+
+TPA workflow statuses include:
+
+- sent_to_tpa
+- tpa_in_progress
+- tpa_query
+- completed
+
+A permitted TPA processor starts the case, then records card/member number, TPA effective date and TPA premium/refund amount per row.
+
+For additions and initial enrollment, card/member number is required before completion. TPA effective date and TPA amount are required for applicable member rows.
+
+Complete TPA Processing performs the deterministic member/enrollment update and marks the case completed. Initial Policy Enrollment completion also activates the policy.
+
+## TPA query and embedded chat
+
+If TPA needs more information, Raise Query to Requester creates a dedicated GLIS query Ticket related to the main transaction Ticket and pauses the case in TPA Query.
+
+GLIS still stores normal TicketComment and TicketAttachment records for SLA/audit/notifications, but requester and TPA communication is rendered as DaisyUI chat directly inside the TPA Processing step. Users do not have to navigate to the ticket page.
+
+Resolving the query closes the query ticket and resumes TPA processing. Resolved conversation history remains visible inside the case.
+
+## Email intake
+
+Email endorsements use the same downstream workflow as portal uploads. Email-body AI can identify policy, endorsement type, effective date and member data. Email attachments enter the same SourceDocument processor used by portal uploads, including Excel, PDF and image OCR.
+
+Email intake is for endorsements only. If AI classifies a message as New Policy Enrollment, GLIS sends it to review and instructs the user to use Initial Policy Enrollment.
+
+Manual/provider testing is available at:
+
+/portal/tpa/inbound-emails/
+
+### Automatic IMAP reading
+
+Configure:
+
+TPA_IMAP_HOST=mail.example.com
+TPA_IMAP_PORT=993
+TPA_IMAP_USERNAME=tpa@example.com
+TPA_IMAP_PASSWORD=<secret>
+TPA_IMAP_FOLDER=INBOX
+TPA_IMAP_USE_SSL=1
+
+Run manually:
+
+python manage.py process_tpa_mailbox --username YOUR_USERNAME
+
+Store unread messages without AI:
+
+python manage.py process_tpa_mailbox --username YOUR_USERNAME --no-ai
+
+The same handler is registered in GLIS Job Center as:
+
+tpa.poll_inbound_mailbox
+
+It searches unread mail, deduplicates using Message-ID/IMAP UID, stores body/attachments, processes the endorsement through AI/OCR and marks the IMAP message as seen.
+
+## Permissions
 
 | Permission | Purpose |
 |---|---|
-| `tpa.view_tpa_dashboard` | Open the TPA workspace |
-| `tpa.create_enrollment` | Create enrollment transactions |
-| `tpa.create_endorsement` | Create endorsement transactions |
-| `tpa.terminate_member` | Terminate members |
-| `tpa.delete_member` | Delete/void members |
-| `tpa.cancel_policy` | Cancel policies |
-| `tpa.approve_endorsement` | Approval authority |
-| `tpa.process_endorsement` | TPA processing authority |
-| `tpa.bypass_validation` | Bypass eligible validation rules |
-| `tpa.override_premium` | Override premium where implemented |
-| `tpa.view_sensitive_member_data` | View sensitive member fields |
-| `tpa.view_ai_source_data` | View AI source/extraction data |
-| `tpa.configure_tpa` | Configure the TPA module |
-| `tpa.export_tpa_data` | Export TPA information |
+| tpa.create_enrollment | create Initial Policy Enrollment |
+| tpa.create_endorsement | create post-enrollment endorsements |
+| tpa.approve_endorsement | manual approval authority |
+| tpa.process_endorsement | TPA processing/query/completion |
+| tpa.configure_tpa | administrative TPA access |
 
-Policy-level access still limits which policies and transactions a non-superuser can see.
+PolicyAccess additionally controls policy-scoped view/create/approve/process authority.
 
-## 4. Dashboard
+## AI provider configuration
 
-Open **TPA Member Management** from the portal sidebar.
+AIProviderConfig supports Mock, Ollama, OpenAI-compatible/OpenAI and Anthropic runtimes.
 
-The dashboard currently shows:
+For member documents, set allow_sensitive_data=True only on providers approved for that data.
 
-- Active Sponsors
-- Active Policies
-- Active Members
-- Open Transactions
-- Needs Information
-- Pending Approval
-- STP Rate
-- Recent Transactions
+secret_reference stores the environment-variable name, not the actual secret. For example, secret_reference may be OPENAI_API_KEY while the actual value lives in the runtime environment.
 
-Recent Transactions includes the TPA reference, GLIS ticket, sponsor, policy, transaction type, source, validation score, STP eligibility and status.
+## Sample data
 
-## 5. Create an endorsement
+After migrations:
 
-If your account has create authority:
+python manage.py seed_tpa_sample --username YOUR_USERNAME
 
-1. Select **New Endorsement**.
-2. Select a policy available to your account.
-3. Choose the transaction type:
-   - New Policy Enrollment
-   - Member Addition
-   - Member Termination
-   - Member Deletion / Void
-   - Policy Cancellation
-4. Enter the effective date.
-5. Enter remarks if required.
-6. Save the transaction.
-7. Add member rows manually or upload a **CSV/XLSX** spreadsheet. The transaction screen provides **Valid Sample XLSX**, **Valid Sample CSV**, **Validation Error Sample**, and an on-screen file-format reference.
-8. For any relationship other than **PRINCIPAL**, select/reference the parent principal. In manual entry the Principal list contains active principals on the policy plus principal rows already added to the same transaction. In spreadsheets use `principal_employee_id` for a principal in the same upload or `principal_member_id` for an existing TPA principal.
-9. Review row-level validation, premium impact, success/error KPIs and the quality/error charts.
-10. Submit the draft.
+The idempotent seed creates/updates:
 
-Submission now creates/links the GLIS operational ticket **and immediately runs deterministic validation**.
+- Demo Corporate sponsor
+- Demo Insurance Company
+- NextCare Demo TPA
+- endorsement-enabled DEMO-MED-<year> policy
+- GOLD and SILVER plans
+- existing Principal/Spouse/Child family
+- PolicyAccess and TPA Demo Operators permissions
+- text-only Mock AI for safe email testing
+- email/document/member mapping profiles
+- valid and invalid sample inbound emails
 
-For New Policy Enrollment and Member Addition, the member intake expects First Name, Last Name, DOB, Gender, Relationship and Benefit Plan. Employee No., Civil/National ID and Passport are supported identifiers. Spreadsheet headers such as **Full Name**, **DOB**, **Gender**, **Relationship**, **Plan**, **Employee No.**, **Civil ID** and **Passport** are recognized.
+## Deployment / test sequence
 
-If blocking errors exist, the transaction moves to **Validation Failed**. Correct/remove the affected rows and use **Run Validation** again. If all rows pass, GLIS evaluates STP and approval requirements.
+git pull origin main
+python -m pip install -r requirements.txt
+python manage.py migrate
+python manage.py check
+python manage.py makemigrations --check
+python manage.py test apps.tpa
+python manage.py seed_tpa_sample --username YOUR_USERNAME
+python manage.py runserver
 
-## 6. Transaction statuses
+Primary routes:
 
-| Status | Meaning |
-|---|---|
-| Draft | Saved but not submitted |
-| Extracting | Document/AI extraction in progress |
-| Pending Validation | Waiting for deterministic validation |
-| Needs Information | Missing/corrected information required |
-| Validation Failed | One or more blocking rules failed |
-| Pending Approval | Waiting for approval |
-| Approved | Approved for processing |
-| Auto Approved | Rules allowed straight-through approval |
-| Processing | Operational processing in progress |
-| Processed | Completed |
-| Rejected | Rejected |
-| Failed | Processing failed |
-| Cancelled | Transaction cancelled |
-
-## 7. Premium calculation
-
-Premium calculation is deterministic. Supported plan configuration methods are:
-
-- `FULL`
-- `LUMP_SUM`
-- `PARTIAL`
-- `PRORATA`
-
-Financial values are normalized to Python `Decimal` and rounded to three decimal places. The calculation result and basis are stored as a snapshot for auditability.
-
-## 8. STP and validation
-
-The current service layer contains deterministic validation and STP eligibility checks. Examples of STP blockers include:
-
-- policy STP disabled;
-- validation bypass used;
-- member-action validation errors;
-- insufficient AI extraction confidence;
-- a linked ticket still waiting for approval.
-
-AI extraction can assist with interpretation, but eligibility, pricing, validation, STP and approval decisions remain deterministic.
-
-## 9. AI/document configuration
-
-The shared GLIS AI layer contains:
-
-- AI provider configuration;
-- text/vision capability flags;
-- extraction profiles;
-- training examples;
-- source-document records;
-- canonical member JSON normalization.
-
-The configured AI runtime now supports **Mock**, **Ollama**, **OpenAI-compatible/OpenAI**, and **Anthropic** JSON extraction. Inbound email bodies can be extracted with the `email_extraction` capability. Image attachments can be extracted with a provider configured with `supports_vision=True`, `allow_sensitive_data=True`, and the `document_extraction` capability. CSV/XLSX attachments use deterministic structured import.
-
-AI remains an extraction/mapping assistant only. Policy eligibility, validation, pricing, STP, approvals and final member processing are deterministic application logic.
-
-PDF attachments are currently retained for audit and marked **Needs review**; they are not silently treated as successfully extracted.
-
-## 10. Email intake
-
-The TPA data layer can register inbound email metadata including:
-
-- provider;
-- provider message ID;
-- sender and recipient;
-- subject;
-- received time;
-- email body;
-- attachment metadata;
-- processing state;
-- linked transaction.
-
-Duplicate provider message IDs are prevented.
-
-The portal now exposes **TPA Operations → Inbound Emails → Add Inbound Email**. Users can enter email metadata/body, optional policy/type/effective-date hints and multiple attachments, then process immediately with AI. Successful AI processing creates the TPA transaction, links the GLIS ticket, imports extracted member rows, and runs deterministic validation/STP.
-
-CSV/XLSX attachments are imported directly. Vision-capable image attachments can be processed by AI. Files that cannot be automatically processed remain visible with a review reason.
-
-Automatic external mailbox polling/fetching is still separate from this manual/provider-ingestion screen; external mailbox connectors can use the reusable `register_inbound_email()` service and the same AI processing pipeline.
-
-## 11. Troubleshooting
-
-### TPA menu is not visible
-
-Ask an administrator to check either:
-
-- the user has a suitable TPA permission; or
-- the user has an active `PolicyAccess` record with `can_view=True`.
-
-### New Endorsement button is not visible
-
-The user needs either:
-
-- `tpa.create_enrollment`;
-- `tpa.create_endorsement`;
-- `tpa.configure_tpa`; or
-- policy access with `can_create_enrollment=True` or `can_create_endorsement=True`.
-
-### No policies are available
-
-Confirm that an active `PolicyAccess` record exists for the user and policy. Superusers and users with `tpa.configure_tpa` can see all policies.
-
-### Premium calculation error
-
-Check that annual premium and premium configuration values are numeric. The service normalizes configured values to `Decimal` before calculation.
-
-## 12. Approval and processing
-
-After validation succeeds:
-
-- if the policy is STP-enabled and there are no STP blockers, the transaction becomes **Auto Approved**;
-- if the linked GLIS ticket has a configured approval workflow, the transaction waits in **Pending Approval** until that approval completes;
-- if no ticket approval workflow applies and STP is not available, a user with `tpa.approve_endorsement` or policy-level `can_approve` can approve from the TPA transaction;
-- after **Approved** or **Auto Approved**, a user with `tpa.process_endorsement` or policy-level `can_process` selects **Process Transaction**.
-
-For member additions/enrollments, processing creates the Member and active MemberPolicyEnrollment records. Termination/deletion actions update the matching active enrollment. Policy Cancellation cancels the policy and its active enrollments.
-
-## 13. Recommended operational sequence
-
-**Configure organization → configure policy → configure benefit plans → grant permissions/policy access → create transaction → add/upload members → submit & validate → correct errors if any → STP/approval → process → complete/audit through linked GLIS ticket.**
-
-
-## Sample member upload format
-
-The policy-aware sample download uses these columns:
-
-| Column | Required | Example / rule |
-|---|---|---|
-| employee_id | Recommended | SAMPLE-1001 |
-| first_name | Yes | Ahmed |
-| middle_name | No | Ali |
-| last_name | Yes | Al Harthi |
-| date_of_birth | Yes | 1988-05-12 |
-| gender | Yes | Male / Female |
-| relationship | Yes | PRINCIPAL / SPOUSE / CHILD / OTHER |
-| plan_code | Yes | Must match an active plan on the selected policy |
-| national_id | Optional | TEST-CID-1001 |
-| passport_number | Optional | TEST-P-1001 |
-| principal_employee_id | Dependent only | SAMPLE-1001; may point to a principal in the same upload |
-| principal_member_id | Dependent only | Existing TPA principal member ID |
-
-A dependent without a valid parent principal is rejected with `PARENT_PRINCIPAL_REQUIRED` or `INVALID_PARENT_PRINCIPAL`.
-
-
-## Seed sample TPA data
-
-After migrations, seed a complete idempotent demo environment:
-
-```powershell
-python manage.py seed_tpa_sample
-```
-
-To grant the demo policy access/TPA role to a specific existing user:
-
-```powershell
-python manage.py seed_tpa_sample --username your_username
-```
-
-To create the sample inbound emails without automatically processing the valid one:
-
-```powershell
-python manage.py seed_tpa_sample --username your_username --skip-ai-processing
-```
-
-The seed creates/updates:
-
-- Demo Corporate sponsor and Demo Insurance Company;
-- active `DEMO-MED-<year>` medical policy;
-- GOLD and SILVER benefit plans;
-- an existing principal/spouse/child family;
-- TPA Demo Operators group and policy access;
-- text-only Mock AI provider with `email_extraction` for safe local testing;
-- email/document extraction profiles and a training example;
-- one valid AI inbound email sample;
-- one intentionally invalid inbound email sample.
-
-The command is idempotent and can be rerun.
+/portal/tpa/
+/portal/tpa/policy-enrollment/
+/portal/tpa/transactions/
+/portal/tpa/inbound-emails/
+/portal/tpa/guide/

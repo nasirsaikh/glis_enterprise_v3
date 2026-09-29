@@ -367,7 +367,7 @@ def validate_action(action):
             )
         if enrollment:
             action.member = enrollment.member
-            if enrollment.expected_reactivation_date and tx.effective_date < enrollment.suspension_date:
+            if enrollment.suspension_date and tx.effective_date < enrollment.suspension_date:
                 errors.append(
                     error(
                         "INVALID_REACTIVATION_DATE",

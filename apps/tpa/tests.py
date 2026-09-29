@@ -26,6 +26,7 @@ from .forms import MemberRowForm, TransactionForm
 from .services.access import can_access_tpa, can_create_tpa_transaction
 from .services.ai_intake import process_inbound_email
 from .services.document_intake import create_source_documents, process_source_bundle
+from .services.extraction import select_provider
 from .services.pricing import calculate_member_premium
 from .services.workflow import (
     approve_transaction,
@@ -181,6 +182,36 @@ class TPACoreTests(TestCase):
         self.assertContains(response, "tpa-error-chart")
         self.assertContains(response, "OLLAMA OCR")
         self.assertNotContains(response, "Plotly.newPlot")
+
+    def test_tpa_ai_provider_selection_prefers_ollama(self):
+        AIProviderConfig.objects.create(
+            name="Cloud mapping provider",
+            provider=AIProviderConfig.Provider.OPENAI_COMPATIBLE,
+            model_name="cloud-model",
+            endpoint="https://example.invalid/v1",
+            allow_sensitive_data=True,
+            supports_vision=False,
+            task_capabilities=["member_field_mapping"],
+            priority=1,
+            is_active=True,
+        )
+        ollama = AIProviderConfig.objects.create(
+            name="Local Ollama mapping provider",
+            provider=AIProviderConfig.Provider.OLLAMA,
+            model_name="qwen2.5:7b",
+            endpoint="http://127.0.0.1:11434",
+            allow_sensitive_data=True,
+            supports_vision=False,
+            task_capabilities=["member_field_mapping"],
+            priority=20,
+            is_active=True,
+        )
+
+        selected = select_provider(
+            sensitive=True,
+            capability="member_field_mapping",
+        )
+        self.assertEqual(selected.pk, ollama.pk)
 
     def test_structured_source_bundle_does_not_require_ai(self):
         tx = self._transaction()

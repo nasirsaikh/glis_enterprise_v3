@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Member, MemberTransaction, Policy
+from .models import InboundEmail, Member, MemberTransaction, Policy
 from .services.access import visible_policies
 
 
@@ -172,3 +172,121 @@ class MemberUploadForm(forms.Form):
             }
         ),
     )
+
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    widget = MultipleFileInput
+
+    def clean(self, data, initial=None):
+        single_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            return [single_clean(item, initial) for item in data]
+        return [single_clean(data, initial)] if data else []
+
+
+class InboundEmailForm(forms.ModelForm):
+    policy = forms.ModelChoiceField(
+        queryset=Policy.objects.none(),
+        required=False,
+        help_text="Optional policy hint. AI will try to identify it when left blank.",
+    )
+    transaction_type = forms.ChoiceField(
+        required=False,
+        choices=(("", "Let AI identify"), *MemberTransaction.Type.choices),
+        help_text="Optional transaction type hint.",
+    )
+    effective_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}),
+        help_text="Optional effective-date hint.",
+    )
+    attachments = MultipleFileField(
+        required=False,
+        label="Email attachments",
+        widget=MultipleFileInput(
+            attrs={
+                "multiple": True,
+                "accept": ".csv,.xlsx,.jpg,.jpeg,.png,.webp,.pdf",
+            }
+        ),
+        help_text="CSV/XLSX are imported directly. Images use a vision AI provider. PDF is retained for review.",
+    )
+    process_with_ai = forms.BooleanField(
+        required=False,
+        initial=True,
+        help_text="Immediately extract the email and create the TPA transaction.",
+    )
+
+    class Meta:
+        model = InboundEmail
+        fields = [
+            "provider",
+            "provider_message_id",
+            "sender",
+            "recipient",
+            "subject",
+            "received_at",
+            "body_text",
+        ]
+        widgets = {
+            "received_at": forms.DateTimeInput(
+                attrs={"type": "datetime-local"}
+            ),
+            "body_text": forms.Textarea(
+                attrs={"rows": 12}
+            ),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["policy"].queryset = (
+            visible_policies(user).filter(status=Policy.Status.ACTIVE)
+            if user
+            else Policy.objects.none()
+        )
+        self.fields["provider"].initial = "manual"
+        self.fields["provider_message_id"].required = False
+        self.fields["provider_message_id"].help_text = (
+            "Optional for manual entry; a unique message ID is generated automatically."
+        )
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.Textarea):
+                css = "tw:d-textarea tw:d-textarea-bordered tw:w-full"
+            elif isinstance(field.widget, forms.Select):
+                css = "tw:d-select tw:d-select-bordered tw:w-full"
+            elif isinstance(field.widget, forms.ClearableFileInput):
+                css = "tw:file-input tw:file-input-bordered tw:w-full"
+            elif isinstance(field.widget, forms.CheckboxInput):
+                css = "tw:d-checkbox tw:d-checkbox-primary"
+            else:
+                css = "tw:d-input tw:d-input-bordered tw:w-full"
+            field.widget.attrs.setdefault("class", css)
+
+    def clean_attachments(self):
+        files = self.cleaned_data.get("attachments") or []
+        allowed = {
+            ".csv",
+            ".xlsx",
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp",
+            ".pdf",
+        }
+        for uploaded in files:
+            name = (uploaded.name or "").lower()
+            suffix = "." + name.rsplit(".", 1)[-1] if "." in name else ""
+            if suffix not in allowed:
+                raise forms.ValidationError(
+                    f"Unsupported attachment type: {uploaded.name}"
+                )
+            if uploaded.size > 10 * 1024 * 1024:
+                raise forms.ValidationError(
+                    f"{uploaded.name} exceeds the 10 MB attachment limit."
+                )
+        return files

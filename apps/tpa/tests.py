@@ -49,16 +49,24 @@ class TPACoreTests(TestCase):
         self.insurer = TPAOrganization.objects.create(
             code="IN1",
             name_en="Insurer",
-            organization_type="INSURER",
+            organization_type=TPAOrganization.Type.INSURER,
+        )
+        self.tpa = TPAOrganization.objects.create(
+            code="TPA1",
+            name_en="Test TPA",
+            organization_type=TPAOrganization.Type.TPA,
         )
         self.policy = Policy.objects.create(
             sponsor=self.sponsor,
             insurance_company=self.insurer,
+            tpa_organization=self.tpa,
             policy_number="POL-1",
             start_date=date(2026, 1, 1),
             expiry_date=date(2026, 12, 31),
-            status="active",
+            status=Policy.Status.ACTIVE,
             allowed_backdating_days=3650,
+            initial_enrollment_completed_at=timezone.now(),
+            initial_enrollment_completed_by=self.user,
         )
         self.plan = BenefitPlan.objects.create(
             policy=self.policy,

@@ -37,7 +37,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--skip-ai-processing",
             action="store_true",
-            help="Create the sample inbound email without processing it through Mock AI.",
+            help="Create the sample inbound email without offline demo AI processing.",
         )
 
     def handle(self, *args, **options):
@@ -223,6 +223,50 @@ class Command(BaseCommand):
                 },
             )
 
+        vision_provider, _ = AIProviderConfig.objects.update_or_create(
+            name="TPA Ollama Vision OCR",
+            defaults={
+                "provider": AIProviderConfig.Provider.OLLAMA,
+                "model_name": "glm-ocr",
+                "endpoint": "http://127.0.0.1:11434",
+                "secret_reference": "",
+                "temperature": Decimal("0.00"),
+                "timeout_seconds": 600,
+                "supports_vision": True,
+                "task_capabilities": ["document_extraction"],
+                "runtime_options": {
+                    "keep_alive": "15m",
+                    "num_ctx": 8192,
+                },
+                "allow_sensitive_data": True,
+                "is_active": True,
+                "priority": 10,
+            },
+        )
+        text_provider, _ = AIProviderConfig.objects.update_or_create(
+            name="TPA Ollama Text Mapping",
+            defaults={
+                "provider": AIProviderConfig.Provider.OLLAMA,
+                "model_name": "qwen2.5:7b",
+                "endpoint": "http://127.0.0.1:11434",
+                "secret_reference": "",
+                "temperature": Decimal("0.00"),
+                "timeout_seconds": 300,
+                "supports_vision": False,
+                "task_capabilities": [
+                    "member_field_mapping",
+                    "email_extraction",
+                    "structured_header_mapping",
+                ],
+                "runtime_options": {
+                    "keep_alive": "15m",
+                    "num_ctx": 8192,
+                },
+                "allow_sensitive_data": True,
+                "is_active": True,
+                "priority": 20,
+            },
+        )
         provider, _ = AIProviderConfig.objects.update_or_create(
             name="TPA Mock AI",
             defaults={
@@ -423,7 +467,15 @@ class Command(BaseCommand):
             f"Existing family: {principal.tpa_member_id}, "
             f"{spouse.tpa_member_id}, {child.tpa_member_id}"
         )
-        self.stdout.write(f"AI provider: {provider.name} (Mock)")
+        self.stdout.write(
+            f"Ollama OCR provider: {vision_provider.name} ({vision_provider.model_name})"
+        )
+        self.stdout.write(
+            f"Ollama text provider: {text_provider.name} ({text_provider.model_name})"
+        )
+        self.stdout.write(
+            f"Offline sample provider: {provider.name} (Mock, priority {provider.priority})"
+        )
         if processed_tx:
             self.stdout.write(
                 f"Processed AI email transaction: {processed_tx.reference} "

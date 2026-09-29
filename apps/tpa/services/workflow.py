@@ -3,7 +3,7 @@ from datetime import date, datetime
 from django.db import transaction
 from django.utils import timezone
 
-from apps.tickets.models import TicketComment, TicketEvent
+from apps.tickets.models import Ticket, TicketComment, TicketEvent
 
 from ..models import (
     Member,
@@ -145,9 +145,9 @@ def raise_tpa_query(tx, actor, subject, message):
     if not can_process_tpa_transaction(actor, tx):
         raise PermissionError("You do not have TPA processing authority.")
 
-    if not tx.ticket_id:
-        from .ticketing import create_ticket_for_transaction
+    from .ticketing import create_query_ticket, create_ticket_for_transaction
 
+    if not tx.ticket_id:
         create_ticket_for_transaction(tx, actor=actor)
         tx.refresh_from_db(fields=["ticket"])
 
@@ -157,8 +157,14 @@ def raise_tpa_query(tx, actor, subject, message):
         raised_by=actor,
         pre_query_status=tx.status,
     )
+    query_ticket = create_query_ticket(
+        tx,
+        query,
+        actor,
+        str(message or "").strip(),
+    )
     comment = TicketComment.objects.create(
-        ticket=tx.ticket,
+        ticket=query_ticket,
         author=actor,
         body=(
             f"TPA QUERY — {query.subject}\n\n"
@@ -189,14 +195,14 @@ def post_query_message(query, actor, message, *, kind=None):
     if query.status != TransactionQuery.Status.OPEN:
         raise ValueError("This query is already resolved.")
     tx = query.transaction
-    if not tx.ticket_id:
-        raise ValueError("The query is not linked to a GLIS ticket.")
+    if not query.ticket_id:
+        raise ValueError("The query is not linked to its GLIS query ticket.")
     text = str(message or "").strip()
     if not text:
         raise ValueError("Query message cannot be empty.")
 
     comment = TicketComment.objects.create(
-        ticket=tx.ticket,
+        ticket=query.ticket,
         author=actor,
         body=text,
         is_internal=False,
@@ -236,6 +242,12 @@ def resolve_tpa_query(query, actor):
             "updated_at",
         ]
     )
+    if query.ticket_id:
+        query.ticket.status = Ticket.Status.RESOLVED
+        query.ticket.resolved_at = timezone.now()
+        query.ticket.save(
+            update_fields=["status", "resolved_at", "updated_at"]
+        )
     tx.status = query.pre_query_status or tx.Status.TPA_IN_PROGRESS
     if tx.status == tx.Status.SENT_TO_TPA:
         tx.status = tx.Status.TPA_IN_PROGRESS

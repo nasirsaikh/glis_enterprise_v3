@@ -226,7 +226,7 @@ class Command(BaseCommand):
                 "runtime_options": {},
                 "allow_sensitive_data": True,
                 "is_active": True,
-                "priority": 1,
+                "priority": 900,
             },
         )
 
@@ -316,6 +316,7 @@ class Command(BaseCommand):
         processed_email = self._seed_email(
             actor=actor,
             policy=policy,
+            ai_provider=provider,
             key="seed-tpa-email-processed-v1",
             subject="Demo AI member addition - valid",
             body=(
@@ -342,6 +343,7 @@ class Command(BaseCommand):
         review_email = self._seed_email(
             actor=actor,
             policy=policy,
+            ai_provider=provider,
             key="seed-tpa-email-review-v1",
             subject="Demo AI member addition - validation errors",
             body=(
@@ -461,7 +463,7 @@ class Command(BaseCommand):
             member.save()
         return member
 
-    def _seed_email(self, *, actor, policy, key, subject, body):
+    def _seed_email(self, *, actor, policy, ai_provider, key, subject, body):
         email, _ = InboundEmail.objects.update_or_create(
             provider="seed",
             provider_message_id=key,
@@ -473,6 +475,7 @@ class Command(BaseCommand):
                 "received_at": timezone.now(),
                 "body_text": body,
                 "processing_hints": {
+                    "ai_provider_id": ai_provider.pk,
                     "policy_id": policy.pk,
                     "policy_number": policy.policy_number,
                     "transaction_type": "MEMBER_ADD",

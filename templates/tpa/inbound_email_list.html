@@ -20,7 +20,7 @@
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Mailbox / ingestion" %}</div><h2 class="tpa-section-title">{% translate "EMAIL PROCESSING QUEUE" %}</h2></div>
-      <span class="badge badge-info tw:d-badge-info badge-soft tw:d-badge-soft"><i class="bi bi-stars"></i>{% translate "OLLAMA READY" %}</span>
+      <span class="badge badge-info tw:d-badge-info tw:d-badge-info badge-soft tw:d-badge-soft tw:d-badge-soft"><i class="bi bi-stars"></i>{% translate "OLLAMA READY" %}</span>
     </div>
     <div class="tw:overflow-x-auto">
       <table class="table table-sm tw:d-table-sm">
@@ -31,7 +31,7 @@
             <td class="tpa-mono tw:text-[10px]">{{ email.received_at|date:"d-M-Y H:i" }}</td>
             <td>{{ email.sender }}</td>
             <td><a class="link link-primary tw:d-link-primary tw:font-semibold" href="{% url 'tpa:inbound_email_detail' email.pk %}">{{ email.subject|default:"(No subject)" }}</a></td>
-            <td><span class="badge tw:d-badge {% if email.processing_state == 'PROCESSED' %}badge-success badge-soft{% elif email.processing_state == 'REVIEW' or email.processing_state == 'FAILED' %}badge-warning badge-soft{% else %}badge-outline{% endif %}">{{ email.get_processing_state_display }}</span></td>
+            <td><span class="badge tw:d-badge {% if email.processing_state == 'PROCESSED' %}badge-success tw:d-badge-success badge-soft tw:d-badge-soft{% elif email.processing_state == 'REVIEW' or email.processing_state == 'FAILED' %}badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft{% else %}badge-outline tw:d-badge-outline{% endif %}">{{ email.get_processing_state_display }}</span></td>
             <td class="tpa-mono">{% if email.ai_confidence is not None %}{{ email.ai_confidence }}%{% else %}—{% endif %}</td>
             <td>{% if email.transaction %}<a class="link tw:d-link tpa-mono tw:text-[10px]" href="{% url 'tpa:transaction_detail' email.transaction.reference %}">{{ email.transaction.reference }}</a>{% else %}—{% endif %}</td>
           </tr>

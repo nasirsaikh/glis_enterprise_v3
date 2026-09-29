@@ -163,6 +163,7 @@ class MemberTransaction(TimeStampedModel):
         NEEDS_INFORMATION="needs_information","Needs Information"; VALIDATION_FAILED="validation_failed","Validation Failed"
         PENDING_APPROVAL="pending_approval","Pending Approval"; APPROVED="approved","Approved"; AUTO_APPROVED="auto_approved","Auto Approved"
         SENT_TO_TPA="sent_to_tpa","Sent to TPA"; TPA_IN_PROGRESS="tpa_in_progress","TPA In Progress"; TPA_QUERY="tpa_query","TPA Query"
+        CARD_DISPATCH="card_dispatch","Card Dispatch"
         PROCESSING="processing","Processing"; PROCESSED="processed","Processed"; COMPLETED="completed","Completed"; REJECTED="rejected","Rejected"; FAILED="failed","Failed"; CANCELLED="cancelled","Cancelled"
     reference=models.CharField(max_length=40, unique=True, null=True, blank=True, editable=False)
     sponsor=models.ForeignKey(TPAOrganization, related_name="transactions", on_delete=models.PROTECT)
@@ -240,6 +241,7 @@ class MemberAction(TimeStampedModel):
     card_number=models.CharField(max_length=100, blank=True)
     tpa_effective_date=models.DateField(null=True, blank=True)
     tpa_premium_amount=models.DecimalField(max_digits=14, decimal_places=3, null=True, blank=True)
+    tpa_override_reason=models.TextField(blank=True)
     processing_status=models.CharField(max_length=30, blank=True)
     processing_message=models.TextField(blank=True)
     processed_at=models.DateTimeField(null=True, blank=True)

@@ -829,10 +829,15 @@ def transaction_detail(request, reference):
     except CardDispatch.DoesNotExist:
         card_dispatch = None
 
+    target_tat_hours = None
+    if tx.ticket_id and tx.ticket.sla_policy_id:
+        target_tat_hours = round(tx.ticket.sla_policy.resolution_minutes / 60, 1)
+
     context = {
         "tx": tx,
         "actions": actions,
-        "events": tx.events.all(),
+        "events": tx.events.select_related("actor").all(),
+        "target_tat_hours": target_tat_hours,
         "member_form": member_form,
         "bulk_card_form": BulkCardSelectionForm(),
         "selectable_members": selectable_members,

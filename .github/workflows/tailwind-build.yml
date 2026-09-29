@@ -4,21 +4,28 @@ on:
   push:
     branches:
       - main
-      - django-cdn-tailwind-daisyui
     paths:
-      - "static/css/glis-tailwind.css"
-      - "static/js/app.js"
+      - "static/css/input.css"
+      - "static/css/output.css"
+      - "static/css/tpa.css"
+      - "static/js/portal.js"
+      - "static/js/tpa.js"
       - "templates/**"
       - "apps/**"
       - "services/**"
+      - "scripts/build_portal_css.ps1"
       - ".github/workflows/tailwind-build.yml"
   pull_request:
     paths:
-      - "static/css/glis-tailwind.css"
-      - "static/js/app.js"
+      - "static/css/input.css"
+      - "static/css/output.css"
+      - "static/css/tpa.css"
+      - "static/js/portal.js"
+      - "static/js/tpa.js"
       - "templates/**"
       - "apps/**"
       - "services/**"
+      - "scripts/build_portal_css.ps1"
       - ".github/workflows/tailwind-build.yml"
 
 permissions:
@@ -27,7 +34,8 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,44 +45,74 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Verify Django-only UI assets
+      - name: Verify portal UI assets
         run: |
-          test ! -f package.json
-          test ! -f package-lock.json
-          test ! -f static/src/tailwind.css
-          test -s static/css/glis-tailwind.css
-          grep -Fq "tailwindcss v4.3.3" static/css/glis-tailwind.css
-          grep -Fq "tw\\:d-btn" static/css/glis-tailwind.css
-          grep -Fq "tw\\:d-aura" static/css/glis-tailwind.css
-          grep -Fq "tw\\:d-hover-3d" static/css/glis-tailwind.css
-          grep -Fq "tw\\:d-text-rotate" static/css/glis-tailwind.css
-          grep -Fq "{% static 'css/glis-tailwind.css' %}" templates/base_public.html
-          grep -Fq "{% static 'css/glis-tailwind.css' %}" templates/base_portal.html
+          test -s static/css/input.css
+          test -s static/css/output.css
+          test -s static/js/portal.js
+          grep -Fq "{% static 'css/output.css' %}" templates/base_portal.html
+          grep -Fq "{% static 'js/portal.js' %}" templates/base_portal.html
+          ! grep -Fq "{% static 'css/glis-tailwind.css' %}" templates/base_portal.html
+          ! grep -Fq "cdn.jsdelivr.net/npm/daisyui@5" templates/base_portal.html
+          grep -Fq ".btn" static/css/output.css
+          grep -Fq ".card" static/css/output.css
 
-      - name: Validate prefixed Tailwind syntax
+      - name: Reject Tailwind prefixes in authenticated portal
         shell: python
         run: |
           from pathlib import Path
-          import re
 
-          files = (
-              list(Path("templates").rglob("*.html"))
-              + list(Path("apps").rglob("*.py"))
-              + list(Path("services").rglob("*.py"))
-          )
-          invalid = []
-          wrong_order = re.compile(r"\b(?:sm|md|lg|xl|2xl|hover|focus|active|disabled|group-hover|group-focus):tw:")
-          mangled = re.compile(r"\b(?:2tw:|group-tw:)")
+          files = [
+              Path("templates/base_portal.html"),
+              Path("templates/account/profile.html"),
+              Path("templates/cms/portal_page.html"),
+              *Path("templates/documents").rglob("*.html"),
+              *Path("templates/notifications").rglob("*.html"),
+              *Path("templates/orchestrator").rglob("*.html"),
+              *Path("templates/portal").rglob("*.html"),
+              *Path("templates/tasks").rglob("*.html"),
+              *Path("templates/tickets").rglob("*.html"),
+              *Path("templates/tpa").rglob("*.html"),
+              Path("apps/accounts/forms.py"),
+              Path("apps/accounts/views.py"),
+              Path("apps/tasks/forms.py"),
+              Path("apps/tickets/forms.py"),
+              Path("apps/tpa/forms.py"),
+              Path("services/dynamic_forms.py"),
+              Path("static/js/portal.js"),
+              Path("static/js/tpa.js"),
+          ]
 
+          offenders = []
           for path in files:
+              if not path.exists():
+                  continue
               text = path.read_text(encoding="utf-8")
-              for match in wrong_order.finditer(text):
-                  invalid.append(f"{path}: {match.group(0)}")
-              for match in mangled.finditer(text):
-                  invalid.append(f"{path}: {match.group(0)}")
+              if "tw:" in text:
+                  offenders.append(str(path))
 
-          if invalid:
-              raise SystemExit("Invalid prefixed Tailwind syntax:\n" + "\n".join(invalid))
+          if offenders:
+              raise SystemExit(
+                  "Authenticated portal still contains tw: prefixes:\n"
+                  + "\n".join(offenders)
+              )
 
       - name: Validate Python syntax
         run: python -m compileall -q glis apps services
+
+      - name: Build Tailwind and daisyUI using standalone CLI
+        run: |
+          curl -fsSL -o static/css/tailwindcss https://github.com/tailwindlabs/tailwindcss/releases/download/v4.3.3/tailwindcss-linux-x64
+          chmod +x static/css/tailwindcss
+          curl -fsSL -o static/css/daisyui.mjs https://github.com/saadeghi/daisyui/releases/download/v5.7.46/daisyui.mjs
+          curl -fsSL -o static/css/daisyui-theme.mjs https://github.com/saadeghi/daisyui/releases/download/v5.7.46/daisyui-theme.mjs
+          ./static/css/tailwindcss -i static/css/input.css -o /tmp/glis-portal-output.css --minify
+          test -s /tmp/glis-portal-output.css
+          grep -Fq ".btn" /tmp/glis-portal-output.css
+          grep -Fq ".card" /tmp/glis-portal-output.css
+          grep -Fq ".flex" /tmp/glis-portal-output.css
+
+      - name: Validate portal JavaScript syntax
+        run: |
+          node --check static/js/portal.js
+          node --check static/js/tpa.js

@@ -3,108 +3,108 @@
 {% block title %}{% translate "Overview" %}{% endblock %}
 
 {% block content %}
-<div class="tw:mx-auto tw:max-w-[100rem] tw:space-y-6">
+<div class="mx-auto max-w-[100rem] space-y-6">
 
-  <section class="card tw:overflow-hidden tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg">
-    <div class="card-body tw:grid tw:gap-6 tw:p-6 tw:lg:grid-cols-[1.35fr_.65fr] tw:lg:items-center">
+  <section class="card overflow-hidden border border-base-300 bg-base-100 shadow-lg">
+    <div class="card-body grid gap-6 p-6 lg:grid-cols-[1.35fr_.65fr] lg:items-center">
       <div>
-        <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-          <span class="badge badge-success badge-soft tw:gap-2"><span class="status status-success tw:animate-pulse"></span>{% translate "Operations online" %}</span>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="badge badge-success badge-soft gap-2"><span class="status status-success animate-pulse"></span>{% translate "Operations online" %}</span>
           <span class="badge badge-outline"><i class="bi bi-calendar3"></i>{% now "d M Y" %}</span>
           <span class="badge badge-primary badge-soft"><i class="bi bi-shield-check"></i>{% translate "Secure workspace" %}</span>
         </div>
-        <h1 class="tw:mt-2 tw:text-3xl tw:font-black tw:tracking-[-.04em] tw:sm:text-4xl tw:lg:text-5xl">{% blocktranslate with name=user.first_name|default:user.email %}Welcome back, {{ name }}{% endblocktranslate %}</h1>
+        <h1 class="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl lg:text-5xl">{% blocktranslate with name=user.first_name|default:user.email %}Welcome back, {{ name }}{% endblocktranslate %}</h1>
       </div>
     </div>
   </section>
 
-  <section class="tw:overflow-x-auto" aria-label="{% translate 'Key metrics' %}">
-    <div class="stats stats-horizontal tw:w-full tw:min-w-[72rem] tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
+  <section class="overflow-x-auto" aria-label="{% translate 'Key metrics' %}">
+    <div class="stats stats-horizontal w-full min-w-[72rem] border border-base-300 bg-base-100 shadow-sm">
       <div class="stat">
-        <div class="stat-figure tw:text-primary"><i class="bi bi-inbox tw:text-2xl"></i></div>
-        <div class="stat-title">{% translate "Open tickets" %}</div><div class="stat-value tw:text-primary">{{ metrics.open }}</div><div class="stat-desc">{% translate "Active workload" %}</div>
+        <div class="stat-figure text-primary"><i class="bi bi-inbox text-2xl"></i></div>
+        <div class="stat-title">{% translate "Open tickets" %}</div><div class="stat-value text-primary">{{ metrics.open }}</div><div class="stat-desc">{% translate "Active workload" %}</div>
       </div>
       <div class="stat">
-        <div class="stat-figure tw:text-info"><i class="bi bi-person-check tw:text-2xl"></i></div>
+        <div class="stat-figure text-info"><i class="bi bi-person-check text-2xl"></i></div>
         <div class="stat-title">{% translate "Assigned to me" %}</div><div class="stat-value">{{ metrics.assigned }}</div><div class="stat-desc">{% translate "Direct and shared" %}</div>
       </div>
       <div class="stat">
-        <div class="stat-figure tw:text-error"><i class="bi bi-exclamation-triangle tw:text-2xl"></i></div>
-        <div class="stat-title">{% translate "Overdue" %}</div><div class="stat-value tw:text-error">{{ metrics.overdue }}</div><div class="stat-desc">{% translate "Requires action" %}</div>
+        <div class="stat-figure text-error"><i class="bi bi-exclamation-triangle text-2xl"></i></div>
+        <div class="stat-title">{% translate "Overdue" %}</div><div class="stat-value text-error">{{ metrics.overdue }}</div><div class="stat-desc">{% translate "Requires action" %}</div>
       </div>
       <div class="stat">
-        <div class="stat-figure tw:text-success"><i class="bi bi-check2-circle tw:text-2xl"></i></div>
+        <div class="stat-figure text-success"><i class="bi bi-check2-circle text-2xl"></i></div>
         <div class="stat-title">{% translate "Resolved" %}</div><div class="stat-value">{{ metrics.resolved_month }}</div><div class="stat-desc">{% translate "This month" %}</div>
       </div>
       <div class="stat">
-        <div class="stat-figure tw:text-secondary"><i class="bi bi-reply tw:text-2xl"></i></div>
+        <div class="stat-figure text-secondary"><i class="bi bi-reply text-2xl"></i></div>
         <div class="stat-title">{% translate "First response" %}</div><div class="stat-value">{{ metrics.first_response_tat }}h</div><div class="stat-desc">{% translate "Average TAT" %}</div>
       </div>
       <div class="stat">
-        <div class="stat-figure tw:text-accent"><i class="bi bi-stopwatch tw:text-2xl"></i></div>
+        <div class="stat-figure text-accent"><i class="bi bi-stopwatch text-2xl"></i></div>
         <div class="stat-title">{% translate "Resolution TAT" %}</div><div class="stat-value">{{ metrics.resolution_tat }}h</div><div class="stat-desc">{% translate "Average TAT" %}</div>
       </div>
       <div class="stat">
-        <div class="stat-figure tw:text-primary"><i class="bi bi-bullseye tw:text-2xl"></i></div>
+        <div class="stat-figure text-primary"><i class="bi bi-bullseye text-2xl"></i></div>
         <div class="stat-title">{% translate "SLA attainment" %}</div><div class="stat-value">{{ metrics.sla_attainment }}%</div><div class="stat-desc">{% translate "Within target" %}</div>
       </div>
     </div>
   </section>
 
-  <section class="tw:grid tw:gap-6 tw:xl:grid-cols-12">
-    <article class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-8">
-      <div class="card-body tw:p-5 tw:sm:p-6">
-        <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
-          <div><span class="badge badge-primary badge-soft tw:mb-2">{% translate "14 day pulse" %}</span><h2 class="card-title tw:text-xl">{% translate "Opened ticket trend" %}</h2><p class="tw:text-sm tw:text-base-content/45">{% translate "Daily workload created during the last two weeks" %}</p></div>
-          <i class="bi bi-graph-up-arrow tw:text-2xl tw:text-primary"></i>
+  <section class="grid gap-6 xl:grid-cols-12">
+    <article class="card border border-base-300 bg-base-100 shadow-sm xl:col-span-8">
+      <div class="card-body p-5 sm:p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div><span class="badge badge-primary badge-soft mb-2">{% translate "14 day pulse" %}</span><h2 class="card-title text-xl">{% translate "Opened ticket trend" %}</h2><p class="text-sm text-base-content/45">{% translate "Daily workload created during the last two weeks" %}</p></div>
+          <i class="bi bi-graph-up-arrow text-2xl text-primary"></i>
         </div>
-        <div id="ticket-daily-chart" class="tw:min-h-[20rem]"></div>
+        <div id="ticket-daily-chart" class="min-h-[20rem]"></div>
       </div>
     </article>
 
-    <article class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-4">
-      <div class="card-body tw:p-5 tw:sm:p-6">
-        <span class="badge badge-secondary badge-soft tw:mb-2">{% translate "Current mix" %}</span>
-        <h2 class="card-title tw:text-xl">{% translate "Status distribution" %}</h2>
-        <p class="tw:text-sm tw:text-base-content/45">{% translate "Where active work stands now" %}</p>
-        <div id="ticket-status-chart" class="tw:min-h-[20rem]"></div>
+    <article class="card border border-base-300 bg-base-100 shadow-sm xl:col-span-4">
+      <div class="card-body p-5 sm:p-6">
+        <span class="badge badge-secondary badge-soft mb-2">{% translate "Current mix" %}</span>
+        <h2 class="card-title text-xl">{% translate "Status distribution" %}</h2>
+        <p class="text-sm text-base-content/45">{% translate "Where active work stands now" %}</p>
+        <div id="ticket-status-chart" class="min-h-[20rem]"></div>
       </div>
     </article>
   </section>
 
-  <section class="tw:grid tw:gap-6 tw:md:grid-cols-2 tw:xl:grid-cols-3">
-    <article class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="card-body tw:p-5"><h2 class="card-title tw:text-lg">{% translate "Priority" %}</h2><div id="ticket-priority-chart" class="tw:min-h-[16rem]"></div></div></article>
-    <article class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="card-body tw:p-5"><h2 class="card-title tw:text-lg">{% translate "Assignee" %}</h2><div id="ticket-assignee-chart" class="tw:min-h-[16rem]"></div></div></article>
-    <article class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:md:col-span-2 tw:xl:col-span-1"><div class="card-body tw:p-5"><h2 class="card-title tw:text-lg">{% translate "Category" %}</h2><div id="ticket-category-chart" class="tw:min-h-[16rem]"></div></div></article>
+  <section class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <article class="card border border-base-300 bg-base-100 shadow-sm"><div class="card-body p-5"><h2 class="card-title text-lg">{% translate "Priority" %}</h2><div id="ticket-priority-chart" class="min-h-[16rem]"></div></div></article>
+    <article class="card border border-base-300 bg-base-100 shadow-sm"><div class="card-body p-5"><h2 class="card-title text-lg">{% translate "Assignee" %}</h2><div id="ticket-assignee-chart" class="min-h-[16rem]"></div></div></article>
+    <article class="card border border-base-300 bg-base-100 shadow-sm md:col-span-2 xl:col-span-1"><div class="card-body p-5"><h2 class="card-title text-lg">{% translate "Category" %}</h2><div id="ticket-category-chart" class="min-h-[16rem]"></div></div></article>
   </section>
 
-  <section class="tw:grid tw:gap-6 tw:xl:grid-cols-2">
-    <article class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="card-body tw:p-5"><div class="tw:flex tw:items-center tw:justify-between"><h2 class="card-title tw:text-lg">{% translate "Workload by product" %}</h2><i class="bi bi-box-seam tw:text-xl tw:text-primary"></i></div><div id="ticket-product-chart" class="tw:min-h-[18rem]"></div></div></article>
-    <article class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm"><div class="card-body tw:p-5"><div class="tw:flex tw:items-center tw:justify-between"><h2 class="card-title tw:text-lg">{% translate "Workload by project" %}</h2><i class="bi bi-kanban tw:text-xl tw:text-secondary"></i></div><div id="ticket-project-chart" class="tw:min-h-[18rem]"></div></div></article>
+  <section class="grid gap-6 xl:grid-cols-2">
+    <article class="card border border-base-300 bg-base-100 shadow-sm"><div class="card-body p-5"><div class="flex items-center justify-between"><h2 class="card-title text-lg">{% translate "Workload by product" %}</h2><i class="bi bi-box-seam text-xl text-primary"></i></div><div id="ticket-product-chart" class="min-h-[18rem]"></div></div></article>
+    <article class="card border border-base-300 bg-base-100 shadow-sm"><div class="card-body p-5"><div class="flex items-center justify-between"><h2 class="card-title text-lg">{% translate "Workload by project" %}</h2><i class="bi bi-kanban text-xl text-secondary"></i></div><div id="ticket-project-chart" class="min-h-[18rem]"></div></div></article>
   </section>
 
-  <section class="tw:grid tw:gap-6 tw:xl:grid-cols-12">
-    <article class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm tw:xl:col-span-8">
-      <div class="card-body tw:p-0">
-        <div class="tw:flex tw:items-center tw:justify-between tw:gap-3 tw:px-5 tw:pt-5 tw:sm:px-6">
-          <div><span class="badge badge-primary badge-soft tw:mb-2">{% translate "Recent activity" %}</span><h2 class="card-title tw:text-xl">{% translate "Recent tickets" %}</h2></div>
-          <a class="btn btn-ghost btn-sm tw:text-primary" href="{% url 'portal:ticket_list' %}">{% translate "View all" %}<i class="bi bi-arrow-right"></i></a>
+  <section class="grid gap-6 xl:grid-cols-12">
+    <article class="card border border-base-300 bg-base-100 shadow-sm xl:col-span-8">
+      <div class="card-body p-0">
+        <div class="flex items-center justify-between gap-3 px-5 pt-5 sm:px-6">
+          <div><span class="badge badge-primary badge-soft mb-2">{% translate "Recent activity" %}</span><h2 class="card-title text-xl">{% translate "Recent tickets" %}</h2></div>
+          <a class="btn btn-ghost btn-sm text-primary" href="{% url 'portal:ticket_list' %}">{% translate "View all" %}<i class="bi bi-arrow-right"></i></a>
         </div>
-        <div class="tw:mt-3 tw:overflow-x-auto">
+        <div class="mt-3 overflow-x-auto">
           <table class="table table-zebra">
             <thead><tr><th>{% translate "Ticket" %}</th><th>{% translate "Service" %}</th><th>{% translate "Priority" %}</th><th>{% translate "Status" %}</th><th>{% translate "SLA" %}</th><th></th></tr></thead>
             <tbody>
               {% for ticket in recent_tickets %}
               <tr>
-                <td><a class="tw:block tw:min-w-48 tw:no-underline" href="{% url 'portal:ticket_detail' ticket.reference %}"><strong class="tw:block tw:text-primary">{{ ticket.reference }}</strong><small class="tw:block tw:max-w-64 tw:truncate tw:text-base-content/45">{{ ticket.subject|truncatechars:44 }}</small></a></td>
-                <td><span class="tw:block tw:font-semibold">{{ ticket.project.name_en }}</span><small class="tw:text-base-content/45">{{ ticket.category.name_en }}</small></td>
+                <td><a class="block min-w-48 no-underline" href="{% url 'portal:ticket_detail' ticket.reference %}"><strong class="block text-primary">{{ ticket.reference }}</strong><small class="block max-w-64 truncate text-base-content/45">{{ ticket.subject|truncatechars:44 }}</small></a></td>
+                <td><span class="block font-semibold">{{ ticket.project.name_en }}</span><small class="text-base-content/45">{{ ticket.category.name_en }}</small></td>
                 <td><span class="badge badge-warning badge-soft badge-sm">{{ ticket.get_priority_display }}</span></td>
                 <td><span class="badge badge-outline badge-sm">{{ ticket.get_status_display }}</span></td>
                 <td><span class="badge badge-info badge-soft badge-sm">{{ ticket.sla_state|title }}</span></td>
                 <td><a class="btn btn-ghost btn-circle btn-sm" href="{% url 'portal:ticket_detail' ticket.reference %}"><i class="bi bi-arrow-up-right"></i></a></td>
               </tr>
               {% empty %}
-              <tr><td colspan="6"><div class="tw:py-12 tw:text-center tw:text-base-content/45">{% translate "No tickets yet" %}</div></td></tr>
+              <tr><td colspan="6"><div class="py-12 text-center text-base-content/45">{% translate "No tickets yet" %}</div></td></tr>
               {% endfor %}
             </tbody>
           </table>
@@ -112,35 +112,35 @@
       </div>
     </article>
 
-    <div class="tw:space-y-6 tw:xl:col-span-4">
-      <article class="card tw:border tw:border-error/20 tw:bg-base-100 tw:shadow-sm">
-        <div class="card-body tw:p-5">
-          <div class="tw:flex tw:items-start tw:justify-between tw:gap-3">
-            <div><span class="badge badge-error badge-soft tw:mb-2">{% translate "Attention" %}</span><h2 class="card-title tw:text-xl">{% translate "Needs action" %}</h2></div>
+    <div class="space-y-6 xl:col-span-4">
+      <article class="card border border-error/20 bg-base-100 shadow-sm">
+        <div class="card-body p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div><span class="badge badge-error badge-soft mb-2">{% translate "Attention" %}</span><h2 class="card-title text-xl">{% translate "Needs action" %}</h2></div>
             <span class="badge badge-error">{{ attention|length }}</span>
           </div>
-          <ul class="list tw:mt-2">
+          <ul class="list mt-2">
             {% for ticket in attention %}
-            <li class="list-row tw:rounded-xl tw:px-2">
-              <span class="tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-xl tw:bg-error/10 tw:text-error"><i class="bi bi-exclamation-lg"></i></span>
-              <div class="list-col-grow tw:min-w-0"><a class="tw:font-black tw:text-base-content tw:no-underline" href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a><small class="tw:block tw:truncate tw:text-base-content/45">{{ ticket.subject|truncatechars:42 }}</small></div>
+            <li class="list-row rounded-xl px-2">
+              <span class="grid h-10 w-10 place-items-center rounded-xl bg-error/10 text-error"><i class="bi bi-exclamation-lg"></i></span>
+              <div class="list-col-grow min-w-0"><a class="font-black text-base-content no-underline" href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a><small class="block truncate text-base-content/45">{{ ticket.subject|truncatechars:42 }}</small></div>
               <span class="badge badge-error badge-soft badge-sm">{{ ticket.sla_state|title }}</span>
             </li>
             {% empty %}
-            <li class="tw:py-8 tw:text-center tw:text-base-content/45"><i class="bi bi-check2-circle tw:me-2 tw:text-success"></i>{% translate "Nothing urgent" %}</li>
+            <li class="py-8 text-center text-base-content/45"><i class="bi bi-check2-circle me-2 text-success"></i>{% translate "Nothing urgent" %}</li>
             {% endfor %}
           </ul>
         </div>
       </article>
 
-      <article class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm">
-        <div class="card-body tw:p-5">
-          <h2 class="card-title tw:text-lg">{% translate "Quick access" %}</h2>
-          <ul class="menu tw:mt-2 tw:w-full tw:gap-2 tw:p-0">
-            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated tw:text-primary"></i><span>{% translate "Tickets" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
-            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'tasks:list' %}"><i class="bi bi-list-task tw:text-primary"></i><span>{% translate "Tasks" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
-            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'documents:center' %}"><i class="bi bi-folder2-open tw:text-primary"></i><span>{% translate "Documents" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
-            <li><a class="tw:min-h-12 tw:rounded-xl tw:bg-base-200/55" href="{% url 'orchestrator:console' %}"><i class="bi bi-stars tw:text-primary"></i><span>{% translate "Analytics" %}</span><i class="bi bi-chevron-right tw:ms-auto tw:text-xs tw:text-base-content/35"></i></a></li>
+      <article class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="card-body p-5">
+          <h2 class="card-title text-lg">{% translate "Quick access" %}</h2>
+          <ul class="menu mt-2 w-full gap-2 p-0">
+            <li><a class="min-h-12 rounded-xl bg-base-200/55" href="{% url 'portal:ticket_list' %}"><i class="bi bi-ticket-perforated text-primary"></i><span>{% translate "Tickets" %}</span><i class="bi bi-chevron-right ms-auto text-xs text-base-content/35"></i></a></li>
+            <li><a class="min-h-12 rounded-xl bg-base-200/55" href="{% url 'tasks:list' %}"><i class="bi bi-list-task text-primary"></i><span>{% translate "Tasks" %}</span><i class="bi bi-chevron-right ms-auto text-xs text-base-content/35"></i></a></li>
+            <li><a class="min-h-12 rounded-xl bg-base-200/55" href="{% url 'documents:center' %}"><i class="bi bi-folder2-open text-primary"></i><span>{% translate "Documents" %}</span><i class="bi bi-chevron-right ms-auto text-xs text-base-content/35"></i></a></li>
+            <li><a class="min-h-12 rounded-xl bg-base-200/55" href="{% url 'orchestrator:console' %}"><i class="bi bi-stars text-primary"></i><span>{% translate "Analytics" %}</span><i class="bi bi-chevron-right ms-auto text-xs text-base-content/35"></i></a></li>
           </ul>
         </div>
       </article>

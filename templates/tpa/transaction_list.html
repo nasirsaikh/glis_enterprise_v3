@@ -10,9 +10,9 @@
       <p class="tpa-subtitle">{% translate "Member additions, terminations, deletion/void and policy cancellation for already enrolled policies." %}</p>
     </div>
     <div class="tw:flex tw:flex-wrap tw:gap-1.5">
-      <a class="btn btn-outline btn-sm" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-building-add"></i>{% translate "Initial Enrollment" %}</a>
+      <a class="btn btn-outline tw:d-btn-outline btn-sm tw:d-btn-sm" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-building-add"></i>{% translate "Initial Enrollment" %}</a>
       {% if can_create_endorsement %}
-      <a class="btn btn-primary btn-sm" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>
+      <a class="btn btn-primary tw:d-btn-primary btn-sm tw:d-btn-sm" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>
       {% endif %}
     </div>
   </header>
@@ -20,23 +20,23 @@
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Accessible work queue" %}</div><h2 class="tpa-section-title">{% translate "ALL ENDORSEMENTS" %}</h2></div>
-      <span class="badge badge-outline">{{ transactions|length }} {% translate "ROWS" %}</span>
+      <span class="badge badge-outline tw:d-badge-outline">{{ transactions|length }} {% translate "ROWS" %}</span>
     </div>
     <div class="tw:overflow-x-auto">
-      <table class="table table-sm">
+      <table class="table table-sm tw:d-table-sm">
         <thead><tr><th>{% translate "Reference" %}</th><th>{% translate "Policy" %}</th><th>{% translate "Type" %}</th><th>{% translate "Source" %}</th><th>{% translate "Status" %}</th><th>{% translate "STP" %}</th><th>{% translate "GLIS Record" %}</th></tr></thead>
         <tbody>
         {% for tx in transactions %}
           <tr>
-            <td><a class="link link-primary tpa-mono tw:font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.reference }}</a></td>
+            <td><a class="link link-primary tw:d-link-primary tpa-mono tw:font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.reference }}</a></td>
             <td><strong>{{ tx.policy.policy_number }}</strong><div class="tw:text-[10px] tw:opacity-45">{{ tx.sponsor.name_en }}</div></td>
             <td>{{ tx.get_transaction_type_display }}</td>
-            <td><span class="badge badge-ghost">{{ tx.get_source_display }}</span></td>
+            <td><span class="badge badge-ghost tw:d-badge-ghost">{{ tx.get_source_display }}</span></td>
             <td>
-              <span class="badge {% if tx.status == 'completed' %}badge-success badge-soft{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' %}badge-warning badge-soft{% elif tx.status == 'rejected' or tx.status == 'failed' %}badge-error badge-soft{% elif tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' %}badge-info badge-soft{% else %}badge-outline{% endif %}">{{ tx.get_status_display }}</span>
+              <span class="badge tw:d-badge {% if tx.status == 'completed' %}badge-success badge-soft{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' %}badge-warning badge-soft{% elif tx.status == 'rejected' or tx.status == 'failed' %}badge-error badge-soft{% elif tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' %}badge-info badge-soft{% else %}badge-outline{% endif %}">{{ tx.get_status_display }}</span>
             </td>
-            <td>{% if tx.stp_eligible %}<span class="badge badge-success badge-soft">YES</span>{% else %}<span class="badge badge-ghost">NO</span>{% endif %}</td>
-            <td>{% if tx.ticket %}<a class="link tpa-mono tw:text-[10px]" href="{% url 'portal:ticket_detail' tx.ticket.reference %}">{{ tx.ticket.reference }}</a>{% else %}—{% endif %}</td>
+            <td>{% if tx.stp_eligible %}<span class="badge badge-success tw:d-badge-success badge-soft tw:d-badge-soft">YES</span>{% else %}<span class="badge badge-ghost tw:d-badge-ghost">NO</span>{% endif %}</td>
+            <td>{% if tx.ticket %}<a class="link tw:d-link tpa-mono tw:text-[10px]" href="{% url 'portal:ticket_detail' tx.ticket.reference %}">{{ tx.ticket.reference }}</a>{% else %}—{% endif %}</td>
           </tr>
         {% empty %}
           <tr><td colspan="7" class="tw:py-8 tw:text-center tw:opacity-45">{% translate "No endorsements yet." %}</td></tr>

@@ -162,6 +162,14 @@ ollama pull qwen2.5:7b
 ollama serve
 ```
 
+Then create/update only the TPA Ollama provider/profile configuration (no demo business data):
+
+```bash
+python manage.py configure_tpa_ollama
+# Optional exact local model tags:
+python manage.py configure_tpa_ollama --ocr-model glm-ocr:q8_0 --text-model qwen2.5:7b
+```
+
 The seed command creates the provider records in Django Admin. If your installed OCR model tag is different (for example a quantized tag), update **TPA Ollama Vision OCR → Model name** to the exact Ollama model tag installed on the server.
 
 ## AI provider configuration

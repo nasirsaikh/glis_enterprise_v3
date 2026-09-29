@@ -273,7 +273,7 @@ The seed creates/updates:
 - GOLD and SILVER benefit plans;
 - an existing principal/spouse/child family;
 - TPA Demo Operators group and policy access;
-- Mock AI provider with `email_extraction` and `document_extraction`;
+- text-only Mock AI provider with `email_extraction` for safe local testing;
 - email/document extraction profiles and a training example;
 - one valid AI inbound email sample;
 - one intentionally invalid inbound email sample.

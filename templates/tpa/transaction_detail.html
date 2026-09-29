@@ -1,28 +1,34 @@
 {% extends "base_portal.html" %}
 {% load i18n %}
-{% block title %}{{ tx.reference }} · {% translate "TPA Transaction" %}{% endblock %}
+{% block title %}{{ tx.reference }} · {% if initial_setup %}{% translate "Initial Policy Enrollment" %}{% else %}{% translate "Endorsement" %}{% endif %}{% endblock %}
 
 {% block content %}
 <div class="tw:space-y-5">
 
-  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg">
+  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl">
     <div class="tw:d-card-body tw:p-5">
-      <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-4">
+      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-4">
         <div class="tw:min-w-0">
           <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+            {% if initial_setup %}
+            <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">{% translate "Initial Policy Setup" %}</span>
+            {% else %}
             <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">{{ tx.get_transaction_type_display }}</span>
+            {% endif %}
             <span class="tw:d-badge tw:d-badge-outline">{{ tx.get_status_display }}</span>
             {% if tx.source != "PORTAL" %}<span class="tw:d-badge tw:d-badge-info tw:d-badge-soft">{{ tx.get_source_display }}</span>{% endif %}
+            {% if tx.ai_extraction_status %}<span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft">AI {{ tx.ai_extraction_status }}</span>{% endif %}
           </div>
           <h1 class="tw:mt-2 tw:text-3xl tw:font-black">{{ tx.reference }}</h1>
-          <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{{ tx.policy.policy_number }} · {{ tx.sponsor.name_en }} · {{ tx.insurer.name_en }}</p>
+          <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">
+            {{ tx.policy.policy_number }} · {{ tx.sponsor.name_en }} · {{ tx.insurer.name_en }}
+            {% if tx.policy.tpa_organization %} · {{ tx.policy.tpa_organization.name_en }}{% endif %}
+          </p>
         </div>
 
         <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
           {% if tx.ticket %}
-          <a class="tw:d-btn tw:d-btn-outline tw:d-btn-sm" href="{% url 'portal:ticket_detail' tx.ticket.reference %}">
-            <i class="bi bi-ticket-perforated"></i>{{ tx.ticket.reference }}
-          </a>
+          <span class="tw:d-badge tw:d-badge-ghost"><i class="bi bi-ticket-perforated"></i>{{ tx.ticket.reference }}</span>
           {% endif %}
 
           {% if tx.status == "draft" %}
@@ -43,28 +49,24 @@
 
           {% if tx.status == "pending_approval" %}
             {% if ticket_approval_pending %}
-            <a class="tw:d-btn tw:d-btn-warning tw:d-btn-sm" href="{% url 'portal:ticket_detail' tx.ticket.reference %}">
-              <i class="bi bi-hourglass-split"></i>{% translate "Complete GLIS Approval" %}
-            </a>
+            <span class="tw:d-badge tw:d-badge-warning tw:d-badge-lg"><i class="bi bi-hourglass-split"></i>{% translate "GLIS Approval Pending" %}</span>
             {% elif can_approve %}
             <form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}">
               {% csrf_token %}
               <button class="tw:d-btn tw:d-btn-success tw:d-btn-sm" type="submit">
-                <i class="bi bi-check-lg"></i>{% translate "Approve" %}
+                <i class="bi bi-check-lg"></i>{% translate "Approve & Dispatch" %}
               </button>
             </form>
             {% endif %}
           {% endif %}
 
-          {% if tx.status == "approved" or tx.status == "auto_approved" %}
-            {% if can_process %}
-            <form method="post" action="{% url 'tpa:transaction_process' tx.reference %}">
-              {% csrf_token %}
-              <button class="tw:d-btn tw:d-btn-primary tw:d-btn-sm" type="submit">
-                <i class="bi bi-gear-wide-connected"></i>{% translate "Process Transaction" %}
-              </button>
-            </form>
-            {% endif %}
+          {% if can_start_tpa %}
+          <form method="post" action="{% url 'tpa:transaction_tpa_start' tx.reference %}">
+            {% csrf_token %}
+            <button class="tw:d-btn tw:d-btn-info tw:d-btn-sm" type="submit">
+              <i class="bi bi-play-fill"></i>{% translate "Start TPA Processing" %}
+            </button>
+          </form>
           {% endif %}
         </div>
       </div>
@@ -74,173 +76,144 @@
   <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
     <div class="tw:d-card-body tw:p-4">
       <ul class="tw:d-steps tw:w-full">
-        <li class="tw:d-step tw:d-step-primary">{% translate "Intake" %}</li>
-        <li class="tw:d-step {% if actions %}tw:d-step-primary{% endif %}">{% translate "Extraction" %}</li>
-        <li class="tw:d-step {% if tx.status != 'draft' and tx.status != 'pending_validation' or tx.validation_score > 0 %}tw:d-step-primary{% endif %}">{% translate "Validation" %}</li>
-        <li class="tw:d-step {% if tx.status == 'pending_approval' or tx.status == 'approved' or tx.status == 'auto_approved' or tx.status == 'processing' or tx.status == 'processed' or tx.status == 'rejected' %}tw:d-step-primary{% endif %}">{% translate "Approval" %}</li>
-        <li class="tw:d-step {% if tx.status == 'approved' or tx.status == 'auto_approved' or tx.status == 'processing' or tx.status == 'processed' %}tw:d-step-primary{% endif %}">{% translate "Processing" %}</li>
-        <li class="tw:d-step {% if tx.status == 'processed' %}tw:d-step-primary{% endif %}">{% translate "Complete" %}</li>
+        <li class="tw:d-step tw:d-step-primary">{% if initial_setup %}{% translate "Policy & Census" %}{% else %}{% translate "Intake & Correction" %}{% endif %}</li>
+        <li class="tw:d-step {% if tx.status != 'draft' and tx.status != 'extracting' %}tw:d-step-primary{% endif %}">{% translate "Validation" %}</li>
+        <li class="tw:d-step {% if tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' or tx.status == 'processed' %}tw:d-step-primary{% endif %}">{% translate "Approval" %}</li>
+        <li class="tw:d-step {% if tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' %}tw:d-step-primary{% endif %}">{% translate "TPA Processing" %}</li>
+        <li class="tw:d-step {% if tx.status == 'completed' or tx.status == 'processed' %}tw:d-step-primary{% endif %}">{% translate "Complete" %}</li>
       </ul>
     </div>
   </section>
 
   <div style="display:flex;gap:.75rem;overflow-x:auto;padding-bottom:.25rem;">
-    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 155px;">
-      <div class="tw:d-stat-title">{% translate "Rows" %}</div>
-      <div class="tw:d-stat-value tw:text-2xl">{{ actions|length }}</div>
-    </div>
-    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 155px;">
-      <div class="tw:d-stat-title">{% translate "Valid" %}</div>
-      <div class="tw:d-stat-value tw:text-2xl">{{ valid_count }}</div>
-    </div>
-    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 155px;">
-      <div class="tw:d-stat-title">{% translate "Warnings" %}</div>
-      <div class="tw:d-stat-value tw:text-2xl">{{ warning_count }}</div>
-    </div>
-    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 155px;">
-      <div class="tw:d-stat-title">{% translate "Errors" %}</div>
-      <div class="tw:d-stat-value tw:text-2xl">{{ error_count }}</div>
-    </div>
-    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 155px;">
-      <div class="tw:d-stat-title">{% translate "Success rate" %}</div>
-      <div class="tw:d-stat-value tw:text-2xl">{{ success_rate }}%</div>
-    </div>
-    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 155px;">
-      <div class="tw:d-stat-title">{% translate "Validation" %}</div>
-      <div class="tw:d-stat-value tw:text-2xl">{{ tx.validation_score }}%</div>
-    </div>
-    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 155px;">
-      <div class="tw:d-stat-title">{% translate "STP eligible" %}</div>
-      <div class="tw:d-stat-value tw:text-2xl">{{ tx.stp_eligible|yesno:"YES,NO" }}</div>
-    </div>
-    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 180px;">
-      <div class="tw:d-stat-title">{% translate "Premium impact" %}</div>
-      <div class="tw:d-stat-value tw:text-xl">{{ tx.currency }} {{ tx.premium_adjustment }}</div>
-    </div>
+    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 145px;"><div class="tw:d-stat-title">{% translate "Rows" %}</div><div class="tw:d-stat-value tw:text-2xl">{{ actions|length }}</div></div>
+    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 145px;"><div class="tw:d-stat-title">{% translate "Valid" %}</div><div class="tw:d-stat-value tw:text-2xl">{{ valid_count }}</div></div>
+    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 145px;"><div class="tw:d-stat-title">{% translate "Warnings" %}</div><div class="tw:d-stat-value tw:text-2xl">{{ warning_count }}</div></div>
+    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 145px;"><div class="tw:d-stat-title">{% translate "Errors" %}</div><div class="tw:d-stat-value tw:text-2xl">{{ error_count }}</div></div>
+    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 150px;"><div class="tw:d-stat-title">{% translate "Success" %}</div><div class="tw:d-stat-value tw:text-2xl">{{ success_rate }}%</div></div>
+    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 150px;"><div class="tw:d-stat-title">{% translate "Validation" %}</div><div class="tw:d-stat-value tw:text-2xl">{{ tx.validation_score }}%</div></div>
+    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 150px;"><div class="tw:d-stat-title">{% translate "STP" %}</div><div class="tw:d-stat-value tw:text-2xl">{{ tx.stp_eligible|yesno:"YES,NO" }}</div></div>
+    <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 190px;"><div class="tw:d-stat-title">{% translate "Premium Impact" %}</div><div class="tw:d-stat-value tw:text-xl">{{ tx.currency }} {{ tx.premium_adjustment }}</div></div>
   </div>
 
-  {% if tx.stp_blockers %}
-  <div class="tw:d-alert tw:d-alert-warning">
-    <i class="bi bi-signpost-split"></i>
-    <div>
-      <strong>{% translate "STP blockers" %}</strong>
-      <div class="tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">
-        {% for blocker in tx.stp_blockers %}
-        <span class="tw:d-badge tw:d-badge-outline">{{ blocker }}</span>
-        {% endfor %}
+  {% if initial_setup %}
+  <section class="tw:d-card tw:border tw:border-primary/20 tw:bg-base-100">
+    <div class="tw:d-card-body tw:p-5">
+      <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
+        <div>
+          <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">{% translate "Initial Setup" %}</span>
+          <h2 class="tw:mt-2 tw:d-card-title">{% translate "Policy & Benefit Plans" %}</h2>
+          <p class="tw:text-sm tw:text-base-content/55">{% translate "This setup must complete before the policy appears in New Endorsement." %}</p>
+        </div>
+        <span class="tw:d-badge {% if tx.policy.status == 'active' %}tw:d-badge-success{% else %}tw:d-badge-warning{% endif %}">{{ tx.policy.get_status_display }}</span>
+      </div>
+
+      <div class="tw:mt-4 tw:grid tw:gap-4 tw:lg:grid-cols-[1fr_1.2fr]">
+        <dl class="tw:grid tw:grid-cols-2 tw:gap-3 tw:text-sm">
+          <div><dt class="tw:text-base-content/45">{% translate "Policy" %}</dt><dd class="tw:font-bold">{{ tx.policy.policy_number }}</dd></div>
+          <div><dt class="tw:text-base-content/45">{% translate "Period" %}</dt><dd>{{ tx.policy.start_date|date:"d-M-Y" }} → {{ tx.policy.expiry_date|date:"d-M-Y" }}</dd></div>
+          <div><dt class="tw:text-base-content/45">{% translate "Sponsor" %}</dt><dd>{{ tx.policy.sponsor.name_en }}</dd></div>
+          <div><dt class="tw:text-base-content/45">{% translate "Insurance Company" %}</dt><dd>{{ tx.policy.insurance_company.name_en }}</dd></div>
+          <div><dt class="tw:text-base-content/45">{% translate "TPA" %}</dt><dd>{{ tx.policy.tpa_organization.name_en|default:"GLIS TPA Operations" }}</dd></div>
+          <div><dt class="tw:text-base-content/45">{% translate "STP" %}</dt><dd>{{ tx.policy.stp_enabled|yesno:"Enabled,Disabled" }}</dd></div>
+        </dl>
+
+        <div>
+          <div class="tw:overflow-x-auto">
+            <table class="tw:d-table tw:d-table-sm">
+              <thead><tr><th>{% translate "Plan" %}</th><th>{% translate "Annual Premium" %}</th><th>{% translate "Sum Insured" %}</th></tr></thead>
+              <tbody>
+                {% for plan in tx.policy.plans.all %}
+                <tr><td><strong>{{ plan.code }}</strong><div class="tw:text-xs tw:text-base-content/45">{{ plan.name }}</div></td><td>{{ tx.policy.currency }} {{ plan.annual_premium }}</td><td>{{ plan.default_sum_insured|default:"—" }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% if can_edit_intake and plan_form %}
+          <details class="tw:d-collapse tw:d-collapse-arrow tw:mt-3 tw:border tw:border-base-300">
+            <summary class="tw:d-collapse-title tw:text-sm tw:font-bold">{% translate "Add another benefit plan" %}</summary>
+            <div class="tw:d-collapse-content">
+              <form class="tw:grid tw:gap-3 tw:md:grid-cols-2" method="post" action="{% url 'tpa:policy_plan_add' tx.reference %}">
+                {% csrf_token %}
+                {% for field in plan_form %}
+                <label class="tw:d-form-control"><span class="tw:mb-1 tw:text-xs tw:font-semibold">{{ field.label }}</span>{{ field }}</label>
+                {% endfor %}
+                <div class="tw:md:col-span-2"><button class="tw:d-btn tw:d-btn-outline tw:d-btn-sm" type="submit"><i class="bi bi-plus-lg"></i>{% translate "Add Plan" %}</button></div>
+              </form>
+            </div>
+          </details>
+          {% endif %}
+        </div>
       </div>
     </div>
-  </div>
+  </section>
   {% endif %}
 
-  <div class="tw:grid tw:gap-4 tw:xl:grid-cols-2">
-    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
-      <div class="tw:d-card-body tw:p-5">
-        <div>
-          <h2 class="tw:d-card-title">{% translate "Member row quality" %}</h2>
-          <p class="tw:text-sm tw:text-base-content/55">{% translate "Valid, warning and error rows in this transaction." %}</p>
-        </div>
-        <div id="tpa-quality-chart" style="height:280px;"></div>
-      </div>
-    </section>
-
-    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
-      <div class="tw:d-card-body tw:p-5">
-        <div>
-          <h2 class="tw:d-card-title">{% translate "Validation error analysis" %}</h2>
-          <p class="tw:text-sm tw:text-base-content/55">{% translate "Top blocking error categories found in member rows." %}</p>
-        </div>
-        <div id="tpa-error-chart" style="height:280px;"></div>
-      </div>
-    </section>
-  </div>
-
   {% if can_edit_intake %}
-  <div class="tw:grid tw:gap-4 tw:xl:grid-cols-2">
-    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
-      <div class="tw:d-card-body tw:p-5">
-        <div class="tw:flex tw:items-center tw:justify-between tw:gap-3">
-          <div>
-            <h2 class="tw:d-card-title"><i class="bi bi-file-earmark-spreadsheet tw:text-primary"></i>{% translate "Upload members" %}</h2>
-            <p class="tw:text-sm tw:text-base-content/55">{% translate "Upload CSV or XLSX. Headers such as Full Name, DOB, Gender, Relationship, Plan, Employee No., Civil ID and Passport are recognized." %}</p>
-          </div>
+  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+    <div class="tw:d-card-body tw:p-5">
+      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-3">
+        <div>
+          <h2 class="tw:d-card-title"><i class="bi bi-cloud-arrow-up tw:text-primary"></i>{% translate "Source Documents & AI OCR" %}</h2>
+          <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{% translate "One intake zone for Excel/CSV, PDF, passport/ID images and multi-file front/back evidence. Structured files bypass AI; unstructured evidence is OCR'd then mapped to member JSON." %}</p>
         </div>
-        <form class="tw:mt-4 tw:space-y-3" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_upload_members' tx.reference %}">
-          {% csrf_token %}
-          {{ upload_form.member_file }}
-          <button class="tw:d-btn tw:d-btn-primary tw:d-btn-sm" type="submit">
-            <i class="bi bi-cloud-arrow-up"></i>{% translate "Upload & Check Rows" %}
-          </button>
-        </form>
-
-        <div class="tw:mt-4 tw:flex tw:flex-wrap tw:gap-2">
-          <a class="tw:d-btn tw:d-btn-outline tw:d-btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'xlsx' %}">
-            <i class="bi bi-file-earmark-excel"></i>{% translate "Valid Sample XLSX" %}
-          </a>
-          <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}">
-            <i class="bi bi-filetype-csv"></i>{% translate "Valid Sample CSV" %}
-          </a>
-          <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs tw:text-warning" href="{% url 'tpa:transaction_sample_file' tx.reference 'errors' 'xlsx' %}">
-            <i class="bi bi-bug"></i>{% translate "Validation Error Sample" %}
-          </a>
+        <div class="tw:flex tw:flex-wrap tw:gap-2">
+          <a class="tw:d-btn tw:d-btn-outline tw:d-btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'xlsx' %}"><i class="bi bi-file-earmark-excel"></i>{% translate "Sample XLSX" %}</a>
+          <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}"><i class="bi bi-filetype-csv"></i>{% translate "Sample CSV" %}</a>
         </div>
-
-        <details class="tw:d-collapse tw:d-collapse-arrow tw:mt-4 tw:border tw:border-base-300 tw:bg-base-200/40">
-          <summary class="tw:d-collapse-title tw:min-h-0 tw:py-3 tw:text-sm tw:font-bold">{% translate "View sample file format" %}</summary>
-          <div class="tw:d-collapse-content tw:space-y-3">
-            <p class="tw:text-xs tw:text-base-content/60">{% translate "Dependents must reference their principal using principal_employee_id or principal_member_id. A principal in the same upload can be referenced by employee_id." %}</p>
-            <div class="tw:overflow-x-auto">
-              <table class="tw:d-table tw:d-table-xs">
-                <thead>
-                  <tr>
-                    <th>employee_id</th><th>first_name</th><th>last_name</th><th>date_of_birth</th>
-                    <th>gender</th><th>relationship</th><th>plan_code</th><th>national_id</th>
-                    <th>principal_employee_id</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for row in sample_rows %}
-                  <tr>
-                    <td>{{ row.employee_id }}</td><td>{{ row.first_name }}</td><td>{{ row.last_name }}</td>
-                    <td>{{ row.date_of_birth }}</td><td>{{ row.gender }}</td><td>{{ row.relationship }}</td>
-                    <td>{{ row.plan_code }}</td><td>{{ row.national_id }}</td><td>{{ row.principal_employee_id|default:"—" }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-            <div class="tw:text-xs tw:text-base-content/60">
-              <strong>{% translate "Required:" %}</strong>
-              first_name, last_name, date_of_birth, gender, relationship, plan_code.
-              {% translate "For SPOUSE / CHILD / OTHER, a principal reference is also required." %}
-            </div>
-          </div>
-        </details>
       </div>
-    </section>
 
-    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
-      <div class="tw:d-card-body tw:p-5">
-        <h2 class="tw:d-card-title"><i class="bi bi-person-plus tw:text-primary"></i>{% translate "Add member row" %}</h2>
-        <p class="tw:text-sm tw:text-base-content/55">{% translate "Manual rows use the same validation and premium rules as uploaded rows." %}</p>
-        <form class="tw:mt-4 tw:grid tw:gap-3 tw:md:grid-cols-2" method="post" action="{% url 'tpa:transaction_add_member' tx.reference %}">
-          {% csrf_token %}
-          {% for field in member_form %}
-          <label class="tw:d-form-control" {% if field.name == "principal_reference" %}id="principal-reference-field"{% endif %}>
-            <span class="tw:d-label-text tw:mb-1 tw:text-xs tw:font-semibold">{{ field.label }}</span>
-            {{ field }}
-            {% if field.help_text %}<span class="tw:mt-1 tw:text-xs tw:text-base-content/50">{{ field.help_text }}</span>{% endif %}
+      <form class="tw:mt-4 tw:rounded-2xl tw:border tw:border-dashed tw:border-primary/40 tw:bg-primary/5 tw:p-5" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_upload_sources' tx.reference %}">
+        {% csrf_token %}
+        <div class="tw:grid tw:gap-4 tw:lg:grid-cols-[1fr_auto] tw:lg:items-end">
+          <label class="tw:d-form-control">
+            <span class="tw:mb-1 tw:text-xs tw:font-bold">{% translate "Drag/drop or select source files" %}</span>
+            {{ source_upload_form.source_files }}
+            <span class="tw:mt-2 tw:text-xs tw:text-base-content/50">{{ source_upload_form.source_files.help_text }}</span>
           </label>
+          <button class="tw:d-btn tw:d-btn-primary" type="submit"><i class="bi bi-stars"></i>{% translate "Extract & Add Rows" %}</button>
+        </div>
+      </form>
+
+      {% if source_documents %}
+      <div class="tw:mt-4 tw:overflow-x-auto">
+        <table class="tw:d-table tw:d-table-sm">
+          <thead><tr><th>{% translate "Source" %}</th><th>{% translate "Method" %}</th><th>{% translate "State" %}</th><th>{% translate "Confidence" %}</th><th>{% translate "Result" %}</th></tr></thead>
+          <tbody>
+          {% for doc in source_documents %}
+            <tr>
+              <td>{% if doc.file %}<a class="tw:link" href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.original_name }}</a>{% else %}{{ doc.original_name }}{% endif %}</td>
+              <td>{{ doc.extraction_method|default:"—" }}</td>
+              <td><span class="tw:d-badge {% if doc.processing_state == 'PROCESSED' %}tw:d-badge-success{% elif doc.processing_state == 'REVIEW' or doc.processing_state == 'FAILED' %}tw:d-badge-warning{% else %}tw:d-badge-outline{% endif %}">{{ doc.get_processing_state_display }}</span></td>
+              <td>{% if doc.extraction_confidence is not None %}{{ doc.extraction_confidence }}%{% else %}—{% endif %}</td>
+              <td class="tw:max-w-md tw:text-xs">{% if doc.processing_error %}<span class="tw:text-warning">{{ doc.processing_error }}</span>{% else %}{{ doc.extracted_payload.bundle_members_created|default:doc.extracted_payload.rows_created|default:"Processed" }}{% endif %}</td>
+            </tr>
           {% endfor %}
-          <div class="tw:md:col-span-2">
-            <button class="tw:d-btn tw:d-btn-outline tw:d-btn-sm" type="submit">
-              <i class="bi bi-plus-lg"></i>{% translate "Add Row" %}
-            </button>
-          </div>
-        </form>
+          </tbody>
+        </table>
       </div>
-    </section>
-  </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+    <div class="tw:d-card-body tw:p-5">
+      <h2 class="tw:d-card-title"><i class="bi bi-person-plus tw:text-primary"></i>{% translate "Manual Member Entry" %}</h2>
+      <p class="tw:text-sm tw:text-base-content/55">{% translate "Manual rows and AI/file rows use exactly the same deterministic validation and pricing rules." %}</p>
+      <form class="tw:mt-4 tw:grid tw:gap-3 tw:md:grid-cols-2 tw:xl:grid-cols-3" method="post" action="{% url 'tpa:transaction_add_member' tx.reference %}">
+        {% csrf_token %}
+        {% for field in member_form %}
+        <label class="tw:d-form-control" {% if field.name == "principal_reference" %}id="principal-reference-field"{% endif %}>
+          <span class="tw:mb-1 tw:text-xs tw:font-semibold">{{ field.label }}</span>
+          {{ field }}
+          {% if field.help_text %}<span class="tw:mt-1 tw:text-xs tw:text-base-content/45">{{ field.help_text }}</span>{% endif %}
+        </label>
+        {% endfor %}
+        <div class="tw:md:col-span-2 tw:xl:col-span-3"><button class="tw:d-btn tw:d-btn-outline tw:d-btn-sm" type="submit"><i class="bi bi-plus-lg"></i>{% translate "Add Member Row" %}</button></div>
+      </form>
+    </div>
+  </section>
   {% endif %}
 
   <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
@@ -248,65 +221,34 @@
       <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
         <div>
           <h2 class="tw:d-card-title">{% translate "Intake & Correction" %}</h2>
-          <p class="tw:text-sm tw:text-base-content/55">{% translate "Uploaded, extracted and manually entered rows are validated using the same deterministic rules." %}</p>
+          <p class="tw:text-sm tw:text-base-content/55">{% translate "Review extracted/manual values here before validation and downstream processing." %}</p>
         </div>
         <span class="tw:d-badge tw:d-badge-outline">{{ actions|length }} {% translate "row(s)" %}</span>
       </div>
 
       <div class="tw:mt-3 tw:overflow-x-auto">
         <table class="tw:d-table tw:d-table-sm">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>{% translate "Member" %}</th>
-              <th>{% translate "Employee" %}</th>
-              <th>{% translate "Plan" %}</th>
-              <th>{% translate "Validation" %}</th>
-              <th>{% translate "Confidence" %}</th>
-              <th>{% translate "Premium" %}</th>
-              <th>{% translate "Processing" %}</th>
-              {% if can_edit_intake %}<th></th>{% endif %}
-            </tr>
-          </thead>
+          <thead><tr><th>#</th><th>{% translate "Member" %}</th><th>{% translate "Employee" %}</th><th>{% translate "Plan" %}</th><th>{% translate "Validation" %}</th><th>{% translate "Confidence" %}</th><th>{% translate "Premium" %}</th>{% if can_edit_intake %}<th></th>{% endif %}</tr></thead>
           <tbody>
-            {% for a in actions %}
+          {% for a in actions %}
             <tr>
               <td>{{ a.row_number|default:forloop.counter }}</td>
               <td>
                 <strong>{{ a.display_first_name }} {{ a.display_last_name }}</strong>
                 {% if a.validation_errors %}
-                <details class="tw:mt-1">
-                  <summary class="tw:cursor-pointer tw:text-xs tw:text-error">{% translate "View errors" %}</summary>
-                  <ul class="tw:mt-1 tw:list-disc tw:space-y-1 tw:ps-5 tw:text-xs tw:text-error">
-                    {% for err in a.validation_errors %}<li>{{ err.message }}</li>{% endfor %}
-                  </ul>
-                </details>
+                <details class="tw:mt-1"><summary class="tw:cursor-pointer tw:text-xs tw:text-error">{% translate "View errors" %}</summary><ul class="tw:mt-1 tw:list-disc tw:space-y-1 tw:ps-5 tw:text-xs tw:text-error">{% for err in a.validation_errors %}<li>{{ err.message }}</li>{% endfor %}</ul></details>
                 {% endif %}
               </td>
               <td>{{ a.display_employee_id }}</td>
               <td>{{ a.display_plan_code }}</td>
-              <td>
-                <span class="tw:d-badge {% if a.validation_status == 'VALID' %}tw:d-badge-success{% elif a.validation_status == 'WARNING' %}tw:d-badge-warning{% else %}tw:d-badge-error{% endif %} tw:d-badge-soft">
-                  {{ a.validation_status }}
-                </span>
-              </td>
+              <td><span class="tw:d-badge {% if a.validation_status == 'VALID' %}tw:d-badge-success{% elif a.validation_status == 'WARNING' %}tw:d-badge-warning{% else %}tw:d-badge-error{% endif %} tw:d-badge-soft">{{ a.validation_status }}</span></td>
               <td>{% if a.extraction_confidence is not None %}{{ a.extraction_confidence }}%{% else %}{% translate "Manual" %}{% endif %}</td>
               <td>{{ tx.currency }} {{ a.calculated_premium }}</td>
-              <td>{{ a.processing_status|default:"—" }}</td>
-              {% if can_edit_intake %}
-              <td>
-                <form method="post" action="{% url 'tpa:transaction_remove_member' tx.reference a.pk %}">
-                  {% csrf_token %}
-                  <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs tw:text-error" type="submit" title="{% translate 'Remove row' %}">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </form>
-              </td>
-              {% endif %}
+              {% if can_edit_intake %}<td><form method="post" action="{% url 'tpa:transaction_remove_member' tx.reference a.pk %}">{% csrf_token %}<button class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs tw:text-error" type="submit"><i class="bi bi-trash"></i></button></form></td>{% endif %}
             </tr>
-            {% empty %}
-            <tr><td colspan="9" class="tw:py-8 tw:text-center tw:text-base-content/45">{% translate "No member rows yet. Add a row manually or upload a spreadsheet above." %}</td></tr>
-            {% endfor %}
+          {% empty %}
+            <tr><td colspan="8" class="tw:py-8 tw:text-center tw:text-base-content/45">{% translate "No member rows yet. Upload source files or add members manually." %}</td></tr>
+          {% endfor %}
           </tbody>
         </table>
       </div>
@@ -314,37 +256,136 @@
   </section>
 
   <div class="tw:grid tw:gap-4 tw:xl:grid-cols-2">
+    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title">{% translate "Member Quality" %}</h2><div id="tpa-quality-chart" style="height:280px;"></div></div></section>
+    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100"><div class="tw:d-card-body tw:p-5"><h2 class="tw:d-card-title">{% translate "Validation Error Analysis" %}</h2><div id="tpa-error-chart" style="height:280px;"></div></div></section>
+  </div>
+
+  {% if tx.stp_blockers %}
+  <div class="tw:d-alert tw:d-alert-warning"><i class="bi bi-signpost-split"></i><div><strong>{% translate "STP blockers" %}</strong><div class="tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for blocker in tx.stp_blockers %}<span class="tw:d-badge tw:d-badge-outline">{{ blocker }}</span>{% endfor %}</div></div></div>
+  {% endif %}
+
+  <section class="tw:d-card tw:border tw:border-info/30 tw:bg-base-100">
+    <div class="tw:d-card-body tw:p-5">
+      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-3">
+        <div>
+          <span class="tw:d-badge tw:d-badge-info tw:d-badge-soft">{% translate "Step 4" %}</span>
+          <h2 class="tw:mt-2 tw:d-card-title">{% translate "TPA Processing & Query" %}</h2>
+          <p class="tw:text-sm tw:text-base-content/55">{% translate "TPA processing and all requester communication stay inside this case. The linked GLIS ticket remains the audit/SLA record underneath." %}</p>
+        </div>
+        <span class="tw:d-badge tw:d-badge-outline">{{ tx.get_status_display }}</span>
+      </div>
+
+      {% if tx.status == "sent_to_tpa" %}
+      <div class="tw:d-alert tw:d-alert-info tw:mt-4"><i class="bi bi-send-check"></i><span>{% translate "Approved and dispatched to the TPA queue. A TPA processor must start processing." %}</span></div>
+      {% endif %}
+
+      {% if tx.status == "tpa_in_progress" or tx.status == "tpa_query" or tx.status == "completed" %}
+      <div class="tw:mt-4 tw:overflow-x-auto">
+        <table class="tw:d-table tw:d-table-sm">
+          <thead><tr><th>{% translate "Member" %}</th><th>{% translate "Card / Member No." %}</th><th>{% translate "TPA Effective Date" %}</th><th>{% translate "TPA Amount" %}</th><th>{% translate "State" %}</th><th></th></tr></thead>
+          <tbody>
+          {% for a in actions %}
+            <tr>
+              <td><strong>{{ a.display_first_name }} {{ a.display_last_name }}</strong><div class="tw:text-xs tw:text-base-content/45">{{ a.display_employee_id }}</div></td>
+              {% if can_tpa_process and tx.status == "tpa_in_progress" %}
+              <form method="post" action="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}">
+                {% csrf_token %}
+                <td><input class="tw:d-input tw:d-input-bordered tw:d-input-sm tw:w-40" name="card_number" value="{{ a.card_number }}" {% if tx.transaction_type == 'MEMBER_ADD' or initial_setup %}required{% endif %}></td>
+                <td><input class="tw:d-input tw:d-input-bordered tw:d-input-sm" type="date" name="effective_date" value="{% if a.tpa_effective_date %}{{ a.tpa_effective_date|date:'Y-m-d' }}{% else %}{{ tx.effective_date|date:'Y-m-d' }}{% endif %}" required></td>
+                <td><input class="tw:d-input tw:d-input-bordered tw:d-input-sm tw:w-36" name="amount" type="number" step="0.001" value="{% if a.tpa_premium_amount is not None %}{{ a.tpa_premium_amount }}{% else %}{{ a.calculated_premium }}{% endif %}" required></td>
+                <td>{{ a.processing_status|default:"Pending" }}</td>
+                <td><button class="tw:d-btn tw:d-btn-info tw:d-btn-xs" type="submit">{% translate "Save" %}</button></td>
+              </form>
+              {% else %}
+                <td>{{ a.card_number|default:"—" }}</td>
+                <td>{{ a.tpa_effective_date|date:"d-M-Y"|default:"—" }}</td>
+                <td>{% if a.tpa_premium_amount is not None %}{{ tx.currency }} {{ a.tpa_premium_amount }}{% else %}—{% endif %}</td>
+                <td>{{ a.processing_status|default:"Pending" }}</td><td></td>
+              {% endif %}
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="tw:text-center tw:text-base-content/45">{% translate "No member rows." %}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {% if open_query %}
+      <div class="tw:mt-5 tw:rounded-2xl tw:border tw:border-warning/30 tw:bg-warning/5 tw:p-4">
+        <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
+          <div><span class="tw:d-badge tw:d-badge-warning tw:d-badge-soft">{% translate "Open Query" %}</span><h3 class="tw:mt-1 tw:font-black">{{ open_query.subject }}</h3></div>
+          {% if can_tpa_process %}
+          <form method="post" action="{% url 'tpa:transaction_resolve_query' tx.reference open_query.pk %}">{% csrf_token %}<button class="tw:d-btn tw:d-btn-success tw:d-btn-sm" type="submit"><i class="bi bi-check2"></i>{% translate "Resolve & Resume" %}</button></form>
+          {% endif %}
+        </div>
+
+        <div class="tw:mt-4 tw:max-h-[28rem] tw:space-y-3 tw:overflow-y-auto tw:rounded-xl tw:bg-base-100 tw:p-4">
+          {% for msg in open_query.messages.all %}
+          <div class="tw:d-chat {% if msg.sender_id == request.user.id %}tw:d-chat-end{% else %}tw:d-chat-start{% endif %}">
+            <div class="tw:d-chat-header tw:text-xs">{{ msg.sender.get_full_name|default:msg.sender.username }} <time class="tw:opacity-50">{{ msg.created_at|date:"d-M-Y H:i" }}</time></div>
+            <div class="tw:d-chat-bubble {% if msg.kind == 'QUERY' %}tw:d-chat-bubble-warning{% endif %}">{{ msg.ticket_comment.body|linebreaksbr }}</div>
+            {% if msg.ticket_comment.attachments.all %}
+            <div class="tw:d-chat-footer tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for file in msg.ticket_comment.attachments.all %}<a class="tw:d-badge tw:d-badge-outline tw:text-xs" href="{{ file.file.url }}" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i>{{ file.original_name }}</a>{% endfor %}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+
+        <form class="tw:mt-4 tw:space-y-3" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_query_message' tx.reference open_query.pk %}">
+          {% csrf_token %}
+          {{ query_message_form.message }}
+          {{ query_message_form.attachments }}
+          <button class="tw:d-btn tw:d-btn-primary tw:d-btn-sm" type="submit"><i class="bi bi-send"></i>{% translate "Send Reply" %}</button>
+        </form>
+      </div>
+      {% elif can_tpa_process and tx.status == "tpa_in_progress" %}
+      <details class="tw:d-collapse tw:d-collapse-arrow tw:mt-5 tw:border tw:border-warning/30">
+        <summary class="tw:d-collapse-title tw:text-sm tw:font-bold"><i class="bi bi-question-circle tw:me-2"></i>{% translate "Raise Query to Requester" %}</summary>
+        <div class="tw:d-collapse-content">
+          <form class="tw:space-y-3" method="post" action="{% url 'tpa:transaction_raise_query' tx.reference %}">
+            {% csrf_token %}
+            {{ query_raise_form.subject }}
+            {{ query_raise_form.message }}
+            <button class="tw:d-btn tw:d-btn-warning tw:d-btn-sm" type="submit"><i class="bi bi-chat-dots"></i>{% translate "Raise Query" %}</button>
+          </form>
+        </div>
+      </details>
+      {% endif %}
+
+      {% if can_tpa_process and tx.status == "tpa_in_progress" %}
+      <div class="tw:mt-5 tw:flex tw:justify-end">
+        <form method="post" action="{% url 'tpa:transaction_tpa_complete' tx.reference %}">
+          {% csrf_token %}
+          <button class="tw:d-btn tw:d-btn-success" type="submit"><i class="bi bi-check2-circle"></i>{% translate "Complete TPA Processing" %}</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <div class="tw:grid tw:gap-4 tw:xl:grid-cols-2">
     <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
       <div class="tw:d-card-body tw:p-5">
-        <h2 class="tw:d-card-title">{% translate "Workflow status" %}</h2>
+        <h2 class="tw:d-card-title">{% translate "Workflow Status" %}</h2>
         <dl class="tw:mt-2 tw:space-y-3 tw:text-sm">
-          <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Current status" %}</dt><dd class="tw:font-bold">{{ tx.get_status_display }}</dd></div>
-          <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "GLIS approval" %}</dt><dd class="tw:font-bold">{% if tx.ticket %}{{ tx.ticket.get_approval_state_display }}{% else %}—{% endif %}</dd></div>
-          <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Effective date" %}</dt><dd>{{ tx.effective_date|date:"d-M-Y" }}</dd></div>
+          <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Current Status" %}</dt><dd class="tw:font-bold">{{ tx.get_status_display }}</dd></div>
+          <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "GLIS Approval" %}</dt><dd class="tw:font-bold">{% if tx.ticket %}{{ tx.ticket.get_approval_state_display }}{% else %}—{% endif %}</dd></div>
+          <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Effective Date" %}</dt><dd>{{ tx.effective_date|date:"d-M-Y" }}</dd></div>
           <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Submitted" %}</dt><dd>{{ tx.submitted_at|date:"d-M-Y H:i"|default:"—" }}</dd></div>
           <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Approved" %}</dt><dd>{{ tx.approved_at|date:"d-M-Y H:i"|default:"—" }}</dd></div>
-          <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Processed" %}</dt><dd>{{ tx.processed_at|date:"d-M-Y H:i"|default:"—" }}</dd></div>
+          <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Completed" %}</dt><dd>{{ tx.processed_at|date:"d-M-Y H:i"|default:"—" }}</dd></div>
         </dl>
       </div>
     </section>
 
     <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
       <div class="tw:d-card-body tw:p-5">
-        <h2 class="tw:d-card-title">{% translate "Activity" %}</h2>
+        <h2 class="tw:d-card-title">{% translate "Activity Timeline" %}</h2>
         <ul class="tw:d-timeline tw:d-timeline-vertical tw:mt-2">
           {% for e in events %}
-          <li>
-            {% if not forloop.first %}<hr>{% endif %}
-            <div class="tw:d-timeline-middle"><i class="bi bi-check-circle"></i></div>
-            <div class="tw:d-timeline-end tw:d-timeline-box">
-              <strong>{{ e.summary }}</strong>
-              <div class="tw:text-xs tw:text-base-content/50">{{ e.created_at|date:"d-M-Y H:i" }}</div>
-            </div>
-            {% if not forloop.last %}<hr>{% endif %}
-          </li>
-          {% empty %}
-          <li class="tw:text-sm tw:text-base-content/50">{% translate "No activity yet." %}</li>
-          {% endfor %}
+          <li>{% if not forloop.first %}<hr>{% endif %}<div class="tw:d-timeline-middle"><i class="bi bi-check-circle"></i></div><div class="tw:d-timeline-end tw:d-timeline-box"><strong>{{ e.summary }}</strong><div class="tw:text-xs tw:text-base-content/50">{{ e.created_at|date:"d-M-Y H:i" }}</div></div>{% if not forloop.last %}<hr>{% endif %}</li>
+          {% empty %}<li class="tw:text-sm tw:text-base-content/50">{% translate "No activity yet." %}</li>{% endfor %}
         </ul>
       </div>
     </section>
@@ -361,65 +402,42 @@ window.addEventListener("load", function () {
   const relationship = document.querySelector('[name="relationship"]');
   const principalField = document.getElementById("principal-reference-field");
   const principalSelect = document.querySelector('[name="principal_reference"]');
-
   function syncPrincipalField() {
     if (!relationship || !principalField) return;
-    const needsPrincipal = relationship.value && relationship.value !== "PRINCIPAL";
-    principalField.style.display = needsPrincipal ? "" : "none";
-    if (!needsPrincipal && principalSelect) principalSelect.value = "";
+    const needed = relationship.value && relationship.value !== "PRINCIPAL";
+    principalField.style.display = needed ? "" : "none";
+    if (!needed && principalSelect) principalSelect.value = "";
   }
-
-  if (relationship) {
-    relationship.addEventListener("change", syncPrincipalField);
-    syncPrincipalField();
-  }
+  if (relationship) { relationship.addEventListener("change", syncPrincipalField); syncPrincipalField(); }
 
   if (!window.Plotly) return;
-
   const quality = JSON.parse(document.getElementById("tpa-quality-data").textContent || "[]");
   const errors = JSON.parse(document.getElementById("tpa-error-data").textContent || "[]");
   const transparent = "rgba(0,0,0,0)";
 
   Plotly.newPlot("tpa-quality-chart", [{
-    type: "pie",
-    hole: 0.62,
-    labels: quality.map(x => x.label),
-    values: quality.map(x => x.value),
-    textinfo: "label+value",
-    hovertemplate: "%{label}: %{value}<extra></extra>"
+    type: "pie", hole: 0.62,
+    labels: quality.map(x => x.label), values: quality.map(x => x.value),
+    textinfo: "label+value", hovertemplate: "%{label}: %{value}<extra></extra>"
   }], {
-    margin: {l: 20, r: 20, t: 15, b: 15},
-    paper_bgcolor: transparent,
-    plot_bgcolor: transparent,
-    showlegend: false
-  }, {displayModeBar: false, responsive: true});
+    margin: {l:20,r:20,t:15,b:15}, paper_bgcolor:transparent, plot_bgcolor:transparent, showlegend:false
+  }, {displayModeBar:false,responsive:true});
 
   if (errors.length) {
     Plotly.newPlot("tpa-error-chart", [{
-      type: "bar",
-      orientation: "h",
-      y: errors.map(x => x.label).reverse(),
-      x: errors.map(x => x.value).reverse(),
-      hovertemplate: "%{y}: %{x}<extra></extra>"
+      type:"bar", orientation:"h",
+      y:errors.map(x=>x.label).reverse(), x:errors.map(x=>x.value).reverse(),
+      hovertemplate:"%{y}: %{x}<extra></extra>"
     }], {
-      margin: {l: 150, r: 20, t: 15, b: 35},
-      paper_bgcolor: transparent,
-      plot_bgcolor: transparent,
-      xaxis: {title: "Rows", dtick: 1}
-    }, {displayModeBar: false, responsive: true});
+      margin:{l:150,r:20,t:15,b:35}, paper_bgcolor:transparent, plot_bgcolor:transparent,
+      xaxis:{title:"Rows",dtick:1}
+    }, {displayModeBar:false,responsive:true});
   } else {
     Plotly.newPlot("tpa-error-chart", [], {
-      margin: {l: 20, r: 20, t: 20, b: 20},
-      paper_bgcolor: transparent,
-      plot_bgcolor: transparent,
-      xaxis: {visible: false},
-      yaxis: {visible: false},
-      annotations: [{
-        text: "No validation errors",
-        x: 0.5, y: 0.5, xref: "paper", yref: "paper",
-        showarrow: false
-      }]
-    }, {displayModeBar: false, responsive: true});
+      margin:{l:20,r:20,t:20,b:20}, paper_bgcolor:transparent, plot_bgcolor:transparent,
+      xaxis:{visible:false}, yaxis:{visible:false},
+      annotations:[{text:"No validation errors",x:.5,y:.5,xref:"paper",yref:"paper",showarrow:false}]
+    }, {displayModeBar:false,responsive:true});
   }
 });
 </script>

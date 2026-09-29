@@ -1,3 +1,4 @@
+import bleach
 from datetime import date, datetime
 
 from django.db import transaction
@@ -43,6 +44,24 @@ def _event(tx, actor, event_type, summary, details=None):
         )
 
 
+def _clean_chat_html(value):
+    return bleach.clean(
+        str(value or ""),
+        tags=[
+            "p", "br", "strong", "b", "em", "i", "u", "ol", "ul", "li",
+            "blockquote", "a", "span", "div", "img",
+        ],
+        attributes={
+            "a": ["href", "title", "target", "rel"],
+            "img": ["src", "alt", "title"],
+            "span": ["class"],
+            "div": ["class"],
+        },
+        protocols=["http", "https", "mailto", "data"],
+        strip=True,
+    )
+
+
 def _notify_query_user(user, query, title, body):
     if not user or not getattr(user, "is_active", False):
         return
@@ -79,6 +98,47 @@ def _data(action):
         **(action.extracted_data or {}),
         **(action.corrected_data or {}),
     }
+
+
+@transaction.atomic
+def reject_transaction(tx, actor, reason):
+    if tx.status != tx.Status.PENDING_APPROVAL:
+        raise ValueError("Only a transaction pending approval can be rejected.")
+    if not can_approve_tpa_transaction(actor, tx):
+        raise PermissionError("You do not have TPA approval authority.")
+    reason = str(reason or "").strip()
+    if not reason:
+        raise ValueError("Rejection reason is required.")
+    if tx.queries.filter(
+        status=TransactionQuery.Status.OPEN,
+        purpose=TransactionQuery.Purpose.APPROVAL,
+    ).exists():
+        raise ValueError("Resolve the open approval query before rejecting the transaction.")
+
+    tx.status = tx.Status.REJECTED
+    tx.rejection_reason = reason
+    tx.approved_by = actor
+    tx.approved_at = timezone.now()
+    tx.save(
+        update_fields=[
+            "status",
+            "rejection_reason",
+            "approved_by",
+            "approved_at",
+            "updated_at",
+        ]
+    )
+    if tx.ticket_id:
+        tx.ticket.approval_state = "rejected"
+        tx.ticket.save(update_fields=["approval_state", "updated_at"])
+    _event(
+        tx,
+        actor,
+        "approval_rejected",
+        "TPA transaction rejected during approval.",
+        {"reason": reason},
+    )
+    return tx
 
 
 @transaction.atomic
@@ -234,7 +294,7 @@ def raise_transaction_query(
     comment = TicketComment.objects.create(
         ticket=query_ticket,
         author=actor,
-        body=str(message or "").strip(),
+        body=_clean_chat_html(message),
         is_internal=internal,
     )
     TransactionQueryMessage.objects.create(
@@ -306,7 +366,7 @@ def post_query_message(query, actor, message, *, kind=None, audience=None):
     if is_requester and query.audience == TransactionQuery.Audience.INSURER_TPA_INTERNAL:
         raise PermissionError("This is an internal insurer/TPA conversation.")
 
-    text = str(message or "").strip()
+    text = _clean_chat_html(message).strip()
     if not text:
         raise ValueError("Query message cannot be empty.")
     if not query.ticket_id:

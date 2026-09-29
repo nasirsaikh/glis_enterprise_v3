@@ -54,10 +54,12 @@ def normalize_ai_payload(payload):
     }
 
 
-def select_provider(*, vision=False, sensitive=False, capability=None):
+def select_provider(*, vision=None, sensitive=False, capability=None):
     qs = AIProviderConfig.objects.filter(is_active=True)
-    if vision:
+    if vision is True:
         qs = qs.filter(supports_vision=True)
+    elif vision is False:
+        qs = qs.filter(supports_vision=False)
     if sensitive:
         qs = qs.filter(allow_sensitive_data=True)
 

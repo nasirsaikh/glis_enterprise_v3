@@ -79,6 +79,8 @@ class EnrollmentAdmin(admin.ModelAdmin):
         "benefit_plan",
         "coverage_start_date",
         "coverage_end_date",
+        "card_number",
+        "premium_amount",
         "enrollment_status",
     )
     list_filter = ("enrollment_status",)

@@ -77,6 +77,7 @@ from .services.workflow import (
     post_query_message,
     raise_transaction_query,
     raise_tpa_query,
+    reject_transaction,
     resolve_tpa_query,
     share_query_message_with_client,
     run_validation,
@@ -1311,6 +1312,20 @@ def transaction_approve(request, reference):
     try:
         approve_transaction(tx, request.user)
         messages.success(request, "TPA transaction approved.")
+    except (PermissionError, ValueError) as exc:
+        messages.error(request, str(exc))
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_reject(request, reference):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    try:
+        reject_transaction(tx, request.user, request.POST.get("reason"))
+        messages.success(request, "TPA transaction rejected.")
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
     return redirect("tpa:transaction_detail", reference=reference)

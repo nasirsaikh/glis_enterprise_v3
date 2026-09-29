@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
+import os
 
 from django.core.files import File
 from django.db import transaction
@@ -7,7 +8,7 @@ from django.utils import timezone
 
 from apps.ai.models import AIExtractionProfile, AIInteraction, AIProviderConfig
 from apps.ai.runtime import generate_json
-from apps.tickets.models import TicketAttachment
+from apps.tickets.models import Notification, TicketAttachment
 
 from ..models import (
     InboundEmail,
@@ -17,9 +18,11 @@ from ..models import (
     Policy,
     SourceDocument,
 )
+from .authority import sender_is_authorized
 from .document_intake import process_source_bundle
 from .extraction import normalize_ai_payload, select_profile, select_provider
 from .intake import import_member_spreadsheet
+from .member_merge import merge_member_rows
 from .ticketing import create_ticket_for_transaction
 from .workflow import run_validation
 
@@ -35,6 +38,14 @@ TRANSACTION_ALIASES = {
     "MEMBER_TERMINATE": MemberTransaction.Type.MEMBER_TERMINATE,
     "MEMBER TERMINATE": MemberTransaction.Type.MEMBER_TERMINATE,
     "TERMINATION": MemberTransaction.Type.MEMBER_TERMINATE,
+    "PERMANENT TERMINATION": MemberTransaction.Type.MEMBER_TERMINATE,
+    "MEMBER_SUSPEND": MemberTransaction.Type.MEMBER_SUSPEND,
+    "MEMBER SUSPEND": MemberTransaction.Type.MEMBER_SUSPEND,
+    "TEMPORARY SUSPENSION": MemberTransaction.Type.MEMBER_SUSPEND,
+    "TEMPORARY DEACTIVATION": MemberTransaction.Type.MEMBER_SUSPEND,
+    "MEMBER_REACTIVATE": MemberTransaction.Type.MEMBER_REACTIVATE,
+    "MEMBER REACTIVATE": MemberTransaction.Type.MEMBER_REACTIVATE,
+    "REACTIVATION": MemberTransaction.Type.MEMBER_REACTIVATE,
     "MEMBER_DELETE": MemberTransaction.Type.MEMBER_DELETE,
     "MEMBER DELETE": MemberTransaction.Type.MEMBER_DELETE,
     "DELETE": MemberTransaction.Type.MEMBER_DELETE,
@@ -83,11 +94,16 @@ def _member_payload(row):
 
 def _profile_prompt(profile):
     base = (
-        "You extract group medical/member endorsement data. "
-        "Return JSON only. Never make eligibility, premium, approval or STP decisions. "
+        "You classify and extract group medical/member endorsement email evidence. "
+        "Return JSON only. Never make sender-authorization, eligibility, premium, refund, approval or STP decisions. "
         "Use null when a value is unknown. The required top-level JSON is: "
-        '{"policy_number":null,"transaction_type":null,"effective_date":null,'
-        '"summary":"","confidence":0.0,"members":[]}. '
+        '{"is_endorsement_request":true,"classification":"MEMBER_ADD","confidence":0.0,'
+        '"policy_number":null,"transaction_type":"MEMBER_ADD","transaction_reference":null,'
+        '"effective_date":null,"refund_basis":null,"temporary_until":null,"remarks":"",'
+        '"summary":"","missing_information":[],"warnings":[],"source_references":[],"members":[]}. '
+        "classification/transaction_type may be MEMBER_ADD, MEMBER_DELETE, MEMBER_TERMINATE, "
+        "MEMBER_SUSPEND, MEMBER_REACTIVATE, POLICY_CANCEL, QUERY_REPLY, NOT_ENDORSEMENT or NEEDS_REVIEW. "
+        "For deletion/cancellation, refund_basis may be FULL or PRO_RATA when explicitly stated. "
         "Each member may contain employee_id, member_id, first_name, middle_name, "
         "last_name, full_name, date_of_birth (YYYY-MM-DD), gender, relationship "
         "(PRINCIPAL/SPOUSE/CHILD/OTHER), principal_employee_id, principal_member_id, "
@@ -268,27 +284,14 @@ def extract_email_payload(email, actor=None):
         raise
 
 
-def _add_ai_members(tx, payload):
-    next_row = (
-        tx.member_actions.order_by("-row_number")
-        .values_list("row_number", flat=True)
-        .first()
-        or 0
+def _add_ai_members(tx, payload, *, source="email_body"):
+    confidence = _confidence(payload.get("confidence"))
+    return merge_member_rows(
+        tx,
+        payload.get("members") or [],
+        source=source,
+        confidence=confidence,
     )
-    created = []
-    for offset, row in enumerate(payload.get("members") or [], start=1):
-        created.append(
-            MemberAction.objects.create(
-                transaction=tx,
-                action=tx.transaction_type,
-                row_number=next_row + offset,
-                extracted_data=_member_payload(row),
-                extraction_confidence=_confidence(row.get("confidence"))
-                or _confidence(payload.get("confidence")),
-            )
-        )
-    return created
-
 
 def _copy_attachment_to_ticket(tx, attachment, actor):
     if not tx.ticket_id:
@@ -454,67 +457,312 @@ def _process_attachments(tx, email, actor):
             )
 
 
+def _classification_confidence(payload):
+    return _confidence(payload.get("confidence"))
+
+
+def _classification_minimum():
+    try:
+        value = Decimal(str(os.getenv("TPA_EMAIL_CLASSIFICATION_MIN_CONFIDENCE", "0.75")))
+    except (InvalidOperation, TypeError, ValueError):
+        value = Decimal("0.75")
+    if value <= 1:
+        value *= 100
+    return value
+
+
+def _notify_review_staff(policy, email, message):
+    if not policy:
+        return
+    users = []
+    seen = set()
+    for access in policy.access_entries.filter(
+        active=True,
+    ).select_related("user"):
+        user = access.user
+        if not user or not user.is_active or user.pk in seen:
+            continue
+        if access.can_approve or access.can_process:
+            users.append(user)
+            seen.add(user.pk)
+    for user in users:
+        Notification.objects.create(
+            user=user,
+            kind="update",
+            title=f"TPA email needs review: {email.subject}"[:160],
+            body=str(message)[:500],
+            link=f"/portal/tpa/inbound-emails/{email.pk}/",
+        )
+
+
+def _normalize_refund_basis(value):
+    normalized = str(value or "").strip().upper().replace("-", "_").replace(" ", "_")
+    aliases = {
+        "FULL": MemberTransaction.RefundBasis.FULL,
+        "FULL_REFUND": MemberTransaction.RefundBasis.FULL,
+        "PRO_RATA": MemberTransaction.RefundBasis.PRO_RATA,
+        "PRORATA": MemberTransaction.RefundBasis.PRO_RATA,
+        "PRO_RATA_REFUND": MemberTransaction.RefundBasis.PRO_RATA,
+    }
+    return aliases.get(normalized, MemberTransaction.RefundBasis.NONE)
+
+
 def process_inbound_email(email, actor):
     if email.transaction_id and email.processing_state == InboundEmail.State.PROCESSED:
         return email.transaction
 
     email.processing_state = InboundEmail.State.PROCESSING
+    email.processing_stage = "CLASSIFICATION"
     email.processing_error = ""
     email.save(
-        update_fields=["processing_state", "processing_error", "updated_at"]
+        update_fields=[
+            "processing_state",
+            "processing_stage",
+            "processing_error",
+            "updated_at",
+        ]
     )
 
     try:
         payload, provider, profile = extract_email_payload(email, actor=actor)
+        email.raw_ai_output = payload
+        classification = str(
+            payload.get("classification")
+            or payload.get("transaction_type")
+            or ""
+        ).strip().upper()
+        confidence = _classification_confidence(payload)
+        email.classification = classification
+        email.classification_confidence = confidence
+        email.ai_extracted_payload = payload
+        email.ai_confidence = confidence
+
+        is_endorsement = payload.get("is_endorsement_request")
+        if is_endorsement is False or classification in {
+            "NOT_ENDORSEMENT",
+            "UNRELATED",
+            "IGNORED",
+        }:
+            email.processing_state = InboundEmail.State.IGNORED
+            email.processing_stage = "CLASSIFIED"
+            email.processed_at = timezone.now()
+            email.processing_error = ""
+            email.save(
+                update_fields=[
+                    "raw_ai_output",
+                    "ai_extracted_payload",
+                    "ai_confidence",
+                    "classification",
+                    "classification_confidence",
+                    "processing_state",
+                    "processing_stage",
+                    "processing_error",
+                    "processed_at",
+                    "updated_at",
+                ]
+            )
+            return None
+
+        if classification in {"NEEDS_REVIEW", "UNCERTAIN"} or (
+            confidence is not None and confidence < _classification_minimum()
+        ):
+            email.processing_state = InboundEmail.State.REVIEW
+            email.processing_stage = "CLASSIFICATION"
+            email.processing_error = (
+                "Email classification confidence is below the configured threshold."
+            )
+            email.save(
+                update_fields=[
+                    "raw_ai_output",
+                    "ai_extracted_payload",
+                    "ai_confidence",
+                    "classification",
+                    "classification_confidence",
+                    "processing_state",
+                    "processing_stage",
+                    "processing_error",
+                    "updated_at",
+                ]
+            )
+            return None
+
+        if classification == "QUERY_REPLY":
+            email.processing_state = InboundEmail.State.REVIEW
+            email.processing_stage = "QUERY_MATCH"
+            email.processing_error = (
+                "Email was classified as a reply/query. Review and link it to the "
+                "existing endorsement conversation if automatic reference matching is unavailable."
+            )
+            email.save(
+                update_fields=[
+                    "raw_ai_output",
+                    "ai_extracted_payload",
+                    "ai_confidence",
+                    "classification",
+                    "classification_confidence",
+                    "processing_state",
+                    "processing_stage",
+                    "processing_error",
+                    "updated_at",
+                ]
+            )
+            return None
+
         hints = email.processing_hints or {}
         policy = _resolve_policy(payload, hints, email)
         if not policy:
-            raise ValueError(
-                "AI could not resolve an active policy. Add/select the policy hint and process again."
+            email.processing_state = InboundEmail.State.REVIEW
+            email.processing_stage = "POLICY_MATCH"
+            email.processing_error = (
+                "No unique policy could be resolved from the email evidence."
             )
+            email.save(
+                update_fields=[
+                    "raw_ai_output",
+                    "ai_extracted_payload",
+                    "ai_confidence",
+                    "classification",
+                    "classification_confidence",
+                    "processing_state",
+                    "processing_stage",
+                    "processing_error",
+                    "updated_at",
+                ]
+            )
+            return None
 
         transaction_type = _resolve_transaction_type(payload, hints)
         if not transaction_type:
-            raise ValueError(
-                "AI could not resolve the TPA transaction type. Add/select the transaction type hint and process again."
+            email.processing_state = InboundEmail.State.REVIEW
+            email.processing_stage = "CLASSIFICATION"
+            email.processing_error = "No supported endorsement type could be resolved."
+            email.save(
+                update_fields=[
+                    "raw_ai_output",
+                    "ai_extracted_payload",
+                    "ai_confidence",
+                    "classification",
+                    "classification_confidence",
+                    "processing_state",
+                    "processing_stage",
+                    "processing_error",
+                    "updated_at",
+                ]
             )
+            return None
+
+        if policy.status != Policy.Status.ACTIVE:
+            email.processing_state = InboundEmail.State.REVIEW
+            email.processing_stage = "POLICY_MATCH"
+            email.processing_error = (
+                f"Policy {policy.policy_number} is {policy.get_status_display()} and "
+                "cannot be processed automatically."
+            )
+            email.save(
+                update_fields=[
+                    "processing_state",
+                    "processing_stage",
+                    "processing_error",
+                    "updated_at",
+                ]
+            )
+            _notify_review_staff(policy, email, email.processing_error)
+            return None
+
+        authorized, authority, reason = sender_is_authorized(
+            email,
+            policy,
+            transaction_type,
+            actor=actor,
+        )
+        if not authorized:
+            email.processing_state = InboundEmail.State.UNAUTHORIZED
+            email.processing_stage = "SENDER_AUTHORITY"
+            email.processing_error = reason
+            email.save(
+                update_fields=[
+                    "raw_ai_output",
+                    "ai_extracted_payload",
+                    "ai_confidence",
+                    "classification",
+                    "classification_confidence",
+                    "processing_state",
+                    "processing_stage",
+                    "processing_error",
+                    "updated_at",
+                ]
+            )
+            _notify_review_staff(policy, email, reason)
+            return None
 
         effective_date = _as_date(
             hints.get("effective_date") or payload.get("effective_date"),
             fallback=email.received_at.date(),
+        )
+        refund_basis = _normalize_refund_basis(
+            hints.get("refund_basis") or payload.get("refund_basis")
         )
 
         with transaction.atomic():
             if email.transaction_id:
                 tx = email.transaction
             else:
+                requester = (
+                    authority.user
+                    if authority is not None and authority.user_id
+                    else actor
+                )
                 tx = MemberTransaction.objects.create(
                     sponsor=policy.sponsor,
                     insurer=policy.insurance_company,
                     policy=policy,
                     transaction_type=transaction_type,
+                    classification=classification or transaction_type,
+                    classification_confidence=confidence,
+                    refund_basis=refund_basis,
+                    physical_card_required=(
+                        policy.physical_card_required
+                        and transaction_type == MemberTransaction.Type.MEMBER_ADD
+                    ),
                     source=MemberTransaction.Source.EMAIL,
                     effective_date=effective_date,
-                    requester=actor,
-                    requester_organization=policy.sponsor,
-                    status=MemberTransaction.Status.PENDING_VALIDATION,
+                    requester=requester,
+                    requester_organization=(
+                        authority.organization
+                        if authority is not None
+                        else policy.sponsor
+                    ),
+                    status=MemberTransaction.Status.DRAFT,
                     submitted_at=timezone.now(),
                     ai_summary=payload.get("summary") or email.subject,
                     ai_extraction_status="EXTRACTED",
+                    remarks=payload.get("remarks") or "",
                     metadata={
                         "inbound_email_id": email.pk,
                         "ai_provider_id": provider.pk,
                         "ai_profile_id": profile.pk if profile else None,
+                        "email_authority_id": authority.pk if authority else None,
+                        "missing_information": payload.get("missing_information") or [],
+                        "warnings": payload.get("warnings") or [],
+                        "source_references": payload.get("source_references") or [],
+                        "temporary_until": payload.get("temporary_until"),
                     },
                 )
                 email.transaction = tx
 
-            if not tx.member_actions.exists():
-                _add_ai_members(tx, payload)
-
+            _add_ai_members(
+                tx,
+                payload,
+                source=f"email:{email.pk}:body",
+            )
             create_ticket_for_transaction(tx, actor=actor)
 
+        email.processing_stage = "ATTACHMENT_EXTRACTION"
+        email.save(update_fields=["processing_stage", "updated_at"])
         _process_attachments(tx, email, actor)
+
+        email.processing_stage = "VALIDATION"
+        email.save(update_fields=["processing_stage", "updated_at"])
         run_validation(tx, actor=actor)
         tx.refresh_from_db()
 
@@ -522,13 +770,12 @@ def process_inbound_email(email, actor):
             processing_state=InboundEmailAttachment.State.PROCESSED
         ).exists()
 
-        email.ai_extracted_payload = payload
-        email.ai_confidence = _confidence(payload.get("confidence"))
         email.processing_state = (
             InboundEmail.State.REVIEW
             if attachment_review
             else InboundEmail.State.PROCESSED
         )
+        email.processing_stage = "COMPLETE" if not attachment_review else "EVIDENCE_REVIEW"
         email.processing_error = (
             "One or more email attachments require review."
             if attachment_review
@@ -538,9 +785,13 @@ def process_inbound_email(email, actor):
         email.transaction = tx
         email.save(
             update_fields=[
+                "raw_ai_output",
                 "ai_extracted_payload",
                 "ai_confidence",
+                "classification",
+                "classification_confidence",
                 "processing_state",
+                "processing_stage",
                 "processing_error",
                 "processed_at",
                 "transaction",

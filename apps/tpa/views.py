@@ -176,7 +176,9 @@ def inbound_email_create(request):
             or f"manual-{uuid.uuid4()}"
         )
         policy = form.cleaned_data.get("policy")
+        ai_provider = form.cleaned_data.get("ai_provider")
         email.processing_hints = {
+            "ai_provider_id": ai_provider.pk if ai_provider else None,
             "policy_id": policy.pk if policy else None,
             "policy_number": policy.policy_number if policy else "",
             "transaction_type": form.cleaned_data.get("transaction_type") or "",

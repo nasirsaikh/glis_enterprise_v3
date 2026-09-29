@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from apps.ai.models import AIExtractionProfile, AIProviderConfig
+from apps.tickets.models import TicketComment
 
 from .models import (
     BenefitPlan,
@@ -16,12 +17,22 @@ from .models import (
     Policy,
     PolicyAccess,
     TPAOrganization,
+    TransactionQuery,
 )
-from .forms import MemberRowForm
+from .forms import MemberRowForm, TransactionForm
 from .services.access import can_access_tpa, can_create_tpa_transaction
 from .services.ai_intake import process_inbound_email
 from .services.pricing import calculate_member_premium
-from .services.workflow import approve_transaction, process_transaction, run_validation
+from .services.workflow import (
+    approve_transaction,
+    complete_tpa_transaction,
+    post_query_message,
+    raise_tpa_query,
+    resolve_tpa_query,
+    run_validation,
+    start_tpa_processing,
+    update_tpa_action,
+)
 
 
 class TPACoreTests(TestCase):

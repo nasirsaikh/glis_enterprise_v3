@@ -69,23 +69,23 @@
   </section>
 
   <section class="tw:grid tw:grid-cols-2 tw:gap-2 tw:md:grid-cols-4 tw:xl:grid-cols-8">
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Rows" %}</div><div class="stat-value">{{ actions|length }}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Valid" %}</div><div class="stat-value tw:text-success">{{ valid_count }}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Warnings" %}</div><div class="stat-value {% if warning_count %}tw:text-warning{% endif %}">{{ warning_count }}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Errors" %}</div><div class="stat-value {% if error_count %}tw:text-error{% endif %}">{{ error_count }}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Success" %}</div><div class="stat-value">{{ success_rate }}%</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Validation" %}</div><div class="stat-value">{{ tx.validation_score }}%</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "STP" %}</div><div class="stat-value {% if tx.stp_eligible %}tw:text-success{% else %}tw:text-warning{% endif %}">{{ tx.stp_eligible|yesno:"YES,NO" }}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Premium Impact" %}</div><div class="tw:mt-1 tpa-mono tw:text-sm tw:font-bold">{{ tx.currency }} {{ tx.premium_adjustment }}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Rows" %}</div><div class="stat-value tw:d-stat-value">{{ actions|length }}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Valid" %}</div><div class="stat-value tw:text-success">{{ valid_count }}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Warnings" %}</div><div class="stat-value {% if warning_count %}tw:text-warning{% endif %}">{{ warning_count }}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Errors" %}</div><div class="stat-value {% if error_count %}tw:text-error{% endif %}">{{ error_count }}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Success" %}</div><div class="stat-value tw:d-stat-value">{{ success_rate }}%</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Validation" %}</div><div class="stat-value tw:d-stat-value">{{ tx.validation_score }}%</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "STP" %}</div><div class="stat-value {% if tx.stp_eligible %}tw:text-success{% else %}tw:text-warning{% endif %}">{{ tx.stp_eligible|yesno:"YES,NO" }}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Premium Impact" %}</div><div class="tw:mt-1 tpa-mono tw:text-sm tw:font-bold">{{ tx.currency }} {{ tx.premium_adjustment }}</div></div></div>
   </section>
 
   {% if initial_setup %}
-  <section class="card">
+  <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Opening policy setup" %}</div><h2 class="tpa-section-title">{% translate "POLICY & BENEFIT PLANS" %}</h2></div>
       <span class="badge {% if tx.policy.status == 'active' %}badge-success badge-soft{% else %}badge-warning badge-soft{% endif %}">{{ tx.policy.get_status_display }}</span>
     </div>
-    <div class="card-body">
+    <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "This setup must complete before the policy appears in New Endorsement." %}</p>
       <div class="tw:grid tw:gap-3 tw:lg:grid-cols-[1fr_1.2fr]">
         <dl class="tw:grid tw:grid-cols-2 tw:gap-3 tw:text-sm">
@@ -112,11 +112,11 @@
           {% if can_edit_intake and plan_form %}
           <details class="collapse collapse-arrow tw:mt-3 tw:border tw:border-base-300">
             <summary class="collapse-title tw:text-sm tw:font-bold">{% translate "Add another benefit plan" %}</summary>
-            <div class="collapse-content">
+            <div class="collapse-content tw:d-collapse-content">
               <form class="tw:grid tw:gap-3 tw:md:grid-cols-2" method="post" action="{% url 'tpa:policy_plan_add' tx.reference %}">
                 {% csrf_token %}
                 {% for field in plan_form %}
-                <fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}</fieldset>
+                <fieldset class="fieldset tw:d-fieldset"><legend class="fieldset-legend tw:d-fieldset-legend">{{ field.label }}</legend>{{ field }}</fieldset>
                 {% endfor %}
                 <div class="tw:md:col-span-2"><button class="btn btn-outline btn-sm" type="submit"><i class="bi bi-plus-lg"></i>{% translate "Add Plan" %}</button></div>
               </form>
@@ -130,7 +130,7 @@
   {% endif %}
 
   {% if can_edit_intake %}
-  <section class="card">
+  <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Unified evidence intake" %}</div><h2 class="tpa-section-title">{% translate "SOURCE DOCUMENTS & OLLAMA OCR" %}</h2></div>
       <div class="tw:flex tw:flex-wrap tw:gap-1">
@@ -138,7 +138,7 @@
         <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}"><i class="bi bi-filetype-csv"></i>{% translate "Sample CSV" %}</a>
       </div>
     </div>
-    <div class="card-body">
+    <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "Excel/CSV/XLS is parsed directly. PDF and images use Ollama vision OCR where required, followed by a separate Ollama text model for strict member JSON mapping. Multi-file front/back identity evidence is processed as one bundle." %}</p>
       <form class="tpa-dropzone tw:p-3" data-tpa-dropzone method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_upload_sources' tx.reference %}">
         {% csrf_token %}
@@ -172,18 +172,18 @@
     </div>
   </section>
 
-  <section class="card">
+  <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Direct input" %}</div><h2 class="tpa-section-title">{% translate "MANUAL MEMBER ENTRY" %}</h2></div>
       <i class="bi bi-person-plus tw:text-primary"></i>
     </div>
-    <div class="card-body">
+    <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "Manual rows and AI/file rows use exactly the same deterministic validation and pricing rules." %}</p>
       <form class="tw:mt-4 tw:grid tw:gap-3 tw:md:grid-cols-2 tw:xl:grid-cols-3" method="post" action="{% url 'tpa:transaction_add_member' tx.reference %}">
         {% csrf_token %}
         {% for field in member_form %}
-        <fieldset class="fieldset" {% if field.name == "principal_reference" %}id="principal-reference-field"{% endif %}>
-          <legend class="fieldset-legend">{{ field.label }}</legend>
+        <fieldset class="fieldset tw:d-fieldset" {% if field.name == "principal_reference" %}id="principal-reference-field"{% endif %}>
+          <legend class="fieldset-legend tw:d-fieldset-legend">{{ field.label }}</legend>
           {{ field }}
           {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
         </fieldset>
@@ -194,12 +194,12 @@
   </section>
   {% endif %}
 
-  <section class="card">
+  <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Normalized records" %}</div><h2 class="tpa-section-title">{% translate "INTAKE & CORRECTION / MEMBER MATRIX" %}</h2></div>
       <span class="badge badge-outline">{{ actions|length }} {% translate "ROWS" %}</span>
     </div>
-    <div class="card-body">
+    <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "Review extracted/manual values here before validation and downstream processing." %}</p>
 
       <div class="tw:mt-3 tw:overflow-x-auto">
@@ -227,7 +227,7 @@
                   <button class="btn btn-ghost btn-xs" type="button" onclick="document.getElementById('edit-member-{{ a.pk }}').showModal()" title="{% translate 'Correct row' %}">
                     <i class="bi bi-pencil-square"></i>
                   </button>
-                  <dialog id="edit-member-{{ a.pk }}" class="modal">
+                  <dialog id="edit-member-{{ a.pk }}" class="modal tw:d-modal">
                     <div class="modal-box tw:max-w-4xl">
                       <div class="tw:flex tw:items-start tw:justify-between tw:gap-3">
                         <div>
@@ -239,8 +239,8 @@
                       <form class="tw:mt-5 tw:grid tw:gap-3 tw:md:grid-cols-2" method="post" action="{% url 'tpa:transaction_edit_member' tx.reference a.pk %}">
                         {% csrf_token %}
                         {% for field in a.edit_form %}
-                        <fieldset class="fieldset">
-                          <legend class="fieldset-legend">{{ field.label }}</legend>
+                        <fieldset class="fieldset tw:d-fieldset">
+                          <legend class="fieldset-legend tw:d-fieldset-legend">{{ field.label }}</legend>
                           {{ field }}
                           {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
                         </fieldset>
@@ -251,7 +251,7 @@
                         </div>
                       </form>
                     </div>
-                    <form method="dialog" class="modal-backdrop"><button>{% translate "Close" %}</button></form>
+                    <form method="dialog" class="modal-backdrop tw:d-modal-backdrop"><button>{% translate "Close" %}</button></form>
                   </dialog>
                   {% endif %}
                   <form method="post" action="{% url 'tpa:transaction_remove_member' tx.reference a.pk %}">
@@ -272,20 +272,20 @@
   </section>
 
   <div class="tw:grid tw:gap-3 tw:xl:grid-cols-2">
-    <section class="card"><div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Quality telemetry" %}</div><h2 class="tpa-section-title">{% translate "MEMBER QUALITY" %}</h2></div></div><div class="card-body"><div id="tpa-quality-chart" class="tpa-chart"></div></div></section>
-    <section class="card"><div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Exception analysis" %}</div><h2 class="tpa-section-title">{% translate "VALIDATION ERRORS" %}</h2></div></div><div class="card-body"><div id="tpa-error-chart" class="tpa-chart"></div></div></section>
+    <section class="card tw:d-card"><div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Quality telemetry" %}</div><h2 class="tpa-section-title">{% translate "MEMBER QUALITY" %}</h2></div></div><div class="card-body tw:d-card-body"><div id="tpa-quality-chart" class="tpa-chart"></div></div></section>
+    <section class="card tw:d-card"><div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Exception analysis" %}</div><h2 class="tpa-section-title">{% translate "VALIDATION ERRORS" %}</h2></div></div><div class="card-body tw:d-card-body"><div id="tpa-error-chart" class="tpa-chart"></div></div></section>
   </div>
 
   {% if tx.stp_blockers %}
   <div class="alert alert-warning"><i class="bi bi-signpost-split"></i><div><strong>{% translate "STP blockers" %}</strong><div class="tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for blocker in tx.stp_blockers %}<span class="badge badge-outline">{{ blocker }}</span>{% endfor %}</div></div></div>
   {% endif %}
 
-  <section class="card">
+  <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Step 04 / TPA Operations" %}</div><h2 class="tpa-section-title">{% translate "TPA PROCESSING & CASE CONVERSATION" %}</h2></div>
       <span class="badge {% if tx.status == 'tpa_query' %}badge-warning badge-soft{% elif tx.status == 'completed' %}badge-success badge-soft{% else %}badge-info badge-soft{% endif %}">{{ tx.get_status_display }}</span>
     </div>
-    <div class="card-body">
+    <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "TPA processing and requester communication stay inside this case. GLIS tickets remain the underlying SLA and audit record." %}</p>
 
       {% if tx.status == "sent_to_tpa" %}
@@ -327,7 +327,7 @@
       {% endif %}
 
       {% if open_query %}
-      <div class="card tw:mt-3 tw:border-warning/30 tw:bg-warning/5"><div class="card-body">
+      <div class="card tw:mt-3 tw:border-warning/30 tw:bg-warning/5"><div class="card-body tw:d-card-body">
         <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
           <div>
             <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
@@ -363,7 +363,7 @@
       {% elif can_tpa_process and tx.status == "tpa_in_progress" %}
       <details class="collapse collapse-arrow tw:mt-5 tw:border tw:border-warning/30">
         <summary class="collapse-title tw:text-sm tw:font-bold"><i class="bi bi-question-circle tw:me-2"></i>{% translate "Raise Query to Requester" %}</summary>
-        <div class="collapse-content">
+        <div class="collapse-content tw:d-collapse-content">
           <form class="tw:space-y-3" method="post" action="{% url 'tpa:transaction_raise_query' tx.reference %}">
             {% csrf_token %}
             {{ query_raise_form.subject }}
@@ -389,7 +389,7 @@
                 {% for msg in q.messages.all %}
                 <div class="chat {% if msg.sender_id == request.user.id %}chat-end{% else %}chat-start{% endif %}">
                   <div class="chat-header tw:text-xs">{{ msg.sender.get_full_name|default:msg.sender.username }} · {{ msg.created_at|date:"d-M-Y H:i" }}</div>
-                  <div class="chat-bubble">{{ msg.ticket_comment.body|linebreaksbr }}</div>
+                  <div class="chat-bubble tw:d-chat-bubble">{{ msg.ticket_comment.body|linebreaksbr }}</div>
                 </div>
                 {% endfor %}
               </div>
@@ -412,9 +412,9 @@
   </section>
 
   <div class="tw:grid tw:gap-3 tw:xl:grid-cols-2">
-    <section class="card">
+    <section class="card tw:d-card">
       <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Case control" %}</div><h2 class="tpa-section-title">{% translate "WORKFLOW STATUS" %}</h2></div></div>
-      <div class="card-body">
+      <div class="card-body tw:d-card-body">
         <dl class="tw:mt-2 tw:space-y-3 tw:text-sm">
           <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Current Status" %}</dt><dd class="tw:font-bold">{{ tx.get_status_display }}</dd></div>
           <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "GLIS Approval" %}</dt><dd class="tw:font-bold">{% if tx.ticket %}{{ tx.ticket.get_approval_state_display }}{% else %}—{% endif %}</dd></div>
@@ -426,12 +426,12 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card tw:d-card">
       <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Audit trail" %}</div><h2 class="tpa-section-title">{% translate "ACTIVITY TIMELINE" %}</h2></div></div>
-      <div class="card-body">
+      <div class="card-body tw:d-card-body">
         <ul class="timeline timeline-vertical tw:mt-2">
           {% for e in events %}
-          <li>{% if not forloop.first %}<hr>{% endif %}<div class="timeline-middle"><i class="bi bi-check-circle"></i></div><div class="timeline-end timeline-box"><strong>{{ e.summary }}</strong><div class="tw:text-xs tw:text-base-content/50">{{ e.created_at|date:"d-M-Y H:i" }}</div></div>{% if not forloop.last %}<hr>{% endif %}</li>
+          <li>{% if not forloop.first %}<hr>{% endif %}<div class="timeline-middle tw:d-timeline-middle"><i class="bi bi-check-circle"></i></div><div class="timeline-end timeline-box"><strong>{{ e.summary }}</strong><div class="tw:text-xs tw:text-base-content/50">{{ e.created_at|date:"d-M-Y H:i" }}</div></div>{% if not forloop.last %}<hr>{% endif %}</li>
           {% empty %}<li class="tw:text-sm tw:text-base-content/50">{% translate "No activity yet." %}</li>{% endfor %}
         </ul>
       </div>

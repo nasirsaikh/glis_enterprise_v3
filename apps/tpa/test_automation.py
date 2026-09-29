@@ -34,6 +34,7 @@ from apps.tpa.services.access import (
     can_view_transaction_query,
     visible_shared_internal_messages,
 )
+from apps.tpa.services.ai_intake import process_inbound_email
 from apps.tpa.services.authority import resolve_email_authority, sender_is_authorized
 from apps.tpa.services.mailbox import _graph_get, poll_office365_graph
 from apps.tpa.services.ticketing import create_ticket_for_transaction
@@ -252,6 +253,44 @@ class TPAAutomationTests(TestCase):
 
         self.assertEqual(payload, {"value": []})
         self.assertEqual(get.call_count, 2)
+
+    @patch("apps.tpa.services.ai_intake.extract_email_payload")
+    def test_email_classification_without_confidence_goes_to_review(self, extract_payload):
+        provider = MagicMock()
+        provider.name = "Test Provider"
+        provider.provider = "mock"
+        provider.model_name = "test-model"
+        extract_payload.return_value = (
+            {
+                "is_endorsement_request": True,
+                "classification": "MEMBER_ADD",
+                "transaction_type": "MEMBER_ADD",
+                "confidence": None,
+                "policy_number": self.policy.policy_number,
+                "members": [],
+            },
+            provider,
+            None,
+            {"raw": "response"},
+        )
+        email = InboundEmail.objects.create(
+            provider="office365_graph",
+            provider_message_id="missing-confidence",
+            sender="hr@example.com",
+            recipient="tpa@example.com",
+            mailbox="tpa@example.com",
+            received_at=timezone.now(),
+        )
+
+        result = process_inbound_email(email, self.internal)
+
+        self.assertIsNone(result)
+        email.refresh_from_db()
+        self.assertEqual(email.processing_state, InboundEmail.State.REVIEW)
+        self.assertIn("incomplete", email.processing_error.lower())
+        self.assertEqual(email.ai_provider_name, "Test Provider")
+        self.assertEqual(email.ai_model_name, "test-model")
+        self.assertIsNone(email.transaction_id)
 
     def test_sender_authority_is_policy_and_transaction_specific(self):
         authority = TPAEmailAuthority.objects.create(

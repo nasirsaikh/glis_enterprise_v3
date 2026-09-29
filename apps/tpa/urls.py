@@ -57,6 +57,11 @@ urlpatterns = [
         name="transaction_upload_members",
     ),
     path(
+        "transactions/<str:reference>/members/<int:action_id>/edit/",
+        views.transaction_edit_member,
+        name="transaction_edit_member",
+    ),
+    path(
         "transactions/<str:reference>/members/<int:action_id>/remove/",
         views.transaction_remove_member,
         name="transaction_remove_member",

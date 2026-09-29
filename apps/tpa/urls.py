@@ -13,6 +13,7 @@ urlpatterns = [
 
     path("inbound-emails/", views.inbound_email_list, name="inbound_email_list"),
     path("inbound-emails/new/", views.inbound_email_create, name="inbound_email_create"),
+    path("inbound-emails/sync/", views.inbound_email_sync_now, name="inbound_email_sync_now"),
     path(
         "inbound-emails/<int:email_id>/",
         views.inbound_email_detail,
@@ -47,6 +48,11 @@ urlpatterns = [
         name="transaction_sample_file",
     ),
     path(
+        "transactions/<str:reference>/sources/<int:document_id>/reprocess/",
+        views.transaction_reprocess_source,
+        name="transaction_reprocess_source",
+    ),
+    path(
         "transactions/<str:reference>/members/add/",
         views.transaction_add_member,
         name="transaction_add_member",
@@ -55,6 +61,11 @@ urlpatterns = [
         "transactions/<str:reference>/members/upload/",
         views.transaction_upload_members,
         name="transaction_upload_members",
+    ),
+    path(
+        "transactions/<str:reference>/members/select/",
+        views.transaction_select_members,
+        name="transaction_select_members",
     ),
     path(
         "transactions/<str:reference>/members/<int:action_id>/edit/",
@@ -106,6 +117,21 @@ urlpatterns = [
         "transactions/<str:reference>/tpa/query/<int:query_id>/resolve/",
         views.transaction_resolve_query,
         name="transaction_resolve_query",
+    ),
+    path(
+        "transactions/<str:reference>/query-messages/<int:message_id>/share/",
+        views.transaction_share_query_message,
+        name="transaction_share_query_message",
+    ),
+    path(
+        "transactions/<str:reference>/query-attachments/<int:attachment_id>/",
+        views.transaction_query_attachment,
+        name="transaction_query_attachment",
+    ),
+    path(
+        "transactions/<str:reference>/card-dispatch/",
+        views.transaction_card_dispatch,
+        name="transaction_card_dispatch",
     ),
     path(
         "transactions/<str:reference>/tpa/complete/",

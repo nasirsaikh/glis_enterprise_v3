@@ -24,8 +24,12 @@ class AIInteractionAdmin(admin.ModelAdmin):
 class AIProviderConfigAdmin(admin.ModelAdmin):
     list_display=("name","provider","model_name","supports_vision","allow_sensitive_data","priority","is_active")
     list_filter=("provider","supports_vision","allow_sensitive_data","is_active")
-    search_fields=("name","model_name","endpoint")
-    exclude=("secret_reference",)
+    search_fields=("name","model_name","endpoint","secret_reference")
+    fieldsets=(
+        ("Provider", {"fields": ("name","provider","model_name","endpoint","secret_reference","is_active","priority")}),
+        ("Capabilities", {"fields": ("supports_vision","task_capabilities","allow_sensitive_data")}),
+        ("Runtime", {"fields": ("temperature","timeout_seconds","runtime_options")}),
+    )
 
 class AITrainingExampleInline(admin.TabularInline):
     model=AITrainingExample

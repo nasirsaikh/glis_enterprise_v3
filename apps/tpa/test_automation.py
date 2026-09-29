@@ -5,10 +5,12 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.tickets.models import TicketAttachment
 from apps.tpa.forms import MemberRowForm
 from apps.tpa.models import (
     BenefitPlan,
@@ -34,6 +36,7 @@ from apps.tpa.services.access import (
 )
 from apps.tpa.services.authority import resolve_email_authority, sender_is_authorized
 from apps.tpa.services.mailbox import _graph_get, poll_office365_graph
+from apps.tpa.services.ticketing import create_ticket_for_transaction
 from apps.tpa.services.validation import validate_action
 from apps.tpa.services.workflow import (
     approve_transaction,
@@ -599,6 +602,46 @@ class TPAAutomationTests(TestCase):
         self.assertEqual(enrollment.enrollment_status, MemberPolicyEnrollment.Status.ACTIVE)
         self.assertEqual(member.status, Member.Status.ACTIVE)
         self.assertEqual(enrollment.reactivation_date, date(2026, 8, 1))
+
+    def test_card_dispatch_proof_is_not_downloadable_by_client(self):
+        tx = self._transaction(
+            status=MemberTransaction.Status.CARD_DISPATCH,
+            physical_card_required=True,
+        )
+        ticket = create_ticket_for_transaction(tx, actor=self.internal)
+        proof = TicketAttachment.objects.create(
+            ticket=ticket,
+            uploaded_by=self.internal,
+            file=SimpleUploadedFile(
+                "delivery-proof.pdf",
+                b"%PDF-1.4 test proof",
+                content_type="application/pdf",
+            ),
+            original_name="delivery-proof.pdf",
+            content_type="application/pdf",
+            size=19,
+            is_restricted=True,
+            scan_status="clean",
+            source_field="tpa_card_dispatch",
+        )
+        CardDispatch.objects.create(
+            transaction=tx,
+            status=CardDispatch.Status.DELIVERED,
+            proof_attachment=proof,
+            recorded_by=self.internal,
+        )
+
+        self.client.force_login(self.requester)
+        blocked = self.client.get(
+            reverse("tpa:transaction_card_dispatch_proof", args=[tx.reference])
+        )
+        self.assertEqual(blocked.status_code, 403)
+
+        self.client.force_login(self.internal)
+        allowed = self.client.get(
+            reverse("tpa:transaction_card_dispatch_proof", args=[tx.reference])
+        )
+        self.assertEqual(allowed.status_code, 200)
 
     def test_physical_card_dispatch_blocks_completion_until_delivery(self):
         self.policy.physical_card_required = True

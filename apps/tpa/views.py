@@ -113,14 +113,6 @@ def dashboard(request):
     status_labels = dict(MemberTransaction.Status.choices)
     source_labels = dict(MemberTransaction.Source.choices)
 
-    source_documents = list(tx.source_documents.all().order_by("-created_at"))
-    for document in source_documents:
-        payload = document.extracted_payload or {}
-        result_count = payload.get("bundle_members_created")
-        if result_count is None:
-            result_count = payload.get("rows_created")
-        document.result_count = result_count
-
     context = {
         "status_chart": [
             {
@@ -688,6 +680,14 @@ def transaction_detail(request, reference):
         if is_add
         else MemberLookupRowForm()
     )
+
+    source_documents = list(tx.source_documents.all().order_by("-created_at"))
+    for document in source_documents:
+        payload = document.extracted_payload or {}
+        result_count = payload.get("bundle_members_created")
+        if result_count is None:
+            result_count = payload.get("rows_created")
+        document.result_count = result_count
 
     context = {
         "tx": tx,

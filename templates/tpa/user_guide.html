@@ -4,17 +4,17 @@
 
 {% block tpa_content %}
 <div class="space-y-4">
-  <header class="tpa-page-head">
+  <header class="card flex flex-col gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6 xl:flex-row xl:items-end xl:justify-between">
     <div>
-      <div class="tpa-kicker"><i class="bi bi-book"></i>{% translate "TPA / Operations Manual" %}</div>
-      <h1 class="tpa-title">{% translate "AUTOMATED ENDORSEMENT OPERATIONS" %}</h1>
-      <p class="tpa-subtitle">{% translate "Office 365 intake, governed AI extraction, deterministic validation, approval, TPA processing, secure conversations and card dispatch." %}</p>
+      <div class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-book"></i>{% translate "TPA / Operations Manual" %}</div>
+      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "AUTOMATED ENDORSEMENT OPERATIONS" %}</h1>
+      <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{% translate "Office 365 intake, governed AI extraction, deterministic validation, approval, TPA processing, secure conversations and card dispatch." %}</p>
     </div>
     <a class="btn btn-outline btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "TPA Dashboard" %}</a>
   </header>
 
   <div class="grid gap-4 xl:grid-cols-2">
-    <section class="card">
+    <section class="card border border-base-300 bg-base-100 shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-envelope-check text-primary"></i>{% translate "1. Automatic Office 365 Intake" %}</h2>
         <p>{% translate "The configured Office 365/shared mailbox is monitored automatically through Microsoft Graph and GLIS Job Center. Users do not normally upload incoming emails manually." %}</p>
@@ -27,7 +27,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card border border-base-300 bg-base-100 shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-shield-check text-primary"></i>{% translate "2. Classification & Authority" %}</h2>
         <p>{% translate "AI classifies and extracts evidence, but Django validates sender authority and resolves the policy. Unrelated, uncertain, unauthorized or ambiguous requests are retained for review instead of being guessed." %}</p>
@@ -42,7 +42,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card border border-base-300 bg-base-100 shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-stars text-primary"></i>{% translate "3. Evidence & AI/OCR" %}</h2>
         <p>{% translate "Email body and all attachments are treated as one logical evidence bundle. Structured spreadsheets are parsed deterministically; PDFs use native text first; scanned PDFs/images use an approved vision provider and a text model maps OCR into strict member JSON." %}</p>
@@ -61,7 +61,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card border border-base-300 bg-base-100 shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-people text-primary"></i>{% translate "4. Intake & Correction" %}</h2>
         <p>{% translate "Extracted, imported and manual members use one MemberAction matrix. Validated rows and Errors / Needs Correction are separated for operational review." %}</p>
@@ -76,7 +76,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card border border-base-300 bg-base-100 shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-calculator text-primary"></i>{% translate "5. Validation, Refund & STP" %}</h2>
         <p>{% translate "Policy dates, backdating, plans, identifiers, duplicates, principal/dependent relationships and member state are validated deterministically." %}</p>
@@ -88,7 +88,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card border border-base-300 bg-base-100 shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-chat-dots text-primary"></i>{% translate "6. Approval & TPA Conversations" %}</h2>
         <p>{% translate "Approval and TPA queries are multi-message conversations embedded in the transaction. Open approval queries must be resolved before approval or rejection." %}</p>
@@ -101,7 +101,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card border border-base-300 bg-base-100 shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-heart-pulse text-primary"></i>{% translate "7. Suspension & Reactivation" %}</h2>
         <p><strong>{% translate "Permanent termination" %}</strong> — {% translate "permanently terminates remaining coverage." %}</p>
@@ -111,7 +111,7 @@
       </div>
     </section>
 
-    <section class="card">
+    <section class="card border border-base-300 bg-base-100 shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-truck text-primary"></i>{% translate "8. Card Dispatch" %}</h2>
         <p>{% translate "When a physical card is required for Member Addition, successful TPA processing enters Card Dispatch instead of completing early." %}</p>
@@ -127,7 +127,7 @@
     </section>
   </div>
 
-  <section class="card">
+  <section class="card border border-base-300 bg-base-100 shadow-sm">
     <div class="card-body">
       <h2 class="card-title"><i class="bi bi-diagram-3 text-primary"></i>{% translate "End-to-End Workflow" %}</h2>
       <ul class="steps steps-vertical lg:steps-horizontal w-full">

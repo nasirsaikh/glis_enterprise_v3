@@ -55,7 +55,7 @@
           <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-building-add tw:text-primary"></i>{% translate "2. Initial Policy Enrollment" %}</h2>
           <p>{% translate "Use TPA Operations → Initial Policy Enrollment for a brand-new policy. New Policy Enrollment is intentionally not available in the Endorsement menu." %}</p>
           <ol class="tw:list-decimal tw:space-y-2 tw:ps-6">
-            <li>{% translate "Create/select Sponsor, Insurance Company and optional TPA route." %}</li>
+            <li>{% translate "Select an Individual or Corporate Sponsor, Insurance Company and optional TPA route." %}</li>
             <li>{% translate "Enter policy number/name, start/end dates, currency, STP and backdating settings." %}</li>
             <li>{% translate "Create the first benefit plan; additional plans can be added inside the setup case." %}</li>
             <li>{% translate "Load the opening census using manual entry or the same Excel/CSV/PDF/image OCR intake used by endorsements." %}</li>
@@ -109,7 +109,7 @@
       <section id="tpa" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
         <div class="tw:d-card-body">
           <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-hospital tw:text-primary"></i>{% translate "6. TPA Processing & Embedded Query Chat" %}</h2>
-          <p>{% translate "A TPA processor starts the dispatched case, records card/member number, TPA effective date and TPA premium/refund amount per row, then completes the transaction." %}</p>
+          <p>{% translate "A TPA processor starts the dispatched case, records card/member number, TPA effective date and TPA premium/refund amount per row, then completes the transaction. These TPA-final values are persisted to the permanent enrollment where applicable." %}</p>
           <p>{% translate "If information is missing, Raise Query creates a dedicated GLIS query ticket related to the main transaction ticket and pauses the case in TPA Query. The requester and TPA exchange messages/attachments through DaisyUI chat displayed inside this step. Resolving the query closes the query ticket and resumes TPA processing." %}</p>
           <div class="tw:d-alert tw:d-alert-success"><i class="bi bi-chat-dots"></i><span>{% translate "Users do not need to leave the TPA case to answer a query. Previous resolved conversations remain available inside the same workflow section." %}</span></div>
         </div>

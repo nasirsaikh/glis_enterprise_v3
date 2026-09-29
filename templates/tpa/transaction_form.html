@@ -1,31 +1,31 @@
-{% extends "base_portal.html" %}
+{% extends "tpa/base.html" %}
 {% load i18n %}
 {% block title %}{% translate "New Endorsement" %}{% endblock %}
-{% block content %}
+{% block tpa_content %}
 <div class="tw:mx-auto tw:max-w-4xl tw:space-y-5">
-  <section class="tw:d-card tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl">
-    <div class="tw:d-card-body">
+  <section class="card tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl">
+    <div class="card-body">
       <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-4">
         <div>
-          <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">{% translate "Endorsement" %}</span>
+          <span class="badge badge-primary badge-soft">{% translate "Endorsement" %}</span>
           <h1 class="tw:mt-2 tw:text-3xl tw:font-black">{% translate "New Endorsement" %}</h1>
           <p class="tw:mt-1 tw:text-base-content/60">{% translate "Create a member addition, termination, deletion/void or policy cancellation for an already enrolled policy." %}</p>
         </div>
-        <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" href="{% url 'tpa:transaction_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Endorsements" %}</a>
+        <a class="btn btn-ghost btn-sm" href="{% url 'tpa:transaction_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Endorsements" %}</a>
       </div>
     </div>
   </section>
 
-  <div class="tw:d-alert tw:d-alert-info">
+  <div class="alert alert-info">
     <i class="bi bi-building-add"></i>
     <span>{% translate "Opening a new policy and loading its initial member census is handled under Initial Policy Enrollment, not here." %}</span>
   </div>
 
-  <form method="post" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+  <form method="post" class="card tw:border tw:border-base-300 tw:bg-base-100">
     {% csrf_token %}
-    <div class="tw:d-card-body tw:space-y-4">
+    <div class="card-body tw:space-y-4">
       {% for field in form %}
-      <label class="tw:d-form-control">
+      <label class="form-control">
         <span class="tw:mb-1 tw:text-xs tw:font-bold">{{ field.label }}</span>
         {{ field }}
         {% if field.help_text %}<span class="tw:mt-1 tw:text-xs tw:text-base-content/45">{{ field.help_text }}</span>{% endif %}
@@ -33,7 +33,7 @@
       </label>
       {% endfor %}
       <div class="tw:flex tw:justify-end">
-        <button class="tw:d-btn tw:d-btn-primary" type="submit"><i class="bi bi-arrow-right"></i>{% translate "Create Endorsement" %}</button>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-right"></i>{% translate "Create Endorsement" %}</button>
       </div>
     </div>
   </form>

@@ -56,6 +56,11 @@ jobs:
       - name: Compile TPA and AI code
         run: python -m compileall -q apps/tpa apps/ai
 
+      - name: Validate TPA JavaScript syntax
+        run: |
+          node --check static/js/tpa.js
+          node --check static/js/app.js
+
       - name: Django system check
         run: python manage.py check
 

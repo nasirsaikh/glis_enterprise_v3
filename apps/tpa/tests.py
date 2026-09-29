@@ -117,6 +117,21 @@ class TPACoreTests(TestCase):
         self.assertTrue(can_access_tpa(self.user))
         self.assertTrue(can_create_tpa_transaction(self.user))
 
+    def test_endorsement_form_excludes_initial_enrollment(self):
+        PolicyAccess.objects.create(
+            organization=self.sponsor,
+            policy=self.policy,
+            user=self.user,
+            can_view=True,
+            can_create_endorsement=True,
+            active=True,
+        )
+        form = TransactionForm(user=self.user)
+        values = {value for value, _ in form.fields["transaction_type"].choices}
+        self.assertNotIn(MemberTransaction.Type.NEW_POLICY_ENROLLMENT, values)
+        self.assertIn(MemberTransaction.Type.MEMBER_ADD, values)
+        self.assertIn(self.policy, form.fields["policy"].queryset)
+
     def test_validation_with_no_member_rows_requires_information(self):
         tx = self._transaction(status=MemberTransaction.Status.PENDING_VALIDATION)
         run_validation(tx, actor=self.user)
@@ -299,6 +314,60 @@ class TPACoreTests(TestCase):
         parent = Member.objects.get(employee_id="E-FAMILY-1")
         child = Member.objects.get(employee_id="E-FAMILY-2")
         self.assertEqual(child.principal_id, parent.pk)
+
+    def test_tpa_query_creates_dedicated_ticket_and_embedded_messages(self):
+        tx = self._transaction(status=MemberTransaction.Status.PENDING_VALIDATION)
+        MemberAction.objects.create(
+            transaction=tx,
+            action=tx.transaction_type,
+            row_number=1,
+            corrected_data={
+                "employee_id": "E-Q-1",
+                "first_name": "Query",
+                "last_name": "Member",
+                "date_of_birth": "1990-01-01",
+                "gender": "Male",
+                "relationship": "PRINCIPAL",
+                "plan_code": "GOLD",
+                "national_id": "CID-Q-1",
+            },
+        )
+        run_validation(tx, actor=self.user)
+
+        self.user.is_superuser = True
+        self.user.is_staff = True
+        self.user.save(update_fields=["is_superuser", "is_staff"])
+
+        approve_transaction(tx, self.user)
+        start_tpa_processing(tx, self.user)
+        query = raise_tpa_query(
+            tx,
+            self.user,
+            "Confirm relationship",
+            "Please confirm the member relationship.",
+        )
+
+        tx.refresh_from_db()
+        query.refresh_from_db()
+        self.assertEqual(tx.status, MemberTransaction.Status.TPA_QUERY)
+        self.assertEqual(query.status, TransactionQuery.Status.OPEN)
+        self.assertIsNotNone(query.ticket_id)
+        self.assertNotEqual(query.ticket_id, tx.ticket_id)
+        self.assertEqual(query.messages.count(), 1)
+        self.assertTrue(
+            TicketComment.objects.filter(
+                ticket=query.ticket,
+                tpa_query_message__query=query,
+            ).exists()
+        )
+
+        post_query_message(query, self.user, "Relationship confirmed.")
+        self.assertEqual(query.messages.count(), 2)
+        resolve_tpa_query(query, self.user)
+        query.refresh_from_db()
+        tx.refresh_from_db()
+        self.assertEqual(query.status, TransactionQuery.Status.RESOLVED)
+        self.assertEqual(tx.status, MemberTransaction.Status.TPA_IN_PROGRESS)
 
     def test_inbound_email_mock_ai_creates_transaction_and_member_row(self):
         AIProviderConfig.objects.create(

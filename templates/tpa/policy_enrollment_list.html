@@ -2,14 +2,14 @@
 {% load i18n %}
 {% block title %}{% translate "Initial Policy Enrollment" %}{% endblock %}
 {% block tpa_content %}
-<div class="tw:space-y-3">
+<div class="space-y-3">
   <header class="tpa-page-head">
     <div>
       <div class="tpa-kicker"><i class="bi bi-building-add"></i>{% translate "TPA / Onboarding" %}</div>
       <h1 class="tpa-title">{% translate "INITIAL POLICY ENROLLMENT" %}</h1>
       <p class="tpa-subtitle">{% translate "Create the policy, benefit plans and opening member census. Successful TPA completion activates the policy for endorsements." %}</p>
     </div>
-    <div class="tw:flex tw:flex-wrap tw:gap-1.5">
+    <div class="flex flex-wrap gap-1.5">
       <a class="btn btn-ghost btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "Dashboard" %}</a>
       {% if can_create_policy_enrollment %}
       <a class="btn btn-primary btn-sm" href="{% url 'tpa:policy_enrollment_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Policy Enrollment" %}</a>
@@ -22,7 +22,7 @@
       <div><div class="tpa-eyebrow">{% translate "Opening census control" %}</div><h2 class="tpa-section-title">{% translate "POLICY ONBOARDING QUEUE" %}</h2></div>
       <span class="badge badge-outline">{{ policy_rows|length }} {% translate "POLICIES" %}</span>
     </div>
-    <div class="tw:overflow-x-auto">
+    <div class="overflow-x-auto">
       <table class="table table-sm">
         <thead><tr><th>{% translate "Policy" %}</th><th>{% translate "Sponsor" %}</th><th>{% translate "Insurer" %}</th><th>{% translate "TPA" %}</th><th>{% translate "Plans" %}</th><th>{% translate "Initial Enrollment" %}</th><th>{% translate "Policy Status" %}</th></tr></thead>
         <tbody>
@@ -30,11 +30,11 @@
           <tr>
             <td>
               {% if row.transaction %}
-              <a class="link link-primary tpa-mono tw:font-bold" href="{% url 'tpa:transaction_detail' row.transaction.reference %}">{{ row.policy.policy_number }}</a>
+              <a class="link link-primary tpa-mono font-bold" href="{% url 'tpa:transaction_detail' row.transaction.reference %}">{{ row.policy.policy_number }}</a>
               {% else %}<strong class="tpa-mono">{{ row.policy.policy_number }}</strong>{% endif %}
-              <div class="tw:text-[10px] tw:opacity-45">{{ row.policy.policy_name }}</div>
+              <div class="text-[10px] opacity-45">{{ row.policy.policy_name }}</div>
             </td>
-            <td>{{ row.policy.sponsor.name_en }}<div class="tw:text-[10px] tw:opacity-45">{{ row.policy.sponsor.get_organization_type_display }}</div></td>
+            <td>{{ row.policy.sponsor.name_en }}<div class="text-[10px] opacity-45">{{ row.policy.sponsor.get_organization_type_display }}</div></td>
             <td>{{ row.policy.insurance_company.name_en }}</td>
             <td>{{ row.policy.tpa_organization.name_en|default:"GLIS TPA Operations" }}</td>
             <td class="tpa-mono">{{ row.policy.plans.count }}</td>
@@ -50,7 +50,7 @@
             <td><span class="badge {% if row.policy.status == 'active' %}badge-success badge-soft{% else %}badge-outline{% endif %}">{{ row.policy.get_status_display }}</span></td>
           </tr>
         {% empty %}
-          <tr><td colspan="7" class="tw:py-8 tw:text-center tw:opacity-45">{% translate "No policies have been enrolled yet." %}</td></tr>
+          <tr><td colspan="7" class="py-8 text-center opacity-45">{% translate "No policies have been enrolled yet." %}</td></tr>
         {% endfor %}
         </tbody>
       </table>

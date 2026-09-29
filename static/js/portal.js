@@ -345,11 +345,40 @@
     const sidebar = document.getElementById("portal-sidebar");
     if (!button || !sidebar) return;
 
-    let desktopMode = "collapsed";
+    const normalize = (value) => value === "full" ? "full" : "mini";
+    let desktopMode = normalize(
+      localStorage.getItem("glis-sidebar-mode")
+      || document.body?.dataset.sidebarMode
+      || "mini"
+    );
+
+    const csrfToken = () => {
+      const fromForm = document.querySelector('[name="csrfmiddlewaretoken"]')?.value;
+      if (fromForm) return fromForm;
+      const cookie = document.cookie.split("; ").find((item) => item.startsWith("csrftoken="));
+      return cookie ? decodeURIComponent(cookie.split("=").slice(1).join("=")) : "";
+    };
+
+    const save = async (mode) => {
+      localStorage.setItem("glis-sidebar-mode", mode);
+      const endpoint = document.body?.dataset.sidebarPreferenceUrl;
+      if (!endpoint) return;
+      try {
+        await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken(),
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({mode})
+        });
+      } catch (_) { /* Local preference remains available offline. */ }
+    };
 
     const render = (mode) => {
-      const expanded = mode === "expanded";
-      sidebar.dataset.sidebarState = mode;
+      const expanded = mode === "full";
+      sidebar.dataset.sidebarState = expanded ? "expanded" : "collapsed";
       sidebar.classList.toggle("w-20", !expanded);
       sidebar.classList.toggle("w-72", expanded);
 
@@ -364,21 +393,27 @@
       button.setAttribute("aria-label", expanded ? "Collapse navigation" : "Expand navigation");
       button.setAttribute("title", expanded ? "Collapse navigation" : "Expand navigation");
       const icon = button.querySelector("i");
-      if (icon) icon.className = "bi " + (expanded ? "bi-layout-sidebar-inset-reverse" : "bi-layout-sidebar-inset");
+      if (icon) {
+        icon.className = "bi " + (
+          expanded ? "bi-layout-sidebar-inset-reverse" : "bi-layout-sidebar-inset"
+        );
+      }
     };
 
     const syncViewport = () => {
-      if (window.matchMedia("(min-width: 1024px)").matches) render(desktopMode);
-      else render("expanded");
+      if (window.matchMedia("(min-width: 1024px)").matches) {
+        render(desktopMode);
+      } else {
+        render("full");
+      }
     };
 
-    // Desktop always lands collapsed; the user can expand it for the current page.
-    render("collapsed");
     syncViewport();
 
-    button.addEventListener("click", () => {
-      desktopMode = desktopMode === "collapsed" ? "expanded" : "collapsed";
+    button.addEventListener("click", async () => {
+      desktopMode = desktopMode === "full" ? "mini" : "full";
       render(desktopMode);
+      await save(desktopMode);
     });
 
     window.addEventListener("resize", syncViewport);

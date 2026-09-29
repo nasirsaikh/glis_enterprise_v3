@@ -3,6 +3,7 @@ import hashlib
 import imaplib
 import json
 import os
+import time
 from datetime import datetime
 from email import policy as email_policy
 from email.header import decode_header, make_header
@@ -166,9 +167,28 @@ def _graph_get(url, token, *, timeout=60, max_page_size=None):
     }
     if max_page_size:
         headers["Prefer"] = f"odata.maxpagesize={max_page_size}"
-    response = requests.get(url, headers=headers, timeout=timeout)
-    response.raise_for_status()
-    return response.json()
+
+    last_error = None
+    for attempt in range(1, 4):
+        try:
+            response = requests.get(url, headers=headers, timeout=timeout)
+            if response.status_code == 429 or response.status_code >= 500:
+                if attempt < 3:
+                    retry_after = response.headers.get("Retry-After")
+                    try:
+                        delay = min(max(float(retry_after or attempt), 0.1), 10.0)
+                    except (TypeError, ValueError):
+                        delay = float(attempt)
+                    time.sleep(delay)
+                    continue
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt >= 3:
+                raise
+            time.sleep(min(float(attempt), 3.0))
+    raise last_error or RuntimeError("Microsoft Graph request failed.")
 
 
 def _graph_email_address(value):

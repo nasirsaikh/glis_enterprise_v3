@@ -20,6 +20,7 @@ from .models import (
     Policy,
     PolicyAccess,
     SourceDocument,
+    TPAEmailAuthority,
     TPAOrganization,
     TransactionQuery,
 )
@@ -612,6 +613,13 @@ class TPACoreTests(TestCase):
             instructions="Return strict member JSON.",
             priority=1,
             is_active=True,
+        )
+        TPAEmailAuthority.objects.create(
+            email_address="hr@example.com",
+            organization=self.sponsor,
+            policy=self.policy,
+            permitted_transaction_types=[MemberTransaction.Type.MEMBER_ADD],
+            active=True,
         )
         email = InboundEmail.objects.create(
             provider="test",

@@ -817,7 +817,10 @@ class TPAAutomationTests(TestCase):
         allowed = self.client.get(
             reverse("tpa:transaction_card_dispatch_proof", args=[tx.reference])
         )
-        self.assertEqual(allowed.status_code, 200)
+        try:
+            self.assertEqual(allowed.status_code, 200)
+        finally:
+            allowed.close()
 
     def test_physical_card_dispatch_blocks_completion_until_delivery(self):
         self.policy.physical_card_required = True

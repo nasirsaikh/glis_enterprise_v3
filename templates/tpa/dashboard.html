@@ -39,39 +39,39 @@
   {% endif %}
 
   <section class="tw:grid tw:grid-cols-2 tw:gap-2 tw:md:grid-cols-3 tw:xl:grid-cols-6">
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Active Sponsors" %}</div><div class="stat-value">{{ active_sponsors }}</div><div class="stat-desc">{% translate "accessible portfolio" %}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Active Policies" %}</div><div class="stat-value">{{ active_policies }}</div><div class="stat-desc">{% translate "endorsement enabled" %}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Active Members" %}</div><div class="stat-value">{{ active_members }}</div><div class="stat-desc">{% translate "covered lives" %}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Open Pipeline" %}</div><div class="stat-value">{{ open_transactions }}</div><div class="stat-desc">{% translate "active transactions" %}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Needs Info / Query" %}</div><div class="stat-value {% if needs_information %}tw:text-warning{% endif %}">{{ needs_information }}</div><div class="stat-desc">{% translate "exceptions" %}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Pending Approval" %}</div><div class="stat-value {% if pending_approval %}tw:text-info{% endif %}">{{ pending_approval }}</div><div class="stat-desc">{% translate "decision queue" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Active Sponsors" %}</div><div class="stat-value tw:d-stat-value">{{ active_sponsors }}</div><div class="stat-desc tw:d-stat-desc">{% translate "accessible portfolio" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Active Policies" %}</div><div class="stat-value tw:d-stat-value">{{ active_policies }}</div><div class="stat-desc tw:d-stat-desc">{% translate "endorsement enabled" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Active Members" %}</div><div class="stat-value tw:d-stat-value">{{ active_members }}</div><div class="stat-desc tw:d-stat-desc">{% translate "covered lives" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Open Pipeline" %}</div><div class="stat-value tw:d-stat-value">{{ open_transactions }}</div><div class="stat-desc tw:d-stat-desc">{% translate "active transactions" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Needs Info / Query" %}</div><div class="stat-value {% if needs_information %}tw:text-warning{% endif %}">{{ needs_information }}</div><div class="stat-desc tw:d-stat-desc">{% translate "exceptions" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Pending Approval" %}</div><div class="stat-value {% if pending_approval %}tw:text-info{% endif %}">{{ pending_approval }}</div><div class="stat-desc tw:d-stat-desc">{% translate "decision queue" %}</div></div></div>
   </section>
 
   <section class="tw:grid tw:grid-cols-2 tw:gap-2 tw:md:grid-cols-3">
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "STP Rate" %}</div><div class="stat-value tw:text-success">{{ stp_rate }}%</div><div class="stat-desc">{% translate "straight-through eligible" %}</div></div></div>
-    <div class="stats"><div class="stat"><div class="stat-title">{% translate "AI Providers" %}</div><div class="stat-value">{{ ai_provider_count }}</div><div class="stat-desc">{% translate "sensitive-data approved" %}</div></div></div>
-    <div class="stats tw:col-span-2 tw:md:col-span-1"><div class="stat"><div class="stat-title">{% translate "Inbound Review" %}</div><div class="stat-value {% if inbound_review %}tw:text-warning{% endif %}">{{ inbound_review }}</div><div class="stat-desc">{% translate "email/OCR exceptions" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "STP Rate" %}</div><div class="stat-value tw:text-success">{{ stp_rate }}%</div><div class="stat-desc tw:d-stat-desc">{% translate "straight-through eligible" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "AI Providers" %}</div><div class="stat-value tw:d-stat-value">{{ ai_provider_count }}</div><div class="stat-desc tw:d-stat-desc">{% translate "sensitive-data approved" %}</div></div></div>
+    <div class="stats tw:col-span-2 tw:md:col-span-1"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Inbound Review" %}</div><div class="stat-value {% if inbound_review %}tw:text-warning{% endif %}">{{ inbound_review }}</div><div class="stat-desc tw:d-stat-desc">{% translate "email/OCR exceptions" %}</div></div></div>
   </section>
 
   <div class="tw:grid tw:gap-3 tw:xl:grid-cols-2">
-    <section class="card">
+    <section class="card tw:d-card">
       <div class="tpa-section-head">
         <div><div class="tpa-eyebrow">{% translate "Pipeline telemetry" %}</div><h2 class="tpa-section-title">{% translate "TRANSACTIONS BY STATUS" %}</h2></div>
         <span class="badge badge-outline">{{ open_transactions }} {% translate "OPEN" %}</span>
       </div>
-      <div class="card-body"><div id="tpa-status-chart" class="tpa-chart"></div></div>
+      <div class="card-body tw:d-card-body"><div id="tpa-status-chart" class="tpa-chart"></div></div>
     </section>
 
-    <section class="card">
+    <section class="card tw:d-card">
       <div class="tpa-section-head">
         <div><div class="tpa-eyebrow">{% translate "Intake channels" %}</div><h2 class="tpa-section-title">{% translate "TRANSACTIONS BY SOURCE" %}</h2></div>
         <span class="badge badge-ghost"><i class="bi bi-cpu"></i>{% translate "AI READY" %}</span>
       </div>
-      <div class="card-body"><div id="tpa-source-chart" class="tpa-chart"></div></div>
+      <div class="card-body tw:d-card-body"><div id="tpa-source-chart" class="tpa-chart"></div></div>
     </section>
   </div>
 
-  <section class="card">
+  <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Live workflow feed" %}</div><h2 class="tpa-section-title">{% translate "RECENT TRANSACTIONS" %}</h2></div>
       <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "View All" %}<i class="bi bi-arrow-right"></i></a>

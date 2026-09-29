@@ -1,27 +1,27 @@
-{% extends "base_portal.html" %}{% load i18n %}
+{% extends "tpa/base.html" %}{% load i18n %}
 {% block title %}{{ email.subject|default:"Inbound Email" }}{% endblock %}
-{% block content %}
+{% block tpa_content %}
 <div class="tw:space-y-5">
-  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg">
-    <div class="tw:d-card-body tw:p-5">
+  <section class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg">
+    <div class="card-body tw:p-5">
       <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-4">
         <div class="tw:min-w-0">
           <div class="tw:flex tw:flex-wrap tw:gap-2">
-            <span class="tw:d-badge {% if email.processing_state == 'PROCESSED' %}tw:d-badge-success{% elif email.processing_state == 'REVIEW' or email.processing_state == 'FAILED' %}tw:d-badge-warning{% else %}tw:d-badge-outline{% endif %}">{{ email.get_processing_state_display }}</span>
-            {% if email.ai_confidence is not None %}<span class="tw:d-badge tw:d-badge-info tw:d-badge-soft">AI {{ email.ai_confidence }}%</span>{% endif %}
+            <span class="badge {% if email.processing_state == 'PROCESSED' %}badge-success{% elif email.processing_state == 'REVIEW' or email.processing_state == 'FAILED' %}badge-warning{% else %}badge-outline{% endif %}">{{ email.get_processing_state_display }}</span>
+            {% if email.ai_confidence is not None %}<span class="badge badge-info badge-soft">AI {{ email.ai_confidence }}%</span>{% endif %}
           </div>
           <h1 class="tw:mt-2 tw:text-3xl tw:font-black">{{ email.subject|default:"(No subject)" }}</h1>
           <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{{ email.sender }} → {{ email.recipient }} · {{ email.received_at|date:"d-M-Y H:i" }}</p>
         </div>
         <div class="tw:flex tw:flex-wrap tw:gap-2">
-          <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
+          <a class="btn btn-ghost btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
           {% if email.transaction %}
-          <a class="tw:d-btn tw:d-btn-outline tw:d-btn-sm" href="{% url 'tpa:transaction_detail' email.transaction.reference %}"><i class="bi bi-arrow-left-right"></i>{{ email.transaction.reference }}</a>
+          <a class="btn btn-outline btn-sm" href="{% url 'tpa:transaction_detail' email.transaction.reference %}"><i class="bi bi-arrow-left-right"></i>{{ email.transaction.reference }}</a>
           {% endif %}
           {% if email.processing_state != "PROCESSED" %}
           <form method="post" action="{% url 'tpa:inbound_email_process' email.pk %}">
             {% csrf_token %}
-            <button class="tw:d-btn tw:d-btn-primary tw:d-btn-sm" type="submit"><i class="bi bi-stars"></i>{% translate "Process with AI" %}</button>
+            <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-stars"></i>{% translate "Process with AI" %}</button>
           </form>
           {% endif %}
         </div>
@@ -30,19 +30,19 @@
   </section>
 
   {% if email.processing_error %}
-  <div class="tw:d-alert tw:d-alert-warning"><i class="bi bi-exclamation-triangle"></i><span>{{ email.processing_error }}</span></div>
+  <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i><span>{{ email.processing_error }}</span></div>
   {% endif %}
 
   <div class="tw:grid tw:gap-4 tw:xl:grid-cols-2">
-    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
-      <div class="tw:d-card-body tw:p-5">
-        <h2 class="tw:d-card-title">{% translate "Email body" %}</h2>
+    <section class="card tw:border tw:border-base-300 tw:bg-base-100">
+      <div class="card-body tw:p-5">
+        <h2 class="card-title">{% translate "Email body" %}</h2>
         <div class="tw:whitespace-pre-wrap tw:rounded-xl tw:bg-base-200/50 tw:p-4 tw:text-sm">{{ email.body_text|default:"—" }}</div>
       </div>
     </section>
-    <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
-      <div class="tw:d-card-body tw:p-5">
-        <h2 class="tw:d-card-title">{% translate "AI extraction" %}</h2>
+    <section class="card tw:border tw:border-base-300 tw:bg-base-100">
+      <div class="card-body tw:p-5">
+        <h2 class="card-title">{% translate "AI extraction" %}</h2>
         {% if email.ai_extracted_payload %}
         <dl class="tw:space-y-2 tw:text-sm">
           <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Policy" %}</dt><dd>{{ email.ai_extracted_payload.policy_number|default:"—" }}</dd></div>
@@ -50,9 +50,9 @@
           <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Effective date" %}</dt><dd>{{ email.ai_extracted_payload.effective_date|default:"—" }}</dd></div>
           <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Members extracted" %}</dt><dd>{{ email.ai_extracted_payload.members|length }}</dd></div>
         </dl>
-        <details class="tw:d-collapse tw:d-collapse-arrow tw:mt-4 tw:border tw:border-base-300">
-          <summary class="tw:d-collapse-title tw:text-sm tw:font-bold">{% translate "Source JSON" %}</summary>
-          <div class="tw:d-collapse-content"><pre class="tw:max-h-80 tw:overflow-auto tw:text-xs">{{ email.ai_extracted_payload }}</pre></div>
+        <details class="collapse collapse-arrow tw:mt-4 tw:border tw:border-base-300">
+          <summary class="collapse-title tw:text-sm tw:font-bold">{% translate "Source JSON" %}</summary>
+          <div class="collapse-content"><pre class="tw:max-h-80 tw:overflow-auto tw:text-xs">{{ email.ai_extracted_payload }}</pre></div>
         </details>
         {% else %}
         <p class="tw:text-sm tw:text-base-content/50">{% translate "No AI extraction has been stored yet." %}</p>
@@ -61,14 +61,14 @@
     </section>
   </div>
 
-  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
-    <div class="tw:d-card-body tw:p-5">
+  <section class="card tw:border tw:border-base-300 tw:bg-base-100">
+    <div class="card-body tw:p-5">
       <div class="tw:flex tw:items-center tw:justify-between">
-        <h2 class="tw:d-card-title">{% translate "Attachments" %}</h2>
-        <span class="tw:d-badge tw:d-badge-outline">{{ email.attachments.count }}</span>
+        <h2 class="card-title">{% translate "Attachments" %}</h2>
+        <span class="badge badge-outline">{{ email.attachments.count }}</span>
       </div>
       <div class="tw:mt-2 tw:overflow-x-auto">
-        <table class="tw:d-table tw:d-table-sm">
+        <table class="table table-sm">
           <thead><tr><th>{% translate "File" %}</th><th>{% translate "Type" %}</th><th>{% translate "Size" %}</th><th>{% translate "State" %}</th><th>{% translate "Result" %}</th></tr></thead>
           <tbody>
           {% for attachment in email.attachments.all %}
@@ -76,7 +76,7 @@
               <td><a class="tw:link" href="{{ attachment.file.url }}" target="_blank" rel="noopener">{{ attachment.original_name }}</a></td>
               <td>{{ attachment.content_type|default:"—" }}</td>
               <td>{{ attachment.size|filesizeformat }}</td>
-              <td><span class="tw:d-badge tw:d-badge-outline">{{ attachment.get_processing_state_display }}</span></td>
+              <td><span class="badge badge-outline">{{ attachment.get_processing_state_display }}</span></td>
               <td>{{ attachment.processing_error|default:"Processed / ready" }}</td>
             </tr>
           {% empty %}

@@ -1,221 +1,689 @@
-# GLIS TPA Member Management — SmartEndorse-style User Guide
+# GLIS TPA Member Management — Automated Endorsement Operations Guide
 
-## Operating model
+## 1. Operating model
 
-The GLIS TPA module follows the SmartEndorse operating pattern while keeping GLIS tickets, SLA, approvals, notifications and audit infrastructure underneath the workflow.
+The GLIS TPA module is an automated endorsement-processing platform built inside the existing GLIS portal. It reuses GLIS authentication, policy access, tickets, approvals, SLA/TAT, notifications, attachments, audit events, HTMX, Job Center, Tailwind and daisyUI.
 
-Flow:
+Normal automated flow:
 
-Intake & Correction → Validation → Approval → TPA Processing / Query → Complete
+~~~text
+Office 365 Inbox
+→ Microsoft Graph delta sync
+→ email classification
+→ sender authority validation
+→ policy resolution
+→ body + attachment extraction
+→ Intake & Correction
+→ deterministic validation
+→ STP / Approval
+→ TPA Processing
+→ Query/Discussion where required
+→ Card Dispatch when required
+→ Complete
+→ Permanent member/policy update
+~~~
 
-AI is limited to extraction and semantic mapping. Policy/member eligibility, plan validation, dependent-principal rules, premium/refund calculation, STP, approval and final member updates are deterministic GLIS logic.
+AI is assistive. It may classify/extract/map evidence, but it does not decide sender authority, eligibility, duplicate-member rules, premium/refund, backdating, STP, approval or final validation.
 
-## Initial Policy Enrollment
+---
 
-A brand-new policy is created from:
+## 2. Supported endorsement types
 
+The TPA transaction model distinguishes:
+
+- New Policy Enrollment — dedicated setup workflow only;
+- Member Addition;
+- Member Deletion / Void;
+- Member Termination — permanent;
+- Temporary Suspension;
+- Member Reactivation;
+- Policy Cancellation.
+
+Temporary suspension is not permanent termination. Reactivation is available only for eligible suspended enrollments.
+
+---
+
+## 3. Initial Policy Enrollment
+
+Create a new policy from:
+
+~~~text
 Portal → TPA Operations → Initial Policy Enrollment
+~~~
 
-This is intentionally separate from endorsements. Initial setup creates a Draft policy for an Individual or Corporate Sponsor together with the Insurance Company, optional TPA route, policy dates, currency/STP/backdating settings, first Benefit Plan, PolicyAccess for the setup user, and a dedicated NEW_POLICY_ENROLLMENT transaction.
+Initial setup creates a Draft policy and a dedicated New Policy Enrollment transaction. Configure sponsor/individual, insurer, optional TPA, dates, currency, STP/backdating, physical-card requirement and benefit plans.
 
-Additional plans and the complete opening census are added inside that case. The opening census can be entered manually or loaded through the same Excel/CSV/PDF/image OCR intake used later for endorsements.
+The opening census can be entered manually or loaded through the same structured/OCR evidence pipeline used by later endorsements.
 
-After validation, approval/STP and TPA processing complete successfully, GLIS activates the policy and records initial_enrollment_completed_at and initial_enrollment_completed_by. Only then is the policy available for New Endorsement, except legacy active policies that already have active member enrollments.
+Permanent enrollment records are applied only after final TPA completion.
 
-## Endorsements
+---
 
-Portal → TPA Member Management → New Endorsement
+## 4. Office 365 / Microsoft Graph
 
-The endorsement form no longer includes New Policy Enrollment. It supports:
+### 4.1 Primary integration
 
-- Member Addition
-- Member Termination
-- Member Deletion / Void
-- Policy Cancellation
+Microsoft Graph v1.0 with OAuth2 client credentials is the primary automated mailbox transport. No interactive Microsoft login is required for each synchronization.
 
-For spouse, child or other dependent additions, a parent Principal is mandatory. Manual entry provides a policy-aware Principal selector. File/OCR intake can use principal_employee_id or principal_member_id.
+Recommended Microsoft Graph application permission:
 
-## File upload and AI OCR
+~~~text
+Mail.Read (Application)
+~~~
 
-The transaction page contains one Source Documents & AI OCR intake zone. Up to 20 related files can be supplied together so ID front/back, passport pages and supporting evidence can be treated as one evidence bundle.
+Use Mail.ReadWrite only if GLIS is later configured to modify/move/categorize messages in Microsoft 365.
 
-| Source | Processing |
-|---|---|
-| CSV | deterministic structured parsing |
-| XLSX | deterministic structured parsing |
-| XLS | deterministic structured parsing with xlrd |
-| text PDF | pypdf text extraction, then text-model mapping |
-| scanned PDF | PyMuPDF page rendering → vision OCR → text-model mapping |
-| PNG/JPG/JPEG/WEBP | vision OCR → text-model mapping |
+### 4.2 Azure / Entra setup
 
-The default operational AI configuration uses two local Ollama providers:
+1. Create an App Registration in Microsoft Entra ID.
+2. Record Tenant ID and Client ID.
+3. Add Microsoft Graph Application permission Mail.Read.
+4. Grant tenant administrator consent.
+5. Create a client secret or use the organization's approved credential store.
+6. Apply Exchange/Entra application-access restrictions if only a specific shared mailbox should be readable.
+7. Configure GLIS environment variables.
+8. Restart the Django application so Job Center loads the configuration.
 
-1. **TPA Ollama Vision OCR** using `glm-ocr`:
-   - endpoint `http://127.0.0.1:11434`
-   - `supports_vision=True`
-   - `allow_sensitive_data=True`
-   - capability `document_extraction`
-   - 600 second timeout for scanned PDFs / image batches
-2. **TPA Ollama Text Mapping** using `qwen2.5:7b`:
-   - endpoint `http://127.0.0.1:11434`
-   - `supports_vision=False`
-   - `allow_sensitive_data=True`
-   - capability `member_field_mapping`
-   - capability `email_extraction`
-   - capability `structured_header_mapping`
+Never put the client secret in Django Admin, source control, logs or editable JSON.
 
-Keep OCR and JSON mapping separate. The vision model transcribes document evidence; the text model converts OCR/email evidence into strict canonical member JSON. Business decisions remain outside the LLM.
+### 4.3 Environment configuration
 
-The mapper uses the MEMBER_FIELD_MAPPING extraction profile and its training examples. AI interaction metadata and SourceDocument processing results remain auditable.
+~~~dotenv
+TPA_MAIL_PROVIDER=office365_graph
+TPA_MAIL_ENABLED=True
+TPA_MAIL_AUTO_PROCESS_AI=True
+TPA_MAIL_MAX_MESSAGES_PER_RUN=50
+TPA_MAIL_SYNC_CRON=*/5 * * * *
+TPA_MAIL_ACTOR_USERNAME=tpa-service-user
+TPA_EMAIL_CLASSIFICATION_MIN_CONFIDENCE=0.75
 
-### Intake correction
+TPA_O365_TENANT_ID=00000000-0000-0000-0000-000000000000
+TPA_O365_CLIENT_ID=00000000-0000-0000-0000-000000000000
+TPA_O365_CLIENT_SECRET=use-a-secret-manager
+TPA_O365_MAILBOX=endorsements@example.com
+TPA_O365_FOLDER=Inbox
+TPA_O365_RECEIVED_AFTER=
+TPA_O365_TIMEOUT_SECONDS=60
+~~~
 
-Submitted/OCR values are preserved. Use the pencil action to edit working values. Save & Revalidate writes corrected_data, records before/after values in TransactionEvent and immediately reruns deterministic validation.
+<code>TPA_MAIL_SYNC_CRON</code> controls the effective Job Center schedule. The default <code>*/5 * * * *</code> runs every five minutes.
 
-## Validation, pricing and STP
+<code>TPA_MAIL_ACTOR_USERNAME</code> identifies the GLIS service user used for automated audit records. If it is absent, the registered Job Center handler falls back to an active superuser.
 
-Validation includes policy period/backdating, mandatory fields, plan validity, duplicate identifiers, active-member lookup for termination/deletion and dependent/principal rules.
+### 4.4 Automatic synchronization
 
-Premium/refund amounts are calculated with deterministic Decimal arithmetic from Benefit Plan configuration.
+The seeded Job Center job is:
 
-If validation is clean and STP rules pass, the case auto-approves and dispatches to TPA. Otherwise it follows the GLIS approval workflow or manual approval authority.
+~~~text
+TPA Office365 Mailbox Sync
+handler: tpa.poll_inbound_mailbox
+~~~
 
-Approval means dispatch to TPA; it no longer immediately changes member records.
+The scheduler starts with Django. No Celery worker/beat and no separate mailbox command are required.
 
-## TPA processing
+Graph synchronization:
 
-TPA workflow statuses include:
+- obtains an application token;
+- uses Inbox message delta synchronization;
+- persists the delta link in <code>TPAMailboxSyncState</code>;
+- stores new messages and attachments;
+- classifies/processes qualifying mail;
+- persists review/failure states;
+- retries transient Graph 429/5xx requests;
+- remains idempotent after application restarts.
 
-- sent_to_tpa
-- tpa_in_progress
-- tpa_query
-- completed
+Deduplication uses provider message ID, mailbox + internetMessageId and attachment SHA-256 hashes.
 
-A permitted TPA processor starts the case, then records card/member number, TPA effective date and TPA premium/refund amount per row.
+### 4.5 Manual diagnostics
 
-For additions and initial enrollment, card/member number is required before completion. TPA effective date and TPA amount are required for applicable member rows.
+Normal operation does not require these commands, but they remain useful for recovery/testing:
 
-Complete TPA Processing persists the TPA-final card/member number, effective date and final premium/refund amount into the permanent enrollment where applicable, performs the deterministic member/enrollment update and marks the case completed. Initial Policy Enrollment completion also activates the policy.
-
-## TPA query and embedded chat
-
-If TPA needs more information, Raise Query to Requester creates a dedicated GLIS query Ticket related to the main transaction Ticket and pauses the case in TPA Query.
-
-GLIS still stores normal TicketComment and TicketAttachment records for SLA/audit/notifications, but requester and TPA communication is rendered as DaisyUI chat directly inside the TPA Processing step. Users do not have to navigate to the ticket page.
-
-Resolving the query closes the query ticket and resumes TPA processing. Resolved conversation history remains visible inside the case.
-
-## Email intake
-
-Email endorsements use the same downstream workflow as portal uploads. Email-body AI can identify policy, endorsement type, effective date and member data. Email attachments enter the same SourceDocument processor used by portal uploads, including Excel, PDF and image OCR.
-
-Email intake is for endorsements only. If AI classifies a message as New Policy Enrollment, GLIS sends it to review and instructs the user to use Initial Policy Enrollment.
-
-Manual/provider testing is available at:
-
-/portal/tpa/inbound-emails/
-
-### Automatic IMAP reading
-
-Configure:
-
-TPA_IMAP_HOST=mail.example.com
-TPA_IMAP_PORT=993
-TPA_IMAP_USERNAME=tpa@example.com
-TPA_IMAP_PASSWORD=<secret>
-TPA_IMAP_FOLDER=INBOX
-TPA_IMAP_USE_SSL=1
-
-Run manually:
-
+~~~bash
 python manage.py process_tpa_mailbox --username YOUR_USERNAME
-
-Store unread messages without AI:
-
 python manage.py process_tpa_mailbox --username YOUR_USERNAME --no-ai
+~~~
 
-The same handler is registered in GLIS Job Center as:
+Legacy IMAP remains an explicit fallback only when <code>TPA_MAIL_PROVIDER=imap</code>.
 
-tpa.poll_inbound_mailbox
+---
 
-It searches unread mail, deduplicates using Message-ID/IMAP UID, stores body/attachments, processes the endorsement through AI/OCR and marks the IMAP message as seen.
+## 5. Inbound Email monitor
 
-## Permissions
+Open:
 
-| Permission | Purpose |
-|---|---|
-| tpa.create_enrollment | create Initial Policy Enrollment |
-| tpa.create_endorsement | create post-enrollment endorsements |
-| tpa.approve_endorsement | manual approval authority |
-| tpa.process_endorsement | TPA processing/query/completion |
-| tpa.configure_tpa | administrative TPA access |
+~~~text
+/portal/tpa/inbound-emails/
+~~~
 
-PolicyAccess additionally controls policy-scoped view/create/approve/process authority.
+This page is an operational monitor, not primarily an upload page.
 
-## Local Ollama setup
+It displays:
 
-Install/pull the local TPA models before processing scanned documents or live email intake:
+- Graph connection/configuration;
+- mailbox and folder;
+- effective schedule;
+- next run / last job state;
+- last attempted and successful sync;
+- last error;
+- processed count;
+- review count;
+- ignored/non-endorsement count;
+- failed count;
+- scheduler enabled/disabled.
 
-```bash
-ollama pull glm-ocr
-ollama pull qwen2.5:7b
-ollama serve
-```
+Authorized staff can use **Sync Inbox Now**.
 
-Then create/update only the TPA Ollama provider/profile configuration (no demo business data):
+**Manual Intake / Reprocess** remains available only for fallback, recovery, testing or a manually sourced request.
 
-```bash
-python manage.py configure_tpa_ollama
-# Optional exact local model tags:
-python manage.py configure_tpa_ollama --ocr-model glm-ocr:q8_0 --text-model qwen2.5:7b
-```
+---
 
-The seed command creates the provider records in Django Admin. If your installed OCR model tag is different (for example a quantized tag), update **TPA Ollama Vision OCR → Model name** to the exact Ollama model tag installed on the server.
+## 6. Email evidence and audit
 
-## AI provider configuration
+For Graph messages GLIS retains, where supplied:
+
+- Graph message ID;
+- internetMessageId;
+- conversation ID;
+- mailbox;
+- sender name/address;
+- To/CC;
+- subject;
+- received date/time;
+- text body;
+- sanitized HTML body;
+- attachment metadata;
+- original attachments;
+- source hashes;
+- AI extraction result;
+- raw normalized AI output;
+- classification and confidence;
+- processing stage/state/error;
+- linked transaction;
+- timestamps.
+
+Original evidence is not replaced by corrected operational data.
+
+---
+
+## 7. Classification
+
+The email extraction model first decides whether a message is relevant to endorsement processing.
+
+Canonical classifications include:
+
+- MEMBER_ADD
+- MEMBER_DELETE
+- MEMBER_TERMINATE
+- MEMBER_SUSPEND
+- MEMBER_REACTIVATE
+- POLICY_CANCEL
+- QUERY_REPLY
+- NOT_ENDORSEMENT
+- NEEDS_REVIEW
+
+Clearly unrelated mail is retained as configured but marked Ignored and does not create a MemberTransaction.
+
+Low-confidence/uncertain mail is routed to Needs Review rather than guessed.
+
+The default classification confidence threshold is controlled by:
+
+~~~dotenv
+TPA_EMAIL_CLASSIFICATION_MIN_CONFIDENCE=0.75
+~~~
+
+---
+
+## 8. Strict AI extraction contract
+
+The extraction profile requires JSON conceptually shaped as:
+
+~~~json
+{
+  "is_endorsement_request": true,
+  "classification": "MEMBER_ADD",
+  "confidence": 0.97,
+  "policy_number": "MED-123",
+  "transaction_type": "MEMBER_ADD",
+  "transaction_reference": null,
+  "effective_date": "2026-10-01",
+  "refund_basis": null,
+  "temporary_until": null,
+  "remarks": "",
+  "summary": "",
+  "members": [],
+  "missing_information": [],
+  "warnings": [],
+  "source_references": []
+}
+~~~
+
+Free-form model output does not directly mutate production membership.
+
+---
+
+## 9. AI provider configuration
 
 AIProviderConfig supports Mock, Ollama, OpenAI-compatible/OpenAI and Anthropic runtimes.
 
-For member documents, set allow_sensitive_data=True only on providers approved for that data.
+A provider processing member identity/medical evidence must explicitly allow sensitive data.
 
-secret_reference stores the environment-variable name, not the actual secret. For example, secret_reference may be OPENAI_API_KEY while the actual value lives in the runtime environment.
+### Local Ollama pattern
 
-## Sample data
+Recommended separation:
 
-After migrations:
+1. Vision/document OCR provider
+   - model: GLM-OCR or approved equivalent;
+   - supports_vision=True;
+   - capability: document_extraction;
+   - allow_sensitive_data=True only when approved.
 
-python manage.py seed_tpa_sample --username YOUR_USERNAME
+2. Text mapping provider
+   - model: qwen2.5:7b or approved equivalent;
+   - supports_vision=False;
+   - capabilities:
+     - member_field_mapping
+     - email_extraction
+     - structured_header_mapping.
 
-The idempotent seed creates/updates:
+Install:
 
-- Demo Corporate sponsor
-- Demo Insurance Company
-- NextCare Demo TPA
-- endorsement-enabled DEMO-MED-<year> policy
-- GOLD and SILVER plans
-- existing Principal/Spouse/Child family
-- PolicyAccess and TPA Demo Operators permissions
-- TPA Ollama Vision OCR (`glm-ocr`) as the primary document OCR provider
-- TPA Ollama Text Mapping (`qwen2.5:7b`) as the primary member/email mapping provider
-- low-priority Mock AI only for deterministic offline sample-email processing and automated tests
-- email/document/member mapping profiles
-- valid and invalid sample inbound emails
+~~~bash
+ollama pull glm-ocr
+ollama pull qwen2.5:7b
+ollama serve
+~~~
 
-## Deployment / test sequence
+Configure provider/profile records:
 
+~~~bash
+python manage.py configure_tpa_ollama
+python manage.py configure_tpa_ollama --ocr-model glm-ocr:q8_0 --text-model qwen2.5:7b
+~~~
+
+Django Admin can manage extraction profiles, prompts/instructions, aliases and training examples.
+
+---
+
+## 10. Sender authority
+
+AI never authorizes a sender.
+
+Configure <code>TPAEmailAuthority</code> for:
+
+- email address;
+- optional linked user;
+- organization/sponsor;
+- optional specific policy;
+- permitted transaction types;
+- valid-from / valid-until;
+- active flag.
+
+If a Graph sender is not authorized for the resolved policy and endorsement type, GLIS retains the evidence, marks it Unauthorized Sender, records the reason and notifies eligible review staff.
+
+Manual/test intake can proceed only when the operator already has server-side TPA/policy authority.
+
+---
+
+## 11. Policy identification
+
+AI may extract the policy number, but Django resolves it against the database.
+
+Automatic processing proceeds only when a valid active policy can be deterministically resolved and the sender is authorized for that policy.
+
+Missing, ambiguous, inactive or unauthorized policy evidence goes to review.
+
+---
+
+## 12. Evidence processing
+
+All evidence belongs to one logical transaction source bundle.
+
+| Source | Processing |
+|---|---|
+| CSV | deterministic parser |
+| XLSX | deterministic parser with openpyxl |
+| XLS | deterministic parser with xlrd |
+| Text PDF | native text extraction first |
+| Scanned PDF | PyMuPDF page rendering → vision OCR |
+| PNG/JPG/JPEG/WebP | vision OCR |
+| EML | email/body/attachment pipeline |
+| Manual entry | canonical Django form |
+
+OCR output is mapped by the configured text model into canonical member JSON.
+
+New sources append/merge through deterministic matching and provenance. Conflicts generate warnings rather than silently overwriting corrected values.
+
+Failed OCR remains recoverable: files are retained, state moves to review, exact errors/provider/model are recorded, and authorized users can reprocess later.
+
+---
+
+## 13. Intake & Correction
+
+The transaction detail page is the central workspace.
+
+It supports:
+
+- Add / Reprocess Evidence;
+- source status/error listing;
+- protected source download;
+- authorized raw extraction JSON modal;
+- Reprocess Evidence;
+- existing-member selection;
+- bulk pasted card numbers;
+- Add Member Manually modal;
+- Validated and Errors / Needs Correction tabs;
+- row correction/removal while intake remains editable.
+
+Manual member entry uses HTMX. Invalid/duplicate data is returned into the modal without creating a MemberAction or unnecessarily closing the dialog.
+
+Manual addition duplicate checks cover active policy enrollments and pending rows using employee number, Civil/National ID and passport number.
+
+---
+
+## 14. Multiple members and provenance
+
+One transaction may contain 1, 10, 100 or more MemberAction rows.
+
+Row provenance can identify evidence such as:
+
+- email body;
+- attachment;
+- OCR;
+- structured import;
+- policy selection;
+- manual user;
+- correction.
+
+Source conflicts are stored as warnings.
+
+---
+
+## 15. Existing-member selection and pasted cards
+
+For deletion, termination and suspension, active policy enrollments are available for selection.
+
+For reactivation, suspended enrollments are available.
+
+The bulk card parser accepts line breaks, comma, semicolon and whitespace and reports:
+
+- matched;
+- not found;
+- duplicate input;
+- inactive/ineligible cards.
+
+Only eligible matched enrollments are added.
+
+Policy Cancellation automatically populates all active enrollments; the user does not manually select affected members.
+
+---
+
+## 16. Deterministic validation
+
+Validation covers, as applicable:
+
+- policy active state;
+- effective date inside policy;
+- backdating limit;
+- required member fields;
+- valid plan;
+- dependent/principal relationship;
+- active duplicate employee number;
+- duplicate Civil/National ID;
+- duplicate passport;
+- duplicate rows in the same endorsement;
+- active-member lookup for deletion/termination/suspension;
+- suspended-member lookup for reactivation;
+- refund basis;
+- reactivation date after suspension.
+
+Blocking validation errors prevent progression.
+
+For member-operated transaction types, zero member rows produce Needs Information and prevent advancement. Policy Cancellation is the exception because the system populates the affected population.
+
+---
+
+## 17. Refunds and premium impact
+
+Member Deletion and Policy Cancellation support structured:
+
+- FULL
+- PRO_RATA
+
+Financial calculations use Python Decimal.
+
+The calculation snapshot retains the original premium, coverage dates, effective date, calculation basis/days and system calculated amount.
+
+The TPA final amount is stored separately. If it differs from the system amount, an override reason is required.
+
+AI never calculates or approves official financial values.
+
+---
+
+## 18. STP and approval
+
+After authoritative validation, GLIS evaluates STP.
+
+If eligible, the transaction records Auto Approved by STP and dispatches to TPA.
+
+If approval is required, the transaction remains Pending Approval and reuses the GLIS approval infrastructure.
+
+An approver can:
+
+- approve;
+- reject with reason;
+- open an approval query/discussion;
+- exchange multiple replies/files.
+
+An unresolved Approval query blocks both approval and rejection.
+
+---
+
+## 19. Embedded conversations and visibility
+
+Transaction discussions reuse TicketComment/TicketAttachment while rendering as daisyUI chat inside the TPA transaction.
+
+Purposes:
+
+- Approval
+- TPA
+- Client
+
+Audiences:
+
+- CLIENT_VISIBLE
+- INSURER_TPA_INTERNAL
+- SELECTED_PARTICIPANTS
+
+Visibility is server-side.
+
+### Internal insurer/TPA communication
+
+Clients cannot see internal threads, internal metadata or internal attachments.
+
+Authorized insurer/TPA staff can explicitly share a selected internal message body with the requester. The client then sees only the explicitly shared body in a separate shared-information area; the internal parent thread and internal files remain protected.
+
+Protected query attachment downloads re-check message visibility/attachment authorization server-side.
+
+---
+
+## 20. TPA processing
+
+After approval/STP:
+
+1. transaction is dispatched to TPA;
+2. authorized processor starts processing;
+3. each row can record:
+   - final card/member number;
+   - TPA effective date;
+   - TPA final premium/refund;
+   - override reason;
+   - comments/outcome;
+4. TPA may open client-visible or internal discussions;
+5. all open queries must be resolved before completion.
+
+System amount and TPA final amount are always kept separate.
+
+---
+
+## 21. Suspension and reactivation
+
+### Permanent termination
+
+Permanent termination changes the active enrollment to Terminated at final processing and is not ordinary reactivation-eligible.
+
+### Temporary suspension
+
+MEMBER_SUSPEND changes the enrollment/member to Suspended at final TPA completion and stores suspension date/reason plus optional expected reactivation date.
+
+### Reactivation
+
+MEMBER_REACTIVATE requires an existing suspended enrollment. Validation confirms policy/date eligibility and final processing restores the enrollment/member to Active while recording the reactivation date.
+
+---
+
+## 22. Physical card dispatch
+
+When the policy requires a physical card and the transaction is Member Addition, TPA completion enters Card Dispatch instead of immediately completing the endorsement.
+
+Methods include:
+
+- Courier;
+- Hand Delivery;
+- Collected by Client;
+- Collected by Insurance Company;
+- Collected from TPA;
+- Other.
+
+Statuses include:
+
+- Pending;
+- Ready for Dispatch;
+- Dispatched;
+- In Transit;
+- Ready for Collection;
+- Collected;
+- Delivered;
+- Failed / Returned;
+- Not Required.
+
+GLIS can record courier, AWB/tracking, dispatch/delivery dates, recipient/organization/contact, remarks and proof attachment.
+
+The permanent member enrollment is finalized only after a terminal dispatch state (Delivered, Collected or explicitly Not Required).
+
+Deletion, termination, suspension and policy cancellation do not use card dispatch.
+
+---
+
+## 23. Workflow status and activity
+
+The transaction detail page contains a compact sticky Workflow Status panel on larger screens showing:
+
+- current status/step;
+- source;
+- policy;
+- requester;
+- type;
+- created/effective dates;
+- STP;
+- approval;
+- TPA state;
+- elapsed TAT;
+- target TAT;
+- refund basis where applicable.
+
+The full-width Activity Timeline follows the workflow and records email receipt/classification/authority/policy matching, extraction/reprocessing, member corrections, validation, approval/query activity, TPA changes, card dispatch and completion.
+
+---
+
+## 24. Permissions
+
+Important TPA permissions include:
+
+| Permission | Purpose |
+|---|---|
+| tpa.view_tpa_dashboard | TPA workspace |
+| tpa.create_enrollment | Initial enrollment |
+| tpa.create_endorsement | Endorsements |
+| tpa.terminate_member | Termination |
+| tpa.delete_member | Deletion/Void |
+| tpa.cancel_policy | Cancellation |
+| tpa.approve_endorsement | Approval |
+| tpa.process_endorsement | TPA processing |
+| tpa.bypass_validation | Authorized bypass |
+| tpa.override_premium | Authorized amount override |
+| tpa.view_sensitive_member_data | Sensitive member data |
+| tpa.view_ai_source_data | Source/AI payload |
+| tpa.configure_tpa | TPA configuration |
+| tpa.export_tpa_data | Export |
+
+PolicyAccess additionally controls policy-scoped view/create/approve/process/premium rights.
+
+Every HTMX/download endpoint still performs server-side authorization.
+
+---
+
+## 25. Deployment / validation
+
+After pulling:
+
+~~~bash
 git pull origin main
 python -m pip install -r requirements.txt
 python manage.py migrate
 python manage.py check
 python manage.py makemigrations --check
 python manage.py test apps.tpa
-python manage.py seed_tpa_sample --username YOUR_USERNAME
 python manage.py runserver
+~~~
+
+Optional demo configuration:
+
+~~~bash
+python manage.py configure_tpa_ollama
+python manage.py seed_tpa_sample --username YOUR_USERNAME
+~~~
 
 Primary routes:
 
+~~~text
 /portal/tpa/
 /portal/tpa/policy-enrollment/
 /portal/tpa/transactions/
 /portal/tpa/inbound-emails/
 /portal/tpa/guide/
+~~~
+
+---
+
+## 26. Troubleshooting
+
+### Office 365 not connected
+
+Check Tenant ID, Client ID, secret, mailbox, Mail.Read application permission and admin consent. Use the Inbound Email monitor for the last synchronization error.
+
+### Scheduler not running
+
+Confirm <code>JOB_CENTER_ENABLED=True</code>, the **TPA Office365 Mailbox Sync** ScheduledJob is enabled and at least one Django process remains running. The monitor shows the effective cron and next run.
+
+### Unauthorized sender
+
+Create/review the sender's TPAEmailAuthority scope. Do not bypass authority with AI output.
+
+### No vision provider
+
+Ensure an active AIProviderConfig:
+
+- allows sensitive data;
+- supports vision;
+- has <code>document_extraction</code> capability;
+- points to an available model.
+
+The failed source remains in Needs Review and can be reprocessed.
+
+### JSON mapping failure
+
+Ensure an active non-vision text provider has <code>member_field_mapping</code> and/or <code>email_extraction</code>. Review the extraction profile/training examples. Do not delete source evidence.
+
+### Duplicate members
+
+The manual modal and authoritative validation both check duplicates. Correct the identifiers or remove the duplicate source row rather than bypassing the rule.

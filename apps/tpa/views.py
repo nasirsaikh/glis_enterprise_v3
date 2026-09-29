@@ -104,12 +104,21 @@ def dashboard(request):
             is_active=True,
             allow_sensitive_data=True,
         ).count(),
-        "inbound_review": InboundEmail.objects.filter(
-            processing_state=InboundEmail.State.REVIEW,
-        ).filter(
-            models.Q(created_by=request.user)
-            | models.Q(transaction_id__in=txs.values_list("pk", flat=True))
-        ).distinct().count(),
+        "inbound_review": (
+            InboundEmail.objects.filter(
+                processing_state=InboundEmail.State.REVIEW,
+            ).count()
+            if (
+                request.user.is_superuser
+                or request.user.has_perm("tpa.configure_tpa")
+            )
+            else InboundEmail.objects.filter(
+                processing_state=InboundEmail.State.REVIEW,
+            ).filter(
+                models.Q(created_by=request.user)
+                | models.Q(transaction_id__in=txs.values_list("pk", flat=True))
+            ).distinct().count()
+        ),
         "transactions": txs[:50],
     }
     return render(request, "tpa/dashboard.html", context)
@@ -125,15 +134,19 @@ def user_guide(request):
 def inbound_email_list(request):
     _require_tpa_access(request.user)
     visible_tx_ids = visible_transactions(request.user).values_list("pk", flat=True)
-    emails = (
-        InboundEmail.objects.select_related("transaction", "transaction__policy")
-        .filter(
+    emails = InboundEmail.objects.select_related(
+        "transaction",
+        "transaction__policy",
+    )
+    if not (
+        request.user.is_superuser
+        or request.user.has_perm("tpa.configure_tpa")
+    ):
+        emails = emails.filter(
             models.Q(created_by=request.user)
             | models.Q(transaction_id__in=visible_tx_ids)
         )
-        .distinct()
-        .order_by("-received_at", "-pk")
-    )
+    emails = emails.distinct().order_by("-received_at", "-pk")
     return render(
         request,
         "tpa/inbound_email_list.html",
@@ -227,15 +240,19 @@ def inbound_email_create(request):
 def inbound_email_detail(request, email_id):
     _require_tpa_access(request.user)
     visible_tx_ids = visible_transactions(request.user).values_list("pk", flat=True)
-    email = get_object_or_404(
-        InboundEmail.objects.select_related(
-            "transaction",
-            "transaction__policy",
-        ).prefetch_related("attachments"),
-        models.Q(created_by=request.user)
-        | models.Q(transaction_id__in=visible_tx_ids),
-        pk=email_id,
-    )
+    email_qs = InboundEmail.objects.select_related(
+        "transaction",
+        "transaction__policy",
+    ).prefetch_related("attachments")
+    if not (
+        request.user.is_superuser
+        or request.user.has_perm("tpa.configure_tpa")
+    ):
+        email_qs = email_qs.filter(
+            models.Q(created_by=request.user)
+            | models.Q(transaction_id__in=visible_tx_ids)
+        )
+    email = get_object_or_404(email_qs, pk=email_id)
     return render(
         request,
         "tpa/inbound_email_detail.html",

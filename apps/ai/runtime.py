@@ -67,11 +67,16 @@ def _mock_json(user_prompt):
         )
 
     return {
+        "is_endorsement_request": True,
+        "classification": transaction,
         "policy_number": policy_number,
         "transaction_type": transaction,
         "effective_date": effective_date,
         "summary": summary,
         "confidence": 0.99,
+        "missing_information": [],
+        "warnings": [],
+        "source_references": [],
         "members": members,
     }
 

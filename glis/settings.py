@@ -10,7 +10,7 @@ environ.Env.read_env(BASE_DIR / ".env", encoding="utf-8-sig")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="unsafe-development-key-change-me")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 INSTALLED_APPS = [

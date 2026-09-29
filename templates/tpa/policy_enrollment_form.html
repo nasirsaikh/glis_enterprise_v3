@@ -17,19 +17,19 @@
     <span>{% translate "Use this workflow for Individual or Corporate onboarding. Normal endorsements become available only after initial enrollment completes." %}</span>
   </div>
 
-  <form method="post" class="card">
+  <form method="post" class="card tw:d-card">
     {% csrf_token %}
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Policy control" %}</div><h2 class="tpa-section-title">{% translate "POLICY, ROUTING & FIRST PLAN" %}</h2></div>
       <span class="badge badge-primary badge-soft">{% translate "DRAFT" %}</span>
     </div>
-    <div class="card-body">
+    <div class="card-body tw:d-card-body">
       {% if form.non_field_errors %}<div role="alert" class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
       <div class="tw:grid tw:gap-2.5 tw:md:grid-cols-2 tw:xl:grid-cols-3">
         {% for field in form %}
         <fieldset class="fieldset {% if field.name == 'stp_enabled' %}tw:flex tw:flex-row tw:items-center tw:gap-2 tw:self-end{% endif %}">
-          {% if field.name != "stp_enabled" %}<legend class="fieldset-legend">{{ field.label }}</legend>{% endif %}
-          {% if field.name == "stp_enabled" %}{{ field }}<span class="label">{{ field.label }}</span>{% else %}{{ field }}{% endif %}
+          {% if field.name != "stp_enabled" %}<legend class="fieldset-legend tw:d-fieldset-legend">{{ field.label }}</legend>{% endif %}
+          {% if field.name == "stp_enabled" %}{{ field }}<span class="label tw:d-label">{{ field.label }}</span>{% else %}{{ field }}{% endif %}
           {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
           {% for error in field.errors %}<p class="label tw:text-error">{{ error }}</p>{% endfor %}
         </fieldset>

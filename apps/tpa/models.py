@@ -266,6 +266,13 @@ class TransactionQuery(TimeStampedModel):
         OPEN="OPEN","Open"
         RESOLVED="RESOLVED","Resolved"
     transaction=models.ForeignKey(MemberTransaction, related_name="queries", on_delete=models.CASCADE)
+    ticket=models.OneToOneField(
+        "tickets.Ticket",
+        related_name="tpa_query",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     subject=models.CharField(max_length=255)
     raised_by=models.ForeignKey(settings.AUTH_USER_MODEL, related_name="raised_tpa_queries", on_delete=models.PROTECT)
     pre_query_status=models.CharField(max_length=30, blank=True)

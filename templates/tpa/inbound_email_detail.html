@@ -31,33 +31,33 @@
   {% endif %}
 
   <div class="tw:grid tw:gap-3 tw:xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,.8fr)]">
-    <section class="card">
+    <section class="card tw:d-card">
       <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Original source" %}</div><h2 class="tpa-section-title">{% translate "EMAIL BODY" %}</h2></div><span class="badge badge-ghost">{% translate "RAW" %}</span></div>
-      <div class="card-body"><pre class="tw:max-h-[32rem] tw:overflow-auto">{{ email.body_text|default:"—" }}</pre></div>
+      <div class="card-body tw:d-card-body"><pre class="tw:max-h-[32rem] tw:overflow-auto">{{ email.body_text|default:"—" }}</pre></div>
     </section>
 
-    <section class="card">
+    <section class="card tw:d-card">
       <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Normalized extraction" %}</div><h2 class="tpa-section-title">{% translate "AI RESULT" %}</h2></div><i class="bi bi-stars tw:text-primary"></i></div>
-      <div class="card-body">
+      <div class="card-body tw:d-card-body">
         {% if email.ai_extracted_payload %}
         <div class="stats stats-vertical tw:w-full">
-          <div class="stat"><div class="stat-title">{% translate "Policy" %}</div><div class="tw:text-sm tw:font-bold">{{ email.ai_extracted_payload.policy_number|default:"—" }}</div></div>
-          <div class="stat"><div class="stat-title">{% translate "Transaction" %}</div><div class="tw:text-sm tw:font-bold">{{ email.ai_extracted_payload.transaction_type|default:"—" }}</div></div>
-          <div class="stat"><div class="stat-title">{% translate "Effective Date" %}</div><div class="tw:text-sm tw:font-bold">{{ email.ai_extracted_payload.effective_date|default:"—" }}</div></div>
-          <div class="stat"><div class="stat-title">{% translate "Members" %}</div><div class="stat-value">{{ email.ai_extracted_payload.members|length }}</div></div>
+          <div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Policy" %}</div><div class="tw:text-sm tw:font-bold">{{ email.ai_extracted_payload.policy_number|default:"—" }}</div></div>
+          <div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Transaction" %}</div><div class="tw:text-sm tw:font-bold">{{ email.ai_extracted_payload.transaction_type|default:"—" }}</div></div>
+          <div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Effective Date" %}</div><div class="tw:text-sm tw:font-bold">{{ email.ai_extracted_payload.effective_date|default:"—" }}</div></div>
+          <div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Members" %}</div><div class="stat-value tw:d-stat-value">{{ email.ai_extracted_payload.members|length }}</div></div>
         </div>
         <details class="collapse collapse-arrow tw:mt-2 tw:border tw:border-base-300">
-          <summary class="collapse-title">{% translate "Source JSON" %}</summary>
-          <div class="collapse-content"><pre class="tw:max-h-80 tw:overflow-auto">{{ email.ai_extracted_payload }}</pre></div>
+          <summary class="collapse-title tw:d-collapse-title">{% translate "Source JSON" %}</summary>
+          <div class="collapse-content tw:d-collapse-content"><pre class="tw:max-h-80 tw:overflow-auto">{{ email.ai_extracted_payload }}</pre></div>
         </details>
         {% else %}
-        <div role="alert" class="alert"><i class="bi bi-hourglass"></i><span>{% translate "No AI extraction has been stored yet." %}</span></div>
+        <div role="alert" class="alert tw:d-alert"><i class="bi bi-hourglass"></i><span>{% translate "No AI extraction has been stored yet." %}</span></div>
         {% endif %}
       </div>
     </section>
   </div>
 
-  <section class="card">
+  <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Evidence bundle" %}</div><h2 class="tpa-section-title">{% translate "ATTACHMENTS" %}</h2></div>
       <span class="badge badge-outline">{{ email.attachments.count }}</span>

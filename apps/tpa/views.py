@@ -1163,6 +1163,50 @@ def transaction_reprocess_source(request, reference, document_id):
 
 
 @login_required
+def transaction_delete_source(request, reference, document_id):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    _require_intake_edit(request.user, tx)
+    if tx.status not in INTAKE_EDITABLE_STATUSES:
+        raise PermissionDenied("Evidence deletion is closed for this transaction.")
+
+    document = get_object_or_404(tx.source_documents, pk=document_id)
+    if document.processing_state not in {
+        SourceDocument.State.REVIEW,
+        SourceDocument.State.FAILED,
+    }:
+        raise PermissionDenied("Only failed or review-required evidence can be deleted.")
+    if document.ticket_attachment_id:
+        raise PermissionDenied(
+            "Email-linked evidence is preserved for audit. Reprocess or add supporting evidence instead."
+        )
+
+    original_name = document.original_name
+    details = {
+        "source_document_id": document.pk,
+        "source_hash": document.source_hash,
+        "processing_state": document.processing_state,
+        "processing_error": document.processing_error,
+    }
+    stored_file = document.file
+    document.delete()
+    if stored_file:
+        stored_file.delete(save=False)
+
+    TransactionEvent.objects.create(
+        transaction=tx,
+        actor=request.user,
+        event_type="failed_evidence_deleted",
+        summary=f"Failed evidence deleted: {original_name}",
+        details=details,
+    )
+    messages.success(request, f"Failed evidence removed: {original_name}.")
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
 def transaction_upload_members(request, reference):
     _require_tpa_access(request.user)
     if request.method != "POST":

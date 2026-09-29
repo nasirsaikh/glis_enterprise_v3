@@ -3,6 +3,7 @@ from datetime import date
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from apps.ai.models import AIExtractionProfile, AIProviderConfig
@@ -133,6 +134,32 @@ class TPACoreTests(TestCase):
         self.assertNotIn(MemberTransaction.Type.NEW_POLICY_ENROLLMENT, values)
         self.assertIn(MemberTransaction.Type.MEMBER_ADD, values)
         self.assertIn(self.policy, form.fields["policy"].queryset)
+
+    def test_redesigned_dashboard_renders_with_apexcharts_shell(self):
+        tx = self._transaction()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse("tpa:dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "tpa-status-chart")
+        self.assertContains(response, "tpa-source-chart")
+        self.assertContains(response, "TPA MEMBER MANAGEMENT")
+        self.assertNotContains(response, "Plotly")
+
+    def test_redesigned_transaction_workspace_renders_without_plotly(self):
+        tx = self._transaction()
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse("tpa:transaction_detail", args=[tx.reference])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "tpa-quality-chart")
+        self.assertContains(response, "tpa-error-chart")
+        self.assertContains(response, "OLLAMA OCR")
+        self.assertNotContains(response, "Plotly.newPlot")
 
     def test_structured_source_bundle_does_not_require_ai(self):
         tx = self._transaction()

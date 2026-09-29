@@ -1,62 +1,59 @@
-{% extends "tpa/base.html" %}{% load i18n %}
+{% extends "tpa/base.html" %}
+{% load i18n %}
 {% block title %}{% translate "Initial Policy Enrollment" %}{% endblock %}
 {% block tpa_content %}
-<div class="tw:space-y-5">
-  <section class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg">
-    <div class="card-body tw:p-5">
-      <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-4">
-        <div>
-          <span class="badge badge-primary badge-soft">{% translate "Initial Setup" %}</span>
-          <h1 class="tw:mt-2 tw:text-3xl tw:font-black">{% translate "Initial Policy Enrollment" %}</h1>
-          <p class="tw:mt-1 tw:max-w-3xl tw:text-sm tw:text-base-content/55">{% translate "Create the policy, benefit plans and opening member census here. Once completed, the policy becomes available for endorsements." %}</p>
-        </div>
-        <div class="tw:flex tw:flex-wrap tw:gap-2">
-          <a class="btn btn-ghost btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "TPA Dashboard" %}</a>
-          {% if can_create_policy_enrollment %}
-          <a class="btn btn-primary btn-sm" href="{% url 'tpa:policy_enrollment_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Policy Enrollment" %}</a>
-          {% endif %}
-        </div>
-      </div>
+<div class="tw:space-y-3">
+  <header class="tpa-page-head">
+    <div>
+      <div class="tpa-kicker"><i class="bi bi-building-add"></i>{% translate "TPA / Onboarding" %}</div>
+      <h1 class="tpa-title">{% translate "INITIAL POLICY ENROLLMENT" %}</h1>
+      <p class="tpa-subtitle">{% translate "Create the policy, benefit plans and opening member census. Successful TPA completion activates the policy for endorsements." %}</p>
     </div>
-  </section>
+    <div class="tw:flex tw:flex-wrap tw:gap-1.5">
+      <a class="btn btn-ghost btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "Dashboard" %}</a>
+      {% if can_create_policy_enrollment %}
+      <a class="btn btn-primary btn-sm" href="{% url 'tpa:policy_enrollment_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Policy Enrollment" %}</a>
+      {% endif %}
+    </div>
+  </header>
 
-  <section class="card tw:border tw:border-base-300 tw:bg-base-100">
-    <div class="card-body tw:p-0">
-      <div class="tw:overflow-x-auto">
-        <table class="table">
-          <thead><tr><th>{% translate "Policy" %}</th><th>{% translate "Sponsor" %}</th><th>{% translate "Insurer" %}</th><th>{% translate "TPA" %}</th><th>{% translate "Plans" %}</th><th>{% translate "Initial Enrollment" %}</th><th>{% translate "Policy Status" %}</th></tr></thead>
-          <tbody>
-          {% for row in policy_rows %}
-            <tr>
-              <td>
-                {% if row.transaction %}
-                <a class="tw:link tw:link-primary tw:font-bold" href="{% url 'tpa:transaction_detail' row.transaction.reference %}">{{ row.policy.policy_number }}</a>
-                {% else %}
-                <strong>{{ row.policy.policy_number }}</strong>
-                {% endif %}
-                <div class="tw:text-xs tw:text-base-content/45">{{ row.policy.policy_name }}</div>
-              </td>
-              <td>{{ row.policy.sponsor.name_en }}</td>
-              <td>{{ row.policy.insurance_company.name_en }}</td>
-              <td>{{ row.policy.tpa_organization.name_en|default:"GLIS TPA Operations" }}</td>
-              <td>{{ row.policy.plans.count }}</td>
-              <td>
-                {% if row.policy.initial_enrollment_completed_at %}
-                <span class="badge badge-success badge-soft">{% translate "Completed" %}</span>
-                {% elif row.transaction %}
-                <span class="badge badge-warning badge-soft">{{ row.transaction.get_status_display }}</span>
-                {% else %}
-                <span class="badge badge-outline">{% translate "Not started" %}</span>
-                {% endif %}
-              </td>
-              <td><span class="badge badge-outline">{{ row.policy.get_status_display }}</span></td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="7" class="tw:py-10 tw:text-center tw:text-base-content/45">{% translate "No policies have been enrolled yet." %}</td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
+  <section class="card">
+    <div class="tpa-section-head">
+      <div><div class="tpa-eyebrow">{% translate "Opening census control" %}</div><h2 class="tpa-section-title">{% translate "POLICY ONBOARDING QUEUE" %}</h2></div>
+      <span class="badge badge-outline">{{ policy_rows|length }} {% translate "POLICIES" %}</span>
+    </div>
+    <div class="tw:overflow-x-auto">
+      <table class="table table-sm">
+        <thead><tr><th>{% translate "Policy" %}</th><th>{% translate "Sponsor" %}</th><th>{% translate "Insurer" %}</th><th>{% translate "TPA" %}</th><th>{% translate "Plans" %}</th><th>{% translate "Initial Enrollment" %}</th><th>{% translate "Policy Status" %}</th></tr></thead>
+        <tbody>
+        {% for row in policy_rows %}
+          <tr>
+            <td>
+              {% if row.transaction %}
+              <a class="link link-primary tpa-mono tw:font-bold" href="{% url 'tpa:transaction_detail' row.transaction.reference %}">{{ row.policy.policy_number }}</a>
+              {% else %}<strong class="tpa-mono">{{ row.policy.policy_number }}</strong>{% endif %}
+              <div class="tw:text-[10px] tw:opacity-45">{{ row.policy.policy_name }}</div>
+            </td>
+            <td>{{ row.policy.sponsor.name_en }}<div class="tw:text-[10px] tw:opacity-45">{{ row.policy.sponsor.get_organization_type_display }}</div></td>
+            <td>{{ row.policy.insurance_company.name_en }}</td>
+            <td>{{ row.policy.tpa_organization.name_en|default:"GLIS TPA Operations" }}</td>
+            <td class="tpa-mono">{{ row.policy.plans.count }}</td>
+            <td>
+              {% if row.policy.initial_enrollment_completed_at %}
+              <span class="badge badge-success badge-soft">{% translate "Completed" %}</span>
+              {% elif row.transaction %}
+              <span class="badge badge-warning badge-soft">{{ row.transaction.get_status_display }}</span>
+              {% else %}
+              <span class="badge badge-ghost">{% translate "Not Started" %}</span>
+              {% endif %}
+            </td>
+            <td><span class="badge {% if row.policy.status == 'active' %}badge-success badge-soft{% else %}badge-outline{% endif %}">{{ row.policy.get_status_display }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="tw:py-8 tw:text-center tw:opacity-45">{% translate "No policies have been enrolled yet." %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
   </section>
 </div>

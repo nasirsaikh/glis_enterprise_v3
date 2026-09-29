@@ -1,20 +1,36 @@
 # Tailwind CSS + daisyUI in GLIS
 
-GLIS is a Django application and **does not require Node.js, npm, npx, Vite, or a Tailwind build command to run**.
+The authenticated GLIS portal now follows the standard daisyUI Django installation model and uses **normal Tailwind/daisyUI classes without a prefix**.
 
-## Runtime setup
+Examples:
 
-The production Tailwind CSS 4 + daisyUI 5 bundle is already committed as a normal Django static asset:
+```html
+<div class="flex gap-4">
+  <section class="card bg-base-100">
+    <div class="card-body">
+      <button class="btn btn-primary">Save</button>
+    </div>
+  </section>
+</div>
+```
+
+The old portal syntax such as `tw:flex`, `tw:d-btn`, `tw:d-card`, etc. is no longer used.
+
+## Portal runtime
+
+The authenticated portal loads:
 
 ```
-static/css/glis-tailwind.css
+static/css/output.css
 ```
 
-Both main shells load it through Django static files:
+from Django static files:
 
 ```django
-<link href="{% static 'css/glis-tailwind.css' %}" rel="stylesheet">
+<link href="{% static 'css/output.css' %}" rel="stylesheet" type="text/css">
 ```
+
+The compiled file is committed, so normal Django development and deployment still do not require Node.js, npm, npx, Vite or a Tailwind runtime process.
 
 Run GLIS normally:
 
@@ -24,47 +40,106 @@ python manage.py collectstatic --noinput
 python manage.py runserver
 ```
 
-For local DEBUG development, `collectstatic` is usually not required because Django serves app/project static files directly.
+For local DEBUG development, `collectstatic` is generally unnecessary.
 
-## Why GLIS keeps prefixed classes
+## Source CSS
 
-GLIS still contains older Bootstrap-based screens while the redesigned public and portal screens use Tailwind/daisyUI. To prevent collisions with common Bootstrap class names such as `btn`, `card`, `table`, `modal`, `input`, and `badge`, the new design uses:
+The portal source file is:
 
-- Tailwind prefix: `tw:`
-- daisyUI component prefix: `d-`
-- Example: `tw:flex`, `tw:bg-base-100`, `tw:d-btn`, `tw:d-card`
-
-Do not remove these prefixes while Bootstrap compatibility is still required.
-
-## Themes
-
-The committed stylesheet contains the GLIS themes:
-
-- `glis`
-- `glis-dark`
-
-`static/js/app.js` synchronizes the existing light/dark preference with Bootstrap's `data-bs-theme` and daisyUI's `data-theme`.
-
-## No npm requirement
-
-The following build-only files are intentionally not part of the Django project anymore:
-
-- `package.json`
-- `package-lock.json`
-- `static/src/tailwind.css`
-
-The generated production stylesheet is version-controlled, so pulling the repository is enough to receive the UI.
-
-## Deployment
-
-For Vercel/WhiteNoise or another Django deployment, deploy exactly like the rest of the project:
-
-```bash
-python manage.py collectstatic --noinput
+```
+static/css/input.css
 ```
 
-No Node build stage is required.
+It uses the daisyUI Django standalone setup:
 
-## Important
+```css
+@import "tailwindcss";
+@plugin "./daisyui.mjs";
+```
 
-If a future UI change introduces a Tailwind/daisyUI class that is not already present in `static/css/glis-tailwind.css`, regenerate the production stylesheet separately before committing that UI change. Normal application developers and deployments still do not need npm.
+and explicit `@source` entries for authenticated portal templates and Django form/widget code.
+
+The public/CMS site currently remains on the older isolated bundle `static/css/glis-tailwind.css`. This prevents the portal migration from breaking unrelated public templates. The portal itself is fully unprefixed.
+
+## Rebuild on Windows — no Node.js
+
+From the repository root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build_portal_css.ps1
+```
+
+The script downloads the standalone Tailwind CSS executable and daisyUI plugin files when missing, then builds:
+
+```
+static/css/input.css -> static/css/output.css
+```
+
+The downloaded build tools are ignored by Git:
+
+- `static/css/tailwindcss.exe`
+- `static/css/daisyui.mjs`
+- `static/css/daisyui-theme.mjs`
+
+Only the generated `output.css` is committed.
+
+## Manual build
+
+The same process can be performed manually using the daisyUI Django guide:
+
+1. Download Tailwind CSS standalone.
+2. Download `daisyui.mjs` and `daisyui-theme.mjs`.
+3. Run the executable against `static/css/input.css`.
+4. Commit the resulting `static/css/output.css`.
+
+Example on Windows:
+
+```powershell
+static\css\tailwindcss.exe -i static/css/input.css -o static/css/output.css
+```
+
+For continuous frontend editing:
+
+```powershell
+static\css\tailwindcss.exe -i static/css/input.css -o static/css/output.css --watch
+```
+
+## daisyUI themes
+
+The portal build includes the standard daisyUI themes exposed in the user profile. The application still resolves the normal light/dark toggle through `data-theme`.
+
+## Portal JavaScript
+
+The authenticated portal loads:
+
+```
+static/js/portal.js
+```
+
+This is the unprefixed portal runtime. The public site retains `static/js/app.js` until that separate frontend is migrated.
+
+## Development rule
+
+For authenticated portal code, write standard Tailwind/daisyUI classes only:
+
+```html
+card
+card-body
+btn
+btn-primary
+badge
+badge-success
+alert
+table
+input
+select
+textarea
+fieldset
+grid
+flex
+gap-4
+p-4
+bg-base-100
+```
+
+Do not introduce `tw:` or `d-` component prefixes into portal templates or portal Django form widgets.

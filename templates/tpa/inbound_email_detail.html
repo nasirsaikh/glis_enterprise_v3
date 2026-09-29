@@ -11,7 +11,7 @@
         {% if email.ai_confidence is not None %}<span class="badge badge-info badge-soft">AI {{ email.ai_confidence }}%</span>{% endif %}
       </div>
       <h1 class="tpa-title max-w-5xl truncate">{{ email.subject|default:"(No subject)" }}</h1>
-      <p class="tpa-subtitle">{{ email.sender }} → {{ email.recipient }} · {{ email.received_at|date:"d-M-Y H:i" }}</p>
+      <p class="tpa-subtitle">{{ email.sender_name|default:email.sender }} &lt;{{ email.sender }}&gt; → {{ email.mailbox|default:email.recipient }} · {{ email.received_at|date:"d-M-Y H:i" }}</p>
     </div>
     <div class="flex flex-wrap gap-1.5">
       <a class="btn btn-ghost btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
@@ -20,7 +20,7 @@
       {% endif %}
       {% if email.processing_state != "PROCESSED" %}
       <form method="post" action="{% url 'tpa:inbound_email_process' email.pk %}">{% csrf_token %}
-        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-cpu"></i>{% translate "Process with AI" %}</button>
+        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-arrow-repeat"></i>{% translate "Reprocess Email" %}</button>
       </form>
       {% endif %}
     </div>
@@ -32,8 +32,18 @@
 
   <div class="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,.8fr)]">
     <section class="card">
-      <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Original source" %}</div><h2 class="tpa-section-title">{% translate "EMAIL BODY" %}</h2></div><span class="badge badge-ghost">{% translate "RAW" %}</span></div>
-      <div class="card-body"><pre class="max-h-[32rem] overflow-auto">{{ email.body_text|default:"—" }}</pre></div>
+      <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Original source" %}</div><h2 class="tpa-section-title">{% translate "EMAIL EVIDENCE" %}</h2></div><span class="badge badge-ghost">{% translate "PRESERVED" %}</span></div>
+      <div class="card-body space-y-3">
+        <dl class="grid grid-cols-2 gap-2 text-xs">
+          <div><dt class="opacity-45">{% translate "Graph Message ID" %}</dt><dd class="break-all tpa-mono">{{ email.graph_message_id|default:"—" }}</dd></div>
+          <div><dt class="opacity-45">{% translate "Internet Message ID" %}</dt><dd class="break-all tpa-mono">{{ email.internet_message_id|default:"—" }}</dd></div>
+          <div><dt class="opacity-45">{% translate "Conversation ID" %}</dt><dd class="break-all tpa-mono">{{ email.conversation_id|default:"—" }}</dd></div>
+          <div><dt class="opacity-45">{% translate "Processing stage" %}</dt><dd>{{ email.processing_stage|default:"—" }}</dd></div>
+          <div><dt class="opacity-45">To</dt><dd>{{ email.to_addresses|default:"—" }}</dd></div>
+          <div><dt class="opacity-45">CC</dt><dd>{{ email.cc_addresses|default:"—" }}</dd></div>
+        </dl>
+        <pre class="max-h-[28rem] overflow-auto whitespace-pre-wrap">{{ email.body_text|default:"—" }}</pre>
+      </div>
     </section>
 
     <section class="card">
@@ -46,10 +56,16 @@
           <div class="stat"><div class="stat-title">{% translate "Effective Date" %}</div><div class="text-sm font-bold">{{ email.ai_extracted_payload.effective_date|default:"—" }}</div></div>
           <div class="stat"><div class="stat-title">{% translate "Members" %}</div><div class="stat-value">{{ email.ai_extracted_payload.members|length }}</div></div>
         </div>
-        <details class="collapse collapse-arrow mt-2 border border-base-300">
-          <summary class="collapse-title">{% translate "Source JSON" %}</summary>
-          <div class="collapse-content"><pre class="max-h-80 overflow-auto">{{ email.ai_extracted_payload }}</pre></div>
-        </details>
+        {% if can_view_ai_source %}
+        <button class="btn btn-ghost btn-sm mt-2" type="button" onclick="document.getElementById('email-source-json').showModal()"><i class="bi bi-braces"></i>{% translate "View Source JSON" %}</button>
+        <dialog id="email-source-json" class="modal">
+          <div class="modal-box max-w-5xl">
+            <h3 class="font-bold">{% translate "AI / Source JSON" %}</h3>
+            <pre class="mt-3 max-h-[65vh] overflow-auto text-xs">{{ email.raw_ai_output|default:email.ai_extracted_payload }}</pre>
+            <div class="modal-action"><form method="dialog"><button class="btn">{% translate "Close" %}</button></form></div>
+          </div>
+        </dialog>
+        {% endif %}
         {% else %}
         <div role="alert" class="alert"><i class="bi bi-hourglass"></i><span>{% translate "No AI extraction has been stored yet." %}</span></div>
         {% endif %}
@@ -68,7 +84,7 @@
         <tbody>
         {% for attachment in email.attachments.all %}
           <tr>
-            <td><a class="link link-primary" href="{{ attachment.file.url }}" target="_blank" rel="noopener">{{ attachment.original_name }}</a></td>
+            <td><a class="link link-primary" href="{% url 'tpa:inbound_email_attachment' email.pk attachment.pk %}">{{ attachment.original_name }}</a></td>
             <td>{{ attachment.content_type|default:"—" }}</td>
             <td class="tpa-mono">{{ attachment.size|filesizeformat }}</td>
             <td><span class="badge badge-outline">{{ attachment.get_processing_state_display }}</span></td>

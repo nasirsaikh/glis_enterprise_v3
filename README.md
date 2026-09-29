@@ -740,49 +740,109 @@ The system:
 
 The user does not have to leave the TPA case to answer a query.
 
-## 12.14 Email endorsement intake
+## 12.14 Automated Office 365 endorsement intake
 
-Email-based endorsements use the same downstream workflow as portal transactions.
+Normal operation does **not** require a user to upload incoming email. Microsoft Graph v1.0 is the primary mailbox transport and runs through the embedded Job Center scheduler.
 
-The email processor can use:
+Flow:
 
-- email body;
-- CSV/XLS/XLSX attachments;
-- text PDFs;
-- scanned PDFs;
-- passport/ID images;
-- multiple attachments belonging to one request.
-
-The AI extractor can identify policy, transaction type, effective date and member data. Attachments then enter the normal source-document pipeline.
-
-Initial Policy Enrollment is intentionally not created from email; email intake is reserved for endorsements on an enrolled policy.
-
-### IMAP configuration
-
-~~~dotenv
-TPA_IMAP_HOST=mail.example.com
-TPA_IMAP_PORT=993
-TPA_IMAP_USERNAME=tpa@example.com
-TPA_IMAP_PASSWORD=change-me
-TPA_IMAP_FOLDER=INBOX
-TPA_IMAP_USE_SSL=1
+~~~text
+Office 365 Inbox
+→ Graph delta synchronization
+→ local immutable email/attachment evidence
+→ endorsement classification
+→ deterministic sender authority
+→ policy resolution
+→ body + attachment extraction
+→ Intake & Correction
+→ deterministic validation
+→ STP / approval
+→ TPA processing
+→ optional query conversations
+→ physical card dispatch when configured
+→ completion
+→ permanent member/policy update
 ~~~
 
-Manual processing:
+The mailbox monitor is available at <code>/portal/tpa/inbound-emails/</code>. It shows connection/configuration state, the effective Job Center schedule, last attempt/success/error, next scheduled run, processed/review/ignored/failed counts and the inbound audit queue. **Sync Inbox Now** is permission-controlled; **Manual Intake / Reprocess** remains a fallback/recovery/testing path.
+
+### Microsoft Graph application configuration
+
+Create an Azure / Microsoft Entra app registration for server-to-server use:
+
+1. Create an App Registration.
+2. Add Microsoft Graph **Application** permission <code>Mail.Read</code>.
+3. Grant tenant administrator consent.
+4. Use <code>Mail.ReadWrite</code> only if a future workflow actually modifies messages in Microsoft 365.
+5. Create a client secret or use the organization’s approved credential mechanism.
+6. Restrict the application’s mailbox scope in Exchange/Entra where required by organizational security policy.
+7. Put credentials in environment/secret management—never in Django Admin or the database.
+
+~~~dotenv
+TPA_MAIL_PROVIDER=office365_graph
+TPA_MAIL_ENABLED=True
+TPA_MAIL_AUTO_PROCESS_AI=True
+TPA_MAIL_MAX_MESSAGES_PER_RUN=50
+TPA_MAIL_SYNC_CRON=*/5 * * * *
+TPA_MAIL_ACTOR_USERNAME=tpa-service-user
+
+TPA_O365_TENANT_ID=00000000-0000-0000-0000-000000000000
+TPA_O365_CLIENT_ID=00000000-0000-0000-0000-000000000000
+TPA_O365_CLIENT_SECRET=use-a-secret-manager
+TPA_O365_MAILBOX=endorsements@example.com
+TPA_O365_FOLDER=Inbox
+TPA_O365_RECEIVED_AFTER=
+TPA_O365_TIMEOUT_SECONDS=60
+
+TPA_EMAIL_CLASSIFICATION_MIN_CONFIDENCE=0.75
+~~~
+
+<code>TPA_MAIL_SYNC_CRON</code> overrides the seeded Job Center cron at runtime without storing secrets or creating a second scheduler. The default is every five minutes.
+
+Graph polling uses delta synchronization and persists the delta link in <code>TPAMailboxSyncState</code>. Deduplication uses provider/message ID, mailbox/internetMessageId and attachment hashes so scheduler restarts/repeated runs do not create duplicate endorsements.
+
+The legacy IMAP reader remains only as an explicit fallback by setting <code>TPA_MAIL_PROVIDER=imap</code> and configuring the existing <code>TPA_IMAP_*</code> values.
+
+Manual diagnostics are still available:
 
 ~~~bash
 python manage.py process_tpa_mailbox --username YOUR_USERNAME
-~~~
-
-Store unread messages without AI processing:
-
-~~~bash
 python manage.py process_tpa_mailbox --username YOUR_USERNAME --no-ai
 ~~~
 
-The same logic is registered for Job Center using the TPA mailbox polling handler. Messages are deduplicated using mail identifiers/UID information before downstream processing.
+They are not required for normal scheduled operation.
 
-## 12.15 TPA permissions
+### Sender authority
+
+AI may extract a policy number, but AI does not grant authority. Configure <code>TPAEmailAuthority</code> in Django Admin to allow a sender for an organization/policy, transaction types and optional validity dates. Unauthorized senders are retained as evidence and routed to review rather than creating an actionable endorsement.
+
+### Classification and evidence
+
+Inbound evidence preserves Graph identifiers, internetMessageId, conversation ID, sender/To/CC, timestamps, text body, sanitized HTML, original attachments, hashes, AI output, provider/profile information, confidence and errors.
+
+The strict extraction schema distinguishes Member Addition, Deletion, Permanent Termination, Temporary Suspension, Reactivation, Policy Cancellation, query/reply, unrelated mail and uncertain mail. Low-confidence/unrelated/unauthorized cases do not silently create production transactions.
+
+## 12.15 TPA conversations, refund and card dispatch
+
+Approval and TPA discussions use the existing GLIS TicketComment/TicketAttachment infrastructure but render inside the transaction as daisyUI chat.
+
+Conversation audiences are enforced server-side:
+
+- <code>CLIENT_VISIBLE</code>
+- <code>INSURER_TPA_INTERNAL</code>
+- <code>SELECTED_PARTICIPANTS</code>
+
+An insurer/TPA internal thread is not visible to the client. Authorized internal staff can explicitly share a selected internal message body; that does **not** expose the parent internal thread or its internal attachments.
+
+Deletion and Policy Cancellation use structured refund basis <code>FULL</code> or <code>PRO_RATA</code>. Calculations use <code>Decimal</code> and retain calculation snapshots. System-calculated amounts and TPA-final amounts remain distinct and an override reason is required when they differ.
+
+Temporary suspension and reactivation are first-class transaction types. Permanent termination remains distinct and cannot be treated as an ordinary temporary suspension.
+
+For Member Addition, when <code>Policy.physical_card_required</code> is enabled, successful TPA processing enters the Card Dispatch step instead of prematurely completing. Courier/delivery/collection status, AWB/tracking, dates, recipient details, remarks and proof are auditable. Deletion, termination, suspension and policy cancellation do not require card dispatch.
+
+## 12.16 TPA permissions
+
+
 
 Model permissions include:
 

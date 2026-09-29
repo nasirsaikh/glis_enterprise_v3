@@ -178,8 +178,13 @@
           <ul class="menu tw:mt-3 tw:w-full tw:gap-1 tw:p-0">
             <li data-sidebar-label class="menu-title tw:hidden"><span>{% translate "TPA Operations" %}</span></li>
             <li>
-              <a data-sidebar-link class="tw:justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name != 'user_guide' %}menu-active{% endif %}" href="{% url 'tpa:dashboard' %}" title="{% translate 'TPA Member Management' %}">
+              <a data-sidebar-link class="tw:justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name != 'user_guide' and 'inbound_email' not in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:dashboard' %}" title="{% translate 'TPA Member Management' %}">
                 <i class="bi bi-people tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "TPA Member Management" %}</span>
+              </a>
+            </li>
+            <li>
+              <a data-sidebar-link class="tw:justify-center {% if request.resolver_match.namespace == 'tpa' and 'inbound_email' in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:inbound_email_list' %}" title="{% translate 'TPA Inbound Emails' %}">
+                <i class="bi bi-inbox tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "TPA Inbound Emails" %}</span>
               </a>
             </li>
             <li>

@@ -64,6 +64,18 @@ def select_provider(*, vision=False, sensitive=False, capability=None):
                 for item in (provider.task_capabilities or [])
             }
         ]
+
+    # TPA production processing is local-first: prefer Ollama whenever an
+    # eligible Ollama provider exists, then fall back to configured test or
+    # alternative providers. Explicit provider selections elsewhere are
+    # still respected.
+    providers.sort(
+        key=lambda provider: (
+            provider.provider != AIProviderConfig.Provider.OLLAMA,
+            provider.priority,
+            provider.pk,
+        )
+    )
     return providers[0] if providers else None
 
 

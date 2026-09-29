@@ -11,6 +11,34 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name="membertransaction",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("draft", "Draft"),
+                    ("extracting", "Extracting"),
+                    ("pending_validation", "Pending Validation"),
+                    ("needs_information", "Needs Information"),
+                    ("validation_failed", "Validation Failed"),
+                    ("pending_approval", "Pending Approval"),
+                    ("approved", "Approved"),
+                    ("auto_approved", "Auto Approved"),
+                    ("sent_to_tpa", "Sent to TPA"),
+                    ("tpa_in_progress", "TPA In Progress"),
+                    ("tpa_query", "TPA Query"),
+                    ("processing", "Processing"),
+                    ("processed", "Processed"),
+                    ("completed", "Completed"),
+                    ("rejected", "Rejected"),
+                    ("failed", "Failed"),
+                    ("cancelled", "Cancelled"),
+                ],
+                db_index=True,
+                default="draft",
+                max_length=30,
+            ),
+        ),
         migrations.AddField(
             model_name="policy",
             name="tpa_organization",

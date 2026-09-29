@@ -107,7 +107,7 @@
           {% if can_edit_intake %}
           <div>
             <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <div><strong class="text-sm">{% translate "Add / Reprocess Evidence" %}</strong><div class="text-xs opacity-50">{% translate "EML, Excel, CSV, PDF, images and multi-file ID/passport bundles use the same intake pipeline." %}</div></div>
+              <div><strong class="text-sm">{% translate "SOURCE DOCUMENTS & OLLAMA OCR" %}</strong><div class="text-xs opacity-50">{% translate "Add / Reprocess Evidence · EML, Excel, CSV, PDF, images and multi-file ID/passport bundles use the same intake pipeline." %}</div></div>
               <div class="flex gap-1">
                 <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'xlsx' %}">{% translate "Sample XLSX" %}</a>
                 <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}">{% translate "Sample CSV" %}</a>

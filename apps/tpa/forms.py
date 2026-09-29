@@ -9,6 +9,7 @@ from .models import (
     CardDispatch,
     InboundEmail,
     Member,
+    MemberPolicyEnrollment,
     MemberTransaction,
     Policy,
     TPAOrganization,

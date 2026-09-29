@@ -57,6 +57,7 @@
           </table>
         </div>
         <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i><span>{% translate "Failed OCR never deletes the source or previously valid rows. Correct the provider configuration and use Reprocess Evidence." %}</span></div>
+        <p class="text-xs opacity-60">{% translate "Authorized intake editors may delete failed/review-required manual evidence. Office365/email-linked evidence is retained for audit and must be reprocessed or supplemented rather than deleted." %}</p>
       </div>
     </section>
 
@@ -94,7 +95,7 @@
         <div class="grid gap-2 sm:grid-cols-3">
           <div class="rounded-box border border-base-300 p-3"><strong>CLIENT_VISIBLE</strong><div class="text-xs opacity-60">{% translate "Requester/client can participate." %}</div></div>
           <div class="rounded-box border border-base-300 p-3"><strong>INSURER_TPA_INTERNAL</strong><div class="text-xs opacity-60">{% translate "Server-side private insurer/TPA discussion." %}</div></div>
-          <div class="rounded-box border border-base-300 p-3"><strong>SELECTED_PARTICIPANTS</strong><div class="text-xs opacity-60">{% translate "Restricted to selected users." %}</div></div>
+          <div class="rounded-box border border-base-300 p-3"><strong>SELECTED_PARTICIPANTS</strong><div class="text-xs opacity-60">{% translate "Restricted to explicitly selected users; only those users are notified." %}</div></div>
         </div>
         <div class="alert alert-info"><i class="bi bi-lock"></i><span>{% translate "Internal staff may explicitly share a selected message body with the client. The parent internal thread and its attachments remain private." %}</span></div>
       </div>
@@ -105,6 +106,7 @@
         <h2 class="card-title"><i class="bi bi-heart-pulse text-primary"></i>{% translate "7. Suspension & Reactivation" %}</h2>
         <p><strong>{% translate "Permanent termination" %}</strong> — {% translate "permanently terminates remaining coverage." %}</p>
         <p><strong>{% translate "Temporary suspension" %}</strong> — {% translate "retains the historical policy/card relationship and records suspension date/reason/expected reactivation." %}</p>
+        <p class="text-xs opacity-60">{% translate "Manual suspension requires a reason and can capture an optional expected reactivation date; email temporary_until is mapped into the same structured field." %}</p>
         <p><strong>{% translate "Reactivation" %}</strong> — {% translate "allowed only for an eligible suspended member on an active policy with a valid reactivation date." %}</p>
       </div>
     </section>

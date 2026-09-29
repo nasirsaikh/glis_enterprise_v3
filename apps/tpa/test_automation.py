@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
+from django.urls import reverse
 from django.utils import timezone
 
 from apps.tpa.forms import MemberRowForm
@@ -19,6 +20,7 @@ from apps.tpa.models import (
     MemberTransaction,
     Policy,
     PolicyAccess,
+    SourceDocument,
     TPAEmailAuthority,
     TPAMailboxSyncState,
     TPAOrganization,
@@ -358,6 +360,58 @@ class TPAAutomationTests(TestCase):
         self.assertTrue(can_view_transaction_query(selected, query))
         self.assertFalse(can_view_query_message(self.requester, query.messages.get()))
         self.assertTrue(can_view_query_message(selected, query.messages.get()))
+
+    def test_read_only_policy_user_cannot_mutate_intake_endpoints(self):
+        User = get_user_model()
+        readonly = User.objects.create_user(
+            username="readonly",
+            email="readonly@example.com",
+            password="x",
+        )
+        PolicyAccess.objects.create(
+            organization=self.sponsor,
+            policy=self.policy,
+            user=readonly,
+            can_view=True,
+            can_create_endorsement=False,
+            active=True,
+        )
+        tx = self._transaction()
+        failed_source = SourceDocument.objects.create(
+            transaction=tx,
+            original_name="failed.pdf",
+            processing_state=SourceDocument.State.REVIEW,
+            processing_error="OCR provider unavailable.",
+            uploaded_by=self.requester,
+        )
+        self.client.force_login(readonly)
+
+        add_response = self.client.post(
+            reverse("tpa:transaction_add_member", args=[tx.reference]),
+            data={
+                "employee_id": "READONLY-1",
+                "first_name": "Read",
+                "last_name": "Only",
+                "date_of_birth": "1990-01-01",
+                "gender": "Male",
+                "relationship": "PRINCIPAL",
+                "principal_reference": "",
+                "plan_code": "GOLD",
+                "national_id": "READONLY-CID",
+                "passport_number": "",
+            },
+        )
+        delete_response = self.client.post(
+            reverse(
+                "tpa:transaction_delete_source",
+                args=[tx.reference, failed_source.pk],
+            )
+        )
+
+        self.assertEqual(add_response.status_code, 403)
+        self.assertEqual(delete_response.status_code, 403)
+        self.assertEqual(tx.member_actions.count(), 0)
+        self.assertTrue(SourceDocument.objects.filter(pk=failed_source.pk).exists())
 
     def test_manual_member_form_rejects_active_and_transaction_duplicates(self):
         self._active_enrollment("ACTIVE")

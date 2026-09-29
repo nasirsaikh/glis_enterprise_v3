@@ -100,9 +100,11 @@ class TransactionAdmin(admin.ModelAdmin):
         "status",
         "validation_score",
         "stp_eligible",
+        "refund_basis",
+        "expected_reactivation_date",
         "ticket",
     )
-    list_filter = ("transaction_type", "source", "status", "stp_eligible")
+    list_filter = ("transaction_type", "source", "status", "stp_eligible", "refund_basis")
     search_fields = ("reference", "policy__policy_number", "ticket__reference")
     readonly_fields = ("reference", "submitted_at", "processed_at", "approved_at")
 

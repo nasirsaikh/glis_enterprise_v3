@@ -154,7 +154,11 @@ The shared GLIS AI layer contains:
 - source-document records;
 - canonical member JSON normalization.
 
-Structured spreadsheet upload is now exposed in the transaction workspace. Full OCR/vision processing of PDF, passport/ID images and other unstructured documents remains a separate AI intake workflow; do not treat that part as complete until the configured provider pipeline has been tested end-to-end.
+The configured AI runtime now supports **Mock**, **Ollama**, **OpenAI-compatible/OpenAI**, and **Anthropic** JSON extraction. Inbound email bodies can be extracted with the `email_extraction` capability. Image attachments can be extracted with a provider configured with `supports_vision=True`, `allow_sensitive_data=True`, and the `document_extraction` capability. CSV/XLSX attachments use deterministic structured import.
+
+AI remains an extraction/mapping assistant only. Policy eligibility, validation, pricing, STP, approvals and final member processing are deterministic application logic.
+
+PDF attachments are currently retained for audit and marked **Needs review**; they are not silently treated as successfully extracted.
 
 ## 10. Email intake
 
@@ -172,7 +176,11 @@ The TPA data layer can register inbound email metadata including:
 
 Duplicate provider message IDs are prevented.
 
-Automatic mailbox polling and full attachment-to-transaction processing are **foundation components at this stage**, not yet a complete end-user portal workflow.
+The portal now exposes **TPA Operations → Inbound Emails → Add Inbound Email**. Users can enter email metadata/body, optional policy/type/effective-date hints and multiple attachments, then process immediately with AI. Successful AI processing creates the TPA transaction, links the GLIS ticket, imports extracted member rows, and runs deterministic validation/STP.
+
+CSV/XLSX attachments are imported directly. Vision-capable image attachments can be processed by AI. Files that cannot be automatically processed remain visible with a review reason.
+
+Automatic external mailbox polling/fetching is still separate from this manual/provider-ingestion screen; external mailbox connectors can use the reusable `register_inbound_email()` service and the same AI processing pipeline.
 
 ## 11. Troubleshooting
 
@@ -236,3 +244,38 @@ The policy-aware sample download uses these columns:
 | principal_member_id | Dependent only | Existing TPA principal member ID |
 
 A dependent without a valid parent principal is rejected with `PARENT_PRINCIPAL_REQUIRED` or `INVALID_PARENT_PRINCIPAL`.
+
+
+## Seed sample TPA data
+
+After migrations, seed a complete idempotent demo environment:
+
+```powershell
+python manage.py seed_tpa_sample
+```
+
+To grant the demo policy access/TPA role to a specific existing user:
+
+```powershell
+python manage.py seed_tpa_sample --username your_username
+```
+
+To create the sample inbound emails without automatically processing the valid one:
+
+```powershell
+python manage.py seed_tpa_sample --username your_username --skip-ai-processing
+```
+
+The seed creates/updates:
+
+- Demo Corporate sponsor and Demo Insurance Company;
+- active `DEMO-MED-<year>` medical policy;
+- GOLD and SILVER benefit plans;
+- an existing principal/spouse/child family;
+- TPA Demo Operators group and policy access;
+- Mock AI provider with `email_extraction` and `document_extraction`;
+- email/document extraction profiles and a training example;
+- one valid AI inbound email sample;
+- one intentionally invalid inbound email sample.
+
+The command is idempotent and can be rerun.

@@ -270,7 +270,7 @@ def extract_email_payload(email, actor=None):
             duration_ms=duration_ms,
             succeeded=True,
         )
-        return normalized, provider, profile
+        return normalized, provider, profile, raw
     except Exception as exc:
         _log_interaction(
             actor=actor,
@@ -525,8 +525,11 @@ def process_inbound_email(email, actor):
     )
 
     try:
-        payload, provider, profile = extract_email_payload(email, actor=actor)
-        email.raw_ai_output = payload
+        payload, provider, profile, raw_ai_output = extract_email_payload(
+            email,
+            actor=actor,
+        )
+        email.raw_ai_output = raw_ai_output
         classification = str(
             payload.get("classification")
             or payload.get("transaction_type")

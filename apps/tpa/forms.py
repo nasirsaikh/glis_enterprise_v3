@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 
 from .models import InboundEmail, Member, MemberTransaction, Policy
 from .services.access import visible_policies
@@ -249,6 +250,11 @@ class InboundEmailForm(forms.ModelForm):
             if user
             else Policy.objects.none()
         )
+        if not self.is_bound:
+            self.fields["received_at"].initial = timezone.localtime().replace(
+                second=0,
+                microsecond=0,
+            )
         self.fields["provider"].initial = "manual"
         self.fields["provider_message_id"].required = False
         self.fields["provider_message_id"].help_text = (

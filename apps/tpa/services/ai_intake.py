@@ -17,6 +17,7 @@ from ..models import (
     MemberTransaction,
     Policy,
     SourceDocument,
+    TransactionEvent,
 )
 from .authority import sender_is_authorized
 from .document_intake import process_source_bundle
@@ -756,6 +757,42 @@ def process_inbound_email(email, actor):
                 source=f"email:{email.pk}:body",
             )
             create_ticket_for_transaction(tx, actor=actor)
+            TransactionEvent.objects.bulk_create(
+                [
+                    TransactionEvent(
+                        transaction=tx,
+                        actor=actor,
+                        event_type="office365_email_received" if email.provider == "office365_graph" else "email_received",
+                        summary=f"Inbound email received: {email.subject or '(No subject)'}",
+                        details={
+                            "inbound_email_id": email.pk,
+                            "provider": email.provider,
+                            "sender": email.sender,
+                            "received_at": email.received_at.isoformat(),
+                        },
+                    ),
+                    TransactionEvent(
+                        transaction=tx,
+                        actor=actor,
+                        event_type="email_classified",
+                        summary=f"Email classified as {classification or transaction_type}",
+                        details={"confidence": str(confidence) if confidence is not None else None},
+                    ),
+                    TransactionEvent(
+                        transaction=tx,
+                        actor=actor,
+                        event_type="sender_authority_checked",
+                        summary="Sender authority validated",
+                        details={"authority_id": authority.pk if authority else None},
+                    ),
+                    TransactionEvent(
+                        transaction=tx,
+                        actor=actor,
+                        event_type="policy_matched",
+                        summary=f"Policy matched: {policy.policy_number}",
+                    ),
+                ]
+            )
 
         email.processing_stage = "ATTACHMENT_EXTRACTION"
         email.save(update_fields=["processing_stage", "updated_at"])

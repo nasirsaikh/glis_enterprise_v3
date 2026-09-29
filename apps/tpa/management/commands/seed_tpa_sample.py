@@ -309,6 +309,31 @@ class Command(BaseCommand):
         )
 
         AIExtractionProfile.objects.update_or_create(
+            name="TPA Medical Member Mapping",
+            task=AIExtractionProfile.Task.MEMBER_FIELD_MAPPING,
+            applicable_product="MEDICAL",
+            applicable_transaction_type="",
+            defaults={
+                "system_prompt": (
+                    "Map OCR/document text to canonical TPA member JSON only. "
+                    "Never calculate premium, eligibility, STP or approval."
+                ),
+                "instructions": (
+                    "Combine related front/back identity evidence into one member where "
+                    "appropriate. Use PRINCIPAL/SPOUSE/CHILD/OTHER and YYYY-MM-DD dates."
+                ),
+                "field_aliases": {
+                    "employee_id": ["employee no", "staff id"],
+                    "national_id": ["civil id", "national id"],
+                    "passport_number": ["passport", "passport no"],
+                    "plan_code": ["plan", "benefit plan"],
+                },
+                "priority": 1,
+                "is_active": True,
+            },
+        )
+
+        AIExtractionProfile.objects.update_or_create(
             name="TPA Medical Vision Extraction",
             task=AIExtractionProfile.Task.DOCUMENT_EXTRACTION,
             applicable_product="MEDICAL",

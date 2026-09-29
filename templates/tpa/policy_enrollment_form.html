@@ -1,33 +1,33 @@
-{% extends "base_portal.html" %}{% load i18n %}
+{% extends "tpa/base.html" %}{% load i18n %}
 {% block title %}{% translate "New Policy Enrollment" %}{% endblock %}
-{% block content %}
+{% block tpa_content %}
 <div class="tw:mx-auto tw:max-w-6xl tw:space-y-5">
-  <section class="tw:d-card tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl">
-    <div class="tw:d-card-body tw:p-5">
+  <section class="card tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl">
+    <div class="card-body tw:p-5">
       <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-4">
         <div>
-          <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">{% translate "Step 1 · Initial Setup" %}</span>
+          <span class="badge badge-primary badge-soft">{% translate "Step 1 · Initial Setup" %}</span>
           <h1 class="tw:mt-2 tw:text-3xl tw:font-black">{% translate "Create Policy & Initial Benefit Plan" %}</h1>
           <p class="tw:mt-1 tw:max-w-3xl tw:text-sm tw:text-base-content/55">{% translate "The policy starts as Draft. After this screen you will add additional plans if needed and load the initial member census manually or from Excel/CSV/PDF/images." %}</p>
         </div>
-        <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Policy Enrollments" %}</a>
+        <a class="btn btn-ghost btn-sm" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Policy Enrollments" %}</a>
       </div>
     </div>
   </section>
 
-  <div class="tw:d-alert tw:d-alert-info">
+  <div class="alert alert-info">
     <i class="bi bi-info-circle"></i>
     <span>{% translate "This is not an endorsement. Initial policy enrollment establishes the opening policy, plans and member census. The policy becomes endorsement-enabled only after the setup is completed." %}</span>
   </div>
 
-  <form method="post" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+  <form method="post" class="card tw:border tw:border-base-300 tw:bg-base-100">
     {% csrf_token %}
-    <div class="tw:d-card-body tw:p-5">
-      {% if form.non_field_errors %}<div class="tw:d-alert tw:d-alert-error tw:mb-4">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="card-body tw:p-5">
+      {% if form.non_field_errors %}<div class="alert alert-error tw:mb-4">{{ form.non_field_errors }}</div>{% endif %}
       <div class="tw:grid tw:gap-4 tw:md:grid-cols-2 tw:xl:grid-cols-3">
         {% for field in form %}
-        <label class="tw:d-form-control {% if field.name == 'stp_enabled' %}tw:flex tw:flex-row tw:items-center tw:gap-3 tw:pt-6{% endif %}">
-          {% if field.name != "stp_enabled" %}<span class="tw:d-label-text tw:mb-1 tw:text-xs tw:font-bold">{{ field.label }}</span>{% endif %}
+        <label class="form-control {% if field.name == 'stp_enabled' %}tw:flex tw:flex-row tw:items-center tw:gap-3 tw:pt-6{% endif %}">
+          {% if field.name != "stp_enabled" %}<span class="label-text tw:mb-1 tw:text-xs tw:font-bold">{{ field.label }}</span>{% endif %}
           {{ field }}
           {% if field.name == "stp_enabled" %}<span class="tw:text-sm tw:font-semibold">{{ field.label }}</span>{% endif %}
           {% for error in field.errors %}<span class="tw:mt-1 tw:text-xs tw:text-error">{{ error }}</span>{% endfor %}
@@ -35,7 +35,7 @@
         {% endfor %}
       </div>
       <div class="tw:mt-5 tw:flex tw:justify-end">
-        <button class="tw:d-btn tw:d-btn-primary" type="submit"><i class="bi bi-arrow-right"></i>{% translate "Create Setup & Add Members" %}</button>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-right"></i>{% translate "Create Setup & Add Members" %}</button>
       </div>
     </div>
   </form>

@@ -120,6 +120,8 @@ class ChromaDomainMemory:
             path=str(persist_directory),
             settings=Settings(anonymized_telemetry=False, allow_reset=False),
         )
+        self._client = client
+        self._embedding = embedding
         collection_name = _collection_name(domain.collection_name or domain.slug)
         self.collection = client.get_or_create_collection(
             name=collection_name,
@@ -308,3 +310,43 @@ class ChromaDomainMemory:
                 }
             ],
         )
+
+
+    def close(self) -> None:
+        """Release Chroma/Vanna resources deterministically.
+
+        Chroma PersistentClient keeps SQLite/HNSW handles open until close().
+        That is especially visible on Windows, where temporary Chroma
+        directories cannot be removed while data_level0.bin is still mapped.
+        """
+        agent_memory = getattr(self, "agent_memory", None)
+        if agent_memory is not None:
+            executor = getattr(agent_memory, "_executor", None)
+            if executor is not None:
+                executor.shutdown(wait=True, cancel_futures=True)
+                agent_memory._executor = None
+            agent_memory._collection = None
+            agent_memory._client = None
+
+        self.collection = None
+        client = getattr(self, "_client", None)
+        self._client = None
+        if client is not None:
+            close = getattr(client, "close", None)
+            if callable(close):
+                close()
+
+        embedding = getattr(self, "_embedding", None)
+        self._embedding = None
+        if embedding is not None:
+            ollama_client = getattr(embedding, "client", None)
+            close = getattr(ollama_client, "close", None)
+            if callable(close):
+                close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+        return False

@@ -113,6 +113,14 @@ def dashboard(request):
     status_labels = dict(MemberTransaction.Status.choices)
     source_labels = dict(MemberTransaction.Source.choices)
 
+    source_documents = list(tx.source_documents.all().order_by("-created_at"))
+    for document in source_documents:
+        payload = document.extracted_payload or {}
+        result_count = payload.get("bundle_members_created")
+        if result_count is None:
+            result_count = payload.get("rows_created")
+        document.result_count = result_count
+
     context = {
         "status_chart": [
             {
@@ -708,7 +716,7 @@ def transaction_detail(request, reference):
             else None
         ),
         "initial_setup": tx.transaction_type == tx.Type.NEW_POLICY_ENROLLMENT,
-        "source_documents": tx.source_documents.all().order_by("-created_at"),
+        "source_documents": source_documents,
         "open_query": tx.queries.filter(
             status=TransactionQuery.Status.OPEN
         ).select_related("ticket").prefetch_related(

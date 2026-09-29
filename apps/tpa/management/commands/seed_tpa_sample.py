@@ -217,10 +217,9 @@ class Command(BaseCommand):
                 "secret_reference": "",
                 "temperature": Decimal("0.00"),
                 "timeout_seconds": 30,
-                "supports_vision": True,
+                "supports_vision": False,
                 "task_capabilities": [
                     "email_extraction",
-                    "document_extraction",
                     "member_field_mapping",
                 ],
                 "runtime_options": {},

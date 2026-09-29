@@ -6,8 +6,8 @@ from apps.tpa.services.mailbox import poll_inbound_mailbox
 
 class Command(BaseCommand):
     help = (
-        "Read unread TPA emails from the configured IMAP mailbox, deduplicate them, "
-        "store attachments and process endorsement requests through the TPA AI workflow."
+        "Synchronize the configured TPA mailbox. Microsoft Graph application authentication "
+        "is the primary provider; legacy IMAP remains an explicit fallback."
     )
 
     def add_arguments(self, parser):
@@ -21,8 +21,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--limit",
             type=int,
-            default=50,
-            help="Maximum unread messages to process in one run (default: 50).",
+            default=None,
+            help="Optional maximum messages. Defaults to TPA_MAIL_MAX_MESSAGES_PER_RUN.",
         )
         parser.add_argument(
             "--no-ai",
@@ -50,15 +50,17 @@ class Command(BaseCommand):
 
         result = poll_inbound_mailbox(
             actor=actor,
-            limit=max(int(options["limit"]), 1),
-            process_ai=not options["no_ai"],
+            limit=(max(int(options["limit"]), 1) if options["limit"] else None),
+            process_ai=(False if options["no_ai"] else None),
         )
         self.stdout.write(
             self.style.SUCCESS(
                 "TPA mailbox polling completed: "
                 f"created={result['created']}, "
                 f"processed={result['processed']}, "
-                f"review={result['review']}, "
-                f"skipped={result['skipped']}."
+                f"review={result.get('review', 0)}, "
+                f"ignored={result.get('ignored', 0)}, "
+                f"failed={result.get('failed', 0)}, "
+                f"skipped={result.get('skipped', 0)}."
             )
         )

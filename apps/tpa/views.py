@@ -11,6 +11,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from apps.ai.models import AIProviderConfig
+
 from .forms import (
     InboundEmailForm,
     MemberLookupRowForm,
@@ -98,6 +100,16 @@ def dashboard(request):
         "stp_rate": round(
             (txs.filter(stp_eligible=True).count() / txs.count() * 100), 1
         ) if txs.exists() else 0,
+        "ai_provider_count": AIProviderConfig.objects.filter(
+            is_active=True,
+            allow_sensitive_data=True,
+        ).count(),
+        "inbound_review": InboundEmail.objects.filter(
+            processing_state=InboundEmail.State.REVIEW,
+        ).filter(
+            models.Q(created_by=request.user)
+            | models.Q(transaction_id__in=txs.values_list("pk", flat=True))
+        ).distinct().count(),
         "transactions": txs[:50],
     }
     return render(request, "tpa/dashboard.html", context)

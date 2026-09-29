@@ -33,7 +33,7 @@
     <input id="portal-drawer" type="checkbox" class="drawer-toggle">
 
     <div class="drawer-content tw:min-h-screen tw:bg-base-200">
-      <header class="navbar tw:sticky tw:top-0 tw:z-40 tw:min-h-20 tw:border-b tw:border-base-300 tw:bg-base-100/95 tw:px-3 tw:shadow-sm tw:backdrop-blur-xl tw:sm:px-5">
+      <header class="navbar tw:sticky tw:top-0 tw:z-40 tw:min-h-16 tw:border-b tw:border-base-300 tw:bg-base-100/95 tw:px-3 tw:shadow-sm tw:backdrop-blur-xl tw:sm:px-4">
         <div class="navbar-start tw:min-w-0 tw:gap-1 tw:sm:gap-2">
           <label for="portal-drawer" class="btn btn-ghost btn-circle tw:lg:hidden" aria-label="{% translate 'Open navigation' %}">
             <i class="bi bi-list tw:text-xl"></i>
@@ -109,7 +109,7 @@
           </details>
 
           <details class="dropdown dropdown-end">
-            <summary class="btn btn-ghost tw:h-12 tw:gap-2 tw:rounded-full tw:px-2 tw:sm:px-3">
+            <summary class="btn btn-ghost tw:h-10 tw:min-h-10 tw:gap-2 tw:rounded-full tw:px-2 tw:sm:px-3">
               {% if user.profile.avatar %}
               <div class="avatar"><div class="tw:w-9 tw:rounded-full"><img src="{{ user.profile.avatar.url }}" alt=""></div></div>
               {% else %}
@@ -138,7 +138,7 @@
       </div>
       {% endif %}
 
-      <main id="portal-main" class="tw:min-h-[calc(100vh-5rem)] tw:p-4 tw:sm:p-5 tw:lg:p-6 {% block main_class %}{% endblock %}">
+      <main id="portal-main" class="tw:min-h-[calc(100vh-4rem)] tw:p-3 tw:sm:p-4 tw:lg:p-4 {% block main_class %}{% endblock %}">
         {% block content %}{% endblock %}
       </main>
     </div>
@@ -146,7 +146,7 @@
     <div class="drawer-side tw:z-50">
       <label for="portal-drawer" aria-label="{% translate 'Close navigation' %}" class="drawer-overlay"></label>
       <aside id="portal-sidebar" class="tw:min-h-full tw:w-20 tw:border-e tw:border-base-300 tw:bg-base-100 tw:transition-[width] tw:duration-200" data-sidebar-state="collapsed">
-        <div class="tw:flex tw:h-20 tw:items-center tw:gap-3 tw:border-b tw:border-base-300 tw:px-4">
+        <div class="tw:flex tw:h-16 tw:items-center tw:gap-3 tw:border-b tw:border-base-300 tw:px-3">
           <a class="tw:flex tw:min-w-0 tw:items-center tw:gap-3 tw:no-underline" href="{% url 'portal:dashboard' %}">
               {% if glis_site.logo %}<img src="/api/v1/site-logo/" width="80" height="40" alt="{{ glis_site.short_name|default:'GLIS' }}">{% else %}<strong class="tw:text-sm tw:font-black tw:text-primary">GLIS</strong>{% endif %}
             
@@ -154,7 +154,7 @@
           
         </div>
 
-        <nav class="tw:h-[calc(100dvh-5rem)] tw:overflow-y-auto tw:p-3" aria-label="{% translate 'Portal navigation' %}">
+        <nav class="tw:h-[calc(100dvh-4rem)] tw:overflow-y-auto tw:p-2.5" aria-label="{% translate 'Portal navigation' %}">
           {% for section in portal_navigation_sections %}
           <ul class="menu tw:w-full tw:gap-1 tw:p-0">
             <li data-sidebar-label class="menu-title tw:hidden"><span>{{ section.label }}</span></li>

@@ -1,22 +1,22 @@
 {% extends 'base_portal.html' %}{% load i18n %}{% block title %}{% translate "Edit" %} {{ ticket.reference }}{% endblock %}
 {% block content %}
-<div class="tw:mx-auto tw:max-w-5xl tw:space-y-5">
-  <div class="tw:d-breadcrumbs tw:text-sm tw:text-base-content/50"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li><a href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a></li><li>{% translate "Edit" %}</li></ul></div>
-  <section class="tw:d-card tw:rounded-[1.5rem] tw:border tw:border-base-300 tw:bg-base-100 tw:p-6 tw:shadow-sm" data-reveal>
-    <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-3"><i class="bi bi-shield-lock tw:me-1"></i>{% translate "Permission controlled" %}</span>
-    <h1 class="tw:text-3xl tw:font-black tw:tracking-[-.04em] tw:sm:text-4xl">{% translate "Edit ticket" %}</h1>
-    <p class="tw:mt-2 tw:text-base-content/55">{% translate "Update core details and administrator-defined fields." %}</p>
+<div class="mx-auto max-w-5xl space-y-5">
+  <div class="breadcrumbs text-sm text-base-content/50"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li><a href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a></li><li>{% translate "Edit" %}</li></ul></div>
+  <section class="card rounded-[1.5rem] border border-base-300 bg-base-100 p-6 shadow-sm" data-reveal>
+    <span class="badge badge-primary badge-soft mb-3"><i class="bi bi-shield-lock me-1"></i>{% translate "Permission controlled" %}</span>
+    <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "Edit ticket" %}</h1>
+    <p class="mt-2 text-base-content/55">{% translate "Update core details and administrator-defined fields." %}</p>
   </section>
-  <form class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm" method="post" data-reveal>{% csrf_token %}
-    <div class="tw:d-card-body tw:p-5 tw:sm:p-7">
-      <div class="tw:grid tw:gap-5 tw:md:grid-cols-12">
-        <label class="tw:d-fieldset {% if form.priority %}tw:md:col-span-8{% else %}tw:md:col-span-12{% endif %}"><span class="tw:d-fieldset-legend">{% translate "Subject" %}</span>{{ form.subject }}{{ form.subject.errors }}</label>
-        {% if form.priority %}<label class="tw:d-fieldset tw:md:col-span-2"><span class="tw:d-fieldset-legend">{% translate "Priority" %}</span>{{ form.priority }}</label><label class="tw:d-fieldset tw:md:col-span-2"><span class="tw:d-fieldset-legend">{% translate "Status" %}</span>{{ form.status }}{{ form.status.errors }}</label>{% endif %}
-        <label class="tw:d-fieldset tw:md:col-span-12"><span class="tw:d-fieldset-legend">{% translate "Description" %}</span>{{ form.description }}{{ form.description.errors }}</label>
-        {% for field in dynamic_form %}<label class="tw:d-fieldset tw:md:col-span-6"><span class="tw:d-fieldset-legend">{{ field.label }}{% if field.field.required %} *{% endif %}</span>{{ field }}{% if field.help_text %}<span class="tw:d-label tw:text-xs tw:text-base-content/45">{{ field.help_text }}</span>{% endif %}{{ field.errors }}</label>{% endfor %}
+  <form class="card border border-base-300 bg-base-100 shadow-sm" method="post" data-reveal>{% csrf_token %}
+    <div class="card-body p-5 sm:p-7">
+      <div class="grid gap-5 md:grid-cols-12">
+        <label class="fieldset {% if form.priority %}md:col-span-8{% else %}md:col-span-12{% endif %}"><span class="fieldset-legend">{% translate "Subject" %}</span>{{ form.subject }}{{ form.subject.errors }}</label>
+        {% if form.priority %}<label class="fieldset md:col-span-2"><span class="fieldset-legend">{% translate "Priority" %}</span>{{ form.priority }}</label><label class="fieldset md:col-span-2"><span class="fieldset-legend">{% translate "Status" %}</span>{{ form.status }}{{ form.status.errors }}</label>{% endif %}
+        <label class="fieldset md:col-span-12"><span class="fieldset-legend">{% translate "Description" %}</span>{{ form.description }}{{ form.description.errors }}</label>
+        {% for field in dynamic_form %}<label class="fieldset md:col-span-6"><span class="fieldset-legend">{{ field.label }}{% if field.field.required %} *{% endif %}</span>{{ field }}{% if field.help_text %}<span class="label text-xs text-base-content/45">{{ field.help_text }}</span>{% endif %}{{ field.errors }}</label>{% endfor %}
       </div>
-      {% if form.non_field_errors or dynamic_form.non_field_errors %}<div class="tw:d-alert tw:d-alert-error tw:mt-5"><i class="bi bi-exclamation-octagon"></i><span>{{ form.non_field_errors }}{{ dynamic_form.non_field_errors }}</span></div>{% endif %}
-      <div class="tw:mt-7 tw:flex tw:flex-wrap tw:justify-end tw:gap-2"><a class="tw:d-btn tw:d-btn-ghost tw:rounded-full" href="{% url 'portal:ticket_detail' ticket.reference %}">{% translate "Cancel" %}</a><button class="tw:d-btn tw:d-btn-primary tw:rounded-full" type="submit"><i class="bi bi-check2"></i>{% translate "Save changes" %}</button></div>
+      {% if form.non_field_errors or dynamic_form.non_field_errors %}<div class="alert alert-error mt-5"><i class="bi bi-exclamation-octagon"></i><span>{{ form.non_field_errors }}{{ dynamic_form.non_field_errors }}</span></div>{% endif %}
+      <div class="mt-7 flex flex-wrap justify-end gap-2"><a class="btn btn-ghost rounded-full" href="{% url 'portal:ticket_detail' ticket.reference %}">{% translate "Cancel" %}</a><button class="btn btn-primary rounded-full" type="submit"><i class="bi bi-check2"></i>{% translate "Save changes" %}</button></div>
     </div>
   </form>
 </div>

@@ -116,7 +116,7 @@
               <form class="tw:grid tw:gap-3 tw:md:grid-cols-2" method="post" action="{% url 'tpa:policy_plan_add' tx.reference %}">
                 {% csrf_token %}
                 {% for field in plan_form %}
-                <label class="form-control"><span class="tw:mb-1 tw:text-xs tw:font-semibold">{{ field.label }}</span>{{ field }}</label>
+                <fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}</fieldset>
                 {% endfor %}
                 <div class="tw:md:col-span-2"><button class="btn btn-outline btn-sm" type="submit"><i class="bi bi-plus-lg"></i>{% translate "Add Plan" %}</button></div>
               </form>
@@ -158,7 +158,7 @@
           <tbody>
           {% for doc in source_documents %}
             <tr>
-              <td>{% if doc.file %}<a class="tw:link" href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.original_name }}</a>{% else %}{{ doc.original_name }}{% endif %}</td>
+              <td>{% if doc.file %}<a class="link link-primary" href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.original_name }}</a>{% else %}{{ doc.original_name }}{% endif %}</td>
               <td>{{ doc.extraction_method|default:"—" }}</td>
               <td><span class="badge {% if doc.processing_state == 'PROCESSED' %}badge-success{% elif doc.processing_state == 'REVIEW' or doc.processing_state == 'FAILED' %}badge-warning{% else %}badge-outline{% endif %}">{{ doc.get_processing_state_display }}</span></td>
               <td>{% if doc.extraction_confidence is not None %}{{ doc.extraction_confidence }}%{% else %}—{% endif %}</td>
@@ -182,11 +182,11 @@
       <form class="tw:mt-4 tw:grid tw:gap-3 tw:md:grid-cols-2 tw:xl:grid-cols-3" method="post" action="{% url 'tpa:transaction_add_member' tx.reference %}">
         {% csrf_token %}
         {% for field in member_form %}
-        <label class="form-control" {% if field.name == "principal_reference" %}id="principal-reference-field"{% endif %}>
-          <span class="tw:mb-1 tw:text-xs tw:font-semibold">{{ field.label }}</span>
+        <fieldset class="fieldset" {% if field.name == "principal_reference" %}id="principal-reference-field"{% endif %}>
+          <legend class="fieldset-legend">{{ field.label }}</legend>
           {{ field }}
-          {% if field.help_text %}<span class="tw:mt-1 tw:text-xs tw:text-base-content/45">{{ field.help_text }}</span>{% endif %}
-        </label>
+          {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
+        </fieldset>
         {% endfor %}
         <div class="tw:md:col-span-2 tw:xl:col-span-3"><button class="btn btn-outline btn-sm" type="submit"><i class="bi bi-plus-lg"></i>{% translate "Add Member Row" %}</button></div>
       </form>
@@ -239,11 +239,11 @@
                       <form class="tw:mt-5 tw:grid tw:gap-3 tw:md:grid-cols-2" method="post" action="{% url 'tpa:transaction_edit_member' tx.reference a.pk %}">
                         {% csrf_token %}
                         {% for field in a.edit_form %}
-                        <label class="form-control">
-                          <span class="tw:mb-1 tw:text-xs tw:font-semibold">{{ field.label }}</span>
+                        <fieldset class="fieldset">
+                          <legend class="fieldset-legend">{{ field.label }}</legend>
                           {{ field }}
-                          {% if field.help_text %}<span class="tw:mt-1 tw:text-xs tw:text-base-content/45">{{ field.help_text }}</span>{% endif %}
-                        </label>
+                          {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
+                        </fieldset>
                         {% endfor %}
                         <div class="tw:md:col-span-2 tw:flex tw:justify-end tw:gap-2">
                           <button class="btn btn-ghost" type="button" onclick="document.getElementById('edit-member-{{ a.pk }}').close()">{% translate "Cancel" %}</button>

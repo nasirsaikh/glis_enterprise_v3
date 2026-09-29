@@ -56,6 +56,7 @@ class Policy(TimeStampedModel):
     premium_calculation_enabled=models.BooleanField(default=True)
     allowed_backdating_days=models.PositiveSmallIntegerField(default=30)
     validation_bypass_allowed=models.BooleanField(default=False)
+    physical_card_required=models.BooleanField(default=False)
     configuration=models.JSONField(default=dict, blank=True)
     initial_enrollment_completed_at=models.DateTimeField(null=True, blank=True)
     initial_enrollment_completed_by=models.ForeignKey(

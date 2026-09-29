@@ -1,168 +1,302 @@
-(function(){
+(function () {
   "use strict";
 
-  const root=document.documentElement;
-  const charts=new Map();
+  const root = document.documentElement;
+  const charts = new Map();
 
-  const cssVar=(name,fallback)=>{
-    const value=getComputedStyle(root).getPropertyValue(name).trim();
-    return value||fallback;
+  const cssVar = (name, fallback) => {
+    const value = getComputedStyle(root).getPropertyValue(name).trim();
+    return value || fallback;
   };
-  const isDark=()=>root.getAttribute("data-theme")==="dark";
-  const palette=()=>[
-    cssVar("--color-primary","#167a52"),
-    cssVar("--color-success","#16a34a"),
-    cssVar("--color-warning","#d97706"),
-    cssVar("--color-error","#dc2626"),
-    cssVar("--color-info","#0284c7"),
-    cssVar("--color-secondary","#7c3aed")
+  const isDark = () => root.getAttribute("data-theme") === "dark";
+  const palette = () => [
+    cssVar("--color-primary", "#167a52"),
+    cssVar("--color-info", "#0284c7"),
+    cssVar("--color-success", "#16a34a"),
+    cssVar("--color-warning", "#d97706"),
+    cssVar("--color-error", "#dc2626"),
+    cssVar("--color-secondary", "#7c3aed"),
+    cssVar("--color-accent", "#0891b2"),
   ];
-  const destroyChart=(id)=>{
-    const chart=charts.get(id);
-    if(chart){chart.destroy();charts.delete(id);}
+
+  const destroyChart = (id) => {
+    const chart = charts.get(id);
+    if (chart) {
+      chart.destroy();
+      charts.delete(id);
+    }
   };
-  const renderChart=(id,options)=>{
-    const element=document.getElementById(id);
-    if(!element||!window.ApexCharts)return;
+
+  const renderChart = (id, options) => {
+    const element = document.getElementById(id);
+    if (!element || !window.ApexCharts) return;
     destroyChart(id);
-    const chart=new ApexCharts(element,options);
-    charts.set(id,chart);
+    const chart = new ApexCharts(element, options);
+    charts.set(id, chart);
     chart.render();
   };
-  const commonChart=(type,height=250)=>({
-    chart:{
+
+  const commonChart = (type, height = 235) => ({
+    chart: {
       type,
       height,
-      background:"transparent",
-      foreColor:cssVar("--color-base-content","#475569"),
-      fontFamily:"Inter, Cairo, sans-serif",
-      toolbar:{show:false},
-      animations:{enabled:true,speed:260}
+      background: "transparent",
+      foreColor: cssVar("--color-base-content", "#475569"),
+      fontFamily: "Inter, Cairo, sans-serif",
+      toolbar: { show: false },
+      zoom: { enabled: false },
+      animations: { enabled: true, easing: "easeinout", speed: 280 },
+      redrawOnParentResize: true,
+      redrawOnWindowResize: true,
     },
-    theme:{mode:isDark()?"dark":"light"},
-    grid:{borderColor:cssVar("--color-base-300","#e5e7eb"),strokeDashArray:3},
-    dataLabels:{enabled:false},
-    legend:{fontSize:"11px",labels:{colors:cssVar("--color-base-content","#475569")}},
-    tooltip:{theme:isDark()?"dark":"light"}
+    theme: { mode: isDark() ? "dark" : "light" },
+    grid: {
+      borderColor: cssVar("--color-base-300", "#e5e7eb"),
+      strokeDashArray: 3,
+      padding: { left: 6, right: 8, top: 0, bottom: 0 },
+    },
+    dataLabels: { enabled: false },
+    legend: {
+      fontSize: "10px",
+      fontWeight: 600,
+      labels: { colors: cssVar("--color-base-content", "#475569") },
+      markers: { size: 5 },
+      itemMargin: { horizontal: 8, vertical: 3 },
+    },
+    tooltip: {
+      theme: isDark() ? "dark" : "light",
+      style: { fontSize: "11px" },
+    },
+    states: {
+      hover: { filter: { type: "lighten", value: 0.04 } },
+      active: { filter: { type: "darken", value: 0.04 } },
+    },
+    responsive: [
+      {
+        breakpoint: 640,
+        options: {
+          chart: { height: 220 },
+          legend: { fontSize: "9px" },
+        },
+      },
+    ],
   });
 
-  const renderTPACharts=()=>{
-    const qualitySource=document.getElementById("tpa-quality-data");
-    const errorSource=document.getElementById("tpa-error-data");
-    if(!qualitySource||!errorSource||!window.ApexCharts)return;
-
-    const quality=JSON.parse(qualitySource.textContent||"[]");
-    const errors=JSON.parse(errorSource.textContent||"[]");
-    const qualityOptions=commonChart("donut",250);
-    Object.assign(qualityOptions,{
-      series:quality.map(item=>Number(item.value||0)),
-      labels:quality.map(item=>item.label),
-      colors:palette().slice(1,4),
-      stroke:{width:2,colors:[cssVar("--color-base-100","#fff")]},
-      plotOptions:{pie:{donut:{size:"68%",labels:{show:true,total:{show:true,label:"ROWS"}}}}},
-      legend:{...qualityOptions.legend,position:"bottom"},
-      noData:{text:"No member rows"}
-    });
-    renderChart("tpa-quality-chart",qualityOptions);
-
-    const errorOptions=commonChart("bar",250);
-    Object.assign(errorOptions,{
-      series:[{name:"Rows",data:errors.map(item=>Number(item.value||0))}],
-      colors:[cssVar("--color-error","#dc2626")],
-      plotOptions:{bar:{horizontal:true,borderRadius:4,barHeight:"48%"}},
-      xaxis:{categories:errors.map(item=>item.label),tickAmount:Math.max(1,Math.min(6,errors.length))},
-      noData:{text:"No validation errors"},
-      legend:{show:false}
-    });
-    renderChart("tpa-error-chart",errorOptions);
+  const readJSON = (id) => {
+    const source = document.getElementById(id);
+    if (!source) return null;
+    try {
+      return JSON.parse(source.textContent || "[]");
+    } catch (_) {
+      return [];
+    }
   };
 
-  const renderDashboardCharts=()=>{
-    const statusSource=document.getElementById("tpa-dashboard-status-data");
-    const sourceSource=document.getElementById("tpa-dashboard-source-data");
-    if(!statusSource||!sourceSource||!window.ApexCharts)return;
+  const renderTPACharts = () => {
+    const quality = readJSON("tpa-quality-data");
+    const errors = readJSON("tpa-error-data");
+    if (quality === null || errors === null || !window.ApexCharts) return;
 
-    const statusRows=JSON.parse(statusSource.textContent||"[]");
-    const sourceRows=JSON.parse(sourceSource.textContent||"[]");
-
-    const statusOptions=commonChart("donut",270);
-    Object.assign(statusOptions,{
-      series:statusRows.map(item=>Number(item.value||0)),
-      labels:statusRows.map(item=>item.label),
-      colors:palette(),
-      stroke:{width:2,colors:[cssVar("--color-base-100","#fff")]},
-      plotOptions:{pie:{donut:{size:"70%",labels:{show:true,total:{show:true,label:"CASES"}}}}},
-      legend:{...statusOptions.legend,position:"bottom"},
-      noData:{text:"No transactions"}
+    const qualityOptions = commonChart("donut");
+    Object.assign(qualityOptions, {
+      series: quality.map((item) => Number(item.value || 0)),
+      labels: quality.map((item) => item.label),
+      colors: [
+        cssVar("--color-success", "#16a34a"),
+        cssVar("--color-warning", "#d97706"),
+        cssVar("--color-error", "#dc2626"),
+      ],
+      stroke: {
+        width: 2,
+        colors: [cssVar("--color-base-100", "#fff")],
+      },
+      plotOptions: {
+        pie: {
+          expandOnClick: false,
+          donut: {
+            size: "72%",
+            labels: {
+              show: true,
+              name: { fontSize: "10px" },
+              value: { fontSize: "18px", fontWeight: 700 },
+              total: { show: true, label: "ROWS", fontSize: "9px" },
+            },
+          },
+        },
+      },
+      legend: { ...qualityOptions.legend, position: "bottom" },
+      noData: { text: "No member rows" },
     });
-    renderChart("tpa-status-chart",statusOptions);
+    renderChart("tpa-quality-chart", qualityOptions);
 
-    const sourceOptions=commonChart("bar",270);
-    Object.assign(sourceOptions,{
-      series:[{name:"Transactions",data:sourceRows.map(item=>Number(item.value||0))}],
-      colors:[cssVar("--color-primary","#167a52")],
-      plotOptions:{bar:{horizontal:true,borderRadius:4,barHeight:"50%"}},
-      xaxis:{categories:sourceRows.map(item=>item.label),forceNiceScale:true},
-      legend:{show:false},
-      noData:{text:"No source activity"}
+    const errorOptions = commonChart("bar");
+    Object.assign(errorOptions, {
+      series: [{ name: "Rows", data: errors.map((item) => Number(item.value || 0)) }],
+      colors: [cssVar("--color-error", "#dc2626")],
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          borderRadius: 4,
+          borderRadiusApplication: "end",
+          barHeight: "44%",
+        },
+      },
+      xaxis: {
+        categories: errors.map((item) => item.label),
+        min: 0,
+        tickAmount: Math.max(1, Math.min(5, errors.length || 1)),
+      },
+      legend: { show: false },
+      noData: { text: "No validation errors" },
     });
-    renderChart("tpa-source-chart",sourceOptions);
+    renderChart("tpa-error-chart", errorOptions);
   };
 
-  const setupPrincipal=()=>{
-    const relationship=document.querySelector('[name="relationship"]');
-    const principalField=document.getElementById("principal-reference-field");
-    const principalSelect=document.querySelector('[name="principal_reference"]');
-    if(!relationship||!principalField)return;
-    const sync=()=>{
-      const needed=Boolean(relationship.value&&relationship.value!=="PRINCIPAL");
-      principalField.style.display=needed?"":"none";
-      if(!needed&&principalSelect)principalSelect.value="";
+  const renderDashboardCharts = () => {
+    const statusRows = readJSON("tpa-dashboard-status-data");
+    const sourceRows = readJSON("tpa-dashboard-source-data");
+    if (statusRows === null || sourceRows === null || !window.ApexCharts) return;
+
+    const statusOptions = commonChart("donut", 245);
+    Object.assign(statusOptions, {
+      series: statusRows.map((item) => Number(item.value || 0)),
+      labels: statusRows.map((item) => item.label),
+      colors: palette(),
+      stroke: {
+        width: 2,
+        colors: [cssVar("--color-base-100", "#fff")],
+      },
+      plotOptions: {
+        pie: {
+          expandOnClick: false,
+          donut: {
+            size: "73%",
+            labels: {
+              show: true,
+              name: { fontSize: "10px" },
+              value: { fontSize: "18px", fontWeight: 700 },
+              total: { show: true, label: "CASES", fontSize: "9px" },
+            },
+          },
+        },
+      },
+      legend: { ...statusOptions.legend, position: "bottom" },
+      noData: { text: "No transactions" },
+    });
+    renderChart("tpa-status-chart", statusOptions);
+
+    const sourceOptions = commonChart("bar", 245);
+    Object.assign(sourceOptions, {
+      series: [{
+        name: "Transactions",
+        data: sourceRows.map((item) => Number(item.value || 0)),
+      }],
+      colors: [cssVar("--color-primary", "#167a52")],
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          borderRadius: 5,
+          borderRadiusApplication: "end",
+          barHeight: "42%",
+        },
+      },
+      xaxis: {
+        categories: sourceRows.map((item) => item.label),
+        min: 0,
+        forceNiceScale: true,
+      },
+      legend: { show: false },
+      noData: { text: "No source activity" },
+    });
+    renderChart("tpa-source-chart", sourceOptions);
+  };
+
+  const setupPrincipal = () => {
+    const relationship = document.querySelector('[name="relationship"]');
+    const principalField = document.getElementById("principal-reference-field");
+    const principalSelect = document.querySelector('[name="principal_reference"]');
+    if (!relationship || !principalField) return;
+
+    const sync = () => {
+      const needed = Boolean(
+        relationship.value && relationship.value !== "PRINCIPAL"
+      );
+      principalField.hidden = !needed;
+      if (!needed && principalSelect) principalSelect.value = "";
     };
-    if(relationship.dataset.tpaPrincipalReady!=="true"){
-      relationship.dataset.tpaPrincipalReady="true";
-      relationship.addEventListener("change",sync);
+
+    if (relationship.dataset.tpaPrincipalReady !== "true") {
+      relationship.dataset.tpaPrincipalReady = "true";
+      relationship.addEventListener("change", sync);
     }
     sync();
   };
 
-  const setupDropzones=(scope=document)=>{
-    scope.querySelectorAll("[data-tpa-dropzone]:not([data-tpa-ready])").forEach(zone=>{
-      zone.dataset.tpaReady="true";
-      const input=zone.querySelector('input[type="file"]');
-      const count=zone.querySelector("[data-tpa-file-count]");
-      if(!input)return;
-      const update=()=>{
-        const files=Array.from(input.files||[]);
-        if(count)count.textContent=files.length?files.length+" file(s) selected":"No files selected";
-      };
-      zone.addEventListener("click",event=>{
-        if(event.target.closest("button,a,input,label"))return;
-        input.click();
+  const setupDropzones = (scope = document) => {
+    scope
+      .querySelectorAll("[data-tpa-dropzone]:not([data-tpa-ready])")
+      .forEach((zone) => {
+        zone.dataset.tpaReady = "true";
+        const input = zone.querySelector('input[type="file"]');
+        const count = zone.querySelector("[data-tpa-file-count]");
+        if (!input) return;
+
+        const update = () => {
+          const files = Array.from(input.files || []);
+          if (count) {
+            count.textContent = files.length
+              ? `${files.length} file(s) selected`
+              : "No files selected";
+          }
+        };
+
+        zone.addEventListener("click", (event) => {
+          if (event.target.closest("button,a,input,label")) return;
+          input.click();
+        });
+
+        ["dragenter", "dragover"].forEach((name) =>
+          zone.addEventListener(name, (event) => {
+            event.preventDefault();
+            zone.classList.add("is-dragging");
+          })
+        );
+        ["dragleave", "drop"].forEach((name) =>
+          zone.addEventListener(name, (event) => {
+            event.preventDefault();
+            zone.classList.remove("is-dragging");
+          })
+        );
+
+        zone.addEventListener("drop", (event) => {
+          if (event.dataTransfer?.files?.length) {
+            try {
+              input.files = event.dataTransfer.files;
+            } catch (_) {}
+            update();
+          }
+        });
+        input.addEventListener("change", update);
       });
-      ["dragenter","dragover"].forEach(name=>zone.addEventListener(name,event=>{
-        event.preventDefault();zone.classList.add("is-dragging");
-      }));
-      ["dragleave","drop"].forEach(name=>zone.addEventListener(name,event=>{
-        event.preventDefault();zone.classList.remove("is-dragging");
-      }));
-      zone.addEventListener("drop",event=>{
-        if(event.dataTransfer?.files?.length){
-          try{input.files=event.dataTransfer.files;}catch(_){}
-          update();
-        }
-      });
-      input.addEventListener("change",update);
+  };
+
+  const init = (scope = document) => {
+    setupPrincipal();
+    setupDropzones(scope);
+    window.requestAnimationFrame(() => {
+      renderTPACharts();
+      renderDashboardCharts();
     });
   };
 
-  const init=(scope=document)=>{
-    setupPrincipal();
-    setupDropzones(scope);
-    setTimeout(()=>{renderTPACharts();renderDashboardCharts();},40);
-  };
-
-  document.addEventListener("DOMContentLoaded",()=>init());
-  document.addEventListener("glis:theme",()=>setTimeout(()=>{renderTPACharts();renderDashboardCharts();},60));
-  document.body?.addEventListener("htmx:afterSwap",event=>init(event.detail.target));
+  document.addEventListener("DOMContentLoaded", () => init());
+  document.addEventListener("glis:theme", () =>
+    setTimeout(() => {
+      renderTPACharts();
+      renderDashboardCharts();
+    }, 50)
+  );
+  document.body?.addEventListener("htmx:afterSwap", (event) =>
+    init(event.detail.target)
+  );
 })();

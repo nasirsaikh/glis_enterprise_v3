@@ -5,7 +5,7 @@ from apps.tpa.services.mailbox import poll_inbound_mailbox
 
 
 @register_job("tpa.poll_inbound_mailbox")
-def poll_tpa_inbound_mailbox(actor_id=None, limit=50, process_ai=True):
+def poll_tpa_inbound_mailbox(actor_id=None, limit=None, process_ai=None):
     User = get_user_model()
     actor = None
     if actor_id:
@@ -23,6 +23,6 @@ def poll_tpa_inbound_mailbox(actor_id=None, limit=50, process_ai=True):
         )
     return poll_inbound_mailbox(
         actor=actor,
-        limit=max(int(limit or 50), 1),
-        process_ai=bool(process_ai),
+        limit=(max(int(limit), 1) if limit not in (None, "") else None),
+        process_ai=process_ai,
     )

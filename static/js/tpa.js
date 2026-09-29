@@ -77,6 +77,38 @@
     renderChart("tpa-error-chart",errorOptions);
   };
 
+  const renderDashboardCharts=()=>{
+    const statusSource=document.getElementById("tpa-dashboard-status-data");
+    const sourceSource=document.getElementById("tpa-dashboard-source-data");
+    if(!statusSource||!sourceSource||!window.ApexCharts)return;
+
+    const statusRows=JSON.parse(statusSource.textContent||"[]");
+    const sourceRows=JSON.parse(sourceSource.textContent||"[]");
+
+    const statusOptions=commonChart("donut",270);
+    Object.assign(statusOptions,{
+      series:statusRows.map(item=>Number(item.value||0)),
+      labels:statusRows.map(item=>item.label),
+      colors:palette(),
+      stroke:{width:2,colors:[cssVar("--color-base-100","#fff")]},
+      plotOptions:{pie:{donut:{size:"70%",labels:{show:true,total:{show:true,label:"CASES"}}}}},
+      legend:{...statusOptions.legend,position:"bottom"},
+      noData:{text:"No transactions"}
+    });
+    renderChart("tpa-status-chart",statusOptions);
+
+    const sourceOptions=commonChart("bar",270);
+    Object.assign(sourceOptions,{
+      series:[{name:"Transactions",data:sourceRows.map(item=>Number(item.value||0))}],
+      colors:[cssVar("--color-primary","#167a52")],
+      plotOptions:{bar:{horizontal:true,borderRadius:4,barHeight:"50%"}},
+      xaxis:{categories:sourceRows.map(item=>item.label),forceNiceScale:true},
+      legend:{show:false},
+      noData:{text:"No source activity"}
+    });
+    renderChart("tpa-source-chart",sourceOptions);
+  };
+
   const setupPrincipal=()=>{
     const relationship=document.querySelector('[name="relationship"]');
     const principalField=document.getElementById("principal-reference-field");
@@ -127,10 +159,10 @@
   const init=(scope=document)=>{
     setupPrincipal();
     setupDropzones(scope);
-    setTimeout(renderTPACharts,40);
+    setTimeout(()=>{renderTPACharts();renderDashboardCharts();},40);
   };
 
   document.addEventListener("DOMContentLoaded",()=>init());
-  document.addEventListener("glis:theme",()=>setTimeout(renderTPACharts,60));
+  document.addEventListener("glis:theme",()=>setTimeout(()=>{renderTPACharts();renderDashboardCharts();},60));
   document.body?.addEventListener("htmx:afterSwap",event=>init(event.detail.target));
 })();

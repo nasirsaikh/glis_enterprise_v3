@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.utils import timezone
 
@@ -562,6 +563,14 @@ class QueryRaiseForm(forms.Form):
         choices=TransactionQuery.Audience.choices,
         initial=TransactionQuery.Audience.CLIENT_VISIBLE,
     )
+    selected_participants = forms.ModelMultipleChoiceField(
+        queryset=get_user_model().objects.none(),
+        required=False,
+        label="Selected participants",
+        widget=forms.SelectMultiple(
+            attrs={"class": "select select-bordered select-sm w-full", "size": 5}
+        ),
+    )
     message = forms.CharField(
         widget=forms.Textarea(
             attrs={
@@ -570,18 +579,59 @@ class QueryRaiseForm(forms.Form):
             }
         )
     )
+    attachments = MultipleFileField(
+        required=False,
+        widget=MultipleFileInput(
+            attrs={
+                "multiple": True,
+                "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.csv",
+                "class": "file-input file-input-bordered file-input-sm w-full",
+            }
+        ),
+    )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, transaction=None, **kwargs):
         super().__init__(*args, **kwargs)
-        for name, field in self.fields.items():
+        self.transaction = transaction
+        if transaction is not None:
+            User = get_user_model()
+            self.fields["selected_participants"].queryset = (
+                User.objects.filter(is_active=True)
+                .filter(
+                    Q(pk=transaction.requester_id)
+                    | Q(
+                        tpa_policy_access__policy=transaction.policy,
+                        tpa_policy_access__active=True,
+                        tpa_policy_access__can_view=True,
+                    )
+                    | Q(is_staff=True)
+                )
+                .distinct()
+                .order_by("first_name", "last_name", "email", "username")
+            )
+        for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
                 "select select-bordered select-sm w-full"
-                if isinstance(field.widget, forms.Select)
+                if isinstance(field.widget, (forms.Select, forms.SelectMultiple))
+                else "file-input file-input-bordered file-input-sm w-full"
+                if isinstance(field.widget, forms.ClearableFileInput)
                 else "textarea textarea-bordered textarea-sm w-full"
                 if isinstance(field.widget, forms.Textarea)
                 else "input input-bordered input-sm w-full",
             )
+
+    def clean(self):
+        data = super().clean()
+        if (
+            data.get("audience") == TransactionQuery.Audience.SELECTED_PARTICIPANTS
+            and not data.get("selected_participants")
+        ):
+            self.add_error(
+                "selected_participants",
+                "Select at least one participant for a restricted conversation.",
+            )
+        return data
 
 
 class QueryMessageForm(forms.Form):

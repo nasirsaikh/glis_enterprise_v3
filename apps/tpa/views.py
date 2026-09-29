@@ -52,9 +52,11 @@ from .services.access import (
     can_create_policy_enrollment,
     can_create_tpa_transaction,
     can_process_tpa_transaction,
+    can_view_query_attachment,
     can_view_query_message,
     can_view_transaction_query,
     visible_policies,
+    visible_shared_internal_messages,
     visible_transaction_queries,
     visible_transactions,
 )
@@ -815,6 +817,9 @@ def transaction_detail(request, reference):
             for message in query.messages.all()
             if can_view_query_message(request.user, message)
         ]
+    shared_internal_messages = list(
+        visible_shared_internal_messages(request.user, tx)
+    )
 
     selectable_members = []
     if tx.transaction_type in {
@@ -881,6 +886,7 @@ def transaction_detail(request, reference):
             None,
         ),
         "query_history": visible_query_threads,
+        "shared_internal_messages": shared_internal_messages,
         "query_raise_form": QueryRaiseForm(),
         "query_message_form": QueryMessageForm(),
         "can_start_tpa": (
@@ -988,11 +994,17 @@ def transaction_add_member(request, reference):
         tx.Type.MEMBER_ADD,
     }
     form = (
-        MemberRowForm(request.POST, transaction=tx)
+        MemberRowForm(request.POST, transaction=tx, current_action=action)
         if is_add
         else MemberLookupRowForm(request.POST)
     )
     if not form.is_valid():
+        if request.headers.get("HX-Request") and is_add:
+            return render(
+                request,
+                "tpa/partials/manual_member_form.html",
+                {"tx": tx, "member_form": form},
+            )
         messages.error(
             request,
             "Member row was not added: "
@@ -1031,6 +1043,10 @@ def transaction_add_member(request, reference):
         run_validation(tx, actor=request.user)
 
     messages.success(request, f"Member row {row_number} added.")
+    if request.headers.get("HX-Request"):
+        response = HttpResponse(status=204)
+        response["HX-Refresh"] = "true"
+        return response
     return redirect("tpa:transaction_detail", reference=reference)
 
 
@@ -1505,7 +1521,7 @@ def transaction_query_attachment(request, reference, attachment_id):
         comment__tpa_query_message__query__transaction=tx,
     )
     query_message = attachment.comment.tpa_query_message
-    if not can_view_query_message(request.user, query_message):
+    if not can_view_query_attachment(request.user, query_message):
         raise PermissionDenied("You do not have access to this conversation attachment.")
     attachment.file.open("rb")
     return FileResponse(

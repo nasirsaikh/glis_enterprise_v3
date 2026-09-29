@@ -281,22 +281,7 @@ class MemberRowForm(forms.Form):
         data["principal_action_id"] = ""
         data["principal_employee_id"] = ""
 
-        if relationship == Member.Relationship.PRINCIPAL:
-            data["principal_reference"] = ""
-            return data
-
-        if relationship and not reference:
-            self.add_error(
-                "principal_reference",
-                "Select the parent principal for a spouse, child or other dependent.",
-            )
-            return data
-
-        if reference.startswith("member:"):
-            data["principal_member_id"] = reference.split(":", 1)[1]
-        elif reference.startswith("action:"):
-            data["principal_action_id"] = reference.split(":", 1)[1]
-
+        # Manual intake must reject duplicates before a MemberAction is created.
         if self.transaction:
             active = MemberPolicyEnrollment.objects.filter(
                 policy=self.transaction.policy,
@@ -333,6 +318,22 @@ class MemberRowForm(forms.Form):
                             f"{label} already exists in this endorsement.",
                         )
                         break
+
+        if relationship == Member.Relationship.PRINCIPAL:
+            data["principal_reference"] = ""
+            return data
+
+        if relationship and not reference:
+            self.add_error(
+                "principal_reference",
+                "Select the parent principal for a spouse, child or other dependent.",
+            )
+            return data
+
+        if reference.startswith("member:"):
+            data["principal_member_id"] = reference.split(":", 1)[1]
+        elif reference.startswith("action:"):
+            data["principal_action_id"] = reference.split(":", 1)[1]
 
         return data
 

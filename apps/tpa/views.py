@@ -61,7 +61,6 @@ from .services.workflow import (
     approve_transaction,
     complete_tpa_transaction,
     post_query_message,
-    process_transaction,
     raise_tpa_query,
     resolve_tpa_query,
     run_validation,
@@ -964,7 +963,13 @@ def transaction_validate(request, reference):
     if tx.status == tx.Status.DRAFT:
         messages.error(request, "Submit the transaction before running workflow validation.")
         return redirect("tpa:transaction_detail", reference=reference)
-    if tx.status in {tx.Status.PROCESSED, tx.Status.REJECTED, tx.Status.CANCELLED}:
+    if tx.status in {
+        tx.Status.PROCESSED,
+        tx.Status.COMPLETED,
+        tx.Status.REJECTED,
+        tx.Status.CANCELLED,
+        tx.Status.FAILED,
+    }:
         raise PermissionDenied("This transaction is closed.")
 
     run_validation(tx, actor=request.user)
@@ -1138,17 +1143,21 @@ def transaction_tpa_complete(request, reference):
 
 @login_required
 def transaction_process(request, reference):
+    """Backward-compatible endpoint; finalization must use the full TPA completion gate."""
     _require_tpa_access(request.user)
     if request.method != "POST":
         raise PermissionDenied
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
     try:
-        process_transaction(tx, request.user)
+        complete_tpa_transaction(tx, request.user)
         tx.refresh_from_db()
-        if tx.status == tx.Status.PROCESSED:
-            messages.success(request, "TPA transaction processed successfully.")
+        if tx.status == tx.Status.COMPLETED:
+            messages.success(request, "TPA transaction completed successfully.")
         else:
-            messages.error(request, "Processing completed with row errors. Review the row results.")
+            messages.error(
+                request,
+                "Processing completed with row errors. Review the row results.",
+            )
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
     return redirect("tpa:transaction_detail", reference=reference)

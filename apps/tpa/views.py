@@ -887,7 +887,7 @@ def transaction_detail(request, reference):
         ),
         "query_history": visible_query_threads,
         "shared_internal_messages": shared_internal_messages,
-        "query_raise_form": QueryRaiseForm(),
+        "query_raise_form": QueryRaiseForm(transaction=tx),
         "query_message_form": QueryMessageForm(),
         "can_start_tpa": (
             tx.status == tx.Status.SENT_TO_TPA
@@ -1401,17 +1401,39 @@ def transaction_raise_query(request, reference):
     if request.method != "POST":
         raise PermissionDenied
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
-    form = QueryRaiseForm(request.POST)
+    form = QueryRaiseForm(request.POST, request.FILES, transaction=tx)
     if form.is_valid():
         try:
-            raise_transaction_query(
+            query = raise_transaction_query(
                 tx,
                 request.user,
                 form.cleaned_data["subject"],
                 form.cleaned_data["message"],
                 purpose=form.cleaned_data["purpose"],
                 audience=form.cleaned_data["audience"],
+                selected_participant_ids=[
+                    user.pk
+                    for user in form.cleaned_data.get("selected_participants") or []
+                ],
             )
+            initial_message = query.messages.select_related("ticket_comment").order_by(
+                "created_at", "pk"
+            ).first()
+            if initial_message:
+                for uploaded in form.cleaned_data.get("attachments") or []:
+                    TicketAttachment.objects.create(
+                        ticket=query.ticket,
+                        comment=initial_message.ticket_comment,
+                        uploaded_by=request.user,
+                        file=uploaded,
+                        original_name=uploaded.name,
+                        content_type=getattr(uploaded, "content_type", "")
+                        or "application/octet-stream",
+                        size=uploaded.size,
+                        is_restricted=True,
+                        scan_status="pending",
+                        source_field="tpa_query_chat",
+                    )
             messages.warning(
                 request,
                 "Discussion opened inside this transaction.",
@@ -1538,6 +1560,8 @@ def transaction_card_dispatch(request, reference):
     if request.method != "POST":
         raise PermissionDenied
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    if not can_process_tpa_transaction(request.user, tx):
+        raise PermissionDenied("Card dispatch updates require TPA processing authority.")
     try:
         dispatch = tx.card_dispatch
     except CardDispatch.DoesNotExist:

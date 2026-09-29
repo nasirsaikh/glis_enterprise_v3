@@ -204,3 +204,131 @@ def generate_json(config, *, system_prompt, user_prompt, images=None):
         raise RuntimeError(f"Unsupported AI provider: {provider}")
 
     return payload, int((time.perf_counter() - started) * 1000)
+
+
+def generate_text(config, *, system_prompt, user_prompt, images=None):
+    started = time.perf_counter()
+    provider = config.provider
+    timeout = httpx.Timeout(float(config.timeout_seconds or 120))
+    secret = _secret(config)
+    images = images or []
+
+    if provider == "mock":
+        return user_prompt, int((time.perf_counter() - started) * 1000)
+
+    if provider == "ollama":
+        endpoint = _endpoint(config, "http://127.0.0.1:11434")
+        options = {
+            "temperature": float(config.temperature or 0),
+            **(config.runtime_options or {}),
+        }
+        if images:
+            body = {
+                "model": config.model_name,
+                "stream": False,
+                "prompt": user_prompt,
+                "images": [
+                    base64.b64encode(item["bytes"]).decode("ascii")
+                    for item in images
+                ],
+                "options": options,
+                "keep_alive": (config.runtime_options or {}).get("keep_alive", "15m"),
+            }
+            if system_prompt:
+                body["system"] = system_prompt
+            with httpx.Client(timeout=timeout) as client:
+                response = client.post(f"{endpoint}/api/generate", json=body)
+                response.raise_for_status()
+                raw = response.json().get("response", "")
+        else:
+            body = {
+                "model": config.model_name,
+                "stream": False,
+                "messages": [
+                    *([{"role": "system", "content": system_prompt}] if system_prompt else []),
+                    {"role": "user", "content": user_prompt},
+                ],
+                "options": options,
+                "keep_alive": (config.runtime_options or {}).get("keep_alive", "15m"),
+            }
+            with httpx.Client(timeout=timeout) as client:
+                response = client.post(f"{endpoint}/api/chat", json=body)
+                response.raise_for_status()
+                raw = (response.json().get("message") or {}).get("content", "")
+
+    elif provider in {"openai", "openai_compatible"}:
+        default = "https://api.openai.com/v1" if provider == "openai" else ""
+        endpoint = _endpoint(config, default)
+        if not endpoint:
+            raise RuntimeError("OpenAI-compatible provider endpoint is required.")
+        url = endpoint if endpoint.endswith("/chat/completions") else f"{endpoint}/chat/completions"
+        headers = {"Content-Type": "application/json"}
+        if secret:
+            headers["Authorization"] = f"Bearer {secret}"
+        content = user_prompt
+        if images:
+            content = [{"type": "text", "text": user_prompt}]
+            for item in images:
+                encoded = base64.b64encode(item["bytes"]).decode("ascii")
+                content.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{item['mime_type']};base64,{encoded}"},
+                    }
+                )
+        body = {
+            "model": config.model_name,
+            "temperature": float(config.temperature or 0),
+            "messages": [
+                *([{"role": "system", "content": system_prompt}] if system_prompt else []),
+                {"role": "user", "content": content},
+            ],
+            **(config.runtime_options or {}),
+        }
+        body.pop("keep_alive", None)
+        with httpx.Client(timeout=timeout) as client:
+            response = client.post(url, headers=headers, json=body)
+            response.raise_for_status()
+            raw = response.json()["choices"][0]["message"]["content"]
+
+    elif provider == "anthropic":
+        endpoint = _endpoint(config, "https://api.anthropic.com/v1")
+        headers = {
+            "content-type": "application/json",
+            "anthropic-version": "2023-06-01",
+        }
+        if secret:
+            headers["x-api-key"] = secret
+        blocks = [{"type": "text", "text": user_prompt}]
+        for item in images:
+            encoded = base64.b64encode(item["bytes"]).decode("ascii")
+            blocks.append(
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": item["mime_type"],
+                        "data": encoded,
+                    },
+                }
+            )
+        options = config.runtime_options or {}
+        body = {
+            "model": config.model_name,
+            "max_tokens": int(options.get("max_tokens", 4096)),
+            "temperature": float(config.temperature or 0),
+            "system": system_prompt or "",
+            "messages": [{"role": "user", "content": blocks}],
+        }
+        with httpx.Client(timeout=timeout) as client:
+            response = client.post(f"{endpoint}/messages", headers=headers, json=body)
+            response.raise_for_status()
+            raw = "".join(
+                block.get("text", "")
+                for block in response.json().get("content", [])
+                if block.get("type") == "text"
+            )
+    else:
+        raise RuntimeError(f"Unsupported AI provider: {provider}")
+
+    return (raw or "").strip(), int((time.perf_counter() - started) * 1000)

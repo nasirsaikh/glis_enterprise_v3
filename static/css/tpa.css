@@ -1,4 +1,4 @@
-.tpa-app{
+.tpa-main{padding:.75rem!important;}\n@media(min-width:640px){.tpa-main{padding:.9rem!important;}}\n@media(min-width:1024px){.tpa-main{padding:1rem!important;}}\n.tpa-app{
   --tpa-line:color-mix(in srgb,var(--color-base-content) 10%,transparent);
   --tpa-soft:color-mix(in srgb,var(--color-base-content) 4%,transparent);
   --tpa-grid:color-mix(in srgb,var(--color-base-content) 4%,transparent);
@@ -279,4 +279,37 @@
   .tpa-app .tpa-section-head{padding:.6rem .75rem}
   .tpa-app .stat{min-width:8rem;padding:.65rem .7rem}
   .tpa-app .table{font-size:.68rem}
+}
+
+
+.tpa-app .tpa-dropzone .file-input{
+  width:100%;
+  border-style:dashed;
+  background:transparent;
+}
+.tpa-app .tpa-meta-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:.55rem;
+}
+.tpa-app .tpa-meta{
+  min-width:0;
+  border:1px solid var(--tpa-line);
+  border-radius:var(--radius-field);
+  background:var(--tpa-soft);
+  padding:.58rem .65rem;
+}
+.tpa-app .tpa-meta dt{
+  font-size:.52rem;
+  font-weight:800;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  opacity:.45;
+}
+.tpa-app .tpa-meta dd{
+  margin-top:.18rem;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:.69rem;
+  font-weight:650;
 }

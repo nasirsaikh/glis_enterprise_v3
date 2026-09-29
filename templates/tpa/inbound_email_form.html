@@ -9,10 +9,10 @@
       <h1 class="tpa-title">{% translate "ADD INBOUND EMAIL" %}</h1>
       <p class="tpa-subtitle">{% translate "Paste an inbound request and attach Excel/PDF/image evidence. Optional hints improve extraction when the message is ambiguous." %}</p>
     </div>
-    <a class="btn btn-ghost btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
+    <a class="btn btn-ghost tw:d-btn-ghost btn-sm tw:d-btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
   </header>
 
-  <div role="alert" class="alert alert-info">
+  <div role="alert" class="alert alert-info tw:d-alert-info">
     <i class="bi bi-cpu"></i>
     <div>
       <strong>{% translate "Ollama extraction pipeline" %}</strong>
@@ -24,27 +24,27 @@
     {% csrf_token %}
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Message ingestion" %}</div><h2 class="tpa-section-title">{% translate "EMAIL, HINTS & ATTACHMENTS" %}</h2></div>
-      <span class="badge badge-info badge-soft">{% translate "AI ASSISTED" %}</span>
+      <span class="badge badge-info tw:d-badge-info badge-soft tw:d-badge-soft">{% translate "AI ASSISTED" %}</span>
     </div>
     <div class="card-body tw:d-card-body">
-      {% if form.non_field_errors %}<div role="alert" class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+      {% if form.non_field_errors %}<div role="alert" class="alert alert-error tw:d-alert-error">{{ form.non_field_errors }}</div>{% endif %}
       <div class="tw:grid tw:gap-2.5 tw:md:grid-cols-2">
       {% for field in form %}
-        <fieldset class="fieldset {% if field.name == 'body_text' or field.name == 'attachments' or field.name == 'process_with_ai' %}tw:md:col-span-2{% endif %}">
+        <fieldset class="fieldset tw:d-fieldset {% if field.name == 'body_text' or field.name == 'attachments' or field.name == 'process_with_ai' %}tw:md:col-span-2{% endif %}">
           <legend class="fieldset-legend tw:d-fieldset-legend">{{ field.label }}</legend>
           {% if field.name == "process_with_ai" %}
-          <label class="label tw:justify-start tw:gap-2">{{ field }}<span>{% translate "Save and immediately process through the configured Ollama/AI provider" %}</span></label>
+          <label class="label tw:d-label tw:justify-start tw:gap-2">{{ field }}<span>{% translate "Save and immediately process through the configured Ollama/AI provider" %}</span></label>
           {% else %}
           {{ field }}
           {% endif %}
-          {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
-          {% for error in field.errors %}<p class="label tw:text-error">{{ error }}</p>{% endfor %}
+          {% if field.help_text %}<p class="label tw:d-label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
+          {% for error in field.errors %}<p class="label tw:d-label tw:text-error">{{ error }}</p>{% endfor %}
         </fieldset>
       {% endfor %}
       </div>
       <div class="tw:flex tw:justify-end tw:gap-2 tw:border-t tw:border-base-300 tw:pt-3">
-        <a class="btn btn-ghost btn-sm" href="{% url 'tpa:inbound_email_list' %}">{% translate "Cancel" %}</a>
-        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-stars"></i>{% translate "Save Inbound Email" %}</button>
+        <a class="btn btn-ghost tw:d-btn-ghost btn-sm tw:d-btn-sm" href="{% url 'tpa:inbound_email_list' %}">{% translate "Cancel" %}</a>
+        <button class="btn btn-primary tw:d-btn-primary btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-stars"></i>{% translate "Save Inbound Email" %}</button>
       </div>
     </div>
   </form>

@@ -1,20 +1,33 @@
+import hashlib
+import uuid
 from collections import Counter
 from datetime import date
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import models
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from .forms import (
+    InboundEmailForm,
     MemberLookupRowForm,
     MemberRowForm,
     MemberUploadForm,
     TransactionForm,
 )
-from .models import Member, MemberAction, MemberTransaction, Policy, TPAOrganization, TransactionEvent
+from .models import (
+    InboundEmail,
+    InboundEmailAttachment,
+    Member,
+    MemberAction,
+    MemberTransaction,
+    Policy,
+    TPAOrganization,
+    TransactionEvent,
+)
 from .services.access import (
     can_access_tpa,
     can_approve_tpa_transaction,
@@ -23,6 +36,7 @@ from .services.access import (
     visible_policies,
     visible_transactions,
 )
+from .services.ai_intake import process_inbound_email
 from .services.intake import import_member_spreadsheet
 from .services.sample_data import build_sample_csv, build_sample_xlsx, sample_member_rows
 from .services.ticketing import create_ticket_for_transaction
@@ -93,6 +107,161 @@ def dashboard(request):
 def user_guide(request):
     _require_tpa_access(request.user)
     return render(request, "tpa/user_guide.html")
+
+
+@login_required
+def inbound_email_list(request):
+    _require_tpa_access(request.user)
+    visible_tx_ids = visible_transactions(request.user).values_list("pk", flat=True)
+    emails = (
+        InboundEmail.objects.select_related("transaction", "transaction__policy")
+        .filter(
+            models.Q(created_by=request.user)
+            | models.Q(transaction_id__in=visible_tx_ids)
+        )
+        .distinct()
+        .order_by("-received_at", "-pk")
+    )
+    return render(
+        request,
+        "tpa/inbound_email_list.html",
+        {"emails": emails[:200]},
+    )
+
+
+@login_required
+def inbound_email_create(request):
+    _require_tpa_access(request.user)
+    if not can_create_tpa_transaction(request.user):
+        raise PermissionDenied(
+            "You do not have permission to create TPA inbound email transactions."
+        )
+
+    form = InboundEmailForm(
+        request.POST or None,
+        request.FILES or None,
+        user=request.user,
+    )
+    if request.method == "POST" and form.is_valid():
+        email = form.save(commit=False)
+        email.created_by = request.user
+        email.provider = email.provider or "manual"
+        email.provider_message_id = (
+            email.provider_message_id
+            or f"manual-{uuid.uuid4()}"
+        )
+        policy = form.cleaned_data.get("policy")
+        email.processing_hints = {
+            "policy_id": policy.pk if policy else None,
+            "policy_number": policy.policy_number if policy else "",
+            "transaction_type": form.cleaned_data.get("transaction_type") or "",
+            "effective_date": (
+                form.cleaned_data["effective_date"].isoformat()
+                if form.cleaned_data.get("effective_date")
+                else ""
+            ),
+        }
+
+        files = form.cleaned_data.get("attachments") or []
+        email.attachment_metadata = [
+            {
+                "name": uploaded.name,
+                "content_type": getattr(uploaded, "content_type", ""),
+                "size": uploaded.size,
+            }
+            for uploaded in files
+        ]
+        email.save()
+
+        for uploaded in files:
+            digest = hashlib.sha256()
+            for chunk in uploaded.chunks():
+                digest.update(chunk)
+            uploaded.seek(0)
+            InboundEmailAttachment.objects.create(
+                inbound_email=email,
+                file=uploaded,
+                original_name=uploaded.name,
+                content_type=getattr(uploaded, "content_type", "") or "",
+                size=uploaded.size,
+                sha256=digest.hexdigest(),
+            )
+
+        if form.cleaned_data.get("process_with_ai"):
+            try:
+                tx = process_inbound_email(email, request.user)
+                messages.success(
+                    request,
+                    f"Inbound email processed. TPA transaction {tx.reference} created.",
+                )
+            except Exception as exc:
+                messages.warning(
+                    request,
+                    f"Inbound email saved but needs review: {exc}",
+                )
+        else:
+            messages.success(request, "Inbound email saved.")
+
+        return redirect("tpa:inbound_email_detail", email_id=email.pk)
+
+    return render(
+        request,
+        "tpa/inbound_email_form.html",
+        {"form": form},
+    )
+
+
+@login_required
+def inbound_email_detail(request, email_id):
+    _require_tpa_access(request.user)
+    visible_tx_ids = visible_transactions(request.user).values_list("pk", flat=True)
+    email = get_object_or_404(
+        InboundEmail.objects.select_related(
+            "transaction",
+            "transaction__policy",
+        ).prefetch_related("attachments"),
+        models.Q(created_by=request.user)
+        | models.Q(transaction_id__in=visible_tx_ids),
+        pk=email_id,
+    )
+    return render(
+        request,
+        "tpa/inbound_email_detail.html",
+        {"email": email},
+    )
+
+
+@login_required
+def inbound_email_process(request, email_id):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    email = get_object_or_404(
+        InboundEmail,
+        pk=email_id,
+    )
+    if not (
+        request.user.is_superuser
+        or request.user.has_perm("tpa.configure_tpa")
+        or email.created_by_id == request.user.pk
+        or (
+            email.transaction_id
+            and visible_transactions(request.user).filter(
+                pk=email.transaction_id
+            ).exists()
+        )
+    ):
+        raise PermissionDenied
+
+    try:
+        tx = process_inbound_email(email, request.user)
+        messages.success(
+            request,
+            f"AI processing completed. Transaction {tx.reference} is {tx.get_status_display()}.",
+        )
+    except Exception as exc:
+        messages.error(request, f"AI processing requires review: {exc}")
+    return redirect("tpa:inbound_email_detail", email_id=email.pk)
 
 
 @login_required

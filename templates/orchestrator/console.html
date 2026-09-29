@@ -1,6 +1,7 @@
 {% extends "base_portal.html" %}{% load i18n %}
 {% block title %}{% translate "Vanna analytics" %}{% endblock %}
 {% block main_class %}p-0 portal-main-analytics{% endblock %}
+{% block content_width_class %}w-full{% endblock %}
 {% block content %}
 {% if selected_domain %}
 {% url 'orchestrator:session_detail' '00000000-0000-0000-0000-000000000000' as session_detail_template %}

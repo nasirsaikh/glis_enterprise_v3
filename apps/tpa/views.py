@@ -1685,6 +1685,28 @@ def transaction_card_dispatch(request, reference):
 
 
 @login_required
+def transaction_card_dispatch_proof(request, reference):
+    _require_tpa_access(request.user)
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    if not can_process_tpa_transaction(request.user, tx):
+        raise PermissionDenied("Card dispatch proof requires TPA processing authority.")
+    try:
+        dispatch = tx.card_dispatch
+    except CardDispatch.DoesNotExist:
+        raise PermissionDenied("No card dispatch record exists for this transaction.")
+    attachment = dispatch.proof_attachment
+    if not attachment or not attachment.file:
+        raise PermissionDenied("No card dispatch proof is available.")
+    attachment.file.open("rb")
+    return FileResponse(
+        attachment.file,
+        as_attachment=True,
+        filename=attachment.original_name,
+        content_type=attachment.content_type or "application/octet-stream",
+    )
+
+
+@login_required
 def transaction_tpa_complete(request, reference):
     _require_tpa_access(request.user)
     if request.method != "POST":

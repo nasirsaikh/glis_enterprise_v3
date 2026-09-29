@@ -3,22 +3,22 @@
 {% block title %}{{ tx.reference }} · {% if initial_setup %}{% translate "Initial Policy Enrollment" %}{% else %}{% translate "Endorsement" %}{% endif %}{% endblock %}
 
 {% block tpa_content %}
-<div class="space-y-3">
-  <header class="tpa-page-head">
+<div class="space-y-5">
+  <header class="card flex flex-col gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6 xl:flex-row xl:items-end xl:justify-between">
     <div class="min-w-0">
-      <div class="tpa-kicker"><i class="bi bi-diagram-3"></i>{% translate "TPA / Endorsement Workspace" %}</div>
-      <div class="mt-1 flex flex-wrap items-center gap-1.5">
+      <div class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-diagram-3"></i>{% translate "TPA / Endorsement Workspace" %}</div>
+      <div class="mt-1 flex flex-wrap items-center gap-2">
         <span class="badge badge-primary badge-soft">{{ tx.get_transaction_type_display }}</span>
         <span class="badge {% if tx.status == 'completed' %}badge-success{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' or tx.status == 'validation_failed' %}badge-warning{% elif tx.status == 'failed' or tx.status == 'rejected' %}badge-error{% elif tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' or tx.status == 'card_dispatch' %}badge-info{% else %}badge-outline{% endif %} badge-soft">{{ tx.get_status_display }}</span>
         <span class="badge badge-outline">{{ tx.get_source_display }}</span>
         {% if tx.refund_basis != "NONE" %}<span class="badge badge-secondary badge-soft">{{ tx.get_refund_basis_display }}</span>{% endif %}
         {% if tx.ai_extraction_status %}<span class="badge badge-accent badge-soft"><i class="bi bi-stars"></i>{{ tx.ai_extraction_status }}</span>{% endif %}
       </div>
-      <h1 class="tpa-title">{{ tx.reference }}</h1>
-      <p class="tpa-subtitle">{{ tx.policy.policy_number }} · {{ tx.sponsor.name_en }} · {{ tx.insurer.name_en }}{% if tx.policy.tpa_organization %} · {{ tx.policy.tpa_organization.name_en }}{% endif %}</p>
+      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{{ tx.reference }}</h1>
+      <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{{ tx.policy.policy_number }} · {{ tx.sponsor.name_en }} · {{ tx.insurer.name_en }}{% if tx.policy.tpa_organization %} · {{ tx.policy.tpa_organization.name_en }}{% endif %}</p>
     </div>
 
-    <div class="flex flex-wrap items-center gap-1.5">
+    <div class="flex flex-wrap items-center gap-2">
       {% if tx.status == "draft" %}
       <form method="post" action="{% url 'tpa:transaction_submit' tx.reference %}">{% csrf_token %}
         <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-send"></i>{% translate "Submit & Validate" %}</button>
@@ -62,9 +62,9 @@
     <main class="min-w-0 space-y-3">
 
       {% if initial_setup %}
-      <section class="card">
-        <div class="tpa-section-head">
-          <div><div class="tpa-eyebrow">{% translate "Opening setup" %}</div><h2 class="tpa-section-title">{% translate "POLICY & BENEFIT PLANS" %}</h2></div>
+      <section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
+          <div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Opening setup" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "POLICY & BENEFIT PLANS" %}</h2></div>
           <span class="badge {% if tx.policy.status == 'active' %}badge-success{% else %}badge-warning{% endif %} badge-soft">{{ tx.policy.get_status_display }}</span>
         </div>
         <div class="card-body">
@@ -97,9 +97,9 @@
       </section>
       {% endif %}
 
-      <section class="card">
-        <div class="tpa-section-head">
-          <div><div class="tpa-eyebrow">{% translate "Step 01" %}</div><h2 class="tpa-section-title">{% translate "INTAKE & CORRECTION" %}</h2></div>
+      <section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
+          <div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Step 01" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "INTAKE & CORRECTION" %}</h2></div>
           <span class="badge badge-outline">{{ actions|length }} {% translate "rows" %}</span>
         </div>
         <div class="card-body space-y-4">
@@ -121,7 +121,7 @@
                 <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}">{% translate "Sample CSV" %}</a>
               </div>
             </div>
-            <form class="tpa-dropzone p-3" data-tpa-dropzone method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_upload_sources' tx.reference %}">
+            <form class="rounded-[1.25rem] border-2 border-dashed border-primary/30 bg-base-200/40 transition hover:border-primary/60 hover:bg-primary/5 p-3" data-rounded-[1.25rem] border-2 border-dashed border-primary/30 bg-base-200/40 transition hover:border-primary/60 hover:bg-primary/5 method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_upload_sources' tx.reference %}">
               {% csrf_token %}
               <div class="grid gap-2 text-center">
                 <i class="bi bi-cloud-arrow-up text-2xl text-primary"></i>
@@ -180,7 +180,7 @@
                     {% for enrollment in selectable_members %}
                     <tr>
                       <td><input class="checkbox checkbox-sm" type="checkbox" name="enrollment_ids" value="{{ enrollment.pk }}"></td>
-                      <td class="tpa-mono">{{ enrollment.card_number|default:enrollment.member.tpa_member_id }}</td>
+                      <td class="font-mono">{{ enrollment.card_number|default:enrollment.member.tpa_member_id }}</td>
                       <td>{{ enrollment.member.employee_id|default:"—" }}</td>
                       <td>{{ enrollment.member.full_name }}</td>
                       <td>{{ enrollment.member.get_relationship_display }}</td>
@@ -234,7 +234,7 @@
                       <td>{{ a.display_employee_id }}</td><td>{{ a.display_plan_code }}</td>
                       <td><span class="badge {% if a.validation_status == 'VALID' %}badge-success{% else %}badge-warning{% endif %} badge-soft">{{ a.validation_status }}</span></td>
                       <td>{% if a.extraction_confidence is not None %}{{ a.extraction_confidence }}%{% else %}{% translate "Manual" %}{% endif %}</td>
-                      <td class="tpa-mono">{{ tx.currency }} {{ a.calculated_premium }}</td>
+                      <td class="font-mono">{{ tx.currency }} {{ a.calculated_premium }}</td>
                       {% if can_edit_intake %}<td>{% include "tpa/partials/member_row_actions.html" with tx=tx a=a only %}</td>{% endif %}
                     </tr>
                     {% endif %}
@@ -268,8 +268,8 @@
         </div>
       </section>
 
-      <section class="card">
-        <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Step 02" %}</div><h2 class="tpa-section-title">{% translate "VALIDATION" %}</h2></div><span class="badge badge-outline">{{ tx.validation_completed_at|date:"d-M-Y H:i"|default:"Not run" }}</span></div>
+      <section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Step 02" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "VALIDATION" %}</h2></div><span class="badge badge-outline">{{ tx.validation_completed_at|date:"d-M-Y H:i"|default:"Not run" }}</span></div>
         <div class="card-body space-y-3">
           <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
             <div class="stat rounded-box border border-base-300 p-3"><div class="stat-title">{% translate "Total" %}</div><div class="stat-value text-2xl">{{ actions|length }}</div></div>
@@ -283,15 +283,15 @@
           </div>
           {% if tx.stp_blockers %}<div class="alert alert-warning py-2"><i class="bi bi-signpost-split"></i><div><strong>{% translate "STP blockers" %}</strong><div class="mt-1 flex flex-wrap gap-1">{% for blocker in tx.stp_blockers %}<span class="badge badge-outline badge-sm">{{ blocker }}</span>{% endfor %}</div></div></div>{% endif %}
           <div class="grid gap-3 lg:grid-cols-2">
-            <div id="tpa-quality-chart" class="tpa-chart"></div>
-            <div id="tpa-error-chart" class="tpa-chart"></div>
+            <div id="tpa-quality-chart" class="min-h-[20rem]"></div>
+            <div id="tpa-error-chart" class="min-h-[20rem]"></div>
           </div>
         </div>
       </section>
 
       {% if tx.status == "pending_approval" or tx.approved_at or tx.stp_eligible %}
-      <section class="card">
-        <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Step 03" %}</div><h2 class="tpa-section-title">{% translate "APPROVAL" %}</h2></div></div>
+      <section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Step 03" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "APPROVAL" %}</h2></div></div>
         <div class="card-body">
           {% if tx.stp_eligible and tx.status != "pending_approval" %}
           <div class="alert alert-success py-2"><i class="bi bi-lightning-charge"></i><div><strong>{% translate "Auto Approved by STP" %}</strong><div class="text-xs">{% translate "No manual approval action is required for this case." %}</div></div></div>
@@ -323,8 +323,8 @@
       {% endif %}
 
       {% if query_history or can_approve or can_tpa_process %}
-      <section class="card">
-        <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Embedded discussion" %}</div><h2 class="tpa-section-title">{% translate "APPROVAL / TPA CONVERSATIONS" %}</h2></div><i class="bi bi-chat-dots text-primary"></i></div>
+      <section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Embedded discussion" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "APPROVAL / TPA CONVERSATIONS" %}</h2></div><i class="bi bi-chat-dots text-primary"></i></div>
         <div class="card-body space-y-4">
           {% for q in query_history %}
           <div class="rounded-box border {% if q.status == 'OPEN' %}border-warning/50 bg-warning/5{% else %}border-base-300{% endif %} p-3">
@@ -384,8 +384,8 @@
 
       {% if shared_internal_messages %}
       <section class="card border border-info/30">
-        <div class="tpa-section-head">
-          <div><div class="tpa-eyebrow">{% translate "Explicitly shared information" %}</div><h2 class="tpa-section-title">{% translate "INSURER / TPA INFORMATION SHARED WITH YOU" %}</h2></div>
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
+          <div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Explicitly shared information" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "INSURER / TPA INFORMATION SHARED WITH YOU" %}</h2></div>
           <span class="badge badge-info badge-soft">{% translate "Shared" %}</span>
         </div>
         <div class="card-body space-y-3">
@@ -404,8 +404,8 @@
       </section>
       {% endif %}
 
-      <section class="card">
-        <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Step 04" %}</div><h2 class="tpa-section-title">{% translate "TPA PROCESSING" %}</h2></div><span class="badge badge-info badge-soft">{{ tx.get_status_display }}</span></div>
+      <section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Step 04" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "TPA PROCESSING" %}</h2></div><span class="badge badge-info badge-soft">{{ tx.get_status_display }}</span></div>
         <div class="card-body space-y-3">
           {% if tx.status == "sent_to_tpa" %}<div class="alert alert-info py-2"><i class="bi bi-send-check"></i><span>{% translate "Approved and dispatched to the TPA queue." %}</span></div>{% endif %}
           {% if tx.status == "tpa_in_progress" or tx.status == "tpa_query" or tx.status == "card_dispatch" or tx.status == "completed" %}
@@ -419,7 +419,7 @@
                 {% if can_tpa_process and tx.status == "tpa_in_progress" %}
                 <td><form id="tpa-row-{{ a.pk }}" method="post" action="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}">{% csrf_token %}</form><input form="tpa-row-{{ a.pk }}" class="input input-bordered input-xs w-36" name="card_number" value="{{ a.card_number }}"></td>
                 <td><input form="tpa-row-{{ a.pk }}" class="input input-bordered input-xs" type="date" name="effective_date" value="{% if a.tpa_effective_date %}{{ a.tpa_effective_date|date:'Y-m-d' }}{% else %}{{ tx.effective_date|date:'Y-m-d' }}{% endif %}" required></td>
-                <td class="tpa-mono">{{ tx.currency }} {{ a.calculated_premium }}</td>
+                <td class="font-mono">{{ tx.currency }} {{ a.calculated_premium }}</td>
                 <td><input form="tpa-row-{{ a.pk }}" class="input input-bordered input-xs w-32" name="amount" type="number" step="0.001" value="{% if a.tpa_premium_amount != None %}{{ a.tpa_premium_amount }}{% else %}{{ a.calculated_premium }}{% endif %}" required></td>
                 <td><input form="tpa-row-{{ a.pk }}" class="input input-bordered input-xs w-44" name="override_reason" value="{{ a.tpa_override_reason }}" placeholder="{% translate 'Override reason if amount differs' %}"><input form="tpa-row-{{ a.pk }}" class="input input-bordered input-xs mt-1 w-44" name="comments" value="{{ a.processing_message }}" placeholder="{% translate 'TPA comments' %}"></td>
                 <td><button form="tpa-row-{{ a.pk }}" class="btn btn-info btn-xs">{% translate "Save" %}</button></td>
@@ -439,8 +439,8 @@
       </section>
 
       {% if tx.physical_card_required and tx.transaction_type == "MEMBER_ADD" and tx.status == "card_dispatch" or tx.physical_card_required and card_dispatch %}
-      <section class="card">
-        <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Step 05" %}</div><h2 class="tpa-section-title">{% translate "CARD DISPATCH" %}</h2></div>{% if card_dispatch %}<span class="badge badge-info badge-soft">{{ card_dispatch.get_status_display }}</span>{% endif %}</div>
+      <section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Step 05" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "CARD DISPATCH" %}</h2></div>{% if card_dispatch %}<span class="badge badge-info badge-soft">{{ card_dispatch.get_status_display }}</span>{% endif %}</div>
         <div class="card-body">
           <form class="grid gap-3 md:grid-cols-2 xl:grid-cols-3" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_card_dispatch' tx.reference %}">
             {% csrf_token %}
@@ -463,7 +463,7 @@
 
     <aside class="min-w-0">
       <section class="card xl:sticky xl:top-20">
-        <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Case control" %}</div><h2 class="tpa-section-title">{% translate "WORKFLOW STATUS" %}</h2></div></div>
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Case control" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "WORKFLOW STATUS" %}</h2></div></div>
         <div class="card-body p-4">
           <dl class="space-y-2 text-xs">
             <div class="flex justify-between gap-3"><dt class="opacity-50">{% translate "Current step" %}</dt><dd class="font-bold text-right">{{ tx.get_status_display }}</dd></div>
@@ -485,8 +485,8 @@
     </aside>
   </div>
 
-  <section class="card">
-    <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Full audit trail" %}</div><h2 class="tpa-section-title">{% translate "ACTIVITY TIMELINE" %}</h2></div><span class="badge badge-outline">{{ events|length }}</span></div>
+  <section class="card border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Full audit trail" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "ACTIVITY TIMELINE" %}</h2></div><span class="badge badge-outline">{{ events|length }}</span></div>
     <div class="card-body">
       <ul class="timeline timeline-vertical w-full">
         {% for e in events %}

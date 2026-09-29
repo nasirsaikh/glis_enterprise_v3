@@ -1,186 +1,1047 @@
 # Greenline Insurance Services (GLIS) Enterprise Platform
 
-GLIS is a bilingual Django 6.1.1 enterprise service platform for insurance customers, hospitals and providers, brokers, insurers, support teams, managers, auditors and administrators. It combines an original corporate public website with a secure authenticated portal, ticket operations, CMS and theme controls, dynamic JSON forms, executable workflow/SLA automation, a knowledge base, audit history and a governed Vanna analytics console.
+GLIS is a bilingual, enterprise-grade insurance service, TPA member-management, workflow, document, task and analytics platform built on Django 6.1.1. It combines a public Greenline-style website with a secure authenticated portal for customers, corporate clients, insurers, TPAs, brokers, support teams, managers, auditors and administrators.
 
-The implementation intentionally uses Django templates, HTMX and Alpine.js progressive enhancement. It is not a React, Vue, Next.js or SPA project. Operational charts use ApexCharts with daisyUI theme variables.
+The platform is intentionally server-rendered and operationally simple: Django templates, HTMX and Alpine.js provide progressive enhancement; the authenticated portal uses Tailwind CSS + daisyUI semantic components; ApexCharts provides operational charts; APScheduler powers the built-in Job Center; Ollama is supported for local OCR, extraction and analytics; and Mayan EDMS can be used as the governed document engine.
 
-## What is included
+> **Core design principle:** AI assists extraction, mapping, summarization and analytics. Eligibility, validation, pricing, approvals, permissions, workflow transitions and final insurance/TPA updates remain deterministic application logic.
 
-- Original, responsive public GLIS website with English/Arabic, RTL, light/dark themes and reduced-motion support.
-- Django Admin-managed site identity, theme palette, navigation, hero, services, statistics, pages, page sections and safe animation presets.
-- Email/password authentication plus django-allauth Google and Microsoft/Azure AD provider support.
-- Automatic local profile creation and Guest role assignment for new external users.
-- Seven roles: Super Admin, Admin, Project Manager, Support Agent, Requester/User, Viewer/Auditor and Guest.
-- Server-side ticket visibility for requester, assignee, project and support-group scope.
-- AdminLTE-style portal navigation with full, icon-only and fully hidden modes. The default is icon-only and each user's selection is saved to their profile.
-- Working edit, export, secure share, multi-user/multi-group assign/unassign and explicit group-member takeover actions.
-- Ticket detail workspace with dynamic fields, sensitive masking, WYSIWYG conversations, pasted images, drag/drop documents, activity, SLA, approvals and AI recommendations.
-- Four-step ticket creation with exactly four configurable AI clarification questions.
-- JSON-driven form engine with server validation, role visibility/edit rules, conditional visibility/requirements, enum and allowlisted lookup sources.
-- Secure datasource registry: editable JSON never executes SQL.
-- Dynamic form/version administration with schema validation, publish and activate actions.
-- Category-driven default routing, required documents, initial/update email flags, multi-level approvals, auto-close and bounded reopening.
-- Executable SLA escalation levels with target users/groups and assignee reporting-manager escalation.
-- In-app/browser notification panel for assignments, approvals, SLA escalation and ticket updates.
-- Front-end profile/security management for name, email, avatar, organization, title, department, language, theme, notifications and password.
-- Governed Vanna conversation workspace with user-scoped session history, append-only follow-up questions, Chroma/Vanna diagnostics, per-query CSV export, and Admin-managed domains, rules, policies, prompts and training.
-- Admin-managed public and portal navigation plus bilingual portal pages with publication state and optional group restrictions.
-- Versioned CMS content foundations and publish snapshots.
-- Mock AI provider, disabled-by-default real-provider interface and AI interaction audit.
-- Django service/API layer for tickets, comments, forms, validation, AI analysis and CMS settings.
-- Realistic idempotent demo seeding with 24 tickets, roles, teams, comments, internal notes, attachments, SLA conditions and bilingual content.
-- SQLite development configuration and SQL Server production configuration through `mssql-django`.
+---
 
-## Architecture
+## 1. Platform at a glance
 
-```mermaid
+| Capability | Current implementation |
+|---|---|
+| Public website | Bilingual English/Arabic site, RTL, CMS-managed content, services, network/provider content, downloads, contact information and theme support |
+| Authenticated portal | Responsive daisyUI workspace with light/dark/system and additional daisyUI themes, compact sidebar modes, notifications, profile and security settings |
+| Service tickets | Multi-project/product/category request handling, assignment, groups, comments, attachments, dynamic forms, approvals, SLA/TAT, notifications and audit events |
+| Task management | Manual tasks plus recurring task templates that create linked tickets automatically |
+| TPA member management | Initial policy enrollment, member additions, terminations, deletion/void, policy cancellation, validation, pricing, approval, TPA processing and completion |
+| Smart document intake | CSV/XLS/XLSX parsing, PDF/image OCR, multi-file evidence bundles and strict member JSON mapping |
+| Email endorsements | IMAP ingestion of email body and attachments with AI extraction and the same downstream TPA workflow |
+| AI configuration | Mock, Ollama, OpenAI-compatible/OpenAI and Anthropic provider configuration, extraction profiles, training examples and interaction audit |
+| Analytics | Governed Vanna 2.0 analytics with Ollama/ChromaDB support, domain governance, SQL controls and user-scoped conversation history |
+| Enterprise documents | Mayan EDMS integration for Document Center, ticket documents and controlled knowledge documents |
+| Background jobs | Embedded APScheduler Job Center; no Celery/Redis/RabbitMQ required |
+| CMS | django CMS plus GLIS configuration models for bilingual content, site settings and controlled navigation |
+| API | Versioned <code>/api/v1/</code> routes, DRF, JWT support and schema tooling |
+| Database | SQLite for development and SQL Server through <code>mssql-django</code> for production |
+| Security | Server-side authorization, CSRF, CSP middleware, secure cookies, audit trails, sensitive-data controls and configurable AI data permissions |
+
+---
+
+## 2. Technology stack
+
+### Backend
+
+- Python 3.12 deployment baseline from <code>pyproject.toml</code>
+- Django 6.1.1
+- Django REST Framework
+- django-allauth
+- django CMS 5
+- django-htmx
+- django-filter
+- drf-spectacular
+- django-csp
+- django-storages
+- WhiteNoise
+- APScheduler 3.11
+- SQLite development database
+- SQL Server production support through <code>mssql-django</code>
+
+### Frontend
+
+- Django templates
+- HTMX 2.x
+- Alpine.js CSP build
+- Tailwind CSS standalone compiler
+- daisyUI 5 semantic components
+- Bootstrap Icons
+- ApexCharts
+- responsive LTR/RTL layouts
+- server-persisted user theme and sidebar preferences
+
+### AI, OCR and analytics
+
+- Ollama
+- GLM-OCR or another configured vision-capable Ollama model for document OCR
+- qwen2.5:7b or another configured text model for canonical JSON mapping
+- Vanna 2.0.2
+- ChromaDB
+- configurable OpenAI-compatible/OpenAI and Anthropic providers
+- AI extraction profiles and training examples managed from Django Admin
+
+### Documents and file processing
+
+- Mayan EDMS REST integration
+- pypdf
+- PyMuPDF
+- openpyxl
+- xlrd
+- Pillow
+
+---
+
+## 3. High-level architecture
+
+~~~mermaid
 flowchart TB
-    Browser["Browser · Bootstrap / HTMX / Alpine"] --> Views["Django views · templates · JSON endpoints"]
-    Views --> Services["Access policy · dynamic form · datasource · AI services"]
-    Services --> Models["Django ORM models"]
-    Models --> DB[("SQLite dev / SQL Server prod")]
-    Services --> MockAI["Mock AI provider"]
-    Services -. approved adapter .-> ExternalAI["OpenAI-compatible endpoint"]
-    Views --> Admin["Django Admin · CMS / RBAC / forms / SLA / audit"]
-```
+    Public["Public GLIS Website<br/>django CMS / bilingual content"] --> Django["Django 6.1 Application"]
+    Portal["Authenticated Portal<br/>Tailwind + daisyUI + HTMX"] --> Django
+    API["REST API / Integrations"] --> Django
 
-The source is separated by business capability:
+    Django --> Tickets["Tickets / SLA / Approvals"]
+    Django --> Tasks["Tasks / Recurring Tasks"]
+    Django --> TPA["TPA Member Management"]
+    Django --> Knowledge["Knowledge Base"]
+    Django --> Analytics["Vanna Analytics"]
+    Django --> JobCenter["APScheduler Job Center"]
+    Django --> Documents["Document Gateway"]
+
+    Tickets --> DB[("SQLite Dev / SQL Server Prod")]
+    Tasks --> DB
+    TPA --> DB
+    Knowledge --> DB
+    Analytics --> DB
+
+    TPA --> AI["AI Provider Layer"]
+    Analytics --> Ollama["Ollama / ChromaDB"]
+    AI --> Ollama
+    Documents --> Mayan["Mayan EDMS REST API"]
+    JobCenter --> Mail["IMAP / HTTP / SQL / Python Jobs"]
+~~~
+
+---
+
+## 4. Repository structure
 
 | Area | Location | Responsibility |
 |---|---|---|
-| Configuration | `glis/` | Settings, URLs, ASGI/WSGI |
-| Core | `apps/core/` | Module registry, configuration versions, audit logs, API contracts |
-| Accounts | `apps/accounts/` | Profiles, roles, external-account policy, social-login adapter |
-| CMS | `apps/cms/` | Public content, branding, themes, pages, animations |
-| Tickets | `apps/tickets/` | Catalog, groups, tickets, SLA, forms, comments, attachments, wizard |
-| Knowledge | `apps/knowledge/` | Bilingual public/internal articles and feedback |
-| AI | `apps/ai/` | Provider settings, provider interface and interaction audit |
-| Orchestrator | `apps/orchestrator/` | Vanna domains, governance, training memory, gateway adapter and query audits |
-| Services | `services/` | Access policy, dynamic form renderer and datasource registry |
-| UI | `templates/`, `static/` | Django templates, CSS design system and CSP-compatible JavaScript |
+| Project configuration | <code>glis/</code> | settings, URLs, WSGI/ASGI |
+| Core | <code>apps/core/</code> | site configuration, audit, document gateway, shared models |
+| Accounts | <code>apps/accounts/</code> | profiles, roles, social login policy, theme/sidebar preferences |
+| Tickets | <code>apps/tickets/</code> | service requests, categories, dynamic forms, assignment, SLA, approvals, comments, attachments |
+| Tasks | <code>apps/tasks/</code> | manual and recurring task management linked to tickets |
+| TPA | <code>apps/tpa/</code> | policy enrollment, endorsements, members, OCR/AI intake, validation, pricing and TPA processing |
+| AI | <code>apps/ai/</code> | provider configuration, extraction profiles, training examples and AI audit |
+| Analytics | <code>apps/orchestrator/</code> | Vanna domains, SQL governance, prompts, training and query audits |
+| Knowledge | <code>apps/knowledge/</code> | bilingual knowledge articles and controlled documentation |
+| Job Center | <code>apps/job_center/</code> | embedded APScheduler, registered Python/SQL/API jobs and execution history |
+| CMS | <code>apps/cms/</code>, django CMS | navigation, pages, public content and publishing |
+| Services | <code>services/</code> | access rules, dynamic forms and datasource registry |
+| Templates | <code>templates/</code> | public, portal, tickets, TPA, tasks, knowledge and document UI |
+| Static assets | <code>static/</code> | Tailwind/daisyUI build, brand CSS, portal JavaScript and TPA JavaScript |
+| Documentation | <code>docs/</code> | TPA, frontend, compatibility and operational guides |
 
-## Quick start
+---
 
-Django 6.1 supports Python 3.12, 3.13 and 3.14. This repository keeps Python 3.12 as the deployment baseline in `pyproject.toml`; Python 3.13 is also supported for local development.
+# 5. Frontend and design standard
 
-```bash
+The authenticated portal follows the standard daisyUI Django model and uses **normal, unprefixed Tailwind/daisyUI classes**.
+
+Use:
+
+~~~html
+<section class="card bg-base-100">
+  <div class="card-body">
+    <span class="badge badge-primary">Status</span>
+    <button class="btn btn-primary">Save</button>
+  </div>
+</section>
+~~~
+
+Do not introduce old portal syntax such as:
+
+~~~text
+tw:flex
+tw:d-card
+tw:d-btn
+~~~
+
+The current portal source is:
+
+~~~text
+static/css/input.css
+~~~
+
+and the committed runtime bundle is:
+
+~~~text
+static/css/output.css
+~~~
+
+The application therefore **does not require Node.js/npm at runtime**. Frontend changes can be rebuilt using the standalone Tailwind compiler and daisyUI plugin.
+
+### Windows rebuild
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build_portal_css.ps1
+~~~
+
+### Manual/watch build
+
+~~~powershell
+static\css\tailwindcss.exe -i static/css/input.css -o static/css/output.css
+static\css\tailwindcss.exe -i static/css/input.css -o static/css/output.css --watch
+~~~
+
+### Design goals
+
+The portal is designed to be compact, modern and operational rather than a conventional Django admin-style application. UI work should prefer:
+
+- daisyUI <code>card</code>, <code>stats</code>, <code>badge</code>, <code>alert</code>, <code>table</code>, <code>menu</code>, <code>dropdown</code>, <code>modal</code>, <code>steps</code>, <code>timeline</code>, <code>chat</code>, <code>input</code>, <code>select</code>, <code>textarea</code> and <code>btn</code> components;
+- responsive grid/flex layouts;
+- compact KPI bands;
+- subtle depth, hover elevation and motion;
+- theme-aware components rather than hard-coded light backgrounds;
+- ApexCharts instead of Plotly for portal operational dashboards;
+- accessible dark/light rendering;
+- progressive enhancement through HTMX rather than full-page JavaScript frameworks.
+
+The profile currently supports System, Light, Dark and the standard daisyUI theme family configured in <code>UserProfile.THEME_CHOICES</code>.
+
+Sidebar modes:
+
+- Full navigation
+- Icon-only navigation
+- Hidden navigation
+
+The preference is stored per user.
+
+---
+
+# 6. Public website and CMS
+
+GLIS includes a bilingual Greenline-style public website backed by django CMS and GLIS configuration models.
+
+Public capabilities include:
+
+- English and Arabic content;
+- RTL rendering for Arabic;
+- CMS-managed pages and content blocks;
+- public services and medical TPA information;
+- insurer/partner content;
+- network-provider information;
+- downloads and controlled documents;
+- contact information;
+- management/team content;
+- theme-aware responsive layout;
+- visitor tracking;
+- login and portal entry points.
+
+django CMS is available through the same Django deployment. Content editors can work with versioning/moderation/history plugins without changing the operational portal architecture.
+
+---
+
+# 7. Authentication, profiles and RBAC
+
+Authentication supports Django credentials plus django-allauth social-provider integration for Google and Microsoft.
+
+The user profile contains:
+
+- role;
+- organization;
+- title and department;
+- reporting manager;
+- language preference;
+- theme preference;
+- sidebar mode;
+- email/browser notification preferences;
+- external-user status and approval state;
+- optional guest-access expiry.
+
+Current profile roles are:
+
+| Role | Typical use |
+|---|---|
+| Super Admin | unrestricted platform administration |
+| Admin | operational administration |
+| Project Manager | team/project supervision |
+| Support Agent | ticket handling |
+| Requester/User | customer/internal requester |
+| Viewer/Auditor | read/audit use |
+| Guest | restricted external access |
+
+Authorization is enforced server-side. Hiding a menu item is never considered sufficient access control.
+
+---
+
+# 8. Ticket and service-request management
+
+The ticket platform is the workflow backbone used directly by service operations and indirectly by TPA transactions and recurring tasks.
+
+## Ticket capabilities
+
+- project → product → category hierarchy;
+- ticket reference generation;
+- requester and organization context;
+- multiple assigned users;
+- assignment to groups;
+- group-member takeover;
+- statuses and priorities;
+- rich conversation/comments;
+- internal/private notes where permitted;
+- pasted screenshots and uploaded files;
+- dynamic JSON-driven forms;
+- required-document rules;
+- secure sharing;
+- export;
+- AI-assisted ticket insights;
+- related tickets;
+- notifications;
+- approvals;
+- SLA/TAT tracking;
+- event/audit history;
+- HTMX partial updates.
+
+## Statuses
+
+The service workflow supports:
+
+- New
+- Open
+- In Progress
+- Pending Customer
+- Resolved
+- Closed
+
+## SLA and TAT
+
+Category/priority SLA policies can define:
+
+- first-response target;
+- resolution target;
+- pause statuses;
+- escalation timing;
+- target users/groups;
+- reporting-manager escalation;
+- automatic close behavior.
+
+Ticket exports include first-response TAT and resolution TAT in hours.
+
+The Job Center can run recurring workflow processing so escalations and lifecycle automation do not depend on a separate Celery deployment.
+
+---
+
+# 9. Dynamic forms and datasource safety
+
+Ticket forms can be defined through versioned JSON schemas and rendered as Django fields.
+
+Supported patterns include:
+
+- text and textarea;
+- email and phone;
+- numeric/currency;
+- date/datetime;
+- select and multiselect;
+- radio/checkbox/switch;
+- URL/tags/rating;
+- conditional visibility;
+- conditional required rules;
+- role-aware visibility/editing;
+- lookup-based choices;
+- sensitive-field masking.
+
+Editable schema JSON does **not** execute arbitrary SQL. Lookup sources must be registered in the server-side datasource registry.
+
+Example:
+
+~~~python
+@DataSourceRegistry.register("approved_location_lookup")
+def approved_location_lookup(*, user, params):
+    return [("muscat", "Muscat")]
+~~~
+
+Production lookup implementations should use fixed reviewed queries, bound parameters, allowlisted outputs, least-privilege database credentials, timeouts and audit logging.
+
+---
+
+# 10. Task management
+
+GLIS includes a ticket-integrated task workspace.
+
+## Manual tasks
+
+Users with the required permission can create, edit and soft-delete tasks from:
+
+~~~text
+/portal/tasks/
+~~~
+
+Each task carries:
+
+- title and description;
+- project/product/category;
+- priority;
+- owner;
+- tagged users;
+- due date;
+- linked ticket;
+- status inherited from the linked ticket.
+
+## Recurring tasks
+
+Administrators can define recurring templates with:
+
+- owner;
+- tagged users;
+- project/product/category;
+- priority;
+- first due date;
+- recurrence;
+- number of calendar days before the due date to create the occurrence.
+
+Supported recurrence patterns:
+
+- daily;
+- weekly;
+- fortnightly;
+- monthly;
+- quarterly;
+- half yearly;
+- yearly;
+- one time.
+
+Each generated occurrence becomes a separate <code>Task</code> and a linked normal GLIS <code>Ticket</code>. A unique recurring-template/occurrence constraint prevents duplicate generation.
+
+Manual diagnostics:
+
+~~~bash
+python manage.py generate_recurring_tasks
+python manage.py generate_recurring_tasks --as-of 2026-09-29
+~~~
+
+The scheduled handler is designed to run through Job Center.
+
+---
+
+# 11. Enterprise document management with Mayan EDMS
+
+GLIS remains the business application and user interface. Mayan EDMS is an optional document engine accessed through REST.
+
+Implemented surfaces include:
+
+- <code>/documents/</code> — enterprise Document Center;
+- ticket-scoped managed documents;
+- controlled knowledge documents;
+- document search;
+- upload;
+- download;
+- opening the full Mayan UI for permitted staff.
+
+GLIS owns business authorization and workflow. Mayan owns document versions, OCR, document ACLs and document storage.
+
+Recommended metadata convention:
+
+~~~text
+glis_object_type = ticket | claim | policy | legal | knowledge
+glis_object_id   = GLIS primary key
+glis_reference   = human-readable GLIS reference
+uploaded_by      = GLIS user email
+~~~
+
+See <code>MAYAN_EDMS_INTEGRATION.md</code> for the full integration guide.
+
+---
+
+# 12. TPA Member Management / SmartEndorse workflow
+
+The TPA module brings the SmartEndorse operating model directly into GLIS while reusing GLIS authentication, ticketing, SLA, approval, notification and audit infrastructure.
+
+Primary routes:
+
+~~~text
+/portal/tpa/
+/portal/tpa/policy-enrollment/
+/portal/tpa/transactions/
+/portal/tpa/inbound-emails/
+/portal/tpa/guide/
+~~~
+
+## 12.1 Operating model
+
+~~~mermaid
+flowchart LR
+    A["Intake & Correction"] --> B["Validation"]
+    B --> C["Approval / STP"]
+    C --> D["TPA Processing"]
+    D --> E{"Query?"}
+    E -- Yes --> F["Embedded Requester Chat"]
+    F --> D
+    E -- No --> G["Complete"]
+~~~
+
+AI is limited to source understanding and semantic extraction. Business decisions stay deterministic.
+
+## 12.2 Supported organizations
+
+The TPA domain supports:
+
+- Individual
+- Corporate / Sponsor
+- Insurance Company
+- TPA
+- Broker
+- Agent
+- Other
+
+Policy access can additionally be restricted by organization, policy and user.
+
+## 12.3 Initial Policy Enrollment
+
+A new policy starts in:
+
+~~~text
+Portal → TPA Operations → Initial Policy Enrollment
+~~~
+
+Initial setup creates the policy and a dedicated <code>NEW_POLICY_ENROLLMENT</code> transaction.
+
+The policy can contain:
+
+- sponsor/individual;
+- insurance company;
+- optional TPA organization;
+- policy period;
+- currency;
+- STP setting;
+- premium-calculation setting;
+- allowed backdating days;
+- insurer/TPA references;
+- one or more benefit plans.
+
+Each plan can contain an annual premium, default sum insured and premium configuration.
+
+The opening census can then be entered manually or loaded from structured files/PDF/images through the same source-document processor used for endorsements.
+
+The policy becomes available as a completed enrollment only after the configured validation, approval/STP and TPA processing path is completed.
+
+## 12.4 Endorsement types
+
+Post-enrollment transactions support:
+
+- Member Addition
+- Member Termination
+- Member Deletion / Void
+- Policy Cancellation
+
+Initial policy enrollment is deliberately separate from endorsement intake.
+
+## 12.5 Member data
+
+The canonical member model includes:
+
+- TPA member ID;
+- employee number;
+- first/middle/last name;
+- date of birth;
+- gender;
+- relationship;
+- Civil/National ID;
+- passport number;
+- principal/dependent relationship;
+- member status.
+
+Relationships include:
+
+- Principal
+- Spouse
+- Child
+- Other
+
+Dependents must resolve to a principal through the supported identifiers/relationships.
+
+## 12.6 Unified source intake
+
+The transaction workspace contains a single Source Documents & Ollama OCR intake area.
+
+Up to 20 related files can be supplied as one evidence bundle so front/back ID images, passport pages and related evidence can be interpreted together.
+
+| Source | Processing path |
+|---|---|
+| CSV | deterministic structured parsing |
+| XLSX | deterministic structured parsing with openpyxl |
+| XLS | deterministic structured parsing with xlrd |
+| Text PDF | pypdf text extraction → text-model mapping |
+| Scanned PDF | PyMuPDF page rendering → vision OCR → text-model mapping |
+| PNG/JPG/JPEG/WEBP | vision OCR → text-model mapping |
+| Manual portal entry | direct canonical member data |
+| Email body | email extraction profile → canonical transaction/member data |
+| Email attachments | same SourceDocument processor as portal uploads |
+
+Source documents retain:
+
+- original file name;
+- extraction method;
+- processing state;
+- extracted payload;
+- confidence;
+- AI profile;
+- source hash;
+- processing error;
+- uploader.
+
+Submitted/extracted source values are preserved while corrected working values are stored separately for auditability.
+
+## 12.7 OCR and LLM architecture
+
+The recommended local pattern uses two different model responsibilities:
+
+~~~mermaid
+flowchart LR
+    File["PDF / Image"] --> Vision["Vision OCR<br/>GLM-OCR"]
+    Vision --> Text["OCR text"]
+    Email["Email body"] --> Mapper["Text mapping model<br/>qwen2.5:7b"]
+    Text --> Mapper
+    Spreadsheet["CSV / XLS / XLSX"] --> Parser["Deterministic parser"]
+    Parser --> Canonical["Canonical member JSON"]
+    Mapper --> Canonical
+    Canonical --> Validation["Deterministic validation/pricing"]
+~~~
+
+### Vision/OCR provider
+
+Recommended configuration:
+
+- provider: Ollama;
+- model: <code>glm-ocr</code> or the exact installed quantized tag;
+- <code>supports_vision=True</code>;
+- capability: <code>document_extraction</code>;
+- sensitive-data access only when approved.
+
+### Text mapping provider
+
+Recommended configuration:
+
+- provider: Ollama;
+- model: <code>qwen2.5:7b</code>;
+- <code>supports_vision=False</code>;
+- capabilities:
+  - <code>member_field_mapping</code>
+  - <code>email_extraction</code>
+  - <code>structured_header_mapping</code>
+
+The text model converts OCR/email evidence into strict JSON. It must not decide eligibility, premium, approval or STP.
+
+### AI extraction administration
+
+Django Admin supports:
+
+- AI providers;
+- task capabilities;
+- vision flag;
+- model endpoint/name;
+- runtime options;
+- timeout;
+- provider priority;
+- whether sensitive data is permitted;
+- extraction profiles;
+- field aliases;
+- prompts/instructions;
+- training examples.
+
+This allows OCR/mapping prompts to be trained/configured without embedding every instruction in view code.
+
+## 12.8 Intake correction
+
+Extracted and manually entered members appear in the same member matrix.
+
+Authorized users can:
+
+- review extracted values;
+- correct rows;
+- add rows;
+- remove rows while the intake stage is editable;
+- preserve source/submitted values;
+- re-run validation after correction.
+
+Before/after changes are recorded in the transaction event trail.
+
+## 12.9 Validation
+
+Deterministic validation covers the currently implemented rules including:
+
+- required member fields;
+- policy status/period;
+- policy backdating limit;
+- benefit-plan validity;
+- duplicate identifiers;
+- existing-member lookup for termination/deletion;
+- principal/dependent rules;
+- member identifier requirements;
+- workflow-state eligibility.
+
+Validation produces per-row errors/warnings plus transaction-level validation metrics.
+
+## 12.10 Pricing and premium impact
+
+Premium/refund calculation uses Decimal arithmetic and the configured benefit plan.
+
+The transaction stores:
+
+- premium before;
+- premium adjustment;
+- premium after;
+- currency;
+- row-level calculated premium;
+- calculation snapshot.
+
+AI does not calculate or override the official premium.
+
+## 12.11 STP and approval
+
+Policies can enable straight-through processing (STP).
+
+The transaction records:
+
+- validation score;
+- STP eligible flag;
+- STP blockers;
+- approval state;
+- approver and approval timestamp;
+- rejection reason.
+
+If the transaction qualifies for STP it can follow the configured auto-approval path. Otherwise it follows GLIS approval controls/manual authority.
+
+Approval dispatches the transaction into the TPA processing stage; it does not bypass the final TPA completion rules.
+
+## 12.12 TPA processing
+
+Core processing statuses include:
+
+- Sent to TPA
+- TPA In Progress
+- TPA Query
+- Completed
+
+An authorized TPA processor starts the transaction and can record per member:
+
+- card/member number;
+- TPA effective date;
+- final TPA premium/refund amount;
+- processing state/message.
+
+For member additions and initial enrollment, the required final TPA fields must exist before completion.
+
+Completion applies the deterministic member/enrollment updates and persists the TPA-final information.
+
+## 12.13 Embedded TPA query chat
+
+When TPA requires more information, the processor can raise a query.
+
+The system:
+
+1. creates a dedicated GLIS query ticket related to the transaction;
+2. moves the transaction to TPA Query;
+3. reuses normal TicketComment/TicketAttachment storage;
+4. renders the conversation as daisyUI chat inside the TPA case;
+5. keeps resolved conversations visible in history;
+6. resumes processing when the query is resolved.
+
+The user does not have to leave the TPA case to answer a query.
+
+## 12.14 Email endorsement intake
+
+Email-based endorsements use the same downstream workflow as portal transactions.
+
+The email processor can use:
+
+- email body;
+- CSV/XLS/XLSX attachments;
+- text PDFs;
+- scanned PDFs;
+- passport/ID images;
+- multiple attachments belonging to one request.
+
+The AI extractor can identify policy, transaction type, effective date and member data. Attachments then enter the normal source-document pipeline.
+
+Initial Policy Enrollment is intentionally not created from email; email intake is reserved for endorsements on an enrolled policy.
+
+### IMAP configuration
+
+~~~dotenv
+TPA_IMAP_HOST=mail.example.com
+TPA_IMAP_PORT=993
+TPA_IMAP_USERNAME=tpa@example.com
+TPA_IMAP_PASSWORD=change-me
+TPA_IMAP_FOLDER=INBOX
+TPA_IMAP_USE_SSL=1
+~~~
+
+Manual processing:
+
+~~~bash
+python manage.py process_tpa_mailbox --username YOUR_USERNAME
+~~~
+
+Store unread messages without AI processing:
+
+~~~bash
+python manage.py process_tpa_mailbox --username YOUR_USERNAME --no-ai
+~~~
+
+The same logic is registered for Job Center using the TPA mailbox polling handler. Messages are deduplicated using mail identifiers/UID information before downstream processing.
+
+## 12.15 TPA permissions
+
+Model permissions include:
+
+| Permission | Purpose |
+|---|---|
+| <code>view_tpa_dashboard</code> | access TPA dashboard |
+| <code>create_enrollment</code> | create initial enrollment |
+| <code>create_endorsement</code> | create endorsements |
+| <code>terminate_member</code> | terminate member |
+| <code>delete_member</code> | delete/void member |
+| <code>cancel_policy</code> | cancel policy |
+| <code>approve_endorsement</code> | approve transaction |
+| <code>process_endorsement</code> | TPA processing |
+| <code>bypass_validation</code> | authorized validation bypass |
+| <code>override_premium</code> | authorized premium override |
+| <code>view_sensitive_member_data</code> | sensitive member access |
+| <code>view_ai_source_data</code> | raw AI/source data access |
+| <code>configure_tpa</code> | TPA configuration |
+| <code>export_tpa_data</code> | export authority |
+
+<code>PolicyAccess</code> additionally controls policy-scoped rights such as view, member visibility, enrollment creation, endorsement creation, premium visibility, approval and processing.
+
+---
+
+# 13. AI assistance outside TPA
+
+The general ticket workspace contains assistive AI capabilities such as:
+
+- summary;
+- priority suggestion;
+- group/category suggestion;
+- similar-ticket assistance;
+- knowledge suggestion;
+- clarification questions.
+
+General AI settings are configurable and interaction records are auditable.
+
+The default mock provider is deterministic and suitable for local/demo operation. Real provider use should be enabled only after privacy, data-residency, retention and security approval.
+
+---
+
+# 14. Governed Vanna analytics
+
+GLIS contains a governed Vanna analytics workspace rather than exposing unrestricted natural-language SQL.
+
+The analytics architecture supports:
+
+- Vanna 2.0;
+- local Ollama model;
+- ChromaDB retrieval memory;
+- configurable domains;
+- datasource metadata;
+- business rules;
+- table policies;
+- column policies;
+- role-based column overrides;
+- row access policies;
+- suggested prompts;
+- versioned training prompts;
+- training candidates/examples;
+- conversation sessions;
+- SQL/query audit;
+- preview/export;
+- query duration/status diagnostics.
+
+Typical local models:
+
+~~~bash
+ollama pull qwen2.5-coder:7b
+ollama pull nomic-embed-text
+ollama serve
+~~~
+
+Typical environment values:
+
+~~~dotenv
+OLLAMA_HOST=http://127.0.0.1:11434
+OLLAMA_MODEL=qwen2.5-coder:7b
+OLLAMA_EMBED_MODEL=nomic-embed-text
+OLLAMA_CONTEXT_WINDOW=8192
+OLLAMA_TEMPERATURE=0.1
+VANNA_DB_SCHEMA=main
+CHROMA_PERSIST_DIRECTORY=data/chroma
+~~~
+
+For SQL Server, configure the governed datasource and schema appropriately rather than allowing arbitrary editable SQL.
+
+---
+
+# 15. Job Center / APScheduler
+
+GLIS includes a Hangfire-style scheduler application based on APScheduler.
+
+It intentionally requires:
+
+- no Redis;
+- no RabbitMQ;
+- no Celery worker;
+- no Celery Beat;
+- no separate scheduler management command.
+
+The scheduler starts with Django and uses a database-backed leader lock to reduce duplicate scheduling across multiple web workers.
+
+Supported job types include:
+
+- registered Python functions;
+- SQL queries;
+- stored procedures;
+- HTTP/API calls.
+
+Operational features include:
+
+- cron schedules;
+- manual Run now;
+- retry handling;
+- timeout recording;
+- execution history;
+- error and traceback logging;
+- Admin management;
+- staff-only API surfaces.
+
+Important settings:
+
+~~~python
+JOB_CENTER_ENABLED = True
+JOB_CENTER_MAX_WORKERS = 10
+~~~
+
+Use the registry pattern for Python jobs rather than storing arbitrary Python code in the database.
+
+---
+
+# 16. Localization and RTL
+
+GLIS is configured for:
+
+- English: <code>en</code>
+- Arabic: <code>ar</code>
+- timezone: <code>Asia/Muscat</code>
+
+The portal and public site set the document direction from the active language.
+
+Translation workflow:
+
+~~~bash
+python manage.py makemessages -l ar
+python manage.py compilemessages -l ar
+~~~
+
+New UI should use Django translation tags and logical layout properties so Arabic remains first-class.
+
+---
+
+# 17. Local installation
+
+## 17.1 Prerequisites
+
+Recommended:
+
+- Python 3.12.x for deployment compatibility;
+- Git;
+- optional SQL Server ODBC Driver 18;
+- optional Ollama for AI/OCR/Vanna;
+- optional Mayan EDMS for enterprise documents.
+
+Create the environment:
+
+~~~bash
 python -m venv .venv
-```
+~~~
 
-Activate it:
+Windows PowerShell:
 
-```powershell
+~~~powershell
 .venv\Scripts\Activate.ps1
-```
+~~~
 
-or on Linux/macOS:
+Linux/macOS:
 
-```bash
+~~~bash
 source .venv/bin/activate
-```
+~~~
 
-Install and initialize:
+Install dependencies:
 
-```bash
+~~~bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-copy .env.example .env
-python manage.py migrate
-python manage.py seed_demo_data
-python manage.py runserver
-```
+~~~
 
-On Linux/macOS use `cp .env.example .env` instead of `copy`.
+Then:
+
+~~~bash
+python manage.py migrate
+python manage.py check
+python manage.py runserver
+~~~
 
 Open:
 
-- Public website: `http://127.0.0.1:8000/`
-- Arabic website: `http://127.0.0.1:8000/ar/`
-- Portal: `http://127.0.0.1:8000/portal/`
-- Administration: `http://127.0.0.1:8000/admin/`
+~~~text
+Public website: http://127.0.0.1:8000/
+Portal:         http://127.0.0.1:8000/portal/
+TPA:            http://127.0.0.1:8000/portal/tpa/
+Tasks:          http://127.0.0.1:8000/portal/tasks/
+Analytics:      http://127.0.0.1:8000/analytics/
+Documents:      http://127.0.0.1:8000/documents/
+Admin:          http://127.0.0.1:8000/admin/
+~~~
 
-## Demo accounts
+---
 
-All development demo accounts use `DemoAdmin123!`.
+# 18. TPA local setup
 
-| Account | Role |
-|---|---|
-| `admin@glis.local` | Super Admin |
-| `ops.admin@glis.local` | Admin |
-| `manager@glis.local` | Project Manager |
-| `claims.agent@glis.local` | Support Agent |
-| `support.agent@glis.local` | Support Agent |
-| `customer@glis.local` | Requester/User |
-| `auditor@glis.local` | Viewer/Auditor |
-| `guest@glis.local` | Guest |
+Install the local OCR and text models:
 
-These credentials are development-only. Delete or rotate all demo accounts before any shared deployment.
+~~~bash
+ollama pull glm-ocr
+ollama pull qwen2.5:7b
+ollama serve
+~~~
 
-## Environment variables
+Configure TPA providers/profiles:
 
-The application defaults to local development mode when `.env` is absent, so a
-clean extraction can run immediately. Copy `.env.example` to `.env` before
-customizing the configuration:
+~~~bash
+python manage.py configure_tpa_ollama
+~~~
 
-```bash
-# Windows Command Prompt
-copy .env.example .env
+Optional exact OCR tag:
 
-# PowerShell, Linux or macOS
-cp .env.example .env
-```
+~~~bash
+python manage.py configure_tpa_ollama --ocr-model glm-ocr:q8_0 --text-model qwen2.5:7b
+~~~
 
-Set at least:
+Create sample TPA data:
 
-| Variable | Purpose |
-|---|---|
-| `DJANGO_SECRET_KEY` | Long random production secret |
-| `DJANGO_DEBUG` | `True` only for local development |
-| `DJANGO_ALLOWED_HOSTS` | Comma-separated application hosts |
-| `CSRF_TRUSTED_ORIGINS` | HTTPS origins used behind a proxy |
-| `DATABASE_ENGINE` | `sqlite` or `mssql` |
-| `DATABASE_NAME` | SQLite filename or SQL Server database |
-| `DATABASE_HOST` | SQL Server host |
-| `DATABASE_USER` / `DATABASE_PASSWORD` | Least-privilege SQL Server account |
-| `DATABASE_DRIVER` | Normally `ODBC Driver 18 for SQL Server` |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth application |
-| `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | Microsoft application |
-| `MICROSOFT_TENANT` | Tenant ID, organizations, consumers or common |
-| `AI_PROVIDER` | Keep `mock` until a provider is approved |
-| `AI_ENDPOINT`, `AI_MODEL`, `AI_API_KEY` | Reserved for the approved real adapter |
-| `OLLAMA_HOST` | Local Ollama API, normally `http://127.0.0.1:11434` |
-| `OLLAMA_MODEL` | Exact local model tag, default `qwen2.5-coder:7b` |
-| `OLLAMA_EMBED_MODEL` | Local ChromaDB embedding model, default `nomic-embed-text` |
-| `OLLAMA_CONTEXT_WINDOW` | Ollama context size, default `8192` |
-| `OLLAMA_TEMPERATURE` | SQL-generation temperature, default `0.1` |
-| `VANNA_DB_SCHEMA` | `main` for SQLite or `dbo` for SQL Server |
-| `CHROMA_PERSIST_DIRECTORY` | Persistent local Vanna memory, default `data/chroma` |
-| `SECURE_SSL_REDIRECT` | `True` when HTTPS terminates correctly |
-| `SECURE_HSTS_PRELOAD` | Enable only after all subdomains are permanently HTTPS-ready |
+~~~bash
+python manage.py seed_tpa_sample --username YOUR_USERNAME
+~~~
 
-Secrets must come from the environment or a secret manager. Do not store credentials in models, templates, source control or editable JSON.
+The sample command creates/updates demo organizations, policy, plans, family/member data, access rights and the local TPA AI configuration used for development.
 
-## Database
+---
 
-### SQLite development
+# 19. Database configuration
 
-The default `.env.example` uses `db.sqlite3`. Run:
+## SQLite development
 
-```bash
+SQLite is the default development database.
+
+~~~bash
 python manage.py migrate
-python manage.py seed_demo_data
-```
+~~~
 
-### SQL Server production
+## SQL Server
 
-Install Microsoft's ODBC Driver 18, then:
+Install Microsoft ODBC Driver 18 and configure:
 
-```bash
-pip install -r requirements-sqlserver.txt
-```
-
-Set:
-
-```dotenv
+~~~dotenv
 DATABASE_ENGINE=mssql
 DATABASE_NAME=GLIS
 DATABASE_HOST=sqlserver.internal
@@ -189,341 +1050,216 @@ DATABASE_USER=glis_app
 DATABASE_PASSWORD=use-a-secret-manager
 DATABASE_DRIVER=ODBC Driver 18 for SQL Server
 DATABASE_EXTRA_PARAMS=TrustServerCertificate=no;Encrypt=yes
-```
+~~~
 
-Use a dedicated least-privilege login. Test migrations against a staging copy and configure backups before production rollout.
+Use a dedicated least-privilege database account and validate migrations against staging before production rollout.
 
-## Static and media files
+---
 
-WhiteNoise serves versioned static files:
+# 20. Mayan EDMS configuration
 
-```bash
+Example:
+
+~~~dotenv
+MAYAN_ENABLED=True
+MAYAN_BASE_URL=http://127.0.0.1:8090
+MAYAN_API_TOKEN=
+MAYAN_API_USERNAME=glis_service
+MAYAN_API_PASSWORD=change-me
+MAYAN_VERIFY_SSL=True
+MAYAN_TIMEOUT=45
+MAYAN_UPLOAD_PATH=/api/v4/sources/<SOURCE_ID>/actions/<ACTION_ID>/execute/
+MAYAN_SEARCH_PATH=/api/v4/search/search_models/documents.Document/
+MAYAN_DOWNLOAD_PATH=/api/v4/documents/{document_id}/files/1/download/
+MAYAN_DOCUMENT_UI_PATH=/#/documents/{document_id}/
+~~~
+
+Deploy Mayan independently. Do not add Mayan applications to GLIS <code>INSTALLED_APPS</code> and do not share the GLIS application database with Mayan.
+
+---
+
+# 21. Static files and deployment
+
+Development can run directly through Django.
+
+Production static collection:
+
+~~~bash
 python manage.py collectstatic --noinput
-```
+~~~
 
-Uploaded attachments use local `MEDIA_ROOT` in development. Production should use a private object store through `django-storages`, signed download responses and malware scanning. Media must not be placed behind an unrestricted public URL.
+Production example with Gunicorn:
 
-## Gunicorn and reverse proxy
-
-```bash
+~~~bash
 python manage.py migrate
 python manage.py collectstatic --noinput
 gunicorn glis.wsgi:application --bind 127.0.0.1:8000 --workers 3 --timeout 90
-```
+~~~
 
-Terminate TLS at Nginx, IIS or another approved proxy. Forward the original host/protocol safely, enforce HTTPS and limit request body size. `Dockerfile` and `compose.yaml` provide a minimal container baseline; production still requires managed secrets, private media storage, health checks and monitoring.
+Terminate TLS at the approved reverse proxy and configure forwarded protocol/host handling correctly.
 
-## Google and Microsoft sign-in
+Because Job Center runs inside Django, at least one application process must remain continuously running for scheduled jobs to execute.
 
-1. Create OAuth applications with the provider.
-2. Use HTTPS callback URLs:
-   - `/accounts/google/login/callback/`
-   - `/accounts/microsoft/login/callback/`
-3. Set the corresponding environment variables.
-4. Configure allowed email domains and external-user approval in **Administration → Account policies**.
-5. Confirm the default external role is Guest and the default group is appropriate.
-6. Test new-account linking, disabled accounts and domain rejection.
+---
 
-OAuth buttons remain disabled until credentials are configured. The social adapter enforces allowed domains, assigns the configured default role/group and supports administrator approval.
+# 22. Security baseline
 
-## Localization and RTL
+The repository includes or is structured around:
 
-- English is the default language; Arabic is available under `/ar/`.
-- `LocaleMiddleware` and `i18n_patterns` preserve server-side localization.
-- CMS content uses paired `_en` and `_ar` fields.
-- Bootstrap RTL loads for Arabic.
-- The design system uses logical CSS properties so the portal/sidebar, tables, forms, badges and modals follow direction.
-- Arabic translations live in `locale/ar/LC_MESSAGES/django.po`.
+- Django CSRF protection;
+- secure/HTTP-only cookies in production;
+- HTTPS/HSTS configuration;
+- CSP middleware;
+- same-origin framing support required by django CMS;
+- server-side object authorization;
+- permission-filtered ticket access;
+- policy-scoped TPA access;
+- AI sensitive-data controls;
+- environment/secret references instead of storing provider secrets in editable models;
+- audit/event records;
+- sanitized rich-text handling;
+- controlled datasource registry;
+- no arbitrary SQL from dynamic form JSON;
+- Mayan least-privilege service-account integration.
 
-Update translations:
+Before real insurance/identity data is processed in production, also implement the organization’s requirements for:
 
-```bash
-python manage.py makemessages -l ar
-python manage.py compilemessages -l ar
-```
+- private object/media storage;
+- malware scanning;
+- backup/restore testing;
+- SIEM/centralized logging;
+- rate limiting;
+- credential rotation;
+- data retention/deletion;
+- privacy impact assessment;
+- AI provider approval and data residency;
+- vulnerability/dependency scanning.
 
-Review translation completeness in the CMS before publishing a page. Arabic ApexCharts labels should be supplied from server-localized labels when adding new charts.
+---
 
-## CMS, theme and animation controls
+# 23. Testing and validation
 
-Administrators can manage:
+General checks:
 
-- site identity, contact data, logo and favicon;
-- bilingual hero, services, statistics, testimonials, pages and sections;
-- header/footer/portal navigation metadata;
-- color tokens, radius, shadow, type, default theme and theme choice;
-- curated animation presets and per-section timing;
-- draft/published page state and content snapshots.
-
-Public header links and portal sidebar links are rendered from **Admin → CMS → Navigation items** (`/admin/cms/navigationitem/`). Portal items support section, icon, Django route name/arguments, linked CMS page, required permission, staff-only visibility, group restrictions and emphasis. If a seeded menu is deleted completely, the templates show only a minimal safe fallback.
-
-Create full portal content under **Admin → CMS → Pages** (`/admin/cms/page/`). Set **Audience** to **Authenticated portal** or **Public website and portal**, publish the page, and optionally restrict it to selected groups. A navigation item can link directly to the page without hard-coding a URL.
-
-Users choose **Full navigation**, **Icon-only navigation**, or **Hidden navigation** from **Profile & security → Portal navigation**. The header sidebar button cycles through the same three modes and saves immediately.
-
-`custom_css` is visible only to Super Admins. Arbitrary JavaScript is deliberately not supported. Animations use CSS and the small local JavaScript file, honor `prefers-reduced-motion` and can be disabled globally.
-
-## Dynamic JSON form engine
-
-The complaint form supplied with the brief is converted into a secure registry-backed schema in `seed_demo_data.py`.
-
-Runtime flow:
-
-1. A published `DynamicFormVersion` supplies the schema.
-2. `DynamicTicketForm` maps supported controls to Django fields/widgets.
-3. Role visibility, edit rules, conditional visibility and conditional required rules are evaluated server-side.
-4. Validation covers required values, string length, numeric range, regex, date limits and lookup matches.
-5. Select/lookup data comes only from `DataSourceRegistry` handlers.
-6. Valid values are stored in `TicketDynamicData`; sensitive keys are masked unless access permits.
-7. API schema responses strip any legacy SQL/query metadata.
-
-Supported controls include text, textarea, rich text placeholder, number, currency, email, phone, date, datetime, select, multiselect, radio, checkbox, switch, file, URL, rating and tags.
-
-### Add a field type
-
-1. Add a safe Django `Field`/`Widget` mapping in `services/dynamic_forms.py`.
-2. Define server-side validation behavior.
-3. Add responsive and RTL template/CSS treatment.
-4. Add positive, invalid and unauthorized tests.
-5. Publish a new `DynamicFormVersion`; never modify a published schema silently.
-
-### Secure datasource registry
-
-Register approved handlers in `services/datasources.py`:
-
-```python
-@DataSourceRegistry.register("approved_location_lookup")
-def approved_location_lookup(*, user, params):
-    # Call an allowlisted repository with parameterized values.
-    return [("muscat", "Muscat")]
-```
-
-Editable JSON may reference `{"registry": "approved_location_lookup"}`. It must never contain executable SQL. A production SQL handler must use a fixed, reviewed query, bound parameters, row/column allowlists, caller permission checks, a read-only database identity, timeouts and audit logging.
-
-## RBAC and group visibility
-
-`TicketAccessPolicy.visible_queryset()` is the mandatory entry point for ticket reads. It applies:
-
-- Guest: own tickets only.
-- Requester: own plus explicitly permitted project/group scope.
-- Support Agent: assigned and member-group tickets.
-- Project Manager: assigned, member-group and permitted-project tickets.
-- Admin/Super Admin: organization scope when `tickets.view_all` is granted.
-
-Separate checks protect edits, sensitive dynamic fields, internal notes and restricted attachments. Object access always begins from a filtered queryset, preventing insecure direct object reference exposure.
-
-Permissions are enforced in views and services, not only by hiding navigation. New endpoints must use the same rule.
-
-## Ticket and SLA workflow
-
-Statuses: New, Open, In Progress, Pending Customer, Resolved and Closed.
-
-Priorities: Low, Medium, High and Critical.
-
-`SLAPolicy` supports category/priority targets, pause-status configuration and business-calendar metadata. Ordered `SLAEscalationRule` rows identify the breach offset, explicit users/groups and whether the current assignee's reporting manager must be included. `process_ticket_workflows` sends idempotent escalation notifications and automatically closes resolved tickets after each category's configured waiting period.
-
-Run this command every five minutes from Windows Task Scheduler, cron, Celery Beat or the organization's job runner:
-
-```bash
-python manage.py process_ticket_workflows
-```
-
-Each ticket can be assigned to multiple staff and groups. Group members can view group tickets, but must use **Take over** before editing or responding. Assignment, takeover, approval, escalation, sharing and lifecycle changes are recorded in the ticket event timeline.
-
-Approval workflows contain any number of ordered steps. Each step can target multiple users/groups and require one or more approvals. A rejection can end the workflow; completing the required approvals activates the next step automatically.
-
-## Numbered Administration sequence
-
-The Admin index automatically numbers and orders tables. The Orchestrator section appears as:
-
-| No. | Table | Purpose |
-|---:|---|---|
-| 01 | Data sources | Read-only connection metadata and environment-secret prefix |
-| 02 | AI domains | Business domain, collection, tables, groups and row limit |
-| 03 | Business rules | Editable operational definitions and SQL guidance |
-| 04 | Table policies | Role-aware allow/deny rules |
-| 05 | Column policies | Sensitivity, masking and default access |
-| 06 | Column role policies | Per-role column overrides |
-| 07 | Row access policies | Reviewed parameterized scope predicates |
-| 08 | Suggested prompts | Front-end prompt chips |
-| 09 | Training prompts | Versioned system, SQL, summary and chart prompts |
-| 10 | Training candidates | DDL, documents, question/SQL and corrected feedback |
-| 11 | Analysis sessions | User/domain conversation history |
-| 12 | Query audits | Generated SQL, preview, chart, duration and status |
-| 13 | Vanna settings | Gateway, timeout, prompts and safety controls |
-
-## Vanna 2.0 and Ollama configuration
-
-`MockAIProvider` is fully functional and deterministic. It creates a summary, priority, group, solution, similar-ticket placeholder and confidence value. Every result is labeled as AI-generated and remains editable.
-
-`OpenAICompatibleProvider` intentionally raises until an approved integration is implemented. Before enabling a real provider:
-
-- complete privacy/security review;
-- define data residency and retention;
-- suppress sensitive fields by default;
-- obtain per-project/category authorization;
-- add timeout/retry/circuit-breaker behavior;
-- store secrets outside Django and editable JSON;
-- audit request purpose and safe metadata, not raw secrets;
-- validate structured responses and keep human review mandatory.
-
-The **Analytics → Ask Vanna** page supports three providers: the deterministic demo adapter, local **Vanna 2.0 + Ollama + ChromaDB**, or a separately deployed Vanna gateway. The seeded development configuration selects the local Chroma-RAG provider. The left rail lists the current user's sessions, the center keeps every question and answer in chronological order, and the right diagnostics rail reports retrieval, governance, SQL execution, rows and duration. Starting a new question never replaces prior messages in the selected session.
-
-Install and start Ollama, then pull the configured model:
-
-```bash
-ollama pull qwen2.5-coder:7b
-ollama pull nomic-embed-text
-ollama serve
-```
-
-The normal `pip install -r requirements.txt` command installs Vanna 2.0 and its Ollama integration. Set the following values in `.env`:
-
-```dotenv
-OLLAMA_HOST=http://127.0.0.1:11434
-OLLAMA_MODEL=qwen2.5-coder:7b
-OLLAMA_EMBED_MODEL=nomic-embed-text
-OLLAMA_CONTEXT_WINDOW=8192
-OLLAMA_TEMPERATURE=0.1
-VANNA_DB_SCHEMA=main
-CHROMA_PERSIST_DIRECTORY=./data/chroma
-```
-
-For SQL Server, use `VANNA_DB_SCHEMA=dbo`. In **Admin → Orchestrator → 13. Vanna settings**, select **Vanna 2.0 + Ollama + ChromaDB (local)**, set Endpoint to `http://127.0.0.1:11434`, enable the provider and enable **Allow SQL execution**. Configure the number of retrieved memories and whether successful governed queries should become training examples in the same Admin page.
-
-The local provider synchronizes each AI domain into the Chroma collection named by `AIDomain.collection_name`. It stores model-derived DDL for allowlisted Django tables, schema documentation, business rules, training prompts, approved question/SQL pairs, and table/column/row policy descriptions. Relevant memories are retrieved for every question using local Ollama embeddings. Ollama then returns schema-constrained JSON containing SQL; it is no longer responsible for deciding whether to emit a native tool call. The application invokes Vanna's `RunSqlTool` deterministically.
-
-Before execution, GLIS blocks non-read-only statements, rejects tables outside the domain allowlist, applies table/column policies, masks configured columns and scopes `tickets_ticket` to the authenticated user's portal visibility. Successful unscoped question/SQL pairs can be written back to ChromaDB for later retrieval. Results, effective SQL, chart metadata and duration are written to Query Audits.
-
-The collection synchronizes automatically before a query. To prepare or refresh it explicitly after changing Admin training, run:
-
-```bash
-python manage.py sync_vanna_chroma
-# Or one domain only:
-python manage.py sync_vanna_chroma --domain service-operations
-```
-
-For a separately deployed gateway, select **Vanna 2.0 gateway**, configure its HTTPS endpoint and provide only the name of the environment variable holding its bearer token. No secret is stored in Django.
-
-The gateway receives the authenticated user identity and role, domain/collection, schema context, active business rules and current table/column/row policies. It returns a JSON object with `sql`, `summary`, `data`, `chart` and `followups`. GLIS rejects non-read-only SQL and statements referencing denied tables before recording the result. This follows Vanna 2.0's identity-first, permission-aware agent model and keeps the analytics service isolated from the web process.
-
-## API contracts
-
-JSON endpoints are implemented with Django views; Django REST Framework is not required.
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET / POST | `/api/v1/tickets/` | List permitted tickets / create ticket |
-| GET / PATCH | `/api/v1/tickets/{reference}/` | Read or update a permitted ticket |
-| POST | `/api/v1/tickets/{reference}/comments/` | Add public/internal comment |
-| GET | `/api/v1/forms/{form_key}/schema/` | Safe published form schema |
-| POST | `/api/v1/forms/{form_key}/validate/` | Server-side dynamic form validation |
-| POST | `/api/v1/ai/tickets/analyze/` | AI-provider analysis |
-| GET | `/api/v1/cms/site-settings/` | Public site/theme settings |
-| GET | `/analytics/sessions/` | Authenticated user's permitted analysis sessions |
-| GET | `/analytics/sessions/{uuid}/` | Chronological questions and results for one owned session |
-| POST | `/analytics/ask/` | Append a governed question to a new or existing session |
-| GET | `/analytics/queries/{id}/export/` | Export one owned query result as CSV |
-
-Typed dictionaries are defined in `apps/core/contracts.py`. All mutating browser calls require CSRF; API expansion should add versioned authentication, throttling, correlation IDs and a formal OpenAPI contract.
-
-## File upload security
-
-Current validation checks extension, per-field count and the `max_size_mb` value stored in each administrator-managed JSON document specification. Restricted downloads pass through `TicketAccessPolicy`.
-
-Production must also:
-
-- verify MIME type from file content, not only the browser header;
-- quarantine uploads until antivirus scanning completes;
-- generate random storage names and preserve the original name only as metadata;
-- store private media outside the public static tree;
-- disallow active content and dangerous archive types;
-- set download headers to prevent inline execution;
-- apply retention/deletion policies to identity and claim documents;
-- audit every restricted download.
-
-## Security baseline
-
-Implemented/configured:
-
-- CSRF middleware and tokens;
-- secure/HTTP-only session cookie in production;
-- secure CSRF cookie in production;
-- HTTPS redirect/HSTS controls;
-- Content Security Policy middleware;
-- escaped Django templates and allowlisted WYSIWYG HTML sanitization;
-- no arbitrary SQL execution from JSON;
-- no API keys in source or templates;
-- permission-filtered object querysets;
-- sensitive field masking and restricted attachment checks;
-- login and ticket audit events;
-- reduced external data in AI calls.
-
-Add reverse-proxy or application throttling for login, password reset and public submission. Adopt centralized logging, SIEM alerts, dependency scanning, backups, disaster-recovery testing and privacy impact assessment before handling real insurance data.
-
-## Task management and recurring task generation
-
-GLIS includes a ticket-integrated task workspace modeled on the CoreApp recurring-task pattern.
-
-- Administrators define **Recurring Tasks** in Django Admin with project/product/category, priority, owner, tagged users, first due date, recurrence frequency, and **create days before**.
-- Example: a monthly task due on the 1st with `create_days_before = 15` generates the next occurrence and its GLIS ticket 15 calendar days before the due date.
-- Each generated occurrence is stored as a separate **Task** and linked one-to-one with a normal GLIS **Ticket**. The task owner becomes the ticket owner/assignee while tagged users receive assignment and status-change notifications.
-- Generation is idempotent through a unique recurring-template/occurrence constraint, so repeated scheduler runs cannot duplicate the same occurrence.
-- The portal exposes `/portal/tasks/` for HTMX task CRUD and the ticket workspace has separate **Service tickets** and **Task tickets** tabs.
-- The migration seeds a Job Center Python schedule named **Recurring task generator** using handler `tasks.generate_due` and cron `5 0 * * *` (00:05 Asia/Muscat daily).
-- For diagnostics or a manual run, use `python manage.py generate_recurring_tasks`. An optional date can be supplied with `--as-of YYYY-MM-DD`.
-
-After pulling this feature, run:
-
-```bash
-python manage.py migrate
+~~~bash
 python manage.py check
-python manage.py test apps.tasks
-```
-
-## Testing and quality checks
-
-```bash
-python manage.py check
+python manage.py makemigrations --check
 python manage.py test
-python manage.py collectstatic --noinput
 python -m compileall apps glis services
-```
+~~~
 
-The 19 automated tests cover Guest isolation, support-group visibility, takeover, multi-assignment, IDOR prevention, permission-scoped export, notifications, safe-schema query removal, registry-based forms, public/login rendering, two-way language switching, the analytics template, Vanna provider dispatch, governed SQL enforcement, ChromaDB retrieval, structured Ollama SQL generation and deterministic Vanna `RunSqlTool` execution.
+TPA regression suite:
 
-Development uses Django's unhashed static-file storage so `runserver` does not
-depend on a generated manifest. Production (`DJANGO_DEBUG=False`) uses
-WhiteNoise's compressed manifest storage and therefore requires
-`python manage.py collectstatic --noinput` before the application starts.
+~~~bash
+python manage.py test apps.tpa
+~~~
 
-## Production checklist
+Task suite:
 
-- [ ] Replace the development secret and demo credentials.
-- [ ] Set `DEBUG=False`, trusted hosts/origins and correct HTTPS proxy settings.
-- [ ] Configure SQL Server with encryption and least privilege.
-- [ ] Run migrations and backup/restore rehearsal.
-- [ ] Configure private media storage, malware scanning and retention.
-- [ ] Configure Google/Microsoft callback URLs and domain restrictions.
-- [ ] Review every role/group permission and test with representative accounts.
-- [ ] Load approved bilingual content, legal links and brand assets.
-- [ ] Verify Arabic copy, RTL layout and translation completeness.
-- [ ] Configure email delivery for verification/reset/notifications.
-- [ ] Schedule `process_ticket_workflows`, add rate limiting and connect monitoring.
-- [ ] Complete AI/privacy approvals before enabling any real provider.
-- [ ] Run automated tests, static collection and a security review.
+~~~bash
+python manage.py test apps.tasks
+~~~
 
-## Known limitations and next steps
+Frontend build verification should confirm that the committed <code>static/css/output.css</code> contains daisyUI components and that authenticated templates do not reintroduce the old <code>tw:</code>/<code>d-</code> portal syntax.
 
-This delivery is a broad, working enterprise foundation. The following are intentionally extension points rather than simulated production integrations:
+---
 
-- persistent vector memory beyond the included Admin-managed training prompts, approved examples and query history;
-- real SQL claim/policy lookup handlers;
-- antivirus service and cloud object storage;
-- drag-and-drop form builder and visual workflow canvas;
-- scheduled large-report workers beyond the built-in permission-scoped CSV exports;
-- formal REST/OpenAPI layer and API tokens;
-- CMS translation-completeness scoring and one-click historical restore UI;
-- organization/workspace tenancy and SSO provisioning.
+# 24. Main routes
 
-Implement these behind the existing service, provider, registry and permission boundaries so the public site and portal remain stable.
+| Route | Purpose |
+|---|---|
+| <code>/</code> | public website |
+| <code>/portal/</code> | authenticated dashboard |
+| <code>/portal/tickets/</code> | service tickets |
+| <code>/portal/tasks/</code> | task management |
+| <code>/portal/tpa/</code> | TPA dashboard |
+| <code>/portal/tpa/policy-enrollment/</code> | initial policy enrollment |
+| <code>/portal/tpa/transactions/</code> | endorsement/TPA pipeline |
+| <code>/portal/tpa/inbound-emails/</code> | email intake |
+| <code>/portal/tpa/guide/</code> | in-application TPA guide |
+| <code>/documents/</code> | Mayan-backed Document Center |
+| <code>/knowledge/</code> | knowledge base |
+| <code>/analytics/</code> | governed Vanna analytics |
+| <code>/api/v1/</code> | application API |
+| <code>/job-center/</code> | Job Center API surfaces |
+| <code>/admin/</code> | Django administration |
+
+---
+
+# 25. Development rules
+
+When extending GLIS:
+
+1. Reuse existing apps/services before creating duplicate business concepts.
+2. Enforce authorization in views/services, not only templates.
+3. Keep operational portal UI on unprefixed Tailwind + daisyUI.
+4. Prefer daisyUI semantic components over custom one-off CSS.
+5. Use ApexCharts for new portal charts.
+6. Use HTMX for targeted server updates rather than introducing a SPA framework.
+7. Keep AI advisory/extractive; deterministic insurance rules stay in Python/services.
+8. Preserve source, corrected and final values when auditability matters.
+9. Never put executable SQL or secrets inside editable JSON/configuration.
+10. Register background Python jobs through Job Center’s safe registry.
+11. Keep English/Arabic and RTL behavior in every new user-facing module.
+12. Add regression tests for workflow/status/permission changes.
+
+---
+
+# 26. Current scope and extension points
+
+The repository currently provides strong foundations for service operations, medical TPA member administration, enterprise documents, tasks, analytics and AI-assisted intake.
+
+Some broader insurance workflows may be represented today as service categories/content/integration hooks rather than dedicated transactional applications. In particular, do not assume that a public “Claims Management” service description is the same as a complete claim-registration/adjudication/reinsurance/settlement engine.
+
+Future dedicated business modules should reuse the existing platform services for:
+
+- identity and RBAC;
+- tickets and SLA;
+- approvals;
+- notification/audit;
+- Mayan document metadata;
+- Job Center;
+- AI provider governance;
+- dynamic forms;
+- analytics governance.
+
+This avoids creating separate workflow engines for claims, policy servicing, legal, complaints or other insurance domains.
+
+---
+
+# 27. Additional documentation
+
+Important repository guides:
+
+- <code>docs/TPA_USER_GUIDE.md</code> — detailed TPA operating guide
+- <code>docs/TAILWIND_DAISYUI.md</code> — portal frontend/build rules
+- <code>apps/job_center/README.md</code> — scheduler architecture and job registration
+- <code>MAYAN_EDMS_INTEGRATION.md</code> — document integration
+- <code>DJANGO_CMS_MIGRATION.md</code> — CMS migration notes
+- <code>docs/DJANGO_6_1_COMPATIBILITY.md</code> — framework/dependency compatibility
+
+---
+
+# 28. Recommended production rollout sequence
+
+1. Configure production secrets and <code>DEBUG=False</code>.
+2. Configure SQL Server and validate migrations on staging.
+3. Configure HTTPS, trusted origins, proxy headers and secure cookies.
+4. Run <code>collectstatic</code>.
+5. Review RBAC, groups and policy-level TPA permissions.
+6. Configure email delivery and, if required, IMAP endorsement intake.
+7. Configure Ollama or an approved AI provider; validate sensitive-data rules.
+8. Configure Mayan EDMS if enterprise document governance is required.
+9. Validate Job Center leadership and scheduled jobs in the real deployment topology.
+10. Run all automated tests and business UAT.
+11. Test English, Arabic, RTL, light and dark themes.
+12. Test TPA enrollment → validation → approval → TPA processing → completion end to end.
+13. Test query chat, attachments, email intake and OCR evidence bundles.
+14. Validate backup, restore, monitoring and incident procedures.
+15. Remove/rotate development credentials and sample data before go-live.
+
+---
+
+## Project objective
+
+GLIS is intended to provide one consistent insurance-service platform rather than a collection of disconnected portals: a modern public site, a role-based operational workspace, shared workflow/SLA services, governed documents, AI-assisted intake, deterministic insurance processing, TPA member administration, recurring work management and governed analytics — all within the existing Django architecture.

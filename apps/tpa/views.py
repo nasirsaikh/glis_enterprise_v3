@@ -597,11 +597,20 @@ def transaction_detail(request, reference):
         "source_documents": tx.source_documents.all().order_by("-created_at"),
         "open_query": tx.queries.filter(
             status=TransactionQuery.Status.OPEN
-        ).prefetch_related(
+        ).select_related("ticket").prefetch_related(
             "messages__sender",
             "messages__ticket_comment",
             "messages__ticket_comment__attachments",
         ).first(),
+        "query_history": tx.queries.select_related(
+            "ticket",
+            "raised_by",
+            "resolved_by",
+        ).prefetch_related(
+            "messages__sender",
+            "messages__ticket_comment",
+            "messages__ticket_comment__attachments",
+        ),
         "query_raise_form": QueryRaiseForm(),
         "query_message_form": QueryMessageForm(),
         "can_start_tpa": (
@@ -918,7 +927,11 @@ def transaction_query_message(request, reference, query_id):
         raise PermissionDenied
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
     query = get_object_or_404(
-        tx.queries.select_related("transaction", "transaction__ticket"),
+        tx.queries.select_related(
+            "transaction",
+            "transaction__ticket",
+            "ticket",
+        ),
         pk=query_id,
         status=TransactionQuery.Status.OPEN,
     )
@@ -932,7 +945,7 @@ def transaction_query_message(request, reference, query_id):
             )
             for uploaded in form.cleaned_data.get("attachments") or []:
                 TicketAttachment.objects.create(
-                    ticket=tx.ticket,
+                    ticket=query.ticket,
                     comment=comment,
                     uploaded_by=request.user,
                     file=uploaded,

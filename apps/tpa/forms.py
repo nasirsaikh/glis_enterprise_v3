@@ -4,14 +4,23 @@ from django.utils import timezone
 
 from apps.ai.models import AIProviderConfig
 
-from .models import BenefitPlan, InboundEmail, Member, MemberTransaction, Policy, TPAOrganization
+from .models import (
+    BenefitPlan,
+    CardDispatch,
+    InboundEmail,
+    Member,
+    MemberTransaction,
+    Policy,
+    TPAOrganization,
+    TransactionQuery,
+)
 from .services.access import visible_policies
 
 
 class TransactionForm(forms.ModelForm):
     class Meta:
         model = MemberTransaction
-        fields = ["policy", "transaction_type", "effective_date", "remarks"]
+        fields = ["policy", "transaction_type", "effective_date", "refund_basis", "remarks"]
         widgets = {
             "effective_date": forms.DateInput(
                 attrs={"type": "date", "class": "input input-bordered input-sm w-full"}
@@ -44,6 +53,23 @@ class TransactionForm(forms.ModelForm):
                 if isinstance(field.widget, forms.Select)
                 else "input input-bordered input-sm w-full",
             )
+
+
+    def clean(self):
+        data = super().clean()
+        tx_type = data.get("transaction_type")
+        if tx_type in {
+            MemberTransaction.Type.MEMBER_DELETE,
+            MemberTransaction.Type.POLICY_CANCEL,
+        }:
+            if data.get("refund_basis") in {None, "", MemberTransaction.RefundBasis.NONE}:
+                self.add_error(
+                    "refund_basis",
+                    "Choose Full Refund or Pro-Rata Refund for this endorsement.",
+                )
+        else:
+            data["refund_basis"] = MemberTransaction.RefundBasis.NONE
+        return data
 
 
 class PolicyEnrollmentForm(forms.Form):
@@ -275,6 +301,7 @@ class MemberRowForm(forms.Form):
 
 class MemberLookupRowForm(forms.Form):
     tpa_member_id = forms.CharField(required=False, label="TPA Member ID")
+    card_number = forms.CharField(required=False, label="Card / Member Number")
     employee_id = forms.CharField(required=False, label="Employee No.")
     national_id = forms.CharField(required=False, label="Civil / National ID")
     passport_number = forms.CharField(required=False)
@@ -464,18 +491,18 @@ class SourceBundleUploadForm(forms.Form):
         widget=MultipleFileInput(
             attrs={
                 "multiple": True,
-                "accept": ".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp",
+                "accept": ".eml,.csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp",
                 "class": "file-input file-input-bordered file-input-sm w-full",
             }
         ),
-        help_text="Upload Excel/CSV, PDF, passport/ID images or multiple front/back evidence files.",
+        help_text="Upload EML, Excel/CSV, PDF, passport/ID images or multiple front/back evidence files.",
     )
 
     def clean_source_files(self):
         files = self.cleaned_data.get("source_files") or []
         if len(files) > 20:
             raise forms.ValidationError("Upload a maximum of 20 source files at one time.")
-        allowed = {".csv", ".xlsx", ".xls", ".pdf", ".png", ".jpg", ".jpeg", ".webp"}
+        allowed = {".eml", ".csv", ".xlsx", ".xls", ".pdf", ".png", ".jpg", ".jpeg", ".webp"}
         for uploaded in files:
             suffix = "." + uploaded.name.lower().rsplit(".", 1)[-1] if "." in uploaded.name else ""
             if suffix not in allowed:
@@ -487,20 +514,35 @@ class SourceBundleUploadForm(forms.Form):
 
 class QueryRaiseForm(forms.Form):
     subject = forms.CharField(max_length=255)
+    purpose = forms.ChoiceField(
+        choices=TransactionQuery.Purpose.choices,
+        initial=TransactionQuery.Purpose.TPA,
+    )
+    audience = forms.ChoiceField(
+        choices=TransactionQuery.Audience.choices,
+        initial=TransactionQuery.Audience.CLIENT_VISIBLE,
+    )
     message = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["subject"].widget.attrs.setdefault(
-            "class", "input input-bordered input-sm w-full"
-        )
-        self.fields["message"].widget.attrs.setdefault(
-            "class", "textarea textarea-bordered textarea-sm w-full"
-        )
+        for name, field in self.fields.items():
+            field.widget.attrs.setdefault(
+                "class",
+                "select select-bordered select-sm w-full"
+                if isinstance(field.widget, forms.Select)
+                else "textarea textarea-bordered textarea-sm w-full"
+                if isinstance(field.widget, forms.Textarea)
+                else "input input-bordered input-sm w-full",
+            )
 
 
 class QueryMessageForm(forms.Form):
     message = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}))
+    audience = forms.ChoiceField(
+        choices=TransactionQuery.Audience.choices,
+        required=False,
+    )
     attachments = MultipleFileField(
         required=False,
         widget=MultipleFileInput(
@@ -517,6 +559,57 @@ class QueryMessageForm(forms.Form):
         self.fields["message"].widget.attrs.setdefault(
             "class", "textarea textarea-bordered textarea-sm w-full"
         )
+        self.fields["audience"].widget.attrs.setdefault(
+            "class", "select select-bordered select-sm w-full"
+        )
+
+
+class BulkCardSelectionForm(forms.Form):
+    card_numbers = forms.CharField(
+        label="Paste Card Numbers",
+        widget=forms.Textarea(
+            attrs={
+                "rows": 5,
+                "class": "textarea textarea-bordered w-full",
+                "placeholder": "CARD-001\nCARD-002, CARD-003",
+            }
+        ),
+    )
+
+
+class CardDispatchForm(forms.ModelForm):
+    class Meta:
+        model = CardDispatch
+        fields = [
+            "method",
+            "status",
+            "courier_company",
+            "tracking_number",
+            "dispatched_at",
+            "expected_delivery_at",
+            "delivered_or_collected_at",
+            "recipient_name",
+            "recipient_organization",
+            "contact",
+            "remarks",
+        ]
+        widgets = {
+            "dispatched_at": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+            "expected_delivery_at": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+            "delivered_or_collected_at": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+            "remarks": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.Select):
+                css = "select select-bordered select-sm w-full"
+            elif isinstance(field.widget, forms.Textarea):
+                css = "textarea textarea-bordered textarea-sm w-full"
+            else:
+                css = "input input-bordered input-sm w-full"
+            field.widget.attrs.setdefault("class", css)
 
 
 class TPAProcessingRowForm(forms.Form):
@@ -526,6 +619,8 @@ class TPAProcessingRowForm(forms.Form):
         widget=forms.DateInput(attrs={"type": "date"}),
     )
     amount = forms.DecimalField(max_digits=14, decimal_places=3, required=True)
+    override_reason = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}))
+    comments = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

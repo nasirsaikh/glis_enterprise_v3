@@ -707,7 +707,10 @@ def mailbox_health():
             "messages_ignored": getattr(state, "messages_ignored", 0) if state else 0,
             "messages_failed": getattr(state, "messages_failed", 0) if state else 0,
             "scheduler_enabled": scheduler_enabled,
-            "scheduler_cron": getattr(scheduled_job, "cron_expression", "") if scheduled_job else "",
+            "scheduler_cron": (
+                str(getattr(settings, "TPA_MAIL_SYNC_CRON", "") or "").strip()
+                or (getattr(scheduled_job, "cron_expression", "") if scheduled_job else "")
+            ),
             "scheduler_last_run_at": getattr(scheduled_job, "last_run_at", None) if scheduled_job else None,
             "scheduler_last_status": getattr(scheduled_job, "last_status", "") if scheduled_job else "",
             "scheduler_next_run_at": getattr(scheduled_job, "next_run_at", None) if scheduled_job else None,

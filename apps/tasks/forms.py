@@ -25,15 +25,15 @@ class TaskForm(forms.ModelForm):
             "due_date",
         )
         widgets = {
-            "title": forms.TextInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}),
-            "description": forms.Textarea(attrs={"class": "tw:d-textarea tw:d-textarea-bordered tw:w-full", "rows": 4}),
-            "project": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
-            "product": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
-            "category": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
-            "priority": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
-            "owner": forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"}),
-            "tagged_users": forms.CheckboxSelectMultiple(attrs={"class": "tw:d-checkbox tw:d-checkbox-primary tw:d-checkbox-sm"}),
-            "due_date": forms.DateInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full", "type": "date"}),
+            "title": forms.TextInput(attrs={"class": "input input-bordered w-full"}),
+            "description": forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 4}),
+            "project": forms.Select(attrs={"class": "select select-bordered w-full"}),
+            "product": forms.Select(attrs={"class": "select select-bordered w-full"}),
+            "category": forms.Select(attrs={"class": "select select-bordered w-full"}),
+            "priority": forms.Select(attrs={"class": "select select-bordered w-full"}),
+            "owner": forms.Select(attrs={"class": "select select-bordered w-full"}),
+            "tagged_users": forms.CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary checkbox-sm"}),
+            "due_date": forms.DateInput(attrs={"class": "input input-bordered w-full", "type": "date"}),
         }
 
     def __init__(self, *args, user=None, **kwargs):
@@ -42,7 +42,7 @@ class TaskForm(forms.ModelForm):
         User = get_user_model()
         self.fields["owner"].queryset = User.objects.filter(is_active=True).order_by("first_name", "last_name", "email")
         self.fields["tagged_users"].queryset = self.fields["owner"].queryset
-        self.fields["status"].widget.attrs["class"] = "tw:d-select tw:d-select-bordered tw:w-full"
+        self.fields["status"].widget.attrs["class"] = "select select-bordered w-full"
 
         if user and user.is_authenticated:
             if user.is_staff or user.is_superuser:

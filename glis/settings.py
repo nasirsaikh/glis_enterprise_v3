@@ -440,6 +440,26 @@ OLLAMA_EMBED_MODEL = env("OLLAMA_EMBED_MODEL", default="nomic-embed-text")
 OLLAMA_CONTEXT_WINDOW = env.int("OLLAMA_CONTEXT_WINDOW", default=8192)
 OLLAMA_TEMPERATURE = env.float("OLLAMA_TEMPERATURE", default=0.1)
 
+# TPA automated mailbox intake. Microsoft Graph application credentials stay in
+# environment/secret management and are never stored in TPA database models.
+TPA_MAIL_PROVIDER = env("TPA_MAIL_PROVIDER", default="office365_graph")
+TPA_MAIL_ENABLED = env.bool("TPA_MAIL_ENABLED", default=True)
+TPA_MAIL_AUTO_PROCESS_AI = env.bool("TPA_MAIL_AUTO_PROCESS_AI", default=True)
+TPA_MAIL_MAX_MESSAGES_PER_RUN = env.int("TPA_MAIL_MAX_MESSAGES_PER_RUN", default=50)
+TPA_MAIL_SYNC_CRON = env("TPA_MAIL_SYNC_CRON", default="*/5 * * * *")
+TPA_MAIL_ACTOR_USERNAME = env("TPA_MAIL_ACTOR_USERNAME", default="")
+TPA_EMAIL_CLASSIFICATION_MIN_CONFIDENCE = env.float(
+    "TPA_EMAIL_CLASSIFICATION_MIN_CONFIDENCE",
+    default=0.75,
+)
+TPA_O365_TENANT_ID = env("TPA_O365_TENANT_ID", default="")
+TPA_O365_CLIENT_ID = env("TPA_O365_CLIENT_ID", default="")
+TPA_O365_CLIENT_SECRET = env("TPA_O365_CLIENT_SECRET", default="")
+TPA_O365_MAILBOX = env("TPA_O365_MAILBOX", default="")
+TPA_O365_FOLDER = env("TPA_O365_FOLDER", default="Inbox")
+TPA_O365_RECEIVED_AFTER = env("TPA_O365_RECEIVED_AFTER", default="")
+TPA_O365_TIMEOUT_SECONDS = env.int("TPA_O365_TIMEOUT_SECONDS", default=60)
+
 if db_engine == "mssql":
     default_schema = "dbo"
 elif db_engine == "postgresql":

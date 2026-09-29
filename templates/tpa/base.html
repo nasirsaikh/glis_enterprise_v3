@@ -1,0 +1,19 @@
+{% extends "base_portal.html" %}
+{% load static i18n %}
+
+{% block extra_head %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/tpa.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="tpa-app tw:mx-auto tw:w-full tw:max-w-[1800px]">
+  {% block tpa_content %}{% endblock %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <script src="{% static 'js/tpa.js' %}"></script>
+{% endblock %}

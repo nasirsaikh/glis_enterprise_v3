@@ -258,13 +258,13 @@
         ["dragenter", "dragover"].forEach((name) =>
           zone.addEventListener(name, (event) => {
             event.preventDefault();
-            zone.classList.add("is-dragging");
+            zone.classList.add("bg-primary/5");
           })
         );
         ["dragleave", "drop"].forEach((name) =>
           zone.addEventListener(name, (event) => {
             event.preventDefault();
-            zone.classList.remove("is-dragging");
+            zone.classList.remove("bg-primary/5");
           })
         );
 

@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% translate "Add Inbound Email" %}{% endblock %}
 {% block tpa_content %}
-<div class="tw:mx-auto tw:max-w-6xl tw:space-y-3">
+<div class="mx-auto max-w-6xl space-y-3">
   <header class="tpa-page-head">
     <div>
       <div class="tpa-kicker"><i class="bi bi-envelope-plus"></i>{% translate "TPA / AI Intake / Manual Capture" %}</div>
@@ -16,7 +16,7 @@
     <i class="bi bi-cpu"></i>
     <div>
       <strong>{% translate "Ollama extraction pipeline" %}</strong>
-      <div class="tw:text-xs tw:opacity-60">{% translate "Vision OCR reads scanned PDFs/images; a separate Ollama text model maps OCR/email text into strict member JSON. Business decisions remain deterministic." %}</div>
+      <div class="text-xs opacity-60">{% translate "Vision OCR reads scanned PDFs/images; a separate Ollama text model maps OCR/email text into strict member JSON. Business decisions remain deterministic." %}</div>
     </div>
   </div>
 
@@ -28,21 +28,21 @@
     </div>
     <div class="card-body">
       {% if form.non_field_errors %}<div role="alert" class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
-      <div class="tw:grid tw:gap-2.5 tw:md:grid-cols-2">
+      <div class="grid gap-2.5 md:grid-cols-2">
       {% for field in form %}
-        <fieldset class="fieldset {% if field.name == 'body_text' or field.name == 'attachments' or field.name == 'process_with_ai' %}tw:md:col-span-2{% endif %}">
+        <fieldset class="fieldset {% if field.name == 'body_text' or field.name == 'attachments' or field.name == 'process_with_ai' %}md:col-span-2{% endif %}">
           <legend class="fieldset-legend">{{ field.label }}</legend>
           {% if field.name == "process_with_ai" %}
-          <label class="label tw:justify-start tw:gap-2">{{ field }}<span>{% translate "Save and immediately process through the configured Ollama/AI provider" %}</span></label>
+          <label class="label justify-start gap-2">{{ field }}<span>{% translate "Save and immediately process through the configured Ollama/AI provider" %}</span></label>
           {% else %}
           {{ field }}
           {% endif %}
-          {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
-          {% for error in field.errors %}<p class="label tw:text-error">{{ error }}</p>{% endfor %}
+          {% if field.help_text %}<p class="label text-[10px] opacity-50">{{ field.help_text }}</p>{% endif %}
+          {% for error in field.errors %}<p class="label text-error">{{ error }}</p>{% endfor %}
         </fieldset>
       {% endfor %}
       </div>
-      <div class="tw:flex tw:justify-end tw:gap-2 tw:border-t tw:border-base-300 tw:pt-3">
+      <div class="flex justify-end gap-2 border-t border-base-300 pt-3">
         <a class="btn btn-ghost btn-sm" href="{% url 'tpa:inbound_email_list' %}">{% translate "Cancel" %}</a>
         <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-stars"></i>{% translate "Save Inbound Email" %}</button>
       </div>

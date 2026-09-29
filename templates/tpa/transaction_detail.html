@@ -162,7 +162,15 @@
               <td>{{ doc.extraction_method|default:"—" }}</td>
               <td><span class="badge {% if doc.processing_state == 'PROCESSED' %}badge-success{% elif doc.processing_state == 'REVIEW' or doc.processing_state == 'FAILED' %}badge-warning{% else %}badge-outline{% endif %}">{{ doc.get_processing_state_display }}</span></td>
               <td>{% if doc.extraction_confidence is not None %}{{ doc.extraction_confidence }}%{% else %}—{% endif %}</td>
-              <td class="max-w-md text-xs">{% if doc.processing_error %}<span class="text-warning">{{ doc.processing_error }}</span>{% else %}{{ doc.extracted_payload.bundle_members_created|default:doc.extracted_payload.rows_created|default:"Processed" }}{% endif %}</td>
+              <td class="max-w-md text-xs">
+                {% if doc.processing_error %}
+                  <span class="text-warning">{{ doc.processing_error }}</span>
+                {% elif doc.result_count is not None %}
+                  {{ doc.result_count }}
+                {% else %}
+                  {% translate "Processed" %}
+                {% endif %}
+              </td>
             </tr>
           {% endfor %}
           </tbody>

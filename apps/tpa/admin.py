@@ -199,6 +199,8 @@ class InboundEmailAdmin(admin.ModelAdmin):
         "mailbox",
         "classification",
         "processing_state",
+        "ai_provider_name",
+        "ai_model_name",
         "ai_confidence",
         "transaction",
         "created_by",
@@ -217,6 +219,8 @@ class InboundEmailAdmin(admin.ModelAdmin):
     readonly_fields = (
         "raw_ai_output",
         "ai_extracted_payload",
+        "ai_provider_name",
+        "ai_model_name",
         "ai_confidence",
         "classification_confidence",
         "processing_error",

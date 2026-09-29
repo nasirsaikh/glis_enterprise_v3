@@ -1,0 +1,35 @@
+{% load i18n %}
+<form id="manual-member-form"
+      class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3"
+      method="post"
+      action="{% url 'tpa:transaction_add_member' tx.reference %}"
+      hx-post="{% url 'tpa:transaction_add_member' tx.reference %}"
+      hx-target="#manual-member-form"
+      hx-swap="outerHTML">
+  {% csrf_token %}
+  {% if member_form.non_field_errors %}
+  <div class="alert alert-error md:col-span-2 xl:col-span-3">
+    <i class="bi bi-exclamation-triangle"></i>
+    <div>{% for error in member_form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  </div>
+  {% endif %}
+  {% for field in member_form %}
+  <fieldset class="fieldset" {% if field.name == "principal_reference" %}id="principal-reference-field"{% endif %}>
+    <legend class="fieldset-legend">{{ field.label }}</legend>
+    {{ field }}
+    {% if field.help_text %}<p class="label text-[10px] opacity-50">{{ field.help_text }}</p>{% endif %}
+    {% if field.errors %}
+    <div class="mt-1 text-xs text-error">
+      {% for error in field.errors %}<div><i class="bi bi-exclamation-circle me-1"></i>{{ error }}</div>{% endfor %}
+    </div>
+    {% endif %}
+  </fieldset>
+  {% endfor %}
+  <div class="md:col-span-2 xl:col-span-3 flex justify-end gap-2">
+    <button class="btn" type="button" onclick="document.getElementById('manual-member').close()">{% translate "Cancel" %}</button>
+    <button class="btn btn-primary" type="submit">
+      <span class="loading loading-spinner loading-xs htmx-indicator"></span>
+      {% translate "Add & Validate" %}
+    </button>
+  </div>
+</form>

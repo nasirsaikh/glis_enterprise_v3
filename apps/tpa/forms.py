@@ -1,6 +1,8 @@
 from django import forms
 from django.utils import timezone
 
+from apps.ai.models import AIProviderConfig
+
 from .models import InboundEmail, Member, MemberTransaction, Policy
 from .services.access import visible_policies
 
@@ -191,6 +193,12 @@ class MultipleFileField(forms.FileField):
 
 
 class InboundEmailForm(forms.ModelForm):
+    ai_provider = forms.ModelChoiceField(
+        queryset=AIProviderConfig.objects.none(),
+        required=False,
+        label="AI Provider",
+        help_text="Optional. Leave blank to use the highest-priority eligible email extraction provider.",
+    )
     policy = forms.ModelChoiceField(
         queryset=Policy.objects.none(),
         required=False,
@@ -250,6 +258,21 @@ class InboundEmailForm(forms.ModelForm):
             if user
             else Policy.objects.none()
         )
+        eligible_provider_ids = [
+            provider.pk
+            for provider in AIProviderConfig.objects.filter(
+                is_active=True,
+                allow_sensitive_data=True,
+            ).order_by("priority", "id")
+            if "email_extraction"
+            in {
+                str(item).strip().lower()
+                for item in (provider.task_capabilities or [])
+            }
+        ]
+        self.fields["ai_provider"].queryset = AIProviderConfig.objects.filter(
+            pk__in=eligible_provider_ids
+        ).order_by("priority", "id")
         if not self.is_bound:
             self.fields["received_at"].initial = timezone.localtime().replace(
                 second=0,

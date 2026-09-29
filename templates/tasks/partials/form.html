@@ -1,25 +1,25 @@
 {% load i18n %}
-<section class="tw:d-card tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-2xl" data-reveal>
-  <div class="tw:d-card-body tw:p-5 tw:sm:p-6">
-    <div class="tw:flex tw:items-start tw:justify-between tw:gap-4">
-      <div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-2">{% if task %}{% translate "Edit task" %}{% else %}{% translate "Create task" %}{% endif %}</span><h2 class="tw:d-card-title tw:text-xl">{% translate "Task details" %}</h2><p class="tw:mt-1 tw:text-sm tw:text-base-content/50">{% translate "The task is synchronized with a GLIS ticket. Tagged users receive task status notifications." %}</p></div>
-      <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-circle tw:d-btn-sm" type="button" onclick="document.getElementById('task-form-shell').innerHTML=''"><i class="bi bi-x-lg"></i></button>
+<section class="card border border-primary/20 bg-base-100 shadow-2xl" data-reveal>
+  <div class="card-body p-5 sm:p-6">
+    <div class="flex items-start justify-between gap-4">
+      <div><span class="badge badge-primary badge-soft mb-2">{% if task %}{% translate "Edit task" %}{% else %}{% translate "Create task" %}{% endif %}</span><h2 class="card-title text-xl">{% translate "Task details" %}</h2><p class="mt-1 text-sm text-base-content/50">{% translate "The task is synchronized with a GLIS ticket. Tagged users receive task status notifications." %}</p></div>
+      <button class="btn btn-ghost btn-circle btn-sm" type="button" onclick="document.getElementById('task-form-shell').innerHTML=''"><i class="bi bi-x-lg"></i></button>
     </div>
-    <form class="tw:mt-5" method="post" hx-post="{% if task %}{% url 'tasks:edit' task.pk %}{% else %}{% url 'tasks:create' %}{% endif %}" hx-target="#task-form-shell" hx-swap="innerHTML">
-      {% csrf_token %}{% if form.non_field_errors %}<div class="tw:d-alert tw:d-alert-error tw:mb-4">{{ form.non_field_errors }}</div>{% endif %}
-      <div class="tw:grid tw:gap-4 tw:md:grid-cols-12">
-        <label class="tw:d-fieldset tw:md:col-span-8"><span class="tw:d-fieldset-legend">{% translate "Title" %}</span>{{ form.title }}{{ form.title.errors }}</label>
-        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Due date" %}</span>{{ form.due_date }}{{ form.due_date.errors }}</label>
-        <label class="tw:d-fieldset tw:md:col-span-12"><span class="tw:d-fieldset-legend">{% translate "Description" %}</span>{{ form.description }}{{ form.description.errors }}</label>
-        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Project" %}</span>{{ form.project }}{{ form.project.errors }}</label>
-        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Product" %}</span>{{ form.product }}{{ form.product.errors }}</label>
-        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Category" %}</span>{{ form.category }}{{ form.category.errors }}</label>
-        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Owner" %}</span>{{ form.owner }}{{ form.owner.errors }}</label>
-        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Priority" %}</span>{{ form.priority }}{{ form.priority.errors }}</label>
-        <label class="tw:d-fieldset tw:md:col-span-4"><span class="tw:d-fieldset-legend">{% translate "Status" %}</span>{{ form.status }}{{ form.status.errors }}</label>
-        <fieldset class="tw:d-fieldset tw:md:col-span-12"><legend class="tw:d-fieldset-legend">{% translate "Tag / notify users" %}</legend><input class="tw:d-input tw:d-input-bordered tw:mb-2 tw:w-full" type="search" placeholder="{% translate 'Search users' %}" data-multiselect-search="task-tagged-users"><div id="task-tagged-users" class="tw:max-h-56 tw:overflow-y-auto tw:rounded-box tw:border tw:border-base-300 tw:bg-base-200/35 tw:p-2">{% for checkbox in form.tagged_users %}<label class="tw:flex tw:cursor-pointer tw:items-center tw:gap-3 tw:rounded-xl tw:px-3 tw:py-2 tw:hover:bg-base-100" data-multiselect-option data-search-text="{{ checkbox.choice_label|lower }}">{{ checkbox.tag }}<span class="tw:text-sm">{{ checkbox.choice_label }}</span></label>{% endfor %}</div>{{ form.tagged_users.errors }}<span class="tw:d-label tw:text-xs tw:text-base-content/45">{% translate "Tagged users are notified when the task ticket status changes." %}</span></fieldset>
+    <form class="mt-5" method="post" hx-post="{% if task %}{% url 'tasks:edit' task.pk %}{% else %}{% url 'tasks:create' %}{% endif %}" hx-target="#task-form-shell" hx-swap="innerHTML">
+      {% csrf_token %}{% if form.non_field_errors %}<div class="alert alert-error mb-4">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="grid gap-4 md:grid-cols-12">
+        <label class="fieldset md:col-span-8"><span class="fieldset-legend">{% translate "Title" %}</span>{{ form.title }}{{ form.title.errors }}</label>
+        <label class="fieldset md:col-span-4"><span class="fieldset-legend">{% translate "Due date" %}</span>{{ form.due_date }}{{ form.due_date.errors }}</label>
+        <label class="fieldset md:col-span-12"><span class="fieldset-legend">{% translate "Description" %}</span>{{ form.description }}{{ form.description.errors }}</label>
+        <label class="fieldset md:col-span-4"><span class="fieldset-legend">{% translate "Project" %}</span>{{ form.project }}{{ form.project.errors }}</label>
+        <label class="fieldset md:col-span-4"><span class="fieldset-legend">{% translate "Product" %}</span>{{ form.product }}{{ form.product.errors }}</label>
+        <label class="fieldset md:col-span-4"><span class="fieldset-legend">{% translate "Category" %}</span>{{ form.category }}{{ form.category.errors }}</label>
+        <label class="fieldset md:col-span-4"><span class="fieldset-legend">{% translate "Owner" %}</span>{{ form.owner }}{{ form.owner.errors }}</label>
+        <label class="fieldset md:col-span-4"><span class="fieldset-legend">{% translate "Priority" %}</span>{{ form.priority }}{{ form.priority.errors }}</label>
+        <label class="fieldset md:col-span-4"><span class="fieldset-legend">{% translate "Status" %}</span>{{ form.status }}{{ form.status.errors }}</label>
+        <fieldset class="fieldset md:col-span-12"><legend class="fieldset-legend">{% translate "Tag / notify users" %}</legend><input class="input input-bordered mb-2 w-full" type="search" placeholder="{% translate 'Search users' %}" data-multiselect-search="task-tagged-users"><div id="task-tagged-users" class="max-h-56 overflow-y-auto rounded-box border border-base-300 bg-base-200/35 p-2">{% for checkbox in form.tagged_users %}<label class="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 hover:bg-base-100" data-multiselect-option data-search-text="{{ checkbox.choice_label|lower }}">{{ checkbox.tag }}<span class="text-sm">{{ checkbox.choice_label }}</span></label>{% endfor %}</div>{{ form.tagged_users.errors }}<span class="label text-xs text-base-content/45">{% translate "Tagged users are notified when the task ticket status changes." %}</span></fieldset>
       </div>
-      <div class="tw:mt-5 tw:flex tw:justify-end"><button class="tw:d-btn tw:d-btn-primary tw:rounded-full" type="submit"><i class="bi bi-check2"></i>{% if task %}{% translate "Save changes" %}{% else %}{% translate "Create task" %}{% endif %}</button></div>
+      <div class="mt-5 flex justify-end"><button class="btn btn-primary rounded-full" type="submit"><i class="bi bi-check2"></i>{% if task %}{% translate "Save changes" %}{% else %}{% translate "Create task" %}{% endif %}</button></div>
     </form>
   </div>
 </section>

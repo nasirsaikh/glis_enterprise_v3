@@ -12,7 +12,7 @@
           <div class="glis-nav-panel tw:d-dropdown-content tw:z-[90] tw:mt-2 tw:w-[min(32rem,95vw)] tw:rounded-2xl tw:bg-base-100 tw:p-4 tw:shadow-2xl tw:border tw:border-base-200">
             <div class="tw:grid tw:grid-cols-2 tw:gap-2">
               {% for subchild in child.children %}
-              <a href="{{ subchild.get_absolute_url }}" class="tw:flex tw:flex-col tw:gap-1 tw:p-3 tw:rounded-xl tw:border tw:border-base-200 tw:bg-base-100 hover:tw:border-primary hover:tw:bg-primary/5 tw:transition-all {% if subchild.selected %}tw:border-primary tw:bg-primary/10{% endif %}">
+              <a href="{{ subchild.get_absolute_url }}" class="tw:flex tw:flex-col tw:gap-1 tw:p-3 tw:rounded-xl tw:border tw:border-base-200 tw:bg-base-100 tw:hover:border-primary tw:hover:bg-primary/5 tw:transition-all {% if subchild.selected %}tw:border-primary tw:bg-primary/10{% endif %}">
                 <div class="tw:flex tw:items-center tw:justify-between">
                   <span class="tw:grid tw:h-8 tw:w-8 tw:place-items-center tw:rounded-lg tw:bg-primary/10 tw:text-primary">
                     <i class="bi bi-grid-fill tw:text-xs"></i>

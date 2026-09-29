@@ -1,6 +1,6 @@
 from django.db.models import Q
 
-from ..models import MemberTransaction, Policy, PolicyAccess
+from ..models import MemberTransaction, Policy, PolicyAccess, TransactionQuery
 
 
 TPA_ENTRY_PERMISSIONS = (
@@ -103,4 +103,61 @@ def visible_transactions(user):
             policy__access_entries__active=True,
             policy__access_entries__can_view=True,
         )
+    ).distinct()
+
+
+
+def _is_internal_tpa_user(user, tx):
+    return (
+        user.is_superuser
+        or user.has_perm("tpa.configure_tpa")
+        or can_approve_tpa_transaction(user, tx)
+        or can_process_tpa_transaction(user, tx)
+    )
+
+
+def can_view_transaction_query(user, query):
+    if not user or not user.is_authenticated:
+        return False
+    tx = query.transaction
+    if _is_internal_tpa_user(user, tx):
+        return True
+    if query.audience == TransactionQuery.Audience.INSURER_TPA_INTERNAL:
+        return False
+    if query.audience == TransactionQuery.Audience.SELECTED_PARTICIPANTS:
+        return query.selected_participants.filter(pk=user.pk).exists()
+    return (
+        user.pk == tx.requester_id
+        or query.selected_participants.filter(pk=user.pk).exists()
+    )
+
+
+def can_view_query_message(user, message):
+    query = message.query
+    if not can_view_transaction_query(user, query):
+        return False
+    tx = query.transaction
+    if _is_internal_tpa_user(user, tx):
+        return True
+    if message.audience == TransactionQuery.Audience.INSURER_TPA_INTERNAL:
+        return bool(message.shared_with_client_at)
+    if message.audience == TransactionQuery.Audience.SELECTED_PARTICIPANTS:
+        return query.selected_participants.filter(pk=user.pk).exists()
+    return True
+
+
+def visible_transaction_queries(user, tx):
+    qs = tx.queries.select_related(
+        "ticket", "raised_by", "resolved_by", "transaction"
+    ).prefetch_related(
+        "selected_participants",
+        "messages__sender",
+        "messages__ticket_comment",
+        "messages__ticket_comment__attachments",
+    )
+    if _is_internal_tpa_user(user, tx):
+        return qs
+    return qs.filter(
+        Q(audience=TransactionQuery.Audience.CLIENT_VISIBLE)
+        | Q(selected_participants=user)
     ).distinct()

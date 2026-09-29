@@ -39,7 +39,7 @@
         <div class="text-right text-xs">
           <div><span class="opacity-50">{% translate "Mailbox" %}:</span> <strong>{{ mailbox_health.mailbox|default:"—" }}</strong></div>
           <div><span class="opacity-50">{% translate "Folder" %}:</span> {{ mailbox_health.folder|default:"Inbox" }}</div>
-          <div><span class="opacity-50">{% translate "Schedule" %}:</span> <span class="font-mono">{{ mailbox_health.scheduler_cron|default:"—" }}</span></div>
+          <div><span class="opacity-50">{% translate "Schedule" %}:</span> <span class="font-semibold">{{ mailbox_health.scheduler_cron|default:"—" }}</span></div>
           <div><span class="opacity-50">{% translate "Next run" %}:</span> {{ mailbox_health.scheduler_next_run_at|date:"d-M-Y H:i"|default:"—" }}</div>
           {% if mailbox_health.scheduler_last_status %}<div><span class="opacity-50">{% translate "Last job" %}:</span> {{ mailbox_health.scheduler_last_status }}</div>{% endif %}
         </div>
@@ -64,7 +64,7 @@
 
   <section class="card border border-base-300 bg-base-100 shadow-sm">
     <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
-      <div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Mailbox / audit" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "INBOUND EMAIL PROCESSING QUEUE" %}</h2></div>
+      <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Mailbox / audit" %}</div><h2 class="text-lg font-black ">{% translate "INBOUND EMAIL PROCESSING QUEUE" %}</h2></div>
       <span class="badge badge-info badge-soft"><i class="bi bi-shield-check"></i>{% translate "AUTOMATED" %}</span>
     </div>
     <div class="overflow-x-auto">
@@ -83,7 +83,7 @@
         <tbody>
         {% for email in emails %}
           <tr>
-            <td class="font-mono text-[10px]">{{ email.received_at|date:"d-M-Y H:i" }}</td>
+            <td class="font-semibold text-[10px]">{{ email.received_at|date:"d-M-Y H:i" }}</td>
             <td><div class="font-semibold">{{ email.sender_name|default:email.sender }}</div><div class="text-[10px] opacity-50">{{ email.sender }}</div></td>
             <td><a class="link link-primary font-semibold" href="{% url 'tpa:inbound_email_detail' email.pk %}">{{ email.subject|default:"(No subject)" }}</a><div class="text-[10px] opacity-45">{{ email.mailbox|default:email.recipient }}</div></td>
             <td><span class="badge badge-outline badge-sm">{{ email.classification|default:"—" }}</span></td>
@@ -92,8 +92,8 @@
                 {{ email.get_processing_state_display }}
               </span>
             </td>
-            <td class="font-mono">{% if email.classification_confidence is not None %}{{ email.classification_confidence }}%{% elif email.ai_confidence is not None %}{{ email.ai_confidence }}%{% else %}—{% endif %}</td>
-            <td>{% if email.transaction %}<a class="link font-mono text-[10px]" href="{% url 'tpa:transaction_detail' email.transaction.reference %}">{{ email.transaction.reference }}</a>{% else %}—{% endif %}</td>
+            <td class="font-semibold">{% if email.classification_confidence is not None %}{{ email.classification_confidence }}%{% elif email.ai_confidence is not None %}{{ email.ai_confidence }}%{% else %}—{% endif %}</td>
+            <td>{% if email.transaction %}<a class="link font-semibold text-[10px]" href="{% url 'tpa:transaction_detail' email.transaction.reference %}">{{ email.transaction.reference }}</a>{% else %}—{% endif %}</td>
           </tr>
         {% empty %}
           <tr><td colspan="7" class="py-8 text-center opacity-45">{% translate "No inbound emails are available yet." %}</td></tr>

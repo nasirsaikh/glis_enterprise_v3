@@ -354,12 +354,14 @@
           <details class="collapse collapse-arrow border border-base-300">
             <summary class="collapse-title text-sm font-bold">{% translate "Open New Discussion / Query" %}</summary>
             <div class="collapse-content">
-              <form class="grid gap-2 md:grid-cols-2" method="post" action="{% url 'tpa:transaction_raise_query' tx.reference %}">
+              <form class="grid gap-2 md:grid-cols-2" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_raise_query' tx.reference %}">
                 {% csrf_token %}
                 <fieldset class="fieldset"><legend class="fieldset-legend">{% translate "Subject" %}</legend>{{ query_raise_form.subject }}</fieldset>
                 <fieldset class="fieldset"><legend class="fieldset-legend">{% translate "Purpose" %}</legend>{{ query_raise_form.purpose }}</fieldset>
                 <fieldset class="fieldset"><legend class="fieldset-legend">{% translate "Audience" %}</legend>{{ query_raise_form.audience }}</fieldset>
+                <fieldset class="fieldset"><legend class="fieldset-legend">{% translate "Selected participants" %}</legend>{{ query_raise_form.selected_participants }}{{ query_raise_form.selected_participants.errors }}</fieldset>
                 <fieldset class="fieldset md:col-span-2"><legend class="fieldset-legend">{% translate "Message" %}</legend>{{ query_raise_form.message }}</fieldset>
+                <fieldset class="fieldset md:col-span-2"><legend class="fieldset-legend">{% translate "Attachments" %}</legend>{{ query_raise_form.attachments }}</fieldset>
                 <div class="md:col-span-2 flex justify-end"><button class="btn btn-warning btn-sm">{% translate "Open Conversation" %}</button></div>
               </form>
             </div>

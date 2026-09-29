@@ -294,6 +294,71 @@ class TPAAutomationTests(TestCase):
         self.assertTrue(allowed)
         self.assertFalse(blocked)
 
+    def test_organization_wide_authority_supports_insurer_and_tpa(self):
+        insurer_authority = TPAEmailAuthority.objects.create(
+            email_address="insurer@example.com",
+            organization=self.insurer,
+            policy=None,
+            permitted_transaction_types=[MemberTransaction.Type.MEMBER_ADD],
+            active=True,
+        )
+        tpa_authority = TPAEmailAuthority.objects.create(
+            email_address="processor@example.com",
+            organization=self.tpa,
+            policy=None,
+            permitted_transaction_types=[MemberTransaction.Type.MEMBER_DELETE],
+            active=True,
+        )
+
+        self.assertEqual(
+            resolve_email_authority(
+                "insurer@example.com",
+                self.policy,
+                MemberTransaction.Type.MEMBER_ADD,
+                as_of=date(2026, 9, 29),
+            ).pk,
+            insurer_authority.pk,
+        )
+        self.assertEqual(
+            resolve_email_authority(
+                "processor@example.com",
+                self.policy,
+                MemberTransaction.Type.MEMBER_DELETE,
+                as_of=date(2026, 9, 29),
+            ).pk,
+            tpa_authority.pk,
+        )
+
+    def test_selected_participant_query_is_not_visible_to_unselected_requester(self):
+        User = get_user_model()
+        selected = User.objects.create_user(
+            username="selected-reviewer",
+            email="selected@example.com",
+            password="x",
+        )
+        PolicyAccess.objects.create(
+            organization=self.insurer,
+            policy=self.policy,
+            user=selected,
+            can_view=True,
+            active=True,
+        )
+        tx = self._transaction(status=MemberTransaction.Status.TPA_IN_PROGRESS)
+        query = raise_transaction_query(
+            tx,
+            self.internal,
+            "Restricted review",
+            "Selected participant only.",
+            purpose=TransactionQuery.Purpose.TPA,
+            audience=TransactionQuery.Audience.SELECTED_PARTICIPANTS,
+            selected_participant_ids=[selected.pk],
+        )
+
+        self.assertFalse(can_view_transaction_query(self.requester, query))
+        self.assertTrue(can_view_transaction_query(selected, query))
+        self.assertFalse(can_view_query_message(self.requester, query.messages.get()))
+        self.assertTrue(can_view_query_message(selected, query.messages.get()))
+
     def test_manual_member_form_rejects_active_and_transaction_duplicates(self):
         self._active_enrollment("ACTIVE")
         tx = self._transaction()

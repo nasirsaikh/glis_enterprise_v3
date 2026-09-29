@@ -59,26 +59,26 @@ class DynamicTicketForm(forms.Form):
             if source.get("registry"):
                 choices = DataSourceRegistry.choices(source["registry"], user=self.user)
             if control == "multiselect":
-                return forms.MultipleChoiceField(choices=choices, widget=forms.CheckboxSelectMultiple(attrs={"class": "tw:d-checkbox tw:d-checkbox-primary"}), **common)
-            widget = forms.RadioSelect(attrs={"class": "tw:d-radio tw:d-radio-primary"}) if control == "radio" else forms.Select(attrs={"class": "tw:d-select tw:d-select-bordered tw:w-full"})
+                return forms.MultipleChoiceField(choices=choices, widget=forms.CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}), **common)
+            widget = forms.RadioSelect(attrs={"class": "radio radio-primary"}) if control == "radio" else forms.Select(attrs={"class": "select select-bordered w-full"})
             return forms.ChoiceField(choices=choices, widget=widget, **common)
         if control in {"checkbox", "switch"}:
-            return forms.BooleanField(widget=forms.CheckboxInput(attrs={"class": "tw:d-toggle tw:d-toggle-primary" if control == "switch" else "tw:d-checkbox tw:d-checkbox-primary", "role": "switch" if control == "switch" else "checkbox"}), **common)
+            return forms.BooleanField(widget=forms.CheckboxInput(attrs={"class": "toggle toggle-primary" if control == "switch" else "checkbox checkbox-primary", "role": "switch" if control == "switch" else "checkbox"}), **common)
         if control == "file":
-            return forms.FileField(widget=forms.FileInput(attrs={"class": "tw:d-file-input tw:d-file-input-bordered tw:w-full"}), **common)
+            return forms.FileField(widget=forms.FileInput(attrs={"class": "file-input file-input-bordered w-full"}), **common)
         if control in {"number", "currency", "rating"}:
-            return forms.DecimalField(min_value=validation.get("min"), max_value=validation.get("max"), decimal_places=2, widget=CONTROL_WIDGETS[control](attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}), **common)
+            return forms.DecimalField(min_value=validation.get("min"), max_value=validation.get("max"), decimal_places=2, widget=CONTROL_WIDGETS[control](attrs={"class": "input input-bordered w-full"}), **common)
         if control == "date":
-            field = forms.DateField(widget=forms.DateInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full", "type": "date"}), **common)
+            field = forms.DateField(widget=forms.DateInput(attrs={"class": "input input-bordered w-full", "type": "date"}), **common)
         elif control == "datetime":
-            field = forms.DateTimeField(widget=forms.DateTimeInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full", "type": "datetime-local"}), **common)
+            field = forms.DateTimeField(widget=forms.DateTimeInput(attrs={"class": "input input-bordered w-full", "type": "datetime-local"}), **common)
         elif control == "email":
-            field = forms.EmailField(max_length=validation.get("max_length"), widget=forms.EmailInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}), **common)
+            field = forms.EmailField(max_length=validation.get("max_length"), widget=forms.EmailInput(attrs={"class": "input input-bordered w-full"}), **common)
         elif control == "url":
-            field = forms.URLField(widget=forms.URLInput(attrs={"class": "tw:d-input tw:d-input-bordered tw:w-full"}), **common)
+            field = forms.URLField(widget=forms.URLInput(attrs={"class": "input input-bordered w-full"}), **common)
         else:
             widget_cls = CONTROL_WIDGETS.get(control, forms.TextInput)
-            attrs = {"class": "tw:d-textarea tw:d-textarea-bordered tw:w-full" if control in {"textarea", "richtext"} else "tw:d-input tw:d-input-bordered tw:w-full", "placeholder": localized(spec, "placeholder")}
+            attrs = {"class": "textarea textarea-bordered w-full" if control in {"textarea", "richtext"} else "input input-bordered w-full", "placeholder": localized(spec, "placeholder")}
             if control in {"textarea", "richtext"}:
                 attrs["rows"] = 5
             if control == "richtext":

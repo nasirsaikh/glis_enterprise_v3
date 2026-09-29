@@ -361,7 +361,38 @@ def inbound_email_detail(request, email_id):
     return render(
         request,
         "tpa/inbound_email_detail.html",
-        {"email": email},
+        {
+            "email": email,
+            "can_view_ai_source": (
+                request.user.is_superuser
+                or request.user.has_perm("tpa.view_ai_source_data")
+                or request.user.has_perm("tpa.configure_tpa")
+            ),
+        },
+    )
+
+
+@login_required
+def inbound_email_attachment(request, email_id, attachment_id):
+    _require_tpa_access(request.user)
+    visible_tx_ids = visible_transactions(request.user).values_list("pk", flat=True)
+    email_qs = InboundEmail.objects.all()
+    if not (
+        request.user.is_superuser
+        or request.user.has_perm("tpa.configure_tpa")
+    ):
+        email_qs = email_qs.filter(
+            models.Q(created_by=request.user)
+            | models.Q(transaction_id__in=visible_tx_ids)
+        )
+    email = get_object_or_404(email_qs, pk=email_id)
+    attachment = get_object_or_404(email.attachments, pk=attachment_id)
+    attachment.file.open("rb")
+    return FileResponse(
+        attachment.file,
+        as_attachment=True,
+        filename=attachment.original_name,
+        content_type=attachment.content_type or "application/octet-stream",
     )
 
 

@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
@@ -22,6 +23,7 @@ from .models import (
 from .forms import MemberRowForm, TransactionForm
 from .services.access import can_access_tpa, can_create_tpa_transaction
 from .services.ai_intake import process_inbound_email
+from .services.document_intake import create_source_documents, process_source_bundle
 from .services.pricing import calculate_member_premium
 from .services.workflow import (
     approve_transaction,
@@ -131,6 +133,29 @@ class TPACoreTests(TestCase):
         self.assertNotIn(MemberTransaction.Type.NEW_POLICY_ENROLLMENT, values)
         self.assertIn(MemberTransaction.Type.MEMBER_ADD, values)
         self.assertIn(self.policy, form.fields["policy"].queryset)
+
+    def test_structured_source_bundle_does_not_require_ai(self):
+        tx = self._transaction()
+        upload = SimpleUploadedFile(
+            "members.csv",
+            (
+                "employee_id,first_name,last_name,date_of_birth,gender,relationship,plan_code,national_id\n"
+                "CSV-100,CSV,Member,1992-04-10,Male,PRINCIPAL,GOLD,CSV-CID-100\n"
+            ).encode("utf-8"),
+            content_type="text/csv",
+        )
+
+        documents = create_source_documents(tx, [upload], actor=self.user)
+        actions = process_source_bundle(tx, documents, actor=self.user)
+
+        tx.refresh_from_db()
+        documents[0].refresh_from_db()
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(actions[0].corrected_data["employee_id"], "CSV-100")
+        self.assertEqual(documents[0].extraction_method, "STRUCTURED_IMPORT")
+        self.assertTrue(documents[0].processed)
+        self.assertEqual(documents[0].processing_state, "PROCESSED")
+        self.assertEqual(tx.ai_extraction_status, "EXTRACTED")
 
     def test_validation_with_no_member_rows_requires_information(self):
         tx = self._transaction(status=MemberTransaction.Status.PENDING_VALIDATION)

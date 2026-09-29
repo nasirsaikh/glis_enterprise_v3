@@ -14,7 +14,7 @@ class TransactionForm(forms.ModelForm):
         fields = ["policy", "transaction_type", "effective_date", "remarks"]
         widgets = {
             "effective_date": forms.DateInput(
-                attrs={"type": "date", "class": "tw:d-input tw:d-input-bordered tw:w-full"}
+                attrs={"type": "date", "class": "input input-bordered input-sm tw:w-full"}
             )
         }
 
@@ -40,16 +40,16 @@ class TransactionForm(forms.ModelForm):
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
-                "tw:d-select tw:d-select-bordered tw:w-full"
+                "select select-bordered select-sm tw:w-full"
                 if isinstance(field.widget, forms.Select)
-                else "tw:d-input tw:d-input-bordered tw:w-full",
+                else "input input-bordered input-sm tw:w-full",
             )
 
 
 class PolicyEnrollmentForm(forms.Form):
     sponsor = forms.ModelChoiceField(
         queryset=TPAOrganization.objects.none(),
-        label="Corporate / Sponsor",
+        label="Individual / Corporate Sponsor",
     )
     insurance_company = forms.ModelChoiceField(
         queryset=TPAOrganization.objects.none(),
@@ -102,11 +102,11 @@ class PolicyEnrollmentForm(forms.Form):
         ).order_by("name_en")
         for field in self.fields.values():
             if isinstance(field.widget, forms.Select):
-                css = "tw:d-select tw:d-select-bordered tw:w-full"
+                css = "select select-bordered select-sm tw:w-full"
             elif isinstance(field.widget, forms.CheckboxInput):
-                css = "tw:d-checkbox tw:d-checkbox-primary"
+                css = "checkbox checkbox-primary checkbox-sm"
             else:
-                css = "tw:d-input tw:d-input-bordered tw:w-full"
+                css = "input input-bordered input-sm tw:w-full"
             field.widget.attrs.setdefault("class", css)
 
     def clean_policy_number(self):
@@ -141,9 +141,9 @@ class BenefitPlanSetupForm(forms.ModelForm):
         self.policy = policy
         for field in self.fields.values():
             if isinstance(field.widget, forms.CheckboxInput):
-                css = "tw:d-checkbox tw:d-checkbox-primary"
+                css = "checkbox checkbox-primary checkbox-sm"
             else:
-                css = "tw:d-input tw:d-input-bordered tw:w-full"
+                css = "input input-bordered input-sm tw:w-full"
             field.widget.attrs.setdefault("class", css)
 
     def clean_code(self):
@@ -240,9 +240,9 @@ class MemberRowForm(forms.Form):
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
-                "tw:d-select tw:d-select-bordered tw:w-full"
+                "select select-bordered select-sm tw:w-full"
                 if isinstance(field.widget, forms.Select)
-                else "tw:d-input tw:d-input-bordered tw:w-full",
+                else "input input-bordered input-sm tw:w-full",
             )
 
     def clean(self):
@@ -282,7 +282,7 @@ class MemberLookupRowForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget.attrs.setdefault("class", "tw:d-input tw:d-input-bordered tw:w-full")
+            field.widget.attrs.setdefault("class", "input input-bordered input-sm tw:w-full")
 
     def clean(self):
         data = super().clean()
@@ -298,7 +298,7 @@ class MemberUploadForm(forms.Form):
         widget=forms.ClearableFileInput(
             attrs={
                 "accept": ".csv,.xlsx",
-                "class": "tw:file-input tw:file-input-bordered tw:w-full",
+                "class": "file-input file-input-bordered file-input-sm tw:w-full",
             }
         ),
     )
@@ -419,15 +419,15 @@ class InboundEmailForm(forms.ModelForm):
         )
         for field in self.fields.values():
             if isinstance(field.widget, forms.Textarea):
-                css = "tw:d-textarea tw:d-textarea-bordered tw:w-full"
+                css = "textarea textarea-bordered textarea-sm tw:w-full"
             elif isinstance(field.widget, forms.Select):
-                css = "tw:d-select tw:d-select-bordered tw:w-full"
+                css = "select select-bordered select-sm tw:w-full"
             elif isinstance(field.widget, forms.ClearableFileInput):
-                css = "tw:file-input tw:file-input-bordered tw:w-full"
+                css = "file-input file-input-bordered file-input-sm tw:w-full"
             elif isinstance(field.widget, forms.CheckboxInput):
-                css = "tw:d-checkbox tw:d-checkbox-primary"
+                css = "checkbox checkbox-primary checkbox-sm"
             else:
-                css = "tw:d-input tw:d-input-bordered tw:w-full"
+                css = "input input-bordered input-sm tw:w-full"
             field.widget.attrs.setdefault("class", css)
 
     def clean_attachments(self):
@@ -435,6 +435,7 @@ class InboundEmailForm(forms.ModelForm):
         allowed = {
             ".csv",
             ".xlsx",
+            ".xls",
             ".jpg",
             ".jpeg",
             ".png",
@@ -464,7 +465,7 @@ class SourceBundleUploadForm(forms.Form):
             attrs={
                 "multiple": True,
                 "accept": ".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp",
-                "class": "tw:file-input tw:file-input-bordered tw:w-full",
+                "class": "file-input file-input-bordered file-input-sm tw:w-full",
             }
         ),
         help_text="Upload Excel/CSV, PDF, passport/ID images or multiple front/back evidence files.",
@@ -491,10 +492,10 @@ class QueryRaiseForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["subject"].widget.attrs.setdefault(
-            "class", "tw:d-input tw:d-input-bordered tw:w-full"
+            "class", "input input-bordered input-sm tw:w-full"
         )
         self.fields["message"].widget.attrs.setdefault(
-            "class", "tw:d-textarea tw:d-textarea-bordered tw:w-full"
+            "class", "textarea textarea-bordered textarea-sm tw:w-full"
         )
 
 
@@ -506,7 +507,7 @@ class QueryMessageForm(forms.Form):
             attrs={
                 "multiple": True,
                 "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx",
-                "class": "tw:file-input tw:file-input-bordered tw:w-full",
+                "class": "file-input file-input-bordered file-input-sm tw:w-full",
             }
         ),
     )
@@ -514,7 +515,7 @@ class QueryMessageForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["message"].widget.attrs.setdefault(
-            "class", "tw:d-textarea tw:d-textarea-bordered tw:w-full"
+            "class", "textarea textarea-bordered textarea-sm tw:w-full"
         )
 
 
@@ -530,5 +531,5 @@ class TPAProcessingRowForm(forms.Form):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.setdefault(
-                "class", "tw:d-input tw:d-input-bordered tw:w-full"
+                "class", "input input-bordered input-sm tw:w-full"
             )

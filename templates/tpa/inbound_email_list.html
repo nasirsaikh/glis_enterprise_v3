@@ -39,6 +39,9 @@
         <div class="text-right text-xs">
           <div><span class="opacity-50">{% translate "Mailbox" %}:</span> <strong>{{ mailbox_health.mailbox|default:"—" }}</strong></div>
           <div><span class="opacity-50">{% translate "Folder" %}:</span> {{ mailbox_health.folder|default:"Inbox" }}</div>
+          <div><span class="opacity-50">{% translate "Schedule" %}:</span> <span class="tpa-mono">{{ mailbox_health.scheduler_cron|default:"—" }}</span></div>
+          <div><span class="opacity-50">{% translate "Next run" %}:</span> {{ mailbox_health.scheduler_next_run_at|date:"d-M-Y H:i"|default:"—" }}</div>
+          {% if mailbox_health.scheduler_last_status %}<div><span class="opacity-50">{% translate "Last job" %}:</span> {{ mailbox_health.scheduler_last_status }}</div>{% endif %}
         </div>
       </div>
 

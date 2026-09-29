@@ -13,14 +13,14 @@
       </div>
       <div class="tw:mt-1 tw:flex tw:flex-wrap tw:items-center tw:gap-1.5">
         {% if initial_setup %}
-        <span class="badge badge-primary badge-soft">{% translate "Initial Policy Setup" %}</span>
+        <span class="badge badge-primary tw:d-badge-primary badge-soft tw:d-badge-soft">{% translate "Initial Policy Setup" %}</span>
         {% else %}
-        <span class="badge badge-primary badge-soft">{{ tx.get_transaction_type_display }}</span>
+        <span class="badge badge-primary tw:d-badge-primary badge-soft tw:d-badge-soft">{{ tx.get_transaction_type_display }}</span>
         {% endif %}
-        <span class="badge {% if tx.status == 'completed' %}badge-success badge-soft{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' %}badge-warning badge-soft{% elif tx.status == 'rejected' or tx.status == 'failed' %}badge-error badge-soft{% elif tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' %}badge-info badge-soft{% else %}badge-outline{% endif %}">{{ tx.get_status_display }}</span>
-        {% if tx.source != "PORTAL" %}<span class="badge badge-info badge-soft">{{ tx.get_source_display }}</span>{% endif %}
-        {% if tx.ai_extraction_status %}<span class="badge badge-secondary badge-soft"><i class="bi bi-stars"></i>AI {{ tx.ai_extraction_status }}</span>{% endif %}
-        {% if tx.ticket %}<span class="badge badge-ghost tpa-mono"><i class="bi bi-ticket-perforated"></i>{{ tx.ticket.reference }}</span>{% endif %}
+        <span class="badge tw:d-badge {% if tx.status == 'completed' %}badge-success badge-soft{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' %}badge-warning badge-soft{% elif tx.status == 'rejected' or tx.status == 'failed' %}badge-error badge-soft{% elif tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' %}badge-info badge-soft{% else %}badge-outline{% endif %}">{{ tx.get_status_display }}</span>
+        {% if tx.source != "PORTAL" %}<span class="badge badge-info tw:d-badge-info badge-soft tw:d-badge-soft">{{ tx.get_source_display }}</span>{% endif %}
+        {% if tx.ai_extraction_status %}<span class="badge badge-secondary tw:d-badge-secondary badge-soft tw:d-badge-soft"><i class="bi bi-stars"></i>AI {{ tx.ai_extraction_status }}</span>{% endif %}
+        {% if tx.ticket %}<span class="badge badge-ghost tw:d-badge-ghost tpa-mono"><i class="bi bi-ticket-perforated"></i>{{ tx.ticket.reference }}</span>{% endif %}
       </div>
       <h1 class="tpa-title">{{ tx.reference }}</h1>
       <p class="tpa-subtitle">
@@ -32,50 +32,50 @@
     <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-1.5">
       {% if tx.status == "draft" %}
       <form method="post" action="{% url 'tpa:transaction_submit' tx.reference %}">{% csrf_token %}
-        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-send"></i>{% translate "Submit & Validate" %}</button>
+        <button class="btn btn-primary tw:d-btn-primary btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-send"></i>{% translate "Submit & Validate" %}</button>
       </form>
       {% elif tx.status == "pending_validation" or tx.status == "needs_information" or tx.status == "validation_failed" %}
       <form method="post" action="{% url 'tpa:transaction_validate' tx.reference %}">{% csrf_token %}
-        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-shield-check"></i>{% translate "Run Validation" %}</button>
+        <button class="btn btn-primary tw:d-btn-primary btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-shield-check"></i>{% translate "Run Validation" %}</button>
       </form>
       {% endif %}
 
       {% if tx.status == "pending_approval" %}
         {% if ticket_approval_pending %}
-        <span class="badge badge-warning badge-soft"><i class="bi bi-hourglass-split"></i>{% translate "GLIS Approval Pending" %}</span>
+        <span class="badge badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft"><i class="bi bi-hourglass-split"></i>{% translate "GLIS Approval Pending" %}</span>
         {% elif can_approve %}
         <form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}">{% csrf_token %}
-          <button class="btn btn-success btn-sm" type="submit"><i class="bi bi-check-lg"></i>{% translate "Approve & Dispatch" %}</button>
+          <button class="btn btn-success tw:d-btn-success btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-check-lg"></i>{% translate "Approve & Dispatch" %}</button>
         </form>
         {% endif %}
       {% endif %}
 
       {% if can_start_tpa %}
       <form method="post" action="{% url 'tpa:transaction_tpa_start' tx.reference %}">{% csrf_token %}
-        <button class="btn btn-info btn-sm" type="submit"><i class="bi bi-play-fill"></i>{% translate "Start TPA Processing" %}</button>
+        <button class="btn btn-info tw:d-btn-info btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-play-fill"></i>{% translate "Start TPA Processing" %}</button>
       </form>
       {% endif %}
     </div>
   </header>
 
   <section class="tpa-workflow">
-    <ul class="steps steps-horizontal tw:w-full">
-      <li class="step step-primary">{% if initial_setup %}{% translate "Policy & Census" %}{% else %}{% translate "Intake & Correction" %}{% endif %}</li>
-      <li class="step {% if tx.status != 'draft' and tx.status != 'extracting' %}step-primary{% endif %}">{% translate "Validation" %}</li>
-      <li class="step {% if tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' or tx.status == 'processed' %}step-primary{% endif %}">{% translate "Approval" %}</li>
-      <li class="step {% if tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' %}step-primary{% endif %}">{% translate "TPA Processing" %}</li>
-      <li class="step {% if tx.status == 'completed' or tx.status == 'processed' %}step-primary{% endif %}">{% translate "Complete" %}</li>
+    <ul class="steps steps-horizontal tw:d-steps-horizontal tw:w-full">
+      <li class="step step-primary tw:d-step-primary">{% if initial_setup %}{% translate "Policy & Census" %}{% else %}{% translate "Intake & Correction" %}{% endif %}</li>
+      <li class="step tw:d-step {% if tx.status != 'draft' and tx.status != 'extracting' %}step-primary{% endif %}">{% translate "Validation" %}</li>
+      <li class="step tw:d-step {% if tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' or tx.status == 'processed' %}step-primary{% endif %}">{% translate "Approval" %}</li>
+      <li class="step tw:d-step {% if tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' %}step-primary{% endif %}">{% translate "TPA Processing" %}</li>
+      <li class="step tw:d-step {% if tx.status == 'completed' or tx.status == 'processed' %}step-primary{% endif %}">{% translate "Complete" %}</li>
     </ul>
   </section>
 
   <section class="tw:grid tw:grid-cols-2 tw:gap-2 tw:md:grid-cols-4 tw:xl:grid-cols-8">
     <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Rows" %}</div><div class="stat-value tw:d-stat-value">{{ actions|length }}</div></div></div>
-    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Valid" %}</div><div class="stat-value tw:text-success">{{ valid_count }}</div></div></div>
-    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Warnings" %}</div><div class="stat-value {% if warning_count %}tw:text-warning{% endif %}">{{ warning_count }}</div></div></div>
-    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Errors" %}</div><div class="stat-value {% if error_count %}tw:text-error{% endif %}">{{ error_count }}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Valid" %}</div><div class="stat-value tw:d-stat-value tw:text-success">{{ valid_count }}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Warnings" %}</div><div class="stat-value tw:d-stat-value {% if warning_count %}tw:text-warning{% endif %}">{{ warning_count }}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Errors" %}</div><div class="stat-value tw:d-stat-value {% if error_count %}tw:text-error{% endif %}">{{ error_count }}</div></div></div>
     <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Success" %}</div><div class="stat-value tw:d-stat-value">{{ success_rate }}%</div></div></div>
     <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Validation" %}</div><div class="stat-value tw:d-stat-value">{{ tx.validation_score }}%</div></div></div>
-    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "STP" %}</div><div class="stat-value {% if tx.stp_eligible %}tw:text-success{% else %}tw:text-warning{% endif %}">{{ tx.stp_eligible|yesno:"YES,NO" }}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "STP" %}</div><div class="stat-value tw:d-stat-value {% if tx.stp_eligible %}tw:text-success{% else %}tw:text-warning{% endif %}">{{ tx.stp_eligible|yesno:"YES,NO" }}</div></div></div>
     <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Premium Impact" %}</div><div class="tw:mt-1 tpa-mono tw:text-sm tw:font-bold">{{ tx.currency }} {{ tx.premium_adjustment }}</div></div></div>
   </section>
 
@@ -83,7 +83,7 @@
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Opening policy setup" %}</div><h2 class="tpa-section-title">{% translate "POLICY & BENEFIT PLANS" %}</h2></div>
-      <span class="badge {% if tx.policy.status == 'active' %}badge-success badge-soft{% else %}badge-warning badge-soft{% endif %}">{{ tx.policy.get_status_display }}</span>
+      <span class="badge tw:d-badge {% if tx.policy.status == 'active' %}badge-success badge-soft{% else %}badge-warning badge-soft{% endif %}">{{ tx.policy.get_status_display }}</span>
     </div>
     <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "This setup must complete before the policy appears in New Endorsement." %}</p>
@@ -99,7 +99,7 @@
 
         <div>
           <div class="tw:overflow-x-auto">
-            <table class="table table-sm">
+            <table class="table table-sm tw:d-table-sm">
               <thead><tr><th>{% translate "Plan" %}</th><th>{% translate "Annual Premium" %}</th><th>{% translate "Sum Insured" %}</th></tr></thead>
               <tbody>
                 {% for plan in tx.policy.plans.all %}
@@ -110,15 +110,15 @@
           </div>
 
           {% if can_edit_intake and plan_form %}
-          <details class="collapse collapse-arrow tw:mt-3 tw:border tw:border-base-300">
-            <summary class="collapse-title tw:text-sm tw:font-bold">{% translate "Add another benefit plan" %}</summary>
+          <details class="collapse collapse-arrow tw:d-collapse-arrow tw:mt-3 tw:border tw:border-base-300">
+            <summary class="collapse-title tw:d-collapse-title tw:text-sm tw:font-bold">{% translate "Add another benefit plan" %}</summary>
             <div class="collapse-content tw:d-collapse-content">
               <form class="tw:grid tw:gap-3 tw:md:grid-cols-2" method="post" action="{% url 'tpa:policy_plan_add' tx.reference %}">
                 {% csrf_token %}
                 {% for field in plan_form %}
                 <fieldset class="fieldset tw:d-fieldset"><legend class="fieldset-legend tw:d-fieldset-legend">{{ field.label }}</legend>{{ field }}</fieldset>
                 {% endfor %}
-                <div class="tw:md:col-span-2"><button class="btn btn-outline btn-sm" type="submit"><i class="bi bi-plus-lg"></i>{% translate "Add Plan" %}</button></div>
+                <div class="tw:md:col-span-2"><button class="btn btn-outline tw:d-btn-outline btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-plus-lg"></i>{% translate "Add Plan" %}</button></div>
               </form>
             </div>
           </details>
@@ -134,8 +134,8 @@
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Unified evidence intake" %}</div><h2 class="tpa-section-title">{% translate "SOURCE DOCUMENTS & OLLAMA OCR" %}</h2></div>
       <div class="tw:flex tw:flex-wrap tw:gap-1">
-        <a class="btn btn-outline btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'xlsx' %}"><i class="bi bi-file-earmark-excel"></i>{% translate "Sample XLSX" %}</a>
-        <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}"><i class="bi bi-filetype-csv"></i>{% translate "Sample CSV" %}</a>
+        <a class="btn btn-outline tw:d-btn-outline btn-xs tw:d-btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'xlsx' %}"><i class="bi bi-file-earmark-excel"></i>{% translate "Sample XLSX" %}</a>
+        <a class="btn btn-ghost tw:d-btn-ghost btn-xs tw:d-btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}"><i class="bi bi-filetype-csv"></i>{% translate "Sample CSV" %}</a>
       </div>
     </div>
     <div class="card-body tw:d-card-body">
@@ -147,20 +147,20 @@
           <div><strong class="tpa-mono tw:text-xs">{% translate "DROP SOURCE FILES OR BROWSE" %}</strong><div class="tw:mt-1 tw:text-[10px] tw:opacity-50">{{ source_upload_form.source_files.help_text }}</div></div>
           {{ source_upload_form.source_files }}
           <div data-tpa-file-count class="tw:text-[10px] tw:font-bold tw:uppercase tw:tracking-wider tw:opacity-45">{% translate "No files selected" %}</div>
-          <div><button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-stars"></i>{% translate "Extract & Add Rows" %}</button></div>
+          <div><button class="btn btn-primary tw:d-btn-primary btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-stars"></i>{% translate "Extract & Add Rows" %}</button></div>
         </div>
       </form>
 
       {% if source_documents %}
       <div class="tw:mt-4 tw:overflow-x-auto">
-        <table class="table table-sm">
+        <table class="table table-sm tw:d-table-sm">
           <thead><tr><th>{% translate "Source" %}</th><th>{% translate "Method" %}</th><th>{% translate "State" %}</th><th>{% translate "Confidence" %}</th><th>{% translate "Result" %}</th></tr></thead>
           <tbody>
           {% for doc in source_documents %}
             <tr>
-              <td>{% if doc.file %}<a class="link link-primary" href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.original_name }}</a>{% else %}{{ doc.original_name }}{% endif %}</td>
+              <td>{% if doc.file %}<a class="link link-primary tw:d-link-primary" href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.original_name }}</a>{% else %}{{ doc.original_name }}{% endif %}</td>
               <td>{{ doc.extraction_method|default:"—" }}</td>
-              <td><span class="badge {% if doc.processing_state == 'PROCESSED' %}badge-success{% elif doc.processing_state == 'REVIEW' or doc.processing_state == 'FAILED' %}badge-warning{% else %}badge-outline{% endif %}">{{ doc.get_processing_state_display }}</span></td>
+              <td><span class="badge tw:d-badge {% if doc.processing_state == 'PROCESSED' %}badge-success{% elif doc.processing_state == 'REVIEW' or doc.processing_state == 'FAILED' %}badge-warning{% else %}badge-outline{% endif %}">{{ doc.get_processing_state_display }}</span></td>
               <td>{% if doc.extraction_confidence is not None %}{{ doc.extraction_confidence }}%{% else %}—{% endif %}</td>
               <td class="tw:max-w-md tw:text-xs">{% if doc.processing_error %}<span class="tw:text-warning">{{ doc.processing_error }}</span>{% else %}{{ doc.extracted_payload.bundle_members_created|default:doc.extracted_payload.rows_created|default:"Processed" }}{% endif %}</td>
             </tr>
@@ -185,10 +185,10 @@
         <fieldset class="fieldset tw:d-fieldset" {% if field.name == "principal_reference" %}id="principal-reference-field"{% endif %}>
           <legend class="fieldset-legend tw:d-fieldset-legend">{{ field.label }}</legend>
           {{ field }}
-          {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
+          {% if field.help_text %}<p class="label tw:d-label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
         </fieldset>
         {% endfor %}
-        <div class="tw:md:col-span-2 tw:xl:col-span-3"><button class="btn btn-outline btn-sm" type="submit"><i class="bi bi-plus-lg"></i>{% translate "Add Member Row" %}</button></div>
+        <div class="tw:md:col-span-2 tw:xl:col-span-3"><button class="btn btn-outline tw:d-btn-outline btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-plus-lg"></i>{% translate "Add Member Row" %}</button></div>
       </form>
     </div>
   </section>
@@ -197,13 +197,13 @@
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Normalized records" %}</div><h2 class="tpa-section-title">{% translate "INTAKE & CORRECTION / MEMBER MATRIX" %}</h2></div>
-      <span class="badge badge-outline">{{ actions|length }} {% translate "ROWS" %}</span>
+      <span class="badge badge-outline tw:d-badge-outline">{{ actions|length }} {% translate "ROWS" %}</span>
     </div>
     <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "Review extracted/manual values here before validation and downstream processing." %}</p>
 
       <div class="tw:mt-3 tw:overflow-x-auto">
-        <table class="table table-sm">
+        <table class="table table-sm tw:d-table-sm">
           <thead><tr><th>#</th><th>{% translate "Member" %}</th><th>{% translate "Employee" %}</th><th>{% translate "Plan" %}</th><th>{% translate "Validation" %}</th><th>{% translate "Confidence" %}</th><th>{% translate "Premium" %}</th>{% if can_edit_intake %}<th>{% translate "Actions" %}</th>{% endif %}</tr></thead>
           <tbody>
           {% for a in actions %}
@@ -217,24 +217,24 @@
               </td>
               <td>{{ a.display_employee_id }}</td>
               <td>{{ a.display_plan_code }}</td>
-              <td><span class="badge {% if a.validation_status == 'VALID' %}badge-success{% elif a.validation_status == 'WARNING' %}badge-warning{% else %}badge-error{% endif %} badge-soft">{{ a.validation_status }}</span></td>
+              <td><span class="badge {% if a.validation_status == 'VALID' %}badge-success{% elif a.validation_status == 'WARNING' %}badge-warning{% else %}badge-error{% endif %} badge-soft tw:d-badge-soft">{{ a.validation_status }}</span></td>
               <td>{% if a.extraction_confidence is not None %}{{ a.extraction_confidence }}%{% else %}{% translate "Manual" %}{% endif %}</td>
               <td>{{ tx.currency }} {{ a.calculated_premium }}</td>
               {% if can_edit_intake %}
               <td>
                 <div class="tw:flex tw:gap-1">
                   {% if a.edit_form %}
-                  <button class="btn btn-ghost btn-xs" type="button" onclick="document.getElementById('edit-member-{{ a.pk }}').showModal()" title="{% translate 'Correct row' %}">
+                  <button class="btn btn-ghost tw:d-btn-ghost btn-xs tw:d-btn-xs" type="button" onclick="document.getElementById('edit-member-{{ a.pk }}').showModal()" title="{% translate 'Correct row' %}">
                     <i class="bi bi-pencil-square"></i>
                   </button>
                   <dialog id="edit-member-{{ a.pk }}" class="modal tw:d-modal">
-                    <div class="modal-box tw:max-w-4xl">
+                    <div class="modal-box tw:d-modal-box tw:max-w-4xl">
                       <div class="tw:flex tw:items-start tw:justify-between tw:gap-3">
                         <div>
                           <h3 class="tw:text-xl tw:font-black">{% translate "Correct Member Row" %} {{ a.row_number|default:forloop.counter }}</h3>
                           <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{% translate "Original extracted/submitted data remains in the audit trail. These values become the corrected working values." %}</p>
                         </div>
-                        <form method="dialog"><button class="btn btn-circle btn-ghost btn-sm" type="submit">✕</button></form>
+                        <form method="dialog"><button class="btn btn-circle tw:d-btn-circle btn-ghost tw:d-btn-ghost btn-sm tw:d-btn-sm" type="submit">✕</button></form>
                       </div>
                       <form class="tw:mt-5 tw:grid tw:gap-3 tw:md:grid-cols-2" method="post" action="{% url 'tpa:transaction_edit_member' tx.reference a.pk %}">
                         {% csrf_token %}
@@ -242,12 +242,12 @@
                         <fieldset class="fieldset tw:d-fieldset">
                           <legend class="fieldset-legend tw:d-fieldset-legend">{{ field.label }}</legend>
                           {{ field }}
-                          {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
+                          {% if field.help_text %}<p class="label tw:d-label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
                         </fieldset>
                         {% endfor %}
                         <div class="tw:md:col-span-2 tw:flex tw:justify-end tw:gap-2">
-                          <button class="btn btn-ghost" type="button" onclick="document.getElementById('edit-member-{{ a.pk }}').close()">{% translate "Cancel" %}</button>
-                          <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i>{% translate "Save & Revalidate" %}</button>
+                          <button class="btn btn-ghost tw:d-btn-ghost" type="button" onclick="document.getElementById('edit-member-{{ a.pk }}').close()">{% translate "Cancel" %}</button>
+                          <button class="btn btn-primary tw:d-btn-primary" type="submit"><i class="bi bi-check2"></i>{% translate "Save & Revalidate" %}</button>
                         </div>
                       </form>
                     </div>
@@ -256,7 +256,7 @@
                   {% endif %}
                   <form method="post" action="{% url 'tpa:transaction_remove_member' tx.reference a.pk %}">
                     {% csrf_token %}
-                    <button class="btn btn-ghost btn-xs tw:text-error" type="submit" title="{% translate 'Remove row' %}"><i class="bi bi-trash"></i></button>
+                    <button class="btn btn-ghost tw:d-btn-ghost btn-xs tw:d-btn-xs tw:text-error" type="submit" title="{% translate 'Remove row' %}"><i class="bi bi-trash"></i></button>
                   </form>
                 </div>
               </td>
@@ -277,24 +277,24 @@
   </div>
 
   {% if tx.stp_blockers %}
-  <div class="alert alert-warning"><i class="bi bi-signpost-split"></i><div><strong>{% translate "STP blockers" %}</strong><div class="tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for blocker in tx.stp_blockers %}<span class="badge badge-outline">{{ blocker }}</span>{% endfor %}</div></div></div>
+  <div class="alert alert-warning tw:d-alert-warning"><i class="bi bi-signpost-split"></i><div><strong>{% translate "STP blockers" %}</strong><div class="tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for blocker in tx.stp_blockers %}<span class="badge badge-outline tw:d-badge-outline">{{ blocker }}</span>{% endfor %}</div></div></div>
   {% endif %}
 
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Step 04 / TPA Operations" %}</div><h2 class="tpa-section-title">{% translate "TPA PROCESSING & CASE CONVERSATION" %}</h2></div>
-      <span class="badge {% if tx.status == 'tpa_query' %}badge-warning badge-soft{% elif tx.status == 'completed' %}badge-success badge-soft{% else %}badge-info badge-soft{% endif %}">{{ tx.get_status_display }}</span>
+      <span class="badge tw:d-badge {% if tx.status == 'tpa_query' %}badge-warning badge-soft{% elif tx.status == 'completed' %}badge-success badge-soft{% else %}badge-info badge-soft{% endif %}">{{ tx.get_status_display }}</span>
     </div>
     <div class="card-body tw:d-card-body">
       <p class="tw:text-xs tw:opacity-55">{% translate "TPA processing and requester communication stay inside this case. GLIS tickets remain the underlying SLA and audit record." %}</p>
 
       {% if tx.status == "sent_to_tpa" %}
-      <div class="alert alert-info tw:mt-4"><i class="bi bi-send-check"></i><span>{% translate "Approved and dispatched to the TPA queue. A TPA processor must start processing." %}</span></div>
+      <div class="alert alert-info tw:d-alert-info tw:mt-4"><i class="bi bi-send-check"></i><span>{% translate "Approved and dispatched to the TPA queue. A TPA processor must start processing." %}</span></div>
       {% endif %}
 
       {% if tx.status == "tpa_in_progress" or tx.status == "tpa_query" or tx.status == "completed" %}
       <div class="tw:mt-4 tw:overflow-x-auto">
-        <table class="table table-sm">
+        <table class="table table-sm tw:d-table-sm">
           <thead><tr><th>{% translate "Member" %}</th><th>{% translate "Card / Member No." %}</th><th>{% translate "TPA Effective Date" %}</th><th>{% translate "TPA Amount" %}</th><th>{% translate "State" %}</th><th></th></tr></thead>
           <tbody>
           {% for a in actions %}
@@ -305,12 +305,12 @@
                   <form id="tpa-action-{{ a.pk }}" method="post" action="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}">
                     {% csrf_token %}
                   </form>
-                  <input class="input input-bordered input-sm tw:w-40" form="tpa-action-{{ a.pk }}" name="card_number" value="{{ a.card_number }}" {% if tx.transaction_type == 'MEMBER_ADD' or initial_setup %}required{% endif %}>
+                  <input class="input input-bordered tw:d-input-bordered input-sm tw:d-input-sm tw:w-40" form="tpa-action-{{ a.pk }}" name="card_number" value="{{ a.card_number }}" {% if tx.transaction_type == 'MEMBER_ADD' or initial_setup %}required{% endif %}>
                 </td>
-                <td><input class="input input-bordered input-sm" form="tpa-action-{{ a.pk }}" type="date" name="effective_date" value="{% if a.tpa_effective_date %}{{ a.tpa_effective_date|date:'Y-m-d' }}{% else %}{{ tx.effective_date|date:'Y-m-d' }}{% endif %}" required></td>
-                <td><input class="input input-bordered input-sm tw:w-36" form="tpa-action-{{ a.pk }}" name="amount" type="number" step="0.001" value="{% if a.tpa_premium_amount != None %}{{ a.tpa_premium_amount }}{% else %}{{ a.calculated_premium }}{% endif %}" required></td>
+                <td><input class="input input-bordered tw:d-input-bordered input-sm tw:d-input-sm" form="tpa-action-{{ a.pk }}" type="date" name="effective_date" value="{% if a.tpa_effective_date %}{{ a.tpa_effective_date|date:'Y-m-d' }}{% else %}{{ tx.effective_date|date:'Y-m-d' }}{% endif %}" required></td>
+                <td><input class="input input-bordered tw:d-input-bordered input-sm tw:d-input-sm tw:w-36" form="tpa-action-{{ a.pk }}" name="amount" type="number" step="0.001" value="{% if a.tpa_premium_amount != None %}{{ a.tpa_premium_amount }}{% else %}{{ a.calculated_premium }}{% endif %}" required></td>
                 <td>{{ a.processing_status|default:"Pending" }}</td>
-                <td><button class="btn btn-info btn-xs" form="tpa-action-{{ a.pk }}" type="submit">{% translate "Save" %}</button></td>
+                <td><button class="btn btn-info tw:d-btn-info btn-xs tw:d-btn-xs" form="tpa-action-{{ a.pk }}" type="submit">{% translate "Save" %}</button></td>
               {% else %}
                 <td>{{ a.card_number|default:"—" }}</td>
                 <td>{{ a.tpa_effective_date|date:"d-M-Y"|default:"—" }}</td>
@@ -327,27 +327,27 @@
       {% endif %}
 
       {% if open_query %}
-      <div class="card tw:mt-3 tw:border-warning/30 tw:bg-warning/5"><div class="card-body tw:d-card-body">
+      <div class="card tw:d-card tw:mt-3 tw:border-warning/30 tw:bg-warning/5"><div class="card-body tw:d-card-body">
         <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
           <div>
             <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-              <span class="badge badge-warning badge-soft">{% translate "Open Query" %}</span>
-              {% if open_query.ticket %}<span class="badge badge-ghost">{{ open_query.ticket.reference }}</span>{% endif %}
+              <span class="badge badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft">{% translate "Open Query" %}</span>
+              {% if open_query.ticket %}<span class="badge badge-ghost tw:d-badge-ghost">{{ open_query.ticket.reference }}</span>{% endif %}
             </div>
             <h3 class="tw:mt-1 tw:font-black">{{ open_query.subject }}</h3>
           </div>
           {% if can_tpa_process %}
-          <form method="post" action="{% url 'tpa:transaction_resolve_query' tx.reference open_query.pk %}">{% csrf_token %}<button class="btn btn-success btn-sm" type="submit"><i class="bi bi-check2"></i>{% translate "Resolve & Resume" %}</button></form>
+          <form method="post" action="{% url 'tpa:transaction_resolve_query' tx.reference open_query.pk %}">{% csrf_token %}<button class="btn btn-success tw:d-btn-success btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-check2"></i>{% translate "Resolve & Resume" %}</button></form>
           {% endif %}
         </div>
 
         <div class="tw:mt-4 tw:max-h-[28rem] tw:space-y-3 tw:overflow-y-auto tw:rounded-xl tw:bg-base-100 tw:p-4">
           {% for msg in open_query.messages.all %}
-          <div class="chat {% if msg.sender_id == request.user.id %}chat-end{% else %}chat-start{% endif %}">
-            <div class="chat-header tw:text-xs">{{ msg.sender.get_full_name|default:msg.sender.username }} <time class="tw:opacity-50">{{ msg.created_at|date:"d-M-Y H:i" }}</time></div>
-            <div class="chat-bubble {% if msg.kind == 'QUERY' %}chat-bubble-warning{% endif %}">{{ msg.ticket_comment.body|linebreaksbr }}</div>
+          <div class="chat tw:d-chat {% if msg.sender_id == request.user.id %}chat-end{% else %}chat-start{% endif %}">
+            <div class="chat-header tw:d-chat-header tw:text-xs">{{ msg.sender.get_full_name|default:msg.sender.username }} <time class="tw:opacity-50">{{ msg.created_at|date:"d-M-Y H:i" }}</time></div>
+            <div class="chat-bubble tw:d-chat-bubble {% if msg.kind == 'QUERY' %}chat-bubble-warning{% endif %}">{{ msg.ticket_comment.body|linebreaksbr }}</div>
             {% if msg.ticket_comment.attachments.all %}
-            <div class="chat-footer tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for file in msg.ticket_comment.attachments.all %}<a class="badge badge-outline tw:text-xs" href="{{ file.file.url }}" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i>{{ file.original_name }}</a>{% endfor %}</div>
+            <div class="chat-footer tw:d-chat-footer tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for file in msg.ticket_comment.attachments.all %}<a class="badge badge-outline tw:d-badge-outline tw:text-xs" href="{{ file.file.url }}" target="_blank" rel="noopener"><i class="bi bi-paperclip"></i>{{ file.original_name }}</a>{% endfor %}</div>
             {% endif %}
           </div>
           {% endfor %}
@@ -357,38 +357,38 @@
           {% csrf_token %}
           {{ query_message_form.message }}
           {{ query_message_form.attachments }}
-          <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-send"></i>{% translate "Send Reply" %}</button>
+          <button class="btn btn-primary tw:d-btn-primary btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-send"></i>{% translate "Send Reply" %}</button>
         </form>
       </div></div>
       {% elif can_tpa_process and tx.status == "tpa_in_progress" %}
-      <details class="collapse collapse-arrow tw:mt-5 tw:border tw:border-warning/30">
-        <summary class="collapse-title tw:text-sm tw:font-bold"><i class="bi bi-question-circle tw:me-2"></i>{% translate "Raise Query to Requester" %}</summary>
+      <details class="collapse collapse-arrow tw:d-collapse-arrow tw:mt-5 tw:border tw:border-warning/30">
+        <summary class="collapse-title tw:d-collapse-title tw:text-sm tw:font-bold"><i class="bi bi-question-circle tw:me-2"></i>{% translate "Raise Query to Requester" %}</summary>
         <div class="collapse-content tw:d-collapse-content">
           <form class="tw:space-y-3" method="post" action="{% url 'tpa:transaction_raise_query' tx.reference %}">
             {% csrf_token %}
             {{ query_raise_form.subject }}
             {{ query_raise_form.message }}
-            <button class="btn btn-warning btn-sm" type="submit"><i class="bi bi-chat-dots"></i>{% translate "Raise Query" %}</button>
+            <button class="btn btn-warning tw:d-btn-warning btn-sm tw:d-btn-sm" type="submit"><i class="bi bi-chat-dots"></i>{% translate "Raise Query" %}</button>
           </form>
         </div>
       </details>
       {% endif %}
 
       {% if query_history %}
-      <details class="collapse collapse-arrow tw:mt-5 tw:border tw:border-base-300">
-        <summary class="collapse-title tw:text-sm tw:font-bold">{% translate "Previous Query Conversations" %}</summary>
-        <div class="collapse-content tw:space-y-4">
+      <details class="collapse collapse-arrow tw:d-collapse-arrow tw:mt-5 tw:border tw:border-base-300">
+        <summary class="collapse-title tw:d-collapse-title tw:text-sm tw:font-bold">{% translate "Previous Query Conversations" %}</summary>
+        <div class="collapse-content tw:d-collapse-content tw:space-y-4">
           {% for q in query_history %}
             {% if q.status == "RESOLVED" %}
             <div class="tw:rounded-xl tw:border tw:border-base-300 tw:p-4">
               <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
-                <div><strong>{{ q.subject }}</strong>{% if q.ticket %}<span class="badge badge-ghost tw:ms-2">{{ q.ticket.reference }}</span>{% endif %}</div>
-                <span class="badge badge-success badge-soft">{% translate "Resolved" %}</span>
+                <div><strong>{{ q.subject }}</strong>{% if q.ticket %}<span class="badge badge-ghost tw:d-badge-ghost tw:ms-2">{{ q.ticket.reference }}</span>{% endif %}</div>
+                <span class="badge badge-success tw:d-badge-success badge-soft tw:d-badge-soft">{% translate "Resolved" %}</span>
               </div>
               <div class="tw:mt-3 tw:space-y-2">
                 {% for msg in q.messages.all %}
-                <div class="chat {% if msg.sender_id == request.user.id %}chat-end{% else %}chat-start{% endif %}">
-                  <div class="chat-header tw:text-xs">{{ msg.sender.get_full_name|default:msg.sender.username }} · {{ msg.created_at|date:"d-M-Y H:i" }}</div>
+                <div class="chat tw:d-chat {% if msg.sender_id == request.user.id %}chat-end{% else %}chat-start{% endif %}">
+                  <div class="chat-header tw:d-chat-header tw:text-xs">{{ msg.sender.get_full_name|default:msg.sender.username }} · {{ msg.created_at|date:"d-M-Y H:i" }}</div>
                   <div class="chat-bubble tw:d-chat-bubble">{{ msg.ticket_comment.body|linebreaksbr }}</div>
                 </div>
                 {% endfor %}
@@ -404,7 +404,7 @@
       <div class="tw:mt-5 tw:flex tw:justify-end">
         <form method="post" action="{% url 'tpa:transaction_tpa_complete' tx.reference %}">
           {% csrf_token %}
-          <button class="btn btn-success" type="submit"><i class="bi bi-check2-circle"></i>{% translate "Complete TPA Processing" %}</button>
+          <button class="btn btn-success tw:d-btn-success" type="submit"><i class="bi bi-check2-circle"></i>{% translate "Complete TPA Processing" %}</button>
         </form>
       </div>
       {% endif %}
@@ -429,9 +429,9 @@
     <section class="card tw:d-card">
       <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Audit trail" %}</div><h2 class="tpa-section-title">{% translate "ACTIVITY TIMELINE" %}</h2></div></div>
       <div class="card-body tw:d-card-body">
-        <ul class="timeline timeline-vertical tw:mt-2">
+        <ul class="timeline timeline-vertical tw:d-timeline-vertical tw:mt-2">
           {% for e in events %}
-          <li>{% if not forloop.first %}<hr>{% endif %}<div class="timeline-middle tw:d-timeline-middle"><i class="bi bi-check-circle"></i></div><div class="timeline-end timeline-box"><strong>{{ e.summary }}</strong><div class="tw:text-xs tw:text-base-content/50">{{ e.created_at|date:"d-M-Y H:i" }}</div></div>{% if not forloop.last %}<hr>{% endif %}</li>
+          <li>{% if not forloop.first %}<hr>{% endif %}<div class="timeline-middle tw:d-timeline-middle"><i class="bi bi-check-circle"></i></div><div class="timeline-end tw:d-timeline-end timeline-box tw:d-timeline-box"><strong>{{ e.summary }}</strong><div class="tw:text-xs tw:text-base-content/50">{{ e.created_at|date:"d-M-Y H:i" }}</div></div>{% if not forloop.last %}<hr>{% endif %}</li>
           {% empty %}<li class="tw:text-sm tw:text-base-content/50">{% translate "No activity yet." %}</li>{% endfor %}
         </ul>
       </div>

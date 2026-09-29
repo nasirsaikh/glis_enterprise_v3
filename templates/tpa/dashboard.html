@@ -11,20 +11,20 @@
       <p class="tpa-subtitle">{% translate "Individual and corporate policy enrollment, AI-assisted intake, deterministic validation, endorsement processing and TPA completion." %}</p>
     </div>
     <div class="tw:flex tw:flex-wrap tw:gap-1.5">
-      <a class="btn btn-ghost btn-sm" href="{% url 'tpa:user_guide' %}"><i class="bi bi-book"></i>{% translate "Guide" %}</a>
-      <a class="btn btn-outline btn-sm" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-building-add"></i>{% translate "Initial Enrollment" %}</a>
-      <a class="btn btn-outline btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-inbox"></i>{% translate "Inbound Email" %}</a>
+      <a class="btn btn-ghost tw:d-btn-ghost btn-sm tw:d-btn-sm" href="{% url 'tpa:user_guide' %}"><i class="bi bi-book"></i>{% translate "Guide" %}</a>
+      <a class="btn btn-outline tw:d-btn-outline btn-sm tw:d-btn-sm" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-building-add"></i>{% translate "Initial Enrollment" %}</a>
+      <a class="btn btn-outline tw:d-btn-outline btn-sm tw:d-btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-inbox"></i>{% translate "Inbound Email" %}</a>
       {% if can_create_tpa_transaction %}
-      <a class="btn btn-secondary btn-sm" href="{% url 'tpa:inbound_email_create' %}"><i class="bi bi-envelope-plus"></i>{% translate "Add Email" %}</a>
+      <a class="btn btn-secondary tw:d-btn-secondary btn-sm tw:d-btn-sm" href="{% url 'tpa:inbound_email_create' %}"><i class="bi bi-envelope-plus"></i>{% translate "Add Email" %}</a>
       {% endif %}
       {% if can_create_endorsement %}
-      <a class="btn btn-primary btn-sm" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>
+      <a class="btn btn-primary tw:d-btn-primary btn-sm tw:d-btn-sm" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>
       {% endif %}
     </div>
   </header>
 
   {% if needs_information or pending_approval or inbound_review %}
-  <div role="alert" class="alert alert-warning">
+  <div role="alert" class="alert alert-warning tw:d-alert-warning">
     <i class="bi bi-exclamation-triangle"></i>
     <div class="tw:flex-1">
       <strong>{% translate "Operational attention required" %}</strong>
@@ -34,7 +34,7 @@
         {{ inbound_review }} {% translate "inbound review" %}
       </div>
     </div>
-    <a class="btn btn-warning btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "Open Pipeline" %}</a>
+    <a class="btn btn-warning tw:d-btn-warning btn-xs tw:d-btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "Open Pipeline" %}</a>
   </div>
   {% endif %}
 
@@ -43,21 +43,21 @@
     <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Active Policies" %}</div><div class="stat-value tw:d-stat-value">{{ active_policies }}</div><div class="stat-desc tw:d-stat-desc">{% translate "endorsement enabled" %}</div></div></div>
     <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Active Members" %}</div><div class="stat-value tw:d-stat-value">{{ active_members }}</div><div class="stat-desc tw:d-stat-desc">{% translate "covered lives" %}</div></div></div>
     <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Open Pipeline" %}</div><div class="stat-value tw:d-stat-value">{{ open_transactions }}</div><div class="stat-desc tw:d-stat-desc">{% translate "active transactions" %}</div></div></div>
-    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Needs Info / Query" %}</div><div class="stat-value {% if needs_information %}tw:text-warning{% endif %}">{{ needs_information }}</div><div class="stat-desc tw:d-stat-desc">{% translate "exceptions" %}</div></div></div>
-    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Pending Approval" %}</div><div class="stat-value {% if pending_approval %}tw:text-info{% endif %}">{{ pending_approval }}</div><div class="stat-desc tw:d-stat-desc">{% translate "decision queue" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Needs Info / Query" %}</div><div class="stat-value tw:d-stat-value {% if needs_information %}tw:text-warning{% endif %}">{{ needs_information }}</div><div class="stat-desc tw:d-stat-desc">{% translate "exceptions" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Pending Approval" %}</div><div class="stat-value tw:d-stat-value {% if pending_approval %}tw:text-info{% endif %}">{{ pending_approval }}</div><div class="stat-desc tw:d-stat-desc">{% translate "decision queue" %}</div></div></div>
   </section>
 
   <section class="tw:grid tw:grid-cols-2 tw:gap-2 tw:md:grid-cols-3">
-    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "STP Rate" %}</div><div class="stat-value tw:text-success">{{ stp_rate }}%</div><div class="stat-desc tw:d-stat-desc">{% translate "straight-through eligible" %}</div></div></div>
+    <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "STP Rate" %}</div><div class="stat-value tw:d-stat-value tw:text-success">{{ stp_rate }}%</div><div class="stat-desc tw:d-stat-desc">{% translate "straight-through eligible" %}</div></div></div>
     <div class="stats tw:d-stats"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "AI Providers" %}</div><div class="stat-value tw:d-stat-value">{{ ai_provider_count }}</div><div class="stat-desc tw:d-stat-desc">{% translate "sensitive-data approved" %}</div></div></div>
-    <div class="stats tw:col-span-2 tw:md:col-span-1"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Inbound Review" %}</div><div class="stat-value {% if inbound_review %}tw:text-warning{% endif %}">{{ inbound_review }}</div><div class="stat-desc tw:d-stat-desc">{% translate "email/OCR exceptions" %}</div></div></div>
+    <div class="stats tw:d-stats tw:col-span-2 tw:md:col-span-1"><div class="stat tw:d-stat"><div class="stat-title tw:d-stat-title">{% translate "Inbound Review" %}</div><div class="stat-value tw:d-stat-value {% if inbound_review %}tw:text-warning{% endif %}">{{ inbound_review }}</div><div class="stat-desc tw:d-stat-desc">{% translate "email/OCR exceptions" %}</div></div></div>
   </section>
 
   <div class="tw:grid tw:gap-3 tw:xl:grid-cols-2">
     <section class="card tw:d-card">
       <div class="tpa-section-head">
         <div><div class="tpa-eyebrow">{% translate "Pipeline telemetry" %}</div><h2 class="tpa-section-title">{% translate "TRANSACTIONS BY STATUS" %}</h2></div>
-        <span class="badge badge-outline">{{ open_transactions }} {% translate "OPEN" %}</span>
+        <span class="badge badge-outline tw:d-badge-outline">{{ open_transactions }} {% translate "OPEN" %}</span>
       </div>
       <div class="card-body tw:d-card-body"><div id="tpa-status-chart" class="tpa-chart"></div></div>
     </section>
@@ -65,7 +65,7 @@
     <section class="card tw:d-card">
       <div class="tpa-section-head">
         <div><div class="tpa-eyebrow">{% translate "Intake channels" %}</div><h2 class="tpa-section-title">{% translate "TRANSACTIONS BY SOURCE" %}</h2></div>
-        <span class="badge badge-ghost"><i class="bi bi-cpu"></i>{% translate "AI READY" %}</span>
+        <span class="badge badge-ghost tw:d-badge-ghost"><i class="bi bi-cpu"></i>{% translate "AI READY" %}</span>
       </div>
       <div class="card-body tw:d-card-body"><div id="tpa-source-chart" class="tpa-chart"></div></div>
     </section>
@@ -74,10 +74,10 @@
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Live workflow feed" %}</div><h2 class="tpa-section-title">{% translate "RECENT TRANSACTIONS" %}</h2></div>
-      <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "View All" %}<i class="bi bi-arrow-right"></i></a>
+      <a class="btn btn-ghost tw:d-btn-ghost btn-xs tw:d-btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "View All" %}<i class="bi bi-arrow-right"></i></a>
     </div>
     <div class="tw:overflow-x-auto">
-      <table class="table table-sm">
+      <table class="table table-sm tw:d-table-sm">
         <thead>
           <tr>
             <th>{% translate "Reference" %}</th>
@@ -94,15 +94,15 @@
           {% for tx in transactions %}
           <tr>
             <td>
-              <a class="link link-primary tpa-mono tw:font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.reference }}</a>
+              <a class="link link-primary tw:d-link-primary tpa-mono tw:font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.reference }}</a>
               {% if tx.ticket %}<div class="tw:mt-0.5 tw:text-[10px] tw:opacity-45">{{ tx.ticket.reference }}</div>{% endif %}
             </td>
             <td><strong>{{ tx.policy.policy_number }}</strong><div class="tw:text-[10px] tw:opacity-50">{{ tx.sponsor.name_en }}</div></td>
             <td>{{ tx.get_transaction_type_display }}</td>
-            <td><span class="badge badge-ghost">{{ tx.get_source_display }}</span></td>
+            <td><span class="badge badge-ghost tw:d-badge-ghost">{{ tx.get_source_display }}</span></td>
             <td class="tpa-mono">{{ tx.validation_score }}%</td>
-            <td>{% if tx.stp_eligible %}<span class="badge badge-success badge-soft">YES</span>{% else %}<span class="badge badge-ghost">NO</span>{% endif %}</td>
-            <td><span class="badge badge-outline">{{ tx.get_status_display }}</span></td>
+            <td>{% if tx.stp_eligible %}<span class="badge badge-success tw:d-badge-success badge-soft tw:d-badge-soft">YES</span>{% else %}<span class="badge badge-ghost tw:d-badge-ghost">NO</span>{% endif %}</td>
+            <td><span class="badge badge-outline tw:d-badge-outline">{{ tx.get_status_display }}</span></td>
             <td class="tpa-mono tw:text-[10px]">{{ tx.created_at|date:"d-M-Y H:i" }}</td>
           </tr>
           {% empty %}

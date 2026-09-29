@@ -376,6 +376,8 @@ class InboundEmail(TimeStampedModel):
     processing_hints=models.JSONField(default=dict, blank=True)
     ai_extracted_payload=models.JSONField(default=dict, blank=True)
     raw_ai_output=models.JSONField(default=dict, blank=True)
+    ai_provider_name=models.CharField(max_length=120, blank=True)
+    ai_model_name=models.CharField(max_length=120, blank=True)
     ai_confidence=models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     classification=models.CharField(max_length=40, blank=True, db_index=True)
     classification_confidence=models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)

@@ -7,6 +7,18 @@ app_name = "tpa"
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("guide/", views.user_guide, name="user_guide"),
+    path("inbound-emails/", views.inbound_email_list, name="inbound_email_list"),
+    path("inbound-emails/new/", views.inbound_email_create, name="inbound_email_create"),
+    path(
+        "inbound-emails/<int:email_id>/",
+        views.inbound_email_detail,
+        name="inbound_email_detail",
+    ),
+    path(
+        "inbound-emails/<int:email_id>/process/",
+        views.inbound_email_process,
+        name="inbound_email_process",
+    ),
     path("transactions/", views.transaction_list, name="transaction_list"),
     path("transactions/new/", views.transaction_create, name="transaction_create"),
     path(

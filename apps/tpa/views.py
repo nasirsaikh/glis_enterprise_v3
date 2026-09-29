@@ -215,19 +215,37 @@ def inbound_email_list(request):
         "transaction",
         "transaction__policy",
     )
-    if not (
+    is_mail_admin = (
         request.user.is_superuser
         or request.user.has_perm("tpa.configure_tpa")
-    ):
+    )
+    if not is_mail_admin:
         emails = emails.filter(
             models.Q(created_by=request.user)
             | models.Q(transaction_id__in=visible_tx_ids)
         )
     emails = emails.distinct().order_by("-received_at", "-pk")
+    health = mailbox_health()
+    health["awaiting_review"] = InboundEmail.objects.filter(
+        processing_state__in=[
+            InboundEmail.State.REVIEW,
+            InboundEmail.State.UNAUTHORIZED,
+        ]
+    ).count()
+    health["ignored"] = InboundEmail.objects.filter(
+        processing_state=InboundEmail.State.IGNORED
+    ).count()
+    health["failed"] = InboundEmail.objects.filter(
+        processing_state=InboundEmail.State.FAILED
+    ).count()
     return render(
         request,
         "tpa/inbound_email_list.html",
-        {"emails": emails[:200]},
+        {
+            "emails": emails[:200],
+            "mailbox_health": health,
+            "can_sync_mailbox": is_mail_admin,
+        },
     )
 
 
@@ -294,10 +312,18 @@ def inbound_email_create(request):
         if form.cleaned_data.get("process_with_ai"):
             try:
                 tx = process_inbound_email(email, request.user)
-                messages.success(
-                    request,
-                    f"Inbound email processed. TPA transaction {tx.reference} created.",
-                )
+                if tx is not None:
+                    messages.success(
+                        request,
+                        f"Inbound email processed. TPA transaction {tx.reference} created.",
+                    )
+                else:
+                    email.refresh_from_db()
+                    messages.warning(
+                        request,
+                        f"Inbound email retained with status {email.get_processing_state_display()}: "
+                        f"{email.processing_error or email.classification or 'review required'}.",
+                    )
             except Exception as exc:
                 messages.warning(
                     request,
@@ -363,13 +389,47 @@ def inbound_email_process(request, email_id):
 
     try:
         tx = process_inbound_email(email, request.user)
-        messages.success(
-            request,
-            f"AI processing completed. Transaction {tx.reference} is {tx.get_status_display()}.",
-        )
+        if tx is not None:
+            messages.success(
+                request,
+                f"AI processing completed. Transaction {tx.reference} is {tx.get_status_display()}.",
+            )
+        else:
+            email.refresh_from_db()
+            messages.warning(
+                request,
+                f"Email retained as {email.get_processing_state_display()}: "
+                f"{email.processing_error or email.classification or 'review required'}.",
+            )
     except Exception as exc:
         messages.error(request, f"AI processing requires review: {exc}")
     return redirect("tpa:inbound_email_detail", email_id=email.pk)
+
+
+@login_required
+def inbound_email_sync_now(request):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    if not (
+        request.user.is_superuser
+        or request.user.has_perm("tpa.configure_tpa")
+    ):
+        raise PermissionDenied("Mailbox synchronization requires TPA configuration authority.")
+    try:
+        result = poll_inbound_mailbox(actor=request.user)
+        messages.success(
+            request,
+            "Mailbox synchronization completed: "
+            f"created={result.get('created', 0)}, "
+            f"processed={result.get('processed', 0)}, "
+            f"review={result.get('review', 0)}, "
+            f"ignored={result.get('ignored', 0)}, "
+            f"skipped={result.get('skipped', 0)}.",
+        )
+    except Exception as exc:
+        messages.error(request, f"Mailbox synchronization failed: {exc}")
+    return redirect("tpa:inbound_email_list")
 
 
 @login_required

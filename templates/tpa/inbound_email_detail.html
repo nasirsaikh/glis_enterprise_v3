@@ -7,8 +7,8 @@
     <div class="tw:min-w-0">
       <div class="tpa-kicker"><i class="bi bi-envelope-open"></i>{% translate "TPA / AI Intake / Message" %}</div>
       <div class="tw:mt-1 tw:flex tw:flex-wrap tw:items-center tw:gap-1.5">
-        <span class="badge tw:d-badge {% if email.processing_state == 'PROCESSED' %}badge-success badge-soft{% elif email.processing_state == 'REVIEW' or email.processing_state == 'FAILED' %}badge-warning badge-soft{% else %}badge-outline{% endif %}">{{ email.get_processing_state_display }}</span>
-        {% if email.ai_confidence is not None %}<span class="badge badge-info tw:d-badge-info badge-soft tw:d-badge-soft">AI {{ email.ai_confidence }}%</span>{% endif %}
+        <span class="badge tw:d-badge {% if email.processing_state == 'PROCESSED' %}badge-success tw:d-badge-success badge-soft tw:d-badge-soft{% elif email.processing_state == 'REVIEW' or email.processing_state == 'FAILED' %}badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft{% else %}badge-outline tw:d-badge-outline{% endif %}">{{ email.get_processing_state_display }}</span>
+        {% if email.ai_confidence is not None %}<span class="badge badge-info tw:d-badge-info tw:d-badge-info badge-soft tw:d-badge-soft tw:d-badge-soft">AI {{ email.ai_confidence }}%</span>{% endif %}
       </div>
       <h1 class="tpa-title tw:max-w-5xl tw:truncate">{{ email.subject|default:"(No subject)" }}</h1>
       <p class="tpa-subtitle">{{ email.sender }} → {{ email.recipient }} · {{ email.received_at|date:"d-M-Y H:i" }}</p>
@@ -60,7 +60,7 @@
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Evidence bundle" %}</div><h2 class="tpa-section-title">{% translate "ATTACHMENTS" %}</h2></div>
-      <span class="badge badge-outline tw:d-badge-outline">{{ email.attachments.count }}</span>
+      <span class="badge badge-outline tw:d-badge-outline tw:d-badge-outline">{{ email.attachments.count }}</span>
     </div>
     <div class="tw:overflow-x-auto">
       <table class="table table-sm tw:d-table-sm">
@@ -71,7 +71,7 @@
             <td><a class="link link-primary tw:d-link-primary" href="{{ attachment.file.url }}" target="_blank" rel="noopener">{{ attachment.original_name }}</a></td>
             <td>{{ attachment.content_type|default:"—" }}</td>
             <td class="tpa-mono">{{ attachment.size|filesizeformat }}</td>
-            <td><span class="badge badge-outline tw:d-badge-outline">{{ attachment.get_processing_state_display }}</span></td>
+            <td><span class="badge badge-outline tw:d-badge-outline tw:d-badge-outline">{{ attachment.get_processing_state_display }}</span></td>
             <td class="tw:max-w-xl tw:text-xs">{{ attachment.processing_error|default:"Processed / ready" }}</td>
           </tr>
         {% empty %}

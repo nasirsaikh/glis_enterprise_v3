@@ -41,6 +41,8 @@ The TPA transaction model distinguishes:
 
 Temporary suspension is not permanent termination. Reactivation is available only for eligible suspended enrollments.
 
+Manual suspension captures a required suspension reason and an optional expected reactivation date. Email extraction maps `temporary_until` into the same structured transaction field, so both intake channels use the same completion logic.
+
 ---
 
 ## 3. Initial Policy Enrollment
@@ -202,6 +204,8 @@ For Graph messages GLIS retains, where supplied:
 - timestamps.
 
 Original evidence is not replaced by corrected operational data.
+
+The inbound-email audit also stores the AI provider and model name used for extraction. Failed/review-required manually uploaded evidence can be deleted by an authorized intake editor; Office365/email-linked evidence is immutable and remains available for reprocessing/audit.
 
 ---
 

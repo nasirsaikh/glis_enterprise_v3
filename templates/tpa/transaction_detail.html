@@ -228,7 +228,7 @@
 
       <div class="tw:mt-3 tw:overflow-x-auto">
         <table class="tw:d-table tw:d-table-sm">
-          <thead><tr><th>#</th><th>{% translate "Member" %}</th><th>{% translate "Employee" %}</th><th>{% translate "Plan" %}</th><th>{% translate "Validation" %}</th><th>{% translate "Confidence" %}</th><th>{% translate "Premium" %}</th>{% if can_edit_intake %}<th></th>{% endif %}</tr></thead>
+          <thead><tr><th>#</th><th>{% translate "Member" %}</th><th>{% translate "Employee" %}</th><th>{% translate "Plan" %}</th><th>{% translate "Validation" %}</th><th>{% translate "Confidence" %}</th><th>{% translate "Premium" %}</th>{% if can_edit_intake %}<th>{% translate "Actions" %}</th>{% endif %}</tr></thead>
           <tbody>
           {% for a in actions %}
             <tr>
@@ -244,7 +244,47 @@
               <td><span class="tw:d-badge {% if a.validation_status == 'VALID' %}tw:d-badge-success{% elif a.validation_status == 'WARNING' %}tw:d-badge-warning{% else %}tw:d-badge-error{% endif %} tw:d-badge-soft">{{ a.validation_status }}</span></td>
               <td>{% if a.extraction_confidence is not None %}{{ a.extraction_confidence }}%{% else %}{% translate "Manual" %}{% endif %}</td>
               <td>{{ tx.currency }} {{ a.calculated_premium }}</td>
-              {% if can_edit_intake %}<td><form method="post" action="{% url 'tpa:transaction_remove_member' tx.reference a.pk %}">{% csrf_token %}<button class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs tw:text-error" type="submit"><i class="bi bi-trash"></i></button></form></td>{% endif %}
+              {% if can_edit_intake %}
+              <td>
+                <div class="tw:flex tw:gap-1">
+                  {% if a.edit_form %}
+                  <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs" type="button" onclick="document.getElementById('edit-member-{{ a.pk }}').showModal()" title="{% translate 'Correct row' %}">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <dialog id="edit-member-{{ a.pk }}" class="tw:d-modal">
+                    <div class="tw:d-modal-box tw:max-w-4xl">
+                      <div class="tw:flex tw:items-start tw:justify-between tw:gap-3">
+                        <div>
+                          <h3 class="tw:text-xl tw:font-black">{% translate "Correct Member Row" %} {{ a.row_number|default:forloop.counter }}</h3>
+                          <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{% translate "Original extracted/submitted data remains in the audit trail. These values become the corrected working values." %}</p>
+                        </div>
+                        <form method="dialog"><button class="tw:d-btn tw:d-btn-circle tw:d-btn-ghost tw:d-btn-sm" type="submit">✕</button></form>
+                      </div>
+                      <form class="tw:mt-5 tw:grid tw:gap-3 tw:md:grid-cols-2" method="post" action="{% url 'tpa:transaction_edit_member' tx.reference a.pk %}">
+                        {% csrf_token %}
+                        {% for field in a.edit_form %}
+                        <label class="tw:d-form-control">
+                          <span class="tw:mb-1 tw:text-xs tw:font-semibold">{{ field.label }}</span>
+                          {{ field }}
+                          {% if field.help_text %}<span class="tw:mt-1 tw:text-xs tw:text-base-content/45">{{ field.help_text }}</span>{% endif %}
+                        </label>
+                        {% endfor %}
+                        <div class="tw:md:col-span-2 tw:flex tw:justify-end tw:gap-2">
+                          <button class="tw:d-btn tw:d-btn-ghost" type="button" onclick="document.getElementById('edit-member-{{ a.pk }}').close()">{% translate "Cancel" %}</button>
+                          <button class="tw:d-btn tw:d-btn-primary" type="submit"><i class="bi bi-check2"></i>{% translate "Save & Revalidate" %}</button>
+                        </div>
+                      </form>
+                    </div>
+                    <form method="dialog" class="tw:d-modal-backdrop"><button>{% translate "Close" %}</button></form>
+                  </dialog>
+                  {% endif %}
+                  <form method="post" action="{% url 'tpa:transaction_remove_member' tx.reference a.pk %}">
+                    {% csrf_token %}
+                    <button class="tw:d-btn tw:d-btn-ghost tw:d-btn-xs tw:text-error" type="submit" title="{% translate 'Remove row' %}"><i class="bi bi-trash"></i></button>
+                  </form>
+                </div>
+              </td>
+              {% endif %}
             </tr>
           {% empty %}
             <tr><td colspan="8" class="tw:py-8 tw:text-center tw:text-base-content/45">{% translate "No member rows yet. Upload source files or add members manually." %}</td></tr>

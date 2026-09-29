@@ -11,7 +11,7 @@ from django.core.exceptions import ValidationError
 from apps.ai.models import AIExtractionProfile, AIInteraction
 from apps.ai.runtime import generate_json, generate_text
 
-from ..models import ExtractionAttempt, MemberAction, SourceDocument
+from ..models import ExtractionAttempt, MemberAction, SourceDocument, TransactionEvent
 from .extraction import normalize_ai_payload, select_profile, select_provider
 from .intake import normalize_member_row
 from .member_merge import merge_member_rows
@@ -314,6 +314,11 @@ def process_source_bundle(tx, documents, actor=None):
         )
         suffix = Path(document.original_name).suffix.lower()
         content = _read_bytes(document.file)
+        attempt = ExtractionAttempt.objects.create(
+            source_document=document,
+            stage="SOURCE_EXTRACTION",
+            status=ExtractionAttempt.Status.STARTED,
+        )
 
         try:
             if suffix in {".csv", ".xlsx", ".xls"}:
@@ -432,6 +437,35 @@ def process_source_bundle(tx, documents, actor=None):
                     "updated_at",
                 ]
             )
+            attempt.status = ExtractionAttempt.Status.SUCCESS
+            attempt.provider = ai_provider if suffix not in {".csv", ".xlsx", ".xls"} else None
+            attempt.model_name = (
+                getattr(ai_provider, "model_name", "") if attempt.provider_id else ""
+            )
+            attempt.metadata = {
+                "method": document.extraction_method,
+                "source_hash": document.source_hash,
+            }
+            attempt.save(
+                update_fields=[
+                    "status",
+                    "provider",
+                    "model_name",
+                    "metadata",
+                    "updated_at",
+                ]
+            )
+            TransactionEvent.objects.create(
+                transaction=tx,
+                actor=actor,
+                event_type="evidence_extracted",
+                summary=f"Evidence processed: {document.original_name}",
+                details={
+                    "source_document_id": document.pk,
+                    "method": document.extraction_method,
+                    "state": document.processing_state,
+                },
+            )
 
         except Exception as exc:
             document.processing_state = SourceDocument.State.REVIEW
@@ -445,8 +479,30 @@ def process_source_bundle(tx, documents, actor=None):
                     "updated_at",
                 ]
             )
+            attempt.status = ExtractionAttempt.Status.REVIEW
+            attempt.error = str(exc)
+            attempt.save(update_fields=["status", "error", "updated_at"])
+            TransactionEvent.objects.create(
+                transaction=tx,
+                actor=actor,
+                event_type="extraction_failed",
+                summary=f"Evidence needs review: {document.original_name}",
+                details={
+                    "source_document_id": document.pk,
+                    "error": str(exc),
+                },
+            )
 
     if evidence:
+        mapping_attempts = [
+            ExtractionAttempt.objects.create(
+                source_document=document,
+                stage="JSON_MAPPING",
+                status=ExtractionAttempt.Status.STARTED,
+            )
+            for document in documents
+            if document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME"}
+        ]
         try:
             mapped, provider, profile, _ = _map_evidence_text(
                 tx,
@@ -484,6 +540,25 @@ def process_source_bundle(tx, documents, actor=None):
                             "updated_at",
                         ]
                     )
+            for attempt in mapping_attempts:
+                attempt.status = ExtractionAttempt.Status.SUCCESS
+                attempt.provider = provider
+                attempt.model_name = provider.model_name
+                attempt.metadata = {
+                    "profile_id": profile.pk if profile else None,
+                    "members": len(actions),
+                }
+                attempt.raw_output = mapped
+                attempt.save(
+                    update_fields=[
+                        "status",
+                        "provider",
+                        "model_name",
+                        "metadata",
+                        "raw_output",
+                        "updated_at",
+                    ]
+                )
         except Exception as exc:
             for document in documents:
                 if document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME"}:
@@ -500,6 +575,10 @@ def process_source_bundle(tx, documents, actor=None):
                             "updated_at",
                         ]
                     )
+            for attempt in mapping_attempts:
+                attempt.status = ExtractionAttempt.Status.REVIEW
+                attempt.error = str(exc)
+                attempt.save(update_fields=["status", "error", "updated_at"])
 
     review_count = sum(
         1

@@ -656,6 +656,20 @@ def mailbox_health():
             config.get(key)
             for key in ("tenant_id", "client_id", "client_secret", "mailbox")
         )
+        try:
+            from apps.job_center.models import ScheduledJob
+            scheduled_job = ScheduledJob.objects.filter(
+                handler="tpa.poll_inbound_mailbox"
+            ).order_by("pk").first()
+        except Exception:
+            scheduled_job = None
+
+        scheduler_enabled = bool(
+            config["enabled"]
+            and getattr(settings, "JOB_CENTER_ENABLED", True)
+            and scheduled_job
+            and scheduled_job.enabled
+        )
         return {
             "provider": GRAPH_PROVIDER,
             "enabled": config["enabled"],
@@ -672,9 +686,11 @@ def mailbox_health():
             "messages_review": getattr(state, "messages_review", 0) if state else 0,
             "messages_ignored": getattr(state, "messages_ignored", 0) if state else 0,
             "messages_failed": getattr(state, "messages_failed", 0) if state else 0,
-            "scheduler_enabled": bool(
-                config["enabled"] and (state.scheduler_enabled if state else True)
-            ),
+            "scheduler_enabled": scheduler_enabled,
+            "scheduler_cron": getattr(scheduled_job, "cron_expression", "") if scheduled_job else "",
+            "scheduler_last_run_at": getattr(scheduled_job, "last_run_at", None) if scheduled_job else None,
+            "scheduler_last_status": getattr(scheduled_job, "last_status", "") if scheduled_job else "",
+            "scheduler_next_run_at": getattr(scheduled_job, "next_run_at", None) if scheduled_job else None,
         }
 
     return {

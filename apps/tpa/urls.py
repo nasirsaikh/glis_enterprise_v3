@@ -24,6 +24,11 @@ urlpatterns = [
         views.inbound_email_process,
         name="inbound_email_process",
     ),
+    path(
+        "inbound-emails/<int:email_id>/attachments/<int:attachment_id>/",
+        views.inbound_email_attachment,
+        name="inbound_email_attachment",
+    ),
 
     path("transactions/", views.transaction_list, name="transaction_list"),
     path("transactions/new/", views.transaction_create, name="transaction_create"),

@@ -246,8 +246,31 @@ class InboundEmail(TimeStampedModel):
     received_at=models.DateTimeField()
     body_text=models.TextField(blank=True)
     attachment_metadata=models.JSONField(default=list, blank=True)
+    processing_hints=models.JSONField(default=dict, blank=True)
+    ai_extracted_payload=models.JSONField(default=dict, blank=True)
+    ai_confidence=models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     processing_state=models.CharField(max_length=20, choices=State.choices, default=State.RECEIVED, db_index=True)
     transaction=models.ForeignKey(MemberTransaction, null=True, blank=True, related_name="source_emails", on_delete=models.SET_NULL)
     processing_error=models.TextField(blank=True)
+    processed_at=models.DateTimeField(null=True, blank=True)
     class Meta:
         constraints=[models.UniqueConstraint(fields=["provider","provider_message_id"], name="tpa_unique_inbound_email")]
+
+class InboundEmailAttachment(TimeStampedModel):
+    class State(models.TextChoices):
+        RECEIVED="RECEIVED","Received"
+        PROCESSING="PROCESSING","Processing"
+        PROCESSED="PROCESSED","Processed"
+        REVIEW="REVIEW","Needs review"
+        FAILED="FAILED","Failed"
+    inbound_email=models.ForeignKey(InboundEmail, related_name="attachments", on_delete=models.CASCADE)
+    file=models.FileField(upload_to="tpa/inbound/%Y/%m/")
+    original_name=models.CharField(max_length=255)
+    content_type=models.CharField(max_length=120, blank=True)
+    size=models.PositiveIntegerField(default=0)
+    sha256=models.CharField(max_length=64, db_index=True)
+    processing_state=models.CharField(max_length=20, choices=State.choices, default=State.RECEIVED, db_index=True)
+    extracted_payload=models.JSONField(default=dict, blank=True)
+    processing_error=models.TextField(blank=True)
+    def __str__(self):
+        return self.original_name

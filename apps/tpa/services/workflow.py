@@ -1,9 +1,10 @@
 from datetime import date, datetime
 
 from django.db import transaction
+from django.urls import reverse
 from django.utils import timezone
 
-from apps.tickets.models import Ticket, TicketComment, TicketEvent
+from apps.tickets.models import Notification, Ticket, TicketComment, TicketEvent
 
 from ..models import (
     Member,
@@ -34,6 +35,22 @@ def _event(tx, actor, event_type, summary, details=None):
             summary=summary,
             details={"transaction_reference": tx.reference, **(details or {})},
         )
+
+
+def _notify_query_user(user, query, title, body):
+    if not user or not getattr(user, "is_active", False):
+        return
+    Notification.objects.create(
+        user=user,
+        ticket=query.ticket,
+        kind="update",
+        title=title[:160],
+        body=body[:500],
+        link=reverse(
+            "tpa:transaction_detail",
+            args=[query.transaction.reference],
+        ),
+    )
 
 
 def _as_date(value):
@@ -185,7 +202,17 @@ def raise_tpa_query(tx, actor, subject, message):
         actor,
         "tpa_query_raised",
         f"TPA query raised: {query.subject}",
-        {"query_id": query.pk, "ticket_comment_id": comment.pk},
+        {
+            "query_id": query.pk,
+            "query_ticket": query.ticket.reference if query.ticket else "",
+            "ticket_comment_id": comment.pk,
+        },
+    )
+    _notify_query_user(
+        tx.requester,
+        query,
+        f"TPA query: {query.subject}",
+        str(message or "").strip(),
     )
     return query
 
@@ -213,6 +240,20 @@ def post_query_message(query, actor, message, *, kind=None):
         sender=actor,
         kind=kind or TransactionQueryMessage.Kind.REPLY,
     )
+    query.ticket.status = (
+        Ticket.Status.IN_PROGRESS
+        if actor.pk == tx.requester_id
+        else Ticket.Status.PENDING_CUSTOMER
+    )
+    query.ticket.save(update_fields=["status", "updated_at"])
+    recipient = query.raised_by if actor.pk == tx.requester_id else tx.requester
+    if recipient and recipient.pk != actor.pk:
+        _notify_query_user(
+            recipient,
+            query,
+            f"TPA query updated: {query.subject}",
+            text,
+        )
     _event(
         tx,
         actor,
@@ -257,8 +298,18 @@ def resolve_tpa_query(query, actor):
         actor,
         "tpa_query_resolved",
         f"TPA query resolved: {query.subject}",
-        {"query_id": query.pk},
+        {
+            "query_id": query.pk,
+            "query_ticket": query.ticket.reference if query.ticket else "",
+        },
     )
+    if tx.requester_id != actor.pk:
+        _notify_query_user(
+            tx.requester,
+            query,
+            f"TPA query resolved: {query.subject}",
+            "The query has been resolved and TPA processing has resumed.",
+        )
     return tx
 
 

@@ -102,6 +102,11 @@ urlpatterns = [
         views.transaction_approve,
         name="transaction_approve",
     ),
+    path(
+        "transactions/<str:reference>/reject/",
+        views.transaction_reject,
+        name="transaction_reject",
+    ),
 
     path(
         "transactions/<str:reference>/tpa/start/",

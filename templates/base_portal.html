@@ -178,8 +178,13 @@
           <ul class="menu tw:mt-3 tw:w-full tw:gap-1 tw:p-0">
             <li data-sidebar-label class="menu-title tw:hidden"><span>{% translate "TPA Operations" %}</span></li>
             <li>
-              <a data-sidebar-link class="tw:justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name != 'user_guide' and 'inbound_email' not in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:dashboard' %}" title="{% translate 'TPA Member Management' %}">
+              <a data-sidebar-link class="tw:justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name != 'user_guide' and 'inbound_email' not in request.resolver_match.url_name and 'policy_enrollment' not in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:dashboard' %}" title="{% translate 'TPA Member Management' %}">
                 <i class="bi bi-people tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "TPA Member Management" %}</span>
+              </a>
+            </li>
+            <li>
+              <a data-sidebar-link class="tw:justify-center {% if request.resolver_match.namespace == 'tpa' and 'policy_enrollment' in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:policy_enrollment_list' %}" title="{% translate 'Initial Policy Enrollment' %}">
+                <i class="bi bi-building-add tw:text-lg"></i><span data-sidebar-label class="tw:hidden">{% translate "Initial Policy Enrollment" %}</span>
               </a>
             </li>
             <li>

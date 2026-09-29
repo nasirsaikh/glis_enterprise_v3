@@ -1,18 +1,18 @@
 {% extends 'base_portal.html' %}{% load i18n %}{% block title %}{% translate "Create ticket" %}{% endblock %}
 {% block content %}
-<div class="tw:mx-auto tw:max-w-6xl">
-  <div class="tw:mb-6 tw:flex tw:flex-col tw:gap-4 tw:sm:flex-row tw:sm:items-end tw:sm:justify-between">
-    <div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:mb-3">{% translate "Guided service request" %}</span><h1 class="tw:text-3xl tw:font-black tw:tracking-[-.04em] tw:sm:text-4xl">{% translate "Create a ticket" %}</h1><p class="tw:mt-2 tw:text-base-content/55">{% translate "Four clear steps help the responsible team receive a complete request." %}</p></div>
-    <a class="tw:d-btn tw:d-btn-ghost tw:rounded-full" href="{% url 'portal:ticket_list' %}"><i class="bi bi-x-lg"></i>{% translate "Exit" %}</a>
+<div class="mx-auto max-w-6xl">
+  <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div><span class="badge badge-primary badge-soft mb-3">{% translate "Guided service request" %}</span><h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "Create a ticket" %}</h1><p class="mt-2 text-base-content/55">{% translate "Four clear steps help the responsible team receive a complete request." %}</p></div>
+    <a class="btn btn-ghost rounded-full" href="{% url 'portal:ticket_list' %}"><i class="bi bi-x-lg"></i>{% translate "Exit" %}</a>
   </div>
 
-  <ul class="tw:d-steps tw:d-steps-horizontal tw:mb-6 tw:w-full tw:overflow-x-auto">
-    <li class="tw:d-step {% if step >= 1 %}tw:d-step-primary{% endif %}">{% translate "Service" %}</li>
-    <li class="tw:d-step {% if step >= 2 %}tw:d-step-primary{% endif %}">{% translate "Details" %}</li>
-    <li class="tw:d-step {% if step >= 3 %}tw:d-step-primary{% endif %}">{% translate "Clarify" %}</li>
-    <li class="tw:d-step {% if step >= 4 %}tw:d-step-primary{% endif %}">{% translate "Review" %}</li>
+  <ul class="steps steps-horizontal mb-6 w-full overflow-x-auto">
+    <li class="step {% if step >= 1 %}step-primary{% endif %}">{% translate "Service" %}</li>
+    <li class="step {% if step >= 2 %}step-primary{% endif %}">{% translate "Details" %}</li>
+    <li class="step {% if step >= 3 %}step-primary{% endif %}">{% translate "Clarify" %}</li>
+    <li class="step {% if step >= 4 %}step-primary{% endif %}">{% translate "Review" %}</li>
   </ul>
 
-  <section class="tw:d-card tw:border tw:border-base-300 tw:shadow-lg" data-reveal><div class="tw:d-card-body tw:p-5 tw:sm:p-7 tw:lg:p-9">{% block wizard_content %}{% endblock %}</div></section>
+  <section class="card border border-base-300 shadow-lg" data-reveal><div class="card-body p-5 sm:p-7 lg:p-9">{% block wizard_content %}{% endblock %}</div></section>
 </div>
 {% endblock %}

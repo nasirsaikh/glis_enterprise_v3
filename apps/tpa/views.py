@@ -129,7 +129,10 @@ def dashboard(request):
             for row in source_rows
         ],
         "active_sponsors": TPAOrganization.objects.filter(
-            organization_type="CORPORATE",
+            organization_type__in=[
+                TPAOrganization.Type.INDIVIDUAL,
+                TPAOrganization.Type.CORPORATE,
+            ],
             is_active=True,
             sponsored_policies__in=policies,
         ).distinct().count(),

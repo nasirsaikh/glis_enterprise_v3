@@ -203,11 +203,7 @@
           <dialog id="manual-member" class="modal">
             <div class="modal-box max-w-4xl">
               <div class="flex items-start justify-between gap-3"><div><h3 class="text-lg font-black">{% translate "Add Member Manually" %}</h3><p class="text-xs opacity-50">{% translate "Manual entry uses the same deterministic validation rules as extracted rows." %}</p></div><form method="dialog"><button class="btn btn-circle btn-ghost btn-sm">✕</button></form></div>
-              <form class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3" method="post" action="{% url 'tpa:transaction_add_member' tx.reference %}">
-                {% csrf_token %}
-                {% for field in member_form %}<fieldset class="fieldset" {% if field.name == "principal_reference" %}id="principal-reference-field"{% endif %}><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}{% if field.help_text %}<p class="label text-[10px] opacity-50">{{ field.help_text }}</p>{% endif %}</fieldset>{% endfor %}
-                <div class="md:col-span-2 xl:col-span-3 flex justify-end gap-2"><button class="btn" type="button" onclick="document.getElementById('manual-member').close()">{% translate "Cancel" %}</button><button class="btn btn-primary" type="submit">{% translate "Add & Validate" %}</button></div>
-              </form>
+              {% include "tpa/partials/manual_member_form.html" with tx=tx member_form=member_form only %}
             </div>
           </dialog>
           {% endif %}
@@ -369,6 +365,28 @@
             </div>
           </details>
           {% endif %}
+        </div>
+      </section>
+      {% endif %}
+
+      {% if shared_internal_messages %}
+      <section class="card border border-info/30">
+        <div class="tpa-section-head">
+          <div><div class="tpa-eyebrow">{% translate "Explicitly shared information" %}</div><h2 class="tpa-section-title">{% translate "INSURER / TPA INFORMATION SHARED WITH YOU" %}</h2></div>
+          <span class="badge badge-info badge-soft">{% translate "Shared" %}</span>
+        </div>
+        <div class="card-body space-y-3">
+          <div class="alert alert-info py-2"><i class="bi bi-shield-lock"></i><span>{% translate "Only the specific message text explicitly shared with you is visible. The insurer/TPA internal thread, internal attachments and internal metadata remain private." %}</span></div>
+          {% for msg in shared_internal_messages %}
+          <div class="chat chat-start">
+            <div class="chat-header text-xs">
+              {{ msg.sender.get_full_name|default:msg.sender.username }}
+              · {{ msg.shared_with_client_at|date:"d-M-Y H:i" }}
+            </div>
+            <div class="chat-bubble chat-bubble-info">{{ msg.ticket_comment.body|safe }}</div>
+            <div class="chat-footer text-[10px] opacity-50">{% translate "Shared from an internal insurer/TPA discussion" %}</div>
+          </div>
+          {% endfor %}
         </div>
       </section>
       {% endif %}

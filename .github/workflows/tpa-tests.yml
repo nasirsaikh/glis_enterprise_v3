@@ -1,0 +1,63 @@
+name: TPA workflow tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/tpa/**"
+      - "apps/ai/**"
+      - "apps/tickets/**"
+      - "apps/job_center/jobs/tpa_jobs.py"
+      - "glis/**"
+      - "requirements.txt"
+      - "templates/tpa/**"
+      - "templates/base_portal.html"
+      - ".github/workflows/tpa-tests.yml"
+  pull_request:
+    paths:
+      - "apps/tpa/**"
+      - "apps/ai/**"
+      - "apps/tickets/**"
+      - "apps/job_center/jobs/tpa_jobs.py"
+      - "glis/**"
+      - "requirements.txt"
+      - "templates/tpa/**"
+      - "templates/base_portal.html"
+      - ".github/workflows/tpa-tests.yml"
+
+permissions:
+  contents: read
+
+env:
+  JOB_CENTER_ENABLED: "0"
+
+jobs:
+  tpa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip check
+
+      - name: Compile TPA and AI code
+        run: python -m compileall -q apps/tpa apps/ai
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Run TPA regression suite
+        run: python manage.py test apps.tpa

@@ -222,6 +222,13 @@ def post_query_message(query, actor, message, *, kind=None):
     if query.status != TransactionQuery.Status.OPEN:
         raise ValueError("This query is already resolved.")
     tx = query.transaction
+    if (
+        actor.pk != tx.requester_id
+        and not can_process_tpa_transaction(actor, tx)
+    ):
+        raise PermissionError(
+            "Only the requester or an authorized TPA processor can reply to this query."
+        )
     if not query.ticket_id:
         raise ValueError("The query is not linked to its GLIS query ticket.")
     text = str(message or "").strip()

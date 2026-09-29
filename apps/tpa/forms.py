@@ -1,9 +1,10 @@
 from django import forms
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.ai.models import AIProviderConfig
 
-from .models import InboundEmail, Member, MemberTransaction, Policy
+from .models import BenefitPlan, InboundEmail, Member, MemberTransaction, Policy, TPAOrganization
 from .services.access import visible_policies
 
 
@@ -19,7 +20,23 @@ class TransactionForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["policy"].queryset = visible_policies(user) if user else Policy.objects.none()
+        if user:
+            self.fields["policy"].queryset = (
+                visible_policies(user)
+                .filter(status=Policy.Status.ACTIVE)
+                .filter(
+                    Q(initial_enrollment_completed_at__isnull=False)
+                    | Q(enrollments__enrollment_status="active")
+                )
+                .distinct()
+            )
+        else:
+            self.fields["policy"].queryset = Policy.objects.none()
+        self.fields["transaction_type"].choices = [
+            choice
+            for choice in MemberTransaction.Type.choices
+            if choice[0] != MemberTransaction.Type.NEW_POLICY_ENROLLMENT
+        ]
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
@@ -27,6 +44,113 @@ class TransactionForm(forms.ModelForm):
                 if isinstance(field.widget, forms.Select)
                 else "tw:d-input tw:d-input-bordered tw:w-full",
             )
+
+
+class PolicyEnrollmentForm(forms.Form):
+    sponsor = forms.ModelChoiceField(
+        queryset=TPAOrganization.objects.none(),
+        label="Corporate / Sponsor",
+    )
+    insurance_company = forms.ModelChoiceField(
+        queryset=TPAOrganization.objects.none(),
+        label="Insurance Company",
+    )
+    tpa_organization = forms.ModelChoiceField(
+        queryset=TPAOrganization.objects.none(),
+        required=False,
+        label="TPA",
+    )
+    policy_number = forms.CharField(max_length=80)
+    policy_name = forms.CharField(max_length=180)
+    start_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
+    expiry_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
+    currency = forms.CharField(max_length=3, initial="OMR")
+    stp_enabled = forms.BooleanField(required=False, initial=True)
+    allowed_backdating_days = forms.IntegerField(min_value=0, max_value=3650, initial=30)
+
+    plan_code = forms.CharField(max_length=50, initial="GOLD", label="Initial Plan Code")
+    plan_name = forms.CharField(max_length=160, initial="Gold", label="Initial Plan Name")
+    annual_premium = forms.DecimalField(
+        max_digits=14,
+        decimal_places=3,
+        initial="0.000",
+        label="Annual Premium",
+    )
+    default_sum_insured = forms.DecimalField(
+        max_digits=16,
+        decimal_places=3,
+        required=False,
+        label="Default Sum Insured",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["sponsor"].queryset = TPAOrganization.objects.filter(
+            organization_type=TPAOrganization.Type.CORPORATE,
+            is_active=True,
+        ).order_by("name_en")
+        self.fields["insurance_company"].queryset = TPAOrganization.objects.filter(
+            organization_type=TPAOrganization.Type.INSURER,
+            is_active=True,
+        ).order_by("name_en")
+        self.fields["tpa_organization"].queryset = TPAOrganization.objects.filter(
+            organization_type=TPAOrganization.Type.TPA,
+            is_active=True,
+        ).order_by("name_en")
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.Select):
+                css = "tw:d-select tw:d-select-bordered tw:w-full"
+            elif isinstance(field.widget, forms.CheckboxInput):
+                css = "tw:d-checkbox tw:d-checkbox-primary"
+            else:
+                css = "tw:d-input tw:d-input-bordered tw:w-full"
+            field.widget.attrs.setdefault("class", css)
+
+    def clean_policy_number(self):
+        value = self.cleaned_data["policy_number"].strip()
+        if Policy.objects.filter(policy_number__iexact=value).exists():
+            raise forms.ValidationError("A policy with this number already exists.")
+        return value
+
+    def clean(self):
+        data = super().clean()
+        start = data.get("start_date")
+        end = data.get("expiry_date")
+        if start and end and end < start:
+            self.add_error("expiry_date", "Expiry date cannot be before start date.")
+        return data
+
+
+class BenefitPlanSetupForm(forms.ModelForm):
+    class Meta:
+        model = BenefitPlan
+        fields = (
+            "code",
+            "name",
+            "description",
+            "annual_premium",
+            "default_sum_insured",
+            "is_active",
+        )
+
+    def __init__(self, *args, policy=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.policy = policy
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.CheckboxInput):
+                css = "tw:d-checkbox tw:d-checkbox-primary"
+            else:
+                css = "tw:d-input tw:d-input-bordered tw:w-full"
+            field.widget.attrs.setdefault("class", css)
+
+    def clean_code(self):
+        value = self.cleaned_data["code"].strip().upper()
+        if self.policy and BenefitPlan.objects.filter(
+            policy=self.policy,
+            code__iexact=value,
+        ).exists():
+            raise forms.ValidationError("This plan code already exists for the policy.")
+        return value
 
 
 class MemberRowForm(forms.Form):
@@ -319,3 +443,82 @@ class InboundEmailForm(forms.ModelForm):
                     f"{uploaded.name} exceeds the 10 MB attachment limit."
                 )
         return files
+
+
+
+class SourceBundleUploadForm(forms.Form):
+    source_files = MultipleFileField(
+        label="Source documents",
+        required=True,
+        widget=MultipleFileInput(
+            attrs={
+                "multiple": True,
+                "accept": ".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp",
+                "class": "tw:file-input tw:file-input-bordered tw:w-full",
+            }
+        ),
+        help_text="Upload Excel/CSV, PDF, passport/ID images or multiple front/back evidence files.",
+    )
+
+    def clean_source_files(self):
+        files = self.cleaned_data.get("source_files") or []
+        if len(files) > 20:
+            raise forms.ValidationError("Upload a maximum of 20 source files at one time.")
+        allowed = {".csv", ".xlsx", ".xls", ".pdf", ".png", ".jpg", ".jpeg", ".webp"}
+        for uploaded in files:
+            suffix = "." + uploaded.name.lower().rsplit(".", 1)[-1] if "." in uploaded.name else ""
+            if suffix not in allowed:
+                raise forms.ValidationError(f"Unsupported source file: {uploaded.name}")
+            if uploaded.size > 10 * 1024 * 1024:
+                raise forms.ValidationError(f"{uploaded.name} exceeds 10 MB.")
+        return files
+
+
+class QueryRaiseForm(forms.Form):
+    subject = forms.CharField(max_length=255)
+    message = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["subject"].widget.attrs.setdefault(
+            "class", "tw:d-input tw:d-input-bordered tw:w-full"
+        )
+        self.fields["message"].widget.attrs.setdefault(
+            "class", "tw:d-textarea tw:d-textarea-bordered tw:w-full"
+        )
+
+
+class QueryMessageForm(forms.Form):
+    message = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}))
+    attachments = MultipleFileField(
+        required=False,
+        widget=MultipleFileInput(
+            attrs={
+                "multiple": True,
+                "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx",
+                "class": "tw:file-input tw:file-input-bordered tw:w-full",
+            }
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["message"].widget.attrs.setdefault(
+            "class", "tw:d-textarea tw:d-textarea-bordered tw:w-full"
+        )
+
+
+class TPAProcessingRowForm(forms.Form):
+    card_number = forms.CharField(required=False, max_length=100)
+    effective_date = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    amount = forms.DecimalField(max_digits=14, decimal_places=3, required=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.setdefault(
+                "class", "tw:d-input tw:d-input-bordered tw:w-full"
+            )

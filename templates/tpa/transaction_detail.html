@@ -141,6 +141,9 @@
                   <td>
                     <div class="flex gap-1">
                       {% if can_edit_intake %}<form method="post" action="{% url 'tpa:transaction_reprocess_source' tx.reference doc.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-xs" title="{% translate 'Reprocess Evidence' %}"><i class="bi bi-arrow-repeat"></i></button></form>{% endif %}
+                      {% if can_edit_intake and not doc.ticket_attachment_id and doc.processing_state == "REVIEW" or can_edit_intake and not doc.ticket_attachment_id and doc.processing_state == "FAILED" %}
+                      <form method="post" action="{% url 'tpa:transaction_delete_source' tx.reference doc.pk %}" onsubmit="return confirm('{% translate 'Delete this failed evidence source?' %}')">{% csrf_token %}<button class="btn btn-ghost btn-xs text-error" title="{% translate 'Delete failed source' %}"><i class="bi bi-trash"></i></button></form>
+                      {% endif %}
                       {% if can_view_ai_source and doc.extracted_payload %}
                       <button class="btn btn-ghost btn-xs" type="button" onclick="document.getElementById('source-json-{{ doc.pk }}').showModal()"><i class="bi bi-braces"></i></button>
                       <dialog id="source-json-{{ doc.pk }}" class="modal"><div class="modal-box max-w-5xl"><h3 class="font-bold">{{ doc.original_name }}</h3><pre class="mt-3 max-h-[65vh] overflow-auto text-xs">{{ doc.extracted_payload }}</pre><div class="modal-action"><form method="dialog"><button class="btn">{% translate "Close" %}</button></form></div></div></dialog>

@@ -36,11 +36,20 @@ def normalize_ai_payload(payload):
         raise ValueError("AI response did not contain the required members array.")
 
     return {
+        "is_endorsement_request": payload.get("is_endorsement_request"),
+        "classification": payload.get("classification") or payload.get("transaction_type"),
         "policy_number": payload.get("policy_number"),
-        "transaction_type": payload.get("transaction_type"),
+        "transaction_type": payload.get("transaction_type") or payload.get("classification"),
+        "transaction_reference": payload.get("transaction_reference"),
         "effective_date": payload.get("effective_date"),
+        "refund_basis": payload.get("refund_basis"),
+        "temporary_until": payload.get("temporary_until"),
+        "remarks": payload.get("remarks") or "",
         "summary": payload.get("summary") or "",
         "confidence": payload.get("confidence"),
+        "missing_information": list(payload.get("missing_information") or []),
+        "warnings": list(payload.get("warnings") or []),
+        "source_references": list(payload.get("source_references") or []),
         "members": [canonical_member(row) for row in payload["members"]],
     }
 

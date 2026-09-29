@@ -61,6 +61,38 @@ def can_create_tpa_transaction(user):
     return can_create_policy_enrollment(user) or can_create_endorsement(user)
 
 
+def can_edit_tpa_intake(user, tx):
+    """Return whether the user may mutate the intake/correction stage.
+
+    Visibility alone is deliberately insufficient. This guard is reused by
+    POST endpoints so a read-only PolicyAccess user cannot modify a transaction
+    by calling an HTMX/form URL directly.
+    """
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser or user.has_perm("tpa.configure_tpa"):
+        return True
+
+    if tx.transaction_type == MemberTransaction.Type.NEW_POLICY_ENROLLMENT:
+        if user.has_perm("tpa.create_enrollment"):
+            return True
+        return PolicyAccess.objects.filter(
+            user=user,
+            policy=tx.policy,
+            active=True,
+            can_create_enrollment=True,
+        ).exists()
+
+    if user.has_perm("tpa.create_endorsement"):
+        return True
+    return PolicyAccess.objects.filter(
+        user=user,
+        policy=tx.policy,
+        active=True,
+        can_create_endorsement=True,
+    ).exists()
+
+
 def can_approve_tpa_transaction(user, tx):
     if not user or not user.is_authenticated:
         return False

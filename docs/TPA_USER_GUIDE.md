@@ -16,7 +16,7 @@ A brand-new policy is created from:
 
 Portal → TPA Operations → Initial Policy Enrollment
 
-This is intentionally separate from endorsements. Initial setup creates a Draft policy together with the Sponsor, Insurance Company, optional TPA route, policy dates, currency/STP/backdating settings, first Benefit Plan, PolicyAccess for the setup user, and a dedicated NEW_POLICY_ENROLLMENT transaction.
+This is intentionally separate from endorsements. Initial setup creates a Draft policy for an Individual or Corporate Sponsor together with the Insurance Company, optional TPA route, policy dates, currency/STP/backdating settings, first Benefit Plan, PolicyAccess for the setup user, and a dedicated NEW_POLICY_ENROLLMENT transaction.
 
 Additional plans and the complete opening census are added inside that case. The opening census can be entered manually or loaded through the same Excel/CSV/PDF/image OCR intake used later for endorsements.
 
@@ -89,7 +89,7 @@ A permitted TPA processor starts the case, then records card/member number, TPA 
 
 For additions and initial enrollment, card/member number is required before completion. TPA effective date and TPA amount are required for applicable member rows.
 
-Complete TPA Processing performs the deterministic member/enrollment update and marks the case completed. Initial Policy Enrollment completion also activates the policy.
+Complete TPA Processing persists the TPA-final card/member number, effective date and final premium/refund amount into the permanent enrollment where applicable, performs the deterministic member/enrollment update and marks the case completed. Initial Policy Enrollment completion also activates the policy.
 
 ## TPA query and embedded chat
 

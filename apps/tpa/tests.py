@@ -19,6 +19,7 @@ from .models import (
     MemberTransaction,
     Policy,
     PolicyAccess,
+    SourceDocument,
     TPAOrganization,
     TransactionQuery,
 )
@@ -182,6 +183,37 @@ class TPACoreTests(TestCase):
         self.assertContains(response, "tpa-error-chart")
         self.assertContains(response, "OLLAMA OCR")
         self.assertNotContains(response, "Plotly.newPlot")
+
+    def test_transaction_workspace_renders_ocr_payload_without_rows_created(self):
+        tx = self._transaction()
+        SourceDocument.objects.create(
+            transaction=tx,
+            original_name="ocr-id.pdf",
+            document_kind="IDENTITY",
+            extraction_method="PDF_VISION_OCR",
+            processing_state=SourceDocument.State.PROCESSED,
+            processed=True,
+            extracted_payload={
+                "ocr_text": "NASIR ALI",
+                "page_count": 2,
+                "bundle_members_created": 0,
+                "ai_provider": "TPA Mock AI",
+                "ai_profile": "",
+            },
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse("tpa:transaction_detail", args=[tx.reference])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "ocr-id.pdf")
+        self.assertContains(
+            response,
+            '<td class="max-w-md text-xs">0</td>',
+            html=True,
+        )
 
     def test_tpa_ai_provider_selection_prefers_ollama(self):
         AIProviderConfig.objects.create(

@@ -834,6 +834,10 @@ Conversation audiences are enforced server-side:
 
 An insurer/TPA internal thread is not visible to the client. Authorized internal staff can explicitly share a selected internal message body; that does **not** expose the parent internal thread or its internal attachments.
 
+Selected-participant discussions use an explicit participant list and notify only those selected users. Intake mutation is separately authorized from transaction visibility, so read-only policy users cannot upload/reprocess/delete evidence, add/edit/remove members, select members or submit workflow changes by posting directly to an endpoint.
+
+Failed/review-required **manual** evidence can be removed during the editable intake stage; Office365/email-linked evidence is preserved for audit and can only be reprocessed or supplemented. Inbound-email audit records also persist the AI provider and model name used for extraction.
+
 Deletion and Policy Cancellation use structured refund basis <code>FULL</code> or <code>PRO_RATA</code>. Calculations use <code>Decimal</code> and retain calculation snapshots. System-calculated amounts and TPA-final amounts remain distinct and an override reason is required when they differ.
 
 Temporary suspension and reactivation are first-class transaction types. Permanent termination remains distinct and cannot be treated as an ordinary temporary suspension.

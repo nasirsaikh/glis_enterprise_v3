@@ -122,16 +122,17 @@
       <section id="ai" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
         <div class="tw:d-card-body">
           <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-stars tw:text-primary"></i>{% translate "7. AI and document intake" %}</h2>
-          <p>{% translate "The transaction screen supports structured CSV/XLSX member intake, downloadable valid/error sample files, an on-screen column reference and manual correction. The TPA data layer also includes source-document tracking and the shared GLIS AI configuration for text/vision provider selection, extraction profiles, training examples and strict canonical member JSON." %}</p>
-          <div class="tw:d-alert tw:d-alert-warning"><i class="bi bi-cone-striped"></i><span>{% translate "Spreadsheet intake is operational. Full OCR/vision extraction from PDF, passport/ID images and automatic correction mapping remains a separate AI intake workflow and should only be enabled after the configured provider pipeline is tested." %}</span></div>
+          <p>{% translate "AI extraction is operational through admin-configured Mock, Ollama, OpenAI-compatible/OpenAI and Anthropic providers. Providers can be marked for text/vision capabilities and sensitive-data use. Email body extraction and vision-capable image attachments produce canonical member JSON; CSV/XLSX attachments use deterministic structured import." %}</p>
+          <div class="tw:d-alert tw:d-alert-info"><i class="bi bi-shield-check"></i><span>{% translate "AI only extracts and maps source data. Eligibility, validation, premium, STP, approval and final processing remain deterministic application rules." %}</span></div>
+          <div class="tw:d-alert tw:d-alert-warning"><i class="bi bi-cone-striped"></i><span>{% translate "PDF attachments are retained and flagged for review in the current implementation; configure/test a dedicated PDF/OCR path before relying on automatic PDF extraction." %}</span></div>
         </div>
       </section>
 
       <section id="email" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
         <div class="tw:d-card-body">
           <h2 class="tw:d-card-title tw:text-2xl"><i class="bi bi-envelope tw:text-primary"></i>{% translate "8. Email intake" %}</h2>
-          <p>{% translate "Inbound email records are designed to retain provider message ID, sender, recipient, subject, received time, body, attachment metadata, processing state and linked TPA transaction. Duplicate provider message IDs are prevented." %}</p>
-          <div class="tw:d-alert tw:d-alert-warning"><i class="bi bi-cone-striped"></i><span>{% translate "Automatic mailbox polling and attachment-to-transaction processing are foundation components at this stage; they are not yet a complete end-user portal workflow." %}</span></div>
+          <p>{% translate "Use TPA Operations → Inbound Emails → Add Inbound Email. Enter the email body, optionally give policy/type/effective-date hints, attach CSV/XLSX or images, and keep Process with AI enabled. The system stores the email and attachments, audits the AI interaction, creates the TPA transaction and GLIS ticket, then runs deterministic validation/STP." %}</p>
+          <p>{% translate "CSV/XLSX email attachments are imported directly; image attachments use a configured vision provider. Duplicate provider message IDs are prevented and files requiring review remain visible on the inbound email detail page." %}</p>
         </div>
       </section>
 
@@ -143,7 +144,8 @@
             <li>{% translate "Assign TPA permissions through Django users/groups." %}</li>
             <li>{% translate "Create Policy Access for the correct user and organization." %}</li>
             <li>{% translate "Configure policy backdating, STP and premium rules." %}</li>
-            <li>{% translate "Configure AI providers and extraction profiles only for enabled document workflows." %}</li>
+            <li>{% translate "Configure AI Provider Config with capability email_extraction; enable allow_sensitive_data for member/email content. For image extraction also enable supports_vision and document_extraction." %}</li>
+            <li>{% translate "For Ollama/OpenAI/Anthropic credentials, Secret reference is the environment-variable name, not the secret value itself." %}</li>
             <li>{% translate "Use the linked GLIS ticket to monitor SLA, approvals, assignment, notifications and audit events." %}</li>
           </ul>
         </div>

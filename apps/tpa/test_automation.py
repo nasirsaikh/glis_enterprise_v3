@@ -547,6 +547,8 @@ class TPAAutomationTests(TestCase):
         suspend = self._transaction(
             tx_type=MemberTransaction.Type.MEMBER_SUSPEND,
             status=MemberTransaction.Status.PENDING_VALIDATION,
+            expected_reactivation_date=date(2026, 7, 31),
+            remarks="Temporary leave",
         )
         suspend_action = MemberAction.objects.create(
             transaction=suspend,
@@ -568,6 +570,8 @@ class TPAAutomationTests(TestCase):
         member.refresh_from_db()
         self.assertEqual(enrollment.enrollment_status, MemberPolicyEnrollment.Status.SUSPENDED)
         self.assertEqual(member.status, Member.Status.SUSPENDED)
+        self.assertEqual(enrollment.suspension_reason, "Temporary leave")
+        self.assertEqual(enrollment.expected_reactivation_date, date(2026, 7, 31))
 
         reactivate = self._transaction(
             tx_type=MemberTransaction.Type.MEMBER_REACTIVATE,

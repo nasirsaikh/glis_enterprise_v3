@@ -1,23 +1,23 @@
-{% extends "base_portal.html" %}
+{% extends "tpa/base.html" %}
 {% load i18n %}
 {% block title %}{% translate "TPA Endorsements" %}{% endblock %}
-{% block content %}
+{% block tpa_content %}
 <div class="tw:space-y-5">
   <div class="tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-4">
     <div>
-      <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">{% translate "Post-enrollment changes" %}</span>
+      <span class="badge badge-primary badge-soft">{% translate "Post-enrollment changes" %}</span>
       <h1 class="tw:mt-2 tw:text-3xl tw:font-black">{% translate "TPA Endorsements" %}</h1>
       <p class="tw:text-base-content/60">{% translate "Member additions, terminations, deletion/void and policy cancellation. Initial policy enrollment is managed separately." %}</p>
     </div>
     <div class="tw:flex tw:gap-2">
-      <a class="tw:d-btn tw:d-btn-outline" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-building-add"></i>{% translate "Initial Policy Enrollment" %}</a>
-      {% if can_create_endorsement %}<a class="tw:d-btn tw:d-btn-primary" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>{% endif %}
+      <a class="btn btn-outline" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-building-add"></i>{% translate "Initial Policy Enrollment" %}</a>
+      {% if can_create_endorsement %}<a class="btn btn-primary" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>{% endif %}
     </div>
   </div>
 
-  <div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
-    <div class="tw:d-card-body tw:overflow-x-auto">
-      <table class="tw:d-table">
+  <div class="card tw:border tw:border-base-300 tw:bg-base-100">
+    <div class="card-body tw:overflow-x-auto">
+      <table class="table">
         <thead><tr><th>{% translate "Reference" %}</th><th>{% translate "Policy" %}</th><th>{% translate "Type" %}</th><th>{% translate "Source" %}</th><th>{% translate "Status" %}</th><th>{% translate "STP" %}</th><th>{% translate "GLIS Record" %}</th></tr></thead>
         <tbody>
         {% for tx in transactions %}
@@ -26,9 +26,9 @@
             <td>{{ tx.policy.policy_number }}</td>
             <td>{{ tx.get_transaction_type_display }}</td>
             <td>{{ tx.get_source_display }}</td>
-            <td><span class="tw:d-badge tw:d-badge-outline">{{ tx.get_status_display }}</span></td>
+            <td><span class="badge badge-outline">{{ tx.get_status_display }}</span></td>
             <td>{{ tx.stp_eligible|yesno:"YES,NO" }}</td>
-            <td>{% if tx.ticket %}<span class="tw:d-badge tw:d-badge-ghost">{{ tx.ticket.reference }}</span>{% else %}—{% endif %}</td>
+            <td>{% if tx.ticket %}<span class="badge badge-ghost">{{ tx.ticket.reference }}</span>{% else %}—{% endif %}</td>
           </tr>
         {% empty %}
           <tr><td colspan="7" class="tw:py-10 tw:text-center tw:text-base-content/45">{% translate "No endorsements yet." %}</td></tr>

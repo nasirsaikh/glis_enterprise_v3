@@ -1,23 +1,19 @@
 {% extends "tpa/base.html" %}{% load i18n %}
 {% block title %}{% translate "TPA User Guide" %}{% endblock %}
 {% block tpa_content %}
-<div class="tw:mx-auto tw:max-w-6xl tw:space-y-6">
-  <section class="card tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl">
-    <div class="card-body tw:p-6">
-      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-4">
-        <div>
-          <span class="badge badge-primary badge-soft">{% translate "SmartEndorse-style workflow inside GLIS" %}</span>
-          <h1 class="tw:mt-3 tw:text-4xl tw:font-black">{% translate "TPA Member Management — User Guide" %}</h1>
-          <p class="tw:mt-2 tw:max-w-4xl tw:text-base-content/60">{% translate "Initial policy enrollment, endorsement intake, AI/OCR extraction, deterministic validation and pricing, approval, TPA processing, embedded query chat and completion are managed in one GLIS workflow." %}</p>
-        </div>
-        <a class="btn btn-outline tw:rounded-full" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "TPA Dashboard" %}</a>
-      </div>
+<div class="tw:mx-auto tw:max-w-7xl tw:space-y-3">
+  <header class="tpa-page-head">
+    <div>
+      <div class="tpa-kicker"><i class="bi bi-book"></i>{% translate "TPA / Operations Manual" %}</div>
+      <h1 class="tpa-title">{% translate "TPA MEMBER MANAGEMENT — USER GUIDE" %}</h1>
+      <p class="tpa-subtitle">{% translate "SmartEndorse-style policy onboarding, endorsement intake, Ollama OCR/AI extraction, deterministic validation and pricing, approval, TPA processing, embedded query chat and completion inside GLIS." %}</p>
     </div>
-  </section>
+    <a class="btn btn-outline btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "TPA Dashboard" %}</a>
+  </header>
 
-  <div class="tw:grid tw:gap-6 tw:lg:grid-cols-[18rem_minmax(0,1fr)]">
-    <aside class="tw:h-fit tw:lg:sticky tw:lg:top-24">
-      <div class="card tw:border tw:border-base-300 tw:bg-base-100">
+  <div class="tw:grid tw:gap-3 tw:lg:grid-cols-[16rem_minmax(0,1fr)]">
+    <aside class="tw:h-fit tw:lg:sticky tw:lg:top-20">
+      <div class="card">
         <div class="card-body tw:p-4">
           <h2 class="tw:font-black">{% translate "Guide contents" %}</h2>
           <ul class="menu tw:mt-2 tw:w-full tw:p-0">
@@ -34,11 +30,11 @@
       </div>
     </aside>
 
-    <div class="tw:space-y-6">
-      <section id="architecture" class="card tw:border tw:border-base-300 tw:bg-base-100">
+    <div class="tw:space-y-3">
+      <section id="architecture" class="card">
         <div class="card-body">
-          <h2 class="card-title tw:text-2xl">{% translate "1. Workflow model" %}</h2>
-          <div class="steps steps-vertical tw:lg:d-steps-horizontal tw:w-full tw:py-4">
+          <h2 class="tpa-section-title">{% translate "1. Workflow model" %}</h2>
+          <div class="steps steps-horizontal tw:w-full tw:overflow-x-auto tw:py-2">
             <div class="step step-primary">{% translate "Intake & Correction" %}</div>
             <div class="step step-primary">{% translate "Validation" %}</div>
             <div class="step step-primary">{% translate "Approval" %}</div>
@@ -50,9 +46,9 @@
         </div>
       </section>
 
-      <section id="initial" class="card tw:border tw:border-base-300 tw:bg-base-100">
+      <section id="initial" class="card">
         <div class="card-body">
-          <h2 class="card-title tw:text-2xl"><i class="bi bi-building-add tw:text-primary"></i>{% translate "2. Initial Policy Enrollment" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-building-add tw:text-primary"></i>{% translate "2. Initial Policy Enrollment" %}</h2>
           <p>{% translate "Use TPA Operations → Initial Policy Enrollment for a brand-new policy. New Policy Enrollment is intentionally not available in the Endorsement menu." %}</p>
           <ol class="tw:list-decimal tw:space-y-2 tw:ps-6">
             <li>{% translate "Select an Individual or Corporate Sponsor, Insurance Company and optional TPA route." %}</li>
@@ -65,9 +61,9 @@
         </div>
       </section>
 
-      <section id="endorsement" class="card tw:border tw:border-base-300 tw:bg-base-100">
+      <section id="endorsement" class="card">
         <div class="card-body">
-          <h2 class="card-title tw:text-2xl"><i class="bi bi-arrow-left-right tw:text-primary"></i>{% translate "3. Endorsements" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-arrow-left-right tw:text-primary"></i>{% translate "3. Endorsements" %}</h2>
           <p>{% translate "The Endorsement workspace is for post-enrollment changes only." %}</p>
           <div class="tw:grid tw:gap-3 tw:md:grid-cols-2">
             <div class="alert"><span><strong>{% translate "Member Addition" %}</strong> — {% translate "add a new principal/dependent." %}</span></div>
@@ -79,18 +75,18 @@
         </div>
       </section>
 
-      <section id="ocr" class="card tw:border tw:border-base-300 tw:bg-base-100">
+      <section id="ocr" class="card">
         <div class="card-body">
-          <h2 class="card-title tw:text-2xl"><i class="bi bi-stars tw:text-primary"></i>{% translate "4. File Upload & AI OCR" %}</h2>
-          <p>{% translate "Use the single Source Documents & AI OCR upload zone. Up to 20 files can be submitted together so ID front/back, passport pages and related evidence can be treated as one bundle." %}</p>
+          <h2 class="tpa-section-title"><i class="bi bi-stars tw:text-primary"></i>{% translate "4. File Upload & AI OCR" %}</h2>
+          <p>{% translate "Use the single Source Documents & Ollama OCR upload zone. Up to 20 files can be submitted together so ID front/back, passport pages and related evidence can be treated as one bundle." %}</p>
           <div class="tw:overflow-x-auto">
             <table class="table table-sm">
               <thead><tr><th>{% translate "Source" %}</th><th>{% translate "Processing" %}</th></tr></thead>
               <tbody>
                 <tr><td>CSV / XLSX / XLS</td><td>{% translate "Parsed deterministically. AI is not required for known structured headers." %}</td></tr>
-                <tr><td>{% translate "Text PDF" %}</td><td>{% translate "Text extracted with pypdf, then mapped by the text AI provider." %}</td></tr>
-                <tr><td>{% translate "Scanned PDF" %}</td><td>{% translate "Pages rendered with PyMuPDF, OCR'd by the vision provider, then mapped by the text provider." %}</td></tr>
-                <tr><td>PNG / JPG / JPEG / WEBP</td><td>{% translate "Vision OCR first, then separate text-model JSON mapping." %}</td></tr>
+                <tr><td>{% translate "Text PDF" %}</td><td>{% translate "Text extracted with pypdf, then mapped by the Ollama text provider." %}</td></tr>
+                <tr><td>{% translate "Scanned PDF" %}</td><td>{% translate "Pages rendered with PyMuPDF, OCR'd by the Ollama vision provider, then mapped by the separate Ollama text provider." %}</td></tr>
+                <tr><td>PNG / JPG / JPEG / WEBP</td><td>{% translate "Ollama vision OCR first, then separate Ollama text-model JSON mapping." %}</td></tr>
               </tbody>
             </table>
           </div>
@@ -98,26 +94,26 @@
         </div>
       </section>
 
-      <section id="validation" class="card tw:border tw:border-base-300 tw:bg-base-100">
+      <section id="validation" class="card">
         <div class="card-body">
-          <h2 class="card-title tw:text-2xl"><i class="bi bi-shield-check tw:text-primary"></i>{% translate "5. Validation, Pricing & Approval" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-shield-check tw:text-primary"></i>{% translate "5. Validation, Pricing & Approval" %}</h2>
           <p>{% translate "Validation checks policy period/backdating, mandatory fields, plan validity, duplicates, active-member lookup and dependent/principal relationships. Premium/refund calculations use Decimal arithmetic and the policy-plan configuration." %}</p>
           <p>{% translate "Clean STP-eligible cases auto-approve and dispatch to the TPA queue. Otherwise the linked GLIS approval workflow or a permitted approver completes approval. Approval now means dispatch to TPA; it does not immediately mutate member records." %}</p>
         </div>
       </section>
 
-      <section id="tpa" class="card tw:border tw:border-base-300 tw:bg-base-100">
+      <section id="tpa" class="card">
         <div class="card-body">
-          <h2 class="card-title tw:text-2xl"><i class="bi bi-hospital tw:text-primary"></i>{% translate "6. TPA Processing & Embedded Query Chat" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-hospital tw:text-primary"></i>{% translate "6. TPA Processing & Embedded Query Chat" %}</h2>
           <p>{% translate "A TPA processor starts the dispatched case, records card/member number, TPA effective date and TPA premium/refund amount per row, then completes the transaction. These TPA-final values are persisted to the permanent enrollment where applicable." %}</p>
           <p>{% translate "If information is missing, Raise Query creates a dedicated GLIS query ticket related to the main transaction ticket and pauses the case in TPA Query. The requester and TPA exchange messages/attachments through DaisyUI chat displayed inside this step. Resolving the query closes the query ticket and resumes TPA processing." %}</p>
           <div class="alert alert-success"><i class="bi bi-chat-dots"></i><span>{% translate "Users do not need to leave the TPA case to answer a query. Previous resolved conversations remain available inside the same workflow section." %}</span></div>
         </div>
       </section>
 
-      <section id="email" class="card tw:border tw:border-base-300 tw:bg-base-100">
+      <section id="email" class="card">
         <div class="card-body">
-          <h2 class="card-title tw:text-2xl"><i class="bi bi-envelope tw:text-primary"></i>{% translate "7. Email Intake" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-envelope tw:text-primary"></i>{% translate "7. Email Intake" %}</h2>
           <p>{% translate "Email endorsements use the same downstream workflow as portal uploads. Email body AI extracts policy/type/date/member information; attached Excel/PDF/images enter the same unified document OCR pipeline." %}</p>
           <p>{% translate "Manual testing is available under TPA Inbound Emails → Add Inbound Email. Automatic mailbox reading is available through IMAP and deduplicates by Message-ID/UID." %}</p>
           <pre class="tw:overflow-x-auto tw:rounded-xl tw:bg-base-200 tw:p-4 tw:text-xs">python manage.py process_tpa_mailbox --username YOUR_USERNAME</pre>
@@ -125,14 +121,18 @@
         </div>
       </section>
 
-      <section id="admin" class="card tw:border tw:border-base-300 tw:bg-base-100">
+      <section id="admin" class="card">
         <div class="card-body">
-          <h2 class="card-title tw:text-2xl"><i class="bi bi-gear tw:text-primary"></i>{% translate "8. Administrator Setup" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-gear tw:text-primary"></i>{% translate "8. Administrator Setup" %}</h2>
+          <div role="alert" class="alert alert-info"><i class="bi bi-cpu"></i><div><strong>{% translate "Local Ollama models" %}</strong><pre class="tw:mt-2">ollama pull glm-ocr
+ollama pull qwen2.5:7b
+ollama serve</pre></div></div>
           <ul class="tw:list-disc tw:space-y-2 tw:ps-6">
             <li>{% translate "Assign create_enrollment separately from create_endorsement where duties differ." %}</li>
             <li>{% translate "Create Policy Access rows for policy-scoped view/create/approve/process authority." %}</li>
-            <li>{% translate "Configure a text AI provider with allow_sensitive_data and member_field_mapping/email_extraction capability." %}</li>
-            <li>{% translate "For OCR, configure a separate vision provider with supports_vision, allow_sensitive_data and document_extraction capability." %}</li>
+            <li>{% translate "The sample setup creates TPA Ollama Text Mapping using qwen2.5:7b with member_field_mapping/email_extraction capability." %}</li>
+            <li>{% translate "The sample setup creates TPA Ollama Vision OCR using glm-ocr with supports_vision and document_extraction capability." %}</li>
+            <li>{% translate "Keep OCR and JSON mapping as separate providers: the vision model transcribes evidence, then the text model returns strict canonical member JSON." %}</li>
             <li>{% translate "For Ollama/OpenAI/Anthropic secrets, Secret reference contains the environment-variable name rather than the actual secret." %}</li>
             <li>{% translate "For automatic mailbox reading configure TPA_IMAP_HOST, TPA_IMAP_USERNAME, TPA_IMAP_PASSWORD, and optionally TPA_IMAP_PORT/TPA_IMAP_FOLDER/TPA_IMAP_USE_SSL." %}</li>
           </ul>

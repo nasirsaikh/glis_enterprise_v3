@@ -441,7 +441,7 @@
               <legend class="fieldset-legend">{% translate "Proof of delivery / collection" %}</legend>
               <input class="file-input file-input-bordered file-input-sm w-full" type="file" name="proof">
               {% if card_dispatch.proof_attachment and can_tpa_process %}
-              <a class="link link-primary mt-1 text-xs" href="{% url 'portal:download_attachment' card_dispatch.proof_attachment.pk %}">
+              <a class="link link-primary mt-1 text-xs" href="{% url 'tpa:transaction_card_dispatch_proof' tx.reference %}">
                 <i class="bi bi-paperclip"></i>{{ card_dispatch.proof_attachment.original_name }}
               </a>
               {% endif %}

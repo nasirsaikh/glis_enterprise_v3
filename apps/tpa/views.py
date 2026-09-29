@@ -994,7 +994,7 @@ def transaction_add_member(request, reference):
         tx.Type.MEMBER_ADD,
     }
     form = (
-        MemberRowForm(request.POST, transaction=tx, current_action=action)
+        MemberRowForm(request.POST, transaction=tx)
         if is_add
         else MemberLookupRowForm(request.POST)
     )

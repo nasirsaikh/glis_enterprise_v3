@@ -14,13 +14,26 @@ def resolve_email_authority(email_address, policy, transaction_type, *, as_of=No
         return None
 
     day = as_of or timezone.localdate()
+    organization_ids = {
+        policy.sponsor_id,
+        policy.insurance_company_id,
+        policy.tpa_organization_id,
+    }
+    organization_ids.discard(None)
+
     qs = (
         TPAEmailAuthority.objects.select_related("user", "organization", "policy")
         .filter(
             email_address__iexact=address,
             active=True,
         )
-        .filter(Q(policy=policy) | Q(policy__isnull=True, organization=policy.sponsor))
+        .filter(
+            Q(policy=policy)
+            | Q(
+                policy__isnull=True,
+                organization_id__in=organization_ids,
+            )
+        )
         .filter(Q(valid_from__isnull=True) | Q(valid_from__lte=day))
         .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=day))
         .order_by("-policy_id", "pk")

@@ -2,14 +2,14 @@
 {% load i18n %}
 {% block title %}{% translate "TPA Mailbox Monitor" %}{% endblock %}
 {% block tpa_content %}
-<div class="space-y-3">
-  <header class="tpa-page-head">
+<div class="space-y-5">
+  <header class="card flex flex-col gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6 xl:flex-row xl:items-end xl:justify-between">
     <div>
-      <div class="tpa-kicker"><i class="bi bi-microsoft"></i>{% translate "TPA / Automated Mail Intake" %}</div>
-      <h1 class="tpa-title">{% translate "OFFICE 365 MAILBOX MONITOR" %}</h1>
-      <p class="tpa-subtitle">{% translate "The configured mailbox is monitored automatically. This page is for health, audit, review, failures and manual recovery." %}</p>
+      <div class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-microsoft"></i>{% translate "TPA / Automated Mail Intake" %}</div>
+      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "OFFICE 365 MAILBOX MONITOR" %}</h1>
+      <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{% translate "The configured mailbox is monitored automatically. This page is for health, audit, review, failures and manual recovery." %}</p>
     </div>
-    <div class="flex flex-wrap gap-1.5">
+    <div class="flex flex-wrap gap-2">
       <a class="btn btn-ghost btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "Dashboard" %}</a>
       {% if can_sync_mailbox %}
       <form method="post" action="{% url 'tpa:inbound_email_sync_now' %}">
@@ -39,7 +39,7 @@
         <div class="text-right text-xs">
           <div><span class="opacity-50">{% translate "Mailbox" %}:</span> <strong>{{ mailbox_health.mailbox|default:"—" }}</strong></div>
           <div><span class="opacity-50">{% translate "Folder" %}:</span> {{ mailbox_health.folder|default:"Inbox" }}</div>
-          <div><span class="opacity-50">{% translate "Schedule" %}:</span> <span class="tpa-mono">{{ mailbox_health.scheduler_cron|default:"—" }}</span></div>
+          <div><span class="opacity-50">{% translate "Schedule" %}:</span> <span class="font-mono">{{ mailbox_health.scheduler_cron|default:"—" }}</span></div>
           <div><span class="opacity-50">{% translate "Next run" %}:</span> {{ mailbox_health.scheduler_next_run_at|date:"d-M-Y H:i"|default:"—" }}</div>
           {% if mailbox_health.scheduler_last_status %}<div><span class="opacity-50">{% translate "Last job" %}:</span> {{ mailbox_health.scheduler_last_status }}</div>{% endif %}
         </div>
@@ -62,9 +62,9 @@
     </div>
   </section>
 
-  <section class="card">
-    <div class="tpa-section-head">
-      <div><div class="tpa-eyebrow">{% translate "Mailbox / audit" %}</div><h2 class="tpa-section-title">{% translate "INBOUND EMAIL PROCESSING QUEUE" %}</h2></div>
+  <section class="card border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
+      <div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Mailbox / audit" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "INBOUND EMAIL PROCESSING QUEUE" %}</h2></div>
       <span class="badge badge-info badge-soft"><i class="bi bi-shield-check"></i>{% translate "AUTOMATED" %}</span>
     </div>
     <div class="overflow-x-auto">
@@ -83,7 +83,7 @@
         <tbody>
         {% for email in emails %}
           <tr>
-            <td class="tpa-mono text-[10px]">{{ email.received_at|date:"d-M-Y H:i" }}</td>
+            <td class="font-mono text-[10px]">{{ email.received_at|date:"d-M-Y H:i" }}</td>
             <td><div class="font-semibold">{{ email.sender_name|default:email.sender }}</div><div class="text-[10px] opacity-50">{{ email.sender }}</div></td>
             <td><a class="link link-primary font-semibold" href="{% url 'tpa:inbound_email_detail' email.pk %}">{{ email.subject|default:"(No subject)" }}</a><div class="text-[10px] opacity-45">{{ email.mailbox|default:email.recipient }}</div></td>
             <td><span class="badge badge-outline badge-sm">{{ email.classification|default:"—" }}</span></td>
@@ -92,8 +92,8 @@
                 {{ email.get_processing_state_display }}
               </span>
             </td>
-            <td class="tpa-mono">{% if email.classification_confidence is not None %}{{ email.classification_confidence }}%{% elif email.ai_confidence is not None %}{{ email.ai_confidence }}%{% else %}—{% endif %}</td>
-            <td>{% if email.transaction %}<a class="link tpa-mono text-[10px]" href="{% url 'tpa:transaction_detail' email.transaction.reference %}">{{ email.transaction.reference }}</a>{% else %}—{% endif %}</td>
+            <td class="font-mono">{% if email.classification_confidence is not None %}{{ email.classification_confidence }}%{% elif email.ai_confidence is not None %}{{ email.ai_confidence }}%{% else %}—{% endif %}</td>
+            <td>{% if email.transaction %}<a class="link font-mono text-[10px]" href="{% url 'tpa:transaction_detail' email.transaction.reference %}">{{ email.transaction.reference }}</a>{% else %}—{% endif %}</td>
           </tr>
         {% empty %}
           <tr><td colspan="7" class="py-8 text-center opacity-45">{% translate "No inbound emails are available yet." %}</td></tr>

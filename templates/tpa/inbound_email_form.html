@@ -20,18 +20,18 @@
     </div>
   </div>
 
-  <form method="post" enctype="multipart/form-data" class="card">
+  <form method="post" enctype="multipart/form-data" class="card tw:d-card">
     {% csrf_token %}
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Message ingestion" %}</div><h2 class="tpa-section-title">{% translate "EMAIL, HINTS & ATTACHMENTS" %}</h2></div>
       <span class="badge badge-info badge-soft">{% translate "AI ASSISTED" %}</span>
     </div>
-    <div class="card-body">
+    <div class="card-body tw:d-card-body">
       {% if form.non_field_errors %}<div role="alert" class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
       <div class="tw:grid tw:gap-2.5 tw:md:grid-cols-2">
       {% for field in form %}
         <fieldset class="fieldset {% if field.name == 'body_text' or field.name == 'attachments' or field.name == 'process_with_ai' %}tw:md:col-span-2{% endif %}">
-          <legend class="fieldset-legend">{{ field.label }}</legend>
+          <legend class="fieldset-legend tw:d-fieldset-legend">{{ field.label }}</legend>
           {% if field.name == "process_with_ai" %}
           <label class="label tw:justify-start tw:gap-2">{{ field }}<span>{% translate "Save and immediately process through the configured Ollama/AI provider" %}</span></label>
           {% else %}

@@ -51,6 +51,7 @@ from .services.access import (
     can_create_endorsement,
     can_create_policy_enrollment,
     can_create_tpa_transaction,
+    can_edit_tpa_intake,
     can_process_tpa_transaction,
     can_view_query_attachment,
     can_view_query_message,
@@ -101,6 +102,11 @@ INTAKE_EDITABLE_STATUSES = {
 def _require_tpa_access(user):
     if not can_access_tpa(user):
         raise PermissionDenied("You do not have permission to access TPA Member Management.")
+
+
+def _require_intake_edit(user, tx):
+    if not can_edit_tpa_intake(user, tx):
+        raise PermissionDenied("You have read-only access to this TPA transaction.")
 
 
 def _serialize_form_data(cleaned_data):
@@ -594,6 +600,7 @@ def policy_plan_add(request, reference):
         reference=reference,
         transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
     )
+    _require_intake_edit(request.user, tx)
     if tx.status not in INTAKE_EDITABLE_STATUSES:
         raise PermissionDenied("Plan setup is closed after initial enrollment leaves intake.")
 
@@ -850,7 +857,8 @@ def transaction_detail(request, reference):
         "card_dispatch": card_dispatch,
         "card_dispatch_form": CardDispatchForm(instance=card_dispatch),
         "upload_form": MemberUploadForm(),
-        "can_edit_intake": tx.status in INTAKE_EDITABLE_STATUSES
+        "can_edit_intake": can_edit_tpa_intake(request.user, tx)
+        and tx.status in INTAKE_EDITABLE_STATUSES
         and tx.transaction_type != tx.Type.POLICY_CANCEL,
         "can_approve": can_approve_tpa_transaction(request.user, tx),
         "can_process": can_process_tpa_transaction(request.user, tx),
@@ -904,6 +912,7 @@ def transaction_upload_sources(request, reference):
     if request.method != "POST":
         raise PermissionDenied
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    _require_intake_edit(request.user, tx)
     if tx.status not in INTAKE_EDITABLE_STATUSES:
         raise PermissionDenied("Source upload is closed for this transaction.")
 
@@ -986,6 +995,7 @@ def transaction_add_member(request, reference):
         raise PermissionDenied
 
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    _require_intake_edit(request.user, tx)
     if tx.status not in INTAKE_EDITABLE_STATUSES:
         raise PermissionDenied("Member intake is closed for this transaction.")
 
@@ -1056,6 +1066,7 @@ def transaction_select_members(request, reference):
     if request.method != "POST":
         raise PermissionDenied
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    _require_intake_edit(request.user, tx)
     if tx.status not in INTAKE_EDITABLE_STATUSES:
         raise PermissionDenied("Member selection is closed for this transaction.")
     if tx.transaction_type not in {
@@ -1119,6 +1130,7 @@ def transaction_reprocess_source(request, reference, document_id):
     if request.method != "POST":
         raise PermissionDenied
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    _require_intake_edit(request.user, tx)
     if tx.status not in INTAKE_EDITABLE_STATUSES:
         raise PermissionDenied("Evidence reprocessing is closed for this transaction.")
     document = get_object_or_404(tx.source_documents, pk=document_id)
@@ -1157,6 +1169,7 @@ def transaction_upload_members(request, reference):
         raise PermissionDenied
 
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    _require_intake_edit(request.user, tx)
     if tx.status not in INTAKE_EDITABLE_STATUSES:
         raise PermissionDenied("Member intake is closed for this transaction.")
 
@@ -1190,6 +1203,7 @@ def transaction_edit_member(request, reference, action_id):
         raise PermissionDenied
 
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    _require_intake_edit(request.user, tx)
     if tx.status not in INTAKE_EDITABLE_STATUSES:
         raise PermissionDenied("Member correction is closed for this transaction.")
 
@@ -1199,7 +1213,7 @@ def transaction_edit_member(request, reference, action_id):
         tx.Type.MEMBER_ADD,
     }
     form = (
-        MemberRowForm(request.POST, transaction=tx)
+        MemberRowForm(request.POST, transaction=tx, current_action=action)
         if is_add
         else MemberLookupRowForm(request.POST)
     )
@@ -1254,6 +1268,7 @@ def transaction_remove_member(request, reference, action_id):
         raise PermissionDenied
 
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    _require_intake_edit(request.user, tx)
     if tx.status not in INTAKE_EDITABLE_STATUSES:
         raise PermissionDenied("Member intake is closed for this transaction.")
 
@@ -1272,6 +1287,7 @@ def transaction_submit(request, reference):
         raise PermissionDenied
 
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    _require_intake_edit(request.user, tx)
     if tx.status != tx.Status.DRAFT:
         return redirect("tpa:transaction_detail", reference=reference)
 
@@ -1302,6 +1318,14 @@ def transaction_validate(request, reference):
     if request.method != "POST":
         raise PermissionDenied
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    if not (
+        can_edit_tpa_intake(request.user, tx)
+        or can_approve_tpa_transaction(request.user, tx)
+        or can_process_tpa_transaction(request.user, tx)
+    ):
+        raise PermissionDenied(
+            "Validation requires intake, approval or TPA processing authority."
+        )
     if tx.status == tx.Status.DRAFT:
         messages.error(request, "Submit the transaction before running workflow validation.")
         return redirect("tpa:transaction_detail", reference=reference)

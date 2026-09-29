@@ -472,6 +472,13 @@ class TPACoreTests(TestCase):
             ).exists()
         )
 
+        outsider = get_user_model().objects.create_user(
+            username="query-viewer",
+            password="x",
+        )
+        with self.assertRaises(PermissionError):
+            post_query_message(query, outsider, "I should not be allowed to reply.")
+
         post_query_message(query, self.user, "Relationship confirmed.")
         self.assertEqual(query.messages.count(), 2)
         resolve_tpa_query(query, self.user)

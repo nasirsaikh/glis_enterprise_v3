@@ -192,6 +192,7 @@ class MemberTransaction(TimeStampedModel):
     validation_bypassed_at=models.DateTimeField(null=True, blank=True)
     remarks=models.TextField(blank=True)
     refund_basis=models.CharField(max_length=20, choices=RefundBasis.choices, default=RefundBasis.NONE, db_index=True)
+    expected_reactivation_date=models.DateField(null=True, blank=True)
     classification=models.CharField(max_length=40, blank=True, db_index=True)
     classification_confidence=models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     validation_completed_at=models.DateTimeField(null=True, blank=True)

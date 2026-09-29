@@ -344,6 +344,8 @@ def _process_image_attachment(tx, email, attachment, actor, hints):
 
 def _process_attachments(tx, email, actor):
     for attachment in email.attachments.all().order_by("pk"):
+        if attachment.processing_state == InboundEmailAttachment.State.PROCESSED:
+            continue
         attachment.processing_state = InboundEmailAttachment.State.PROCESSING
         attachment.processing_error = ""
         attachment.save(
@@ -487,10 +489,22 @@ def process_inbound_email(email, actor):
         run_validation(tx, actor=actor)
         tx.refresh_from_db()
 
+        attachment_review = email.attachments.exclude(
+            processing_state=InboundEmailAttachment.State.PROCESSED
+        ).exists()
+
         email.ai_extracted_payload = payload
         email.ai_confidence = _confidence(payload.get("confidence"))
-        email.processing_state = InboundEmail.State.PROCESSED
-        email.processing_error = ""
+        email.processing_state = (
+            InboundEmail.State.REVIEW
+            if attachment_review
+            else InboundEmail.State.PROCESSED
+        )
+        email.processing_error = (
+            "One or more email attachments require review."
+            if attachment_review
+            else ""
+        )
         email.processed_at = timezone.now()
         email.transaction = tx
         email.save(

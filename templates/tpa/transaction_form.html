@@ -2,38 +2,44 @@
 {% load i18n %}
 {% block title %}{% translate "New Endorsement" %}{% endblock %}
 {% block tpa_content %}
-<div class="tw:mx-auto tw:max-w-4xl tw:space-y-5">
-  <section class="card tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl">
-    <div class="card-body">
-      <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-4">
-        <div>
-          <span class="badge badge-primary badge-soft">{% translate "Endorsement" %}</span>
-          <h1 class="tw:mt-2 tw:text-3xl tw:font-black">{% translate "New Endorsement" %}</h1>
-          <p class="tw:mt-1 tw:text-base-content/60">{% translate "Create a member addition, termination, deletion/void or policy cancellation for an already enrolled policy." %}</p>
-        </div>
-        <a class="btn btn-ghost btn-sm" href="{% url 'tpa:transaction_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Endorsements" %}</a>
-      </div>
+<div class="tw:mx-auto tw:max-w-5xl tw:space-y-3">
+  <header class="tpa-page-head">
+    <div>
+      <div class="tpa-kicker"><i class="bi bi-plus-square"></i>{% translate "TPA / Pipeline / Create" %}</div>
+      <h1 class="tpa-title">{% translate "NEW ENDORSEMENT" %}</h1>
+      <p class="tpa-subtitle">{% translate "Create a member addition, termination, deletion/void or policy cancellation for an endorsement-enabled policy." %}</p>
     </div>
-  </section>
+    <a class="btn btn-ghost btn-sm" href="{% url 'tpa:transaction_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Pipeline" %}</a>
+  </header>
 
-  <div class="alert alert-info">
+  <div role="alert" class="alert alert-info">
     <i class="bi bi-building-add"></i>
-    <span>{% translate "Opening a new policy and loading its initial member census is handled under Initial Policy Enrollment, not here." %}</span>
+    <span>{% translate "New policy onboarding and opening census are handled under Initial Policy Enrollment." %}</span>
   </div>
 
-  <form method="post" class="card tw:border tw:border-base-300 tw:bg-base-100">
+  <form method="post" class="card">
     {% csrf_token %}
-    <div class="card-body tw:space-y-4">
-      {% for field in form %}
-      <label class="form-control">
-        <span class="tw:mb-1 tw:text-xs tw:font-bold">{{ field.label }}</span>
-        {{ field }}
-        {% if field.help_text %}<span class="tw:mt-1 tw:text-xs tw:text-base-content/45">{{ field.help_text }}</span>{% endif %}
-        {% for error in field.errors %}<span class="tw:mt-1 tw:text-sm tw:text-error">{{ error }}</span>{% endfor %}
-      </label>
-      {% endfor %}
-      <div class="tw:flex tw:justify-end">
-        <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-right"></i>{% translate "Create Endorsement" %}</button>
+    <div class="tpa-section-head">
+      <div><div class="tpa-eyebrow">{% translate "Request control" %}</div><h2 class="tpa-section-title">{% translate "POLICY & ENDORSEMENT" %}</h2></div>
+      <span class="badge badge-outline">{% translate "REQUIRED" %}</span>
+    </div>
+    <div class="card-body">
+      {% if form.non_field_errors %}
+      <div role="alert" class="alert alert-error"><i class="bi bi-x-octagon"></i><div>{{ form.non_field_errors }}</div></div>
+      {% endif %}
+      <div class="tw:grid tw:gap-2.5 tw:md:grid-cols-2">
+        {% for field in form %}
+        <fieldset class="fieldset {% if field.name == 'remarks' %}tw:md:col-span-2{% endif %}">
+          <legend class="fieldset-legend">{{ field.label }}</legend>
+          {{ field }}
+          {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
+          {% for error in field.errors %}<p class="label tw:text-error">{{ error }}</p>{% endfor %}
+        </fieldset>
+        {% endfor %}
+      </div>
+      <div class="tw:flex tw:justify-end tw:gap-2 tw:border-t tw:border-base-300 tw:pt-3">
+        <a class="btn btn-ghost btn-sm" href="{% url 'tpa:transaction_list' %}">{% translate "Cancel" %}</a>
+        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-arrow-right"></i>{% translate "Create Endorsement" %}</button>
       </div>
     </div>
   </form>

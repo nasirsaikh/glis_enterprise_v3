@@ -12,42 +12,62 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from apps.ai.models import AIProviderConfig
+from apps.tickets.models import TicketAttachment
 
 from .forms import (
+    BenefitPlanSetupForm,
     InboundEmailForm,
     MemberLookupRowForm,
     MemberRowForm,
     MemberUploadForm,
+    PolicyEnrollmentForm,
+    QueryMessageForm,
+    QueryRaiseForm,
+    SourceBundleUploadForm,
+    TPAProcessingRowForm,
     TransactionForm,
 )
 from .models import (
     InboundEmail,
+    BenefitPlan,
     InboundEmailAttachment,
     Member,
     MemberAction,
     MemberTransaction,
     Policy,
+    PolicyAccess,
     TPAOrganization,
     TransactionEvent,
+    TransactionQuery,
+    TransactionQueryMessage,
 )
 from .services.access import (
     can_access_tpa,
     can_approve_tpa_transaction,
+    can_create_endorsement,
+    can_create_policy_enrollment,
     can_create_tpa_transaction,
     can_process_tpa_transaction,
     visible_policies,
     visible_transactions,
 )
 from .services.ai_intake import process_inbound_email
+from .services.document_intake import create_source_documents, process_source_bundle
 from .services.intake import import_member_spreadsheet
 from .services.sample_data import build_sample_csv, build_sample_xlsx, sample_member_rows
 from .services.ticketing import create_ticket_for_transaction
 from .services.validation import validate_action
 from .services.workflow import (
     approve_transaction,
+    complete_tpa_transaction,
+    post_query_message,
     process_transaction,
+    raise_tpa_query,
+    resolve_tpa_query,
     run_validation,
+    start_tpa_processing,
     sync_from_ticket_approval,
+    update_tpa_action,
 )
 
 
@@ -296,6 +316,157 @@ def inbound_email_process(request, email_id):
 
 
 @login_required
+def policy_enrollment_list(request):
+    _require_tpa_access(request.user)
+    policies = visible_policies(request.user).prefetch_related("plans", "transactions")
+    if not (
+        request.user.is_superuser
+        or request.user.has_perm("tpa.configure_tpa")
+    ):
+        policies = policies.filter(
+            models.Q(access_entries__user=request.user)
+            | models.Q(transactions__requester=request.user)
+        ).distinct()
+    policies = policies.order_by("-created_at")
+    rows = []
+    for policy in policies:
+        enrollment_tx = (
+            policy.transactions.filter(
+                transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        rows.append({"policy": policy, "transaction": enrollment_tx})
+    return render(
+        request,
+        "tpa/policy_enrollment_list.html",
+        {"policy_rows": rows},
+    )
+
+
+@login_required
+def policy_enrollment_create(request):
+    _require_tpa_access(request.user)
+    if not can_create_policy_enrollment(request.user):
+        raise PermissionDenied(
+            "You do not have permission to perform initial policy enrollment."
+        )
+
+    form = PolicyEnrollmentForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            policy = Policy.objects.create(
+                sponsor=form.cleaned_data["sponsor"],
+                insurance_company=form.cleaned_data["insurance_company"],
+                tpa_organization=form.cleaned_data.get("tpa_organization"),
+                policy_number=form.cleaned_data["policy_number"],
+                policy_name=form.cleaned_data["policy_name"],
+                start_date=form.cleaned_data["start_date"],
+                expiry_date=form.cleaned_data["expiry_date"],
+                status=Policy.Status.DRAFT,
+                product_type="MEDICAL",
+                currency=form.cleaned_data["currency"].upper(),
+                stp_enabled=form.cleaned_data["stp_enabled"],
+                premium_calculation_enabled=True,
+                allowed_backdating_days=form.cleaned_data[
+                    "allowed_backdating_days"
+                ],
+                configuration={"initial_setup": True},
+            )
+            BenefitPlan.objects.create(
+                policy=policy,
+                code=form.cleaned_data["plan_code"].upper(),
+                name=form.cleaned_data["plan_name"],
+                annual_premium=form.cleaned_data["annual_premium"],
+                default_sum_insured=form.cleaned_data.get(
+                    "default_sum_insured"
+                ),
+                premium_configuration={"method": "PRORATA"},
+                is_active=True,
+            )
+            PolicyAccess.objects.update_or_create(
+                organization=policy.sponsor,
+                policy=policy,
+                user=request.user,
+                defaults={
+                    "can_view": True,
+                    "can_view_members": True,
+                    "can_create_enrollment": True,
+                    "can_create_endorsement": True,
+                    "can_view_premium": True,
+                    "can_approve": True,
+                    "can_process": True,
+                    "active": True,
+                },
+            )
+            tx = MemberTransaction.objects.create(
+                sponsor=policy.sponsor,
+                insurer=policy.insurance_company,
+                policy=policy,
+                transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
+                source=MemberTransaction.Source.PORTAL,
+                effective_date=policy.start_date,
+                requester=request.user,
+                requester_organization=policy.sponsor,
+                status=MemberTransaction.Status.DRAFT,
+                remarks="Initial policy enrollment and member census setup.",
+                metadata={"initial_policy_setup": True},
+            )
+            TransactionEvent.objects.create(
+                transaction=tx,
+                actor=request.user,
+                event_type="policy_enrollment_created",
+                summary="Initial policy enrollment created",
+            )
+
+        messages.success(
+            request,
+            "Policy setup created. Add plans and the initial member census, then submit for validation.",
+        )
+        return redirect("tpa:transaction_detail", reference=tx.reference)
+
+    return render(
+        request,
+        "tpa/policy_enrollment_form.html",
+        {"form": form},
+    )
+
+
+@login_required
+def policy_plan_add(request, reference):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(
+        visible_transactions(request.user),
+        reference=reference,
+        transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
+    )
+    if tx.status not in INTAKE_EDITABLE_STATUSES:
+        raise PermissionDenied("Plan setup is closed after initial enrollment leaves intake.")
+
+    form = BenefitPlanSetupForm(request.POST, policy=tx.policy)
+    if form.is_valid():
+        plan = form.save(commit=False)
+        plan.policy = tx.policy
+        plan.code = form.cleaned_data["code"].upper()
+        plan.premium_configuration = {"method": "PRORATA"}
+        plan.save()
+        messages.success(request, f"Benefit plan {plan.code} added.")
+    else:
+        messages.error(
+            request,
+            "; ".join(
+                error
+                for errors in form.errors.values()
+                for error in errors
+            ),
+        )
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
 def transaction_list(request):
     _require_tpa_access(request.user)
     return render(
@@ -308,8 +479,8 @@ def transaction_list(request):
 @login_required
 def transaction_create(request):
     _require_tpa_access(request.user)
-    if not can_create_tpa_transaction(request.user):
-        raise PermissionDenied("You do not have permission to create TPA transactions.")
+    if not can_create_endorsement(request.user):
+        raise PermissionDenied("You do not have permission to create TPA endorsements.")
 
     form = TransactionForm(request.POST or None, user=request.user)
     if request.method == "POST" and form.is_valid():
@@ -413,8 +584,71 @@ def transaction_detail(request, reference):
         "quality_chart": quality_chart,
         "error_chart": error_chart,
         "sample_rows": sample_member_rows(tx),
+        "source_upload_form": SourceBundleUploadForm(),
+        "plan_form": (
+            BenefitPlanSetupForm(policy=tx.policy)
+            if tx.transaction_type == tx.Type.NEW_POLICY_ENROLLMENT
+            else None
+        ),
+        "initial_setup": tx.transaction_type == tx.Type.NEW_POLICY_ENROLLMENT,
+        "source_documents": tx.source_documents.all().order_by("-created_at"),
+        "open_query": tx.queries.filter(
+            status=TransactionQuery.Status.OPEN
+        ).prefetch_related(
+            "messages__sender",
+            "messages__ticket_comment",
+            "messages__ticket_comment__attachments",
+        ).first(),
+        "query_raise_form": QueryRaiseForm(),
+        "query_message_form": QueryMessageForm(),
+        "can_start_tpa": (
+            tx.status == tx.Status.SENT_TO_TPA
+            and can_process_tpa_transaction(request.user, tx)
+        ),
+        "can_tpa_process": can_process_tpa_transaction(request.user, tx),
     }
     return render(request, "tpa/transaction_detail.html", context)
+
+
+@login_required
+def transaction_upload_sources(request, reference):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    if tx.status not in INTAKE_EDITABLE_STATUSES:
+        raise PermissionDenied("Source upload is closed for this transaction.")
+
+    form = SourceBundleUploadForm(request.POST, request.FILES)
+    if not form.is_valid():
+        messages.error(
+            request,
+            "; ".join(
+                error
+                for errors in form.errors.values()
+                for error in errors
+            ),
+        )
+        return redirect("tpa:transaction_detail", reference=reference)
+
+    try:
+        documents = create_source_documents(
+            tx,
+            form.cleaned_data["source_files"],
+            actor=request.user,
+        )
+        actions = process_source_bundle(tx, documents, actor=request.user)
+        if tx.submitted_at:
+            tx.status = tx.Status.PENDING_VALIDATION
+            tx.save(update_fields=["status", "updated_at"])
+            run_validation(tx, actor=request.user)
+        messages.success(
+            request,
+            f"{len(documents)} source file(s) processed; {len(actions)} member row(s) created.",
+        )
+    except (ValidationError, RuntimeError, ValueError) as exc:
+        messages.error(request, str(exc))
+    return redirect("tpa:transaction_detail", reference=reference)
 
 
 @login_required
@@ -597,6 +831,152 @@ def transaction_approve(request, reference):
     try:
         approve_transaction(tx, request.user)
         messages.success(request, "TPA transaction approved.")
+    except (PermissionError, ValueError) as exc:
+        messages.error(request, str(exc))
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_tpa_start(request, reference):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    try:
+        start_tpa_processing(tx, request.user)
+        messages.success(request, "TPA processing started.")
+    except (PermissionError, ValueError) as exc:
+        messages.error(request, str(exc))
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_tpa_action(request, reference, action_id):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    action = get_object_or_404(tx.member_actions, pk=action_id)
+    form = TPAProcessingRowForm(request.POST)
+    if form.is_valid():
+        try:
+            update_tpa_action(
+                action,
+                request.user,
+                card_number=form.cleaned_data["card_number"],
+                effective_date=form.cleaned_data["effective_date"],
+                amount=form.cleaned_data["amount"],
+            )
+            messages.success(request, "TPA member processing data updated.")
+        except (PermissionError, ValueError) as exc:
+            messages.error(request, str(exc))
+    else:
+        messages.error(
+            request,
+            "; ".join(
+                error
+                for errors in form.errors.values()
+                for error in errors
+            ),
+        )
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_raise_query(request, reference):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    form = QueryRaiseForm(request.POST)
+    if form.is_valid():
+        try:
+            raise_tpa_query(
+                tx,
+                request.user,
+                form.cleaned_data["subject"],
+                form.cleaned_data["message"],
+            )
+            messages.warning(
+                request,
+                "TPA query raised. The conversation is available below in this workflow step.",
+            )
+        except (PermissionError, ValueError) as exc:
+            messages.error(request, str(exc))
+    else:
+        messages.error(request, "Enter a query subject and message.")
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_query_message(request, reference, query_id):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    query = get_object_or_404(
+        tx.queries.select_related("transaction", "transaction__ticket"),
+        pk=query_id,
+        status=TransactionQuery.Status.OPEN,
+    )
+    form = QueryMessageForm(request.POST, request.FILES)
+    if form.is_valid():
+        try:
+            comment = post_query_message(
+                query,
+                request.user,
+                form.cleaned_data["message"],
+            )
+            for uploaded in form.cleaned_data.get("attachments") or []:
+                TicketAttachment.objects.create(
+                    ticket=tx.ticket,
+                    comment=comment,
+                    uploaded_by=request.user,
+                    file=uploaded,
+                    original_name=uploaded.name,
+                    content_type=getattr(uploaded, "content_type", "")
+                    or "application/octet-stream",
+                    size=uploaded.size,
+                    is_restricted=True,
+                    scan_status="clean",
+                    source_field="tpa_query_chat",
+                )
+            messages.success(request, "Query message sent.")
+        except (PermissionError, ValueError) as exc:
+            messages.error(request, str(exc))
+    else:
+        messages.error(request, "Enter a query message.")
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_resolve_query(request, reference, query_id):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    query = get_object_or_404(tx.queries, pk=query_id)
+    try:
+        resolve_tpa_query(query, request.user)
+        messages.success(request, "Query resolved and TPA processing resumed.")
+    except (PermissionError, ValueError) as exc:
+        messages.error(request, str(exc))
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_tpa_complete(request, reference):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    try:
+        complete_tpa_transaction(tx, request.user)
+        tx.refresh_from_db()
+        messages.success(
+            request,
+            "TPA processing completed. Member/policy records have been updated.",
+        )
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
     return redirect("tpa:transaction_detail", reference=reference)

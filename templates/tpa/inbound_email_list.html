@@ -1,46 +1,45 @@
-{% extends "tpa/base.html" %}{% load i18n %}
+{% extends "tpa/base.html" %}
+{% load i18n %}
 {% block title %}{% translate "TPA Inbound Emails" %}{% endblock %}
 {% block tpa_content %}
-<div class="tw:space-y-5">
-  <section class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg">
-    <div class="card-body tw:p-5">
-      <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-4">
-        <div>
-          <span class="badge badge-secondary badge-soft">{% translate "AI Intake" %}</span>
-          <h1 class="tw:mt-2 tw:text-3xl tw:font-black">{% translate "Inbound Emails" %}</h1>
-          <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{% translate "Email requests can be extracted by AI, converted to member rows, linked to a GLIS ticket and validated by deterministic rules." %}</p>
-        </div>
-        <div class="tw:flex tw:flex-wrap tw:gap-2">
-          <a class="btn btn-ghost btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "TPA Dashboard" %}</a>
-          {% if can_create_tpa_transaction %}
-          <a class="btn btn-primary btn-sm" href="{% url 'tpa:inbound_email_create' %}"><i class="bi bi-envelope-plus"></i>{% translate "Add Inbound Email" %}</a>
-          {% endif %}
-        </div>
-      </div>
+<div class="tw:space-y-3">
+  <header class="tpa-page-head">
+    <div>
+      <div class="tpa-kicker"><i class="bi bi-cpu"></i>{% translate "TPA / AI Intake" %}</div>
+      <h1 class="tpa-title">{% translate "INBOUND EMAIL CONTROL" %}</h1>
+      <p class="tpa-subtitle">{% translate "Ollama-assisted email and document intake. AI extracts facts; GLIS keeps validation, eligibility, pricing, STP and approvals deterministic." %}</p>
     </div>
-  </section>
+    <div class="tw:flex tw:flex-wrap tw:gap-1.5">
+      <a class="btn btn-ghost btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "Dashboard" %}</a>
+      {% if can_create_tpa_transaction %}
+      <a class="btn btn-primary btn-sm" href="{% url 'tpa:inbound_email_create' %}"><i class="bi bi-envelope-plus"></i>{% translate "Add Inbound Email" %}</a>
+      {% endif %}
+    </div>
+  </header>
 
-  <section class="card tw:border tw:border-base-300 tw:bg-base-100">
-    <div class="card-body tw:p-0">
-      <div class="tw:overflow-x-auto">
-        <table class="table">
-          <thead><tr><th>{% translate "Received" %}</th><th>{% translate "Sender" %}</th><th>{% translate "Subject" %}</th><th>{% translate "State" %}</th><th>{% translate "AI Confidence" %}</th><th>{% translate "Transaction" %}</th></tr></thead>
-          <tbody>
-          {% for email in emails %}
-            <tr>
-              <td>{{ email.received_at|date:"d-M-Y H:i" }}</td>
-              <td>{{ email.sender }}</td>
-              <td><a class="tw:link tw:link-primary" href="{% url 'tpa:inbound_email_detail' email.pk %}">{{ email.subject|default:"(No subject)" }}</a></td>
-              <td><span class="badge {% if email.processing_state == 'PROCESSED' %}badge-success{% elif email.processing_state == 'REVIEW' or email.processing_state == 'FAILED' %}badge-warning{% else %}badge-outline{% endif %}">{{ email.get_processing_state_display }}</span></td>
-              <td>{% if email.ai_confidence is not None %}{{ email.ai_confidence }}%{% else %}—{% endif %}</td>
-              <td>{% if email.transaction %}<a class="tw:link" href="{% url 'tpa:transaction_detail' email.transaction.reference %}">{{ email.transaction.reference }}</a>{% else %}—{% endif %}</td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="6" class="tw:py-10 tw:text-center tw:text-base-content/45">{% translate "No inbound emails are available yet." %}</td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
+  <section class="card">
+    <div class="tpa-section-head">
+      <div><div class="tpa-eyebrow">{% translate "Mailbox / ingestion" %}</div><h2 class="tpa-section-title">{% translate "EMAIL PROCESSING QUEUE" %}</h2></div>
+      <span class="badge badge-info badge-soft"><i class="bi bi-stars"></i>{% translate "OLLAMA READY" %}</span>
+    </div>
+    <div class="tw:overflow-x-auto">
+      <table class="table table-sm">
+        <thead><tr><th>{% translate "Received" %}</th><th>{% translate "Sender" %}</th><th>{% translate "Subject" %}</th><th>{% translate "State" %}</th><th>{% translate "AI Confidence" %}</th><th>{% translate "Transaction" %}</th></tr></thead>
+        <tbody>
+        {% for email in emails %}
+          <tr>
+            <td class="tpa-mono tw:text-[10px]">{{ email.received_at|date:"d-M-Y H:i" }}</td>
+            <td>{{ email.sender }}</td>
+            <td><a class="link link-primary tw:font-semibold" href="{% url 'tpa:inbound_email_detail' email.pk %}">{{ email.subject|default:"(No subject)" }}</a></td>
+            <td><span class="badge {% if email.processing_state == 'PROCESSED' %}badge-success badge-soft{% elif email.processing_state == 'REVIEW' or email.processing_state == 'FAILED' %}badge-warning badge-soft{% else %}badge-outline{% endif %}">{{ email.get_processing_state_display }}</span></td>
+            <td class="tpa-mono">{% if email.ai_confidence is not None %}{{ email.ai_confidence }}%{% else %}—{% endif %}</td>
+            <td>{% if email.transaction %}<a class="link tpa-mono tw:text-[10px]" href="{% url 'tpa:transaction_detail' email.transaction.reference %}">{{ email.transaction.reference }}</a>{% else %}—{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="tw:py-8 tw:text-center tw:opacity-45">{% translate "No inbound emails are available yet." %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
   </section>
 </div>

@@ -3,11 +3,11 @@
 {% block title %}{% translate "Add Inbound Email" %}{% endblock %}
 {% block tpa_content %}
 <div class="mx-auto max-w-6xl space-y-3">
-  <header class="tpa-page-head">
+  <header class="card flex flex-col gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6 xl:flex-row xl:items-end xl:justify-between">
     <div>
-      <div class="tpa-kicker"><i class="bi bi-envelope-plus"></i>{% translate "TPA / AI Intake / Manual Capture" %}</div>
-      <h1 class="tpa-title">{% translate "ADD INBOUND EMAIL" %}</h1>
-      <p class="tpa-subtitle">{% translate "Paste an inbound request and attach Excel/PDF/image evidence. Optional hints improve extraction when the message is ambiguous." %}</p>
+      <div class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-envelope-plus"></i>{% translate "TPA / AI Intake / Manual Capture" %}</div>
+      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "ADD INBOUND EMAIL" %}</h1>
+      <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{% translate "Paste an inbound request and attach Excel/PDF/image evidence. Optional hints improve extraction when the message is ambiguous." %}</p>
     </div>
     <a class="btn btn-ghost btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
   </header>
@@ -20,10 +20,10 @@
     </div>
   </div>
 
-  <form method="post" enctype="multipart/form-data" class="card">
+  <form method="post" enctype="multipart/form-data" class="card border border-base-300 bg-base-100 shadow-sm">
     {% csrf_token %}
-    <div class="tpa-section-head">
-      <div><div class="tpa-eyebrow">{% translate "Message ingestion" %}</div><h2 class="tpa-section-title">{% translate "EMAIL, HINTS & ATTACHMENTS" %}</h2></div>
+    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
+      <div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Message ingestion" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "EMAIL, HINTS & ATTACHMENTS" %}</h2></div>
       <span class="badge badge-info badge-soft">{% translate "AI ASSISTED" %}</span>
     </div>
     <div class="card-body">

@@ -1,6 +1,6 @@
 from django.db.models import Q
 
-from ..models import MemberTransaction, Policy, PolicyAccess, TransactionQuery
+from ..models import (\n    MemberTransaction,\n    Policy,\n    PolicyAccess,\n    TransactionQuery,\n    TransactionQueryMessage,\n)
 
 
 TPA_ENTRY_PERMISSIONS = (
@@ -133,17 +133,65 @@ def can_view_transaction_query(user, query):
 
 
 def can_view_query_message(user, message):
-    query = message.query
-    if not can_view_transaction_query(user, query):
+    if not user or not user.is_authenticated:
         return False
+    query = message.query
     tx = query.transaction
     if _is_internal_tpa_user(user, tx):
         return True
+
+    # A deliberately shared internal message may be shown to the requester
+    # without exposing the internal parent thread.  Query-level visibility is
+    # therefore checked after this explicit exception.
     if message.audience == TransactionQuery.Audience.INSURER_TPA_INTERNAL:
-        return bool(message.shared_with_client_at)
+        if not message.shared_with_client_at:
+            return False
+        return (
+            user.pk == tx.requester_id
+            or query.selected_participants.filter(pk=user.pk).exists()
+        )
+
+    if not can_view_transaction_query(user, query):
+        return False
     if message.audience == TransactionQuery.Audience.SELECTED_PARTICIPANTS:
         return query.selected_participants.filter(pk=user.pk).exists()
     return True
+
+
+def can_view_query_attachment(user, message):
+    """Protect chat files independently from message-body sharing.
+
+    Sharing an internal message exposes only the selected message body.  Its
+    internal attachments remain insurer/TPA-only unless a future explicit
+    attachment-sharing workflow is added.
+    """
+    tx = message.query.transaction
+    if _is_internal_tpa_user(user, tx):
+        return True
+    if message.audience == TransactionQuery.Audience.INSURER_TPA_INTERNAL:
+        return False
+    return can_view_query_message(user, message)
+
+
+def visible_shared_internal_messages(user, tx):
+    if not user or not user.is_authenticated or _is_internal_tpa_user(user, tx):
+        return TransactionQueryMessage.objects.none()
+    if user.pk != tx.requester_id:
+        return TransactionQueryMessage.objects.none()
+    return (
+        TransactionQueryMessage.objects.select_related(
+            "sender",
+            "ticket_comment",
+            "query",
+            "query__transaction",
+        )
+        .filter(
+            query__transaction=tx,
+            audience=TransactionQuery.Audience.INSURER_TPA_INTERNAL,
+            shared_with_client_at__isnull=False,
+        )
+        .order_by("created_at", "pk")
+    )
 
 
 def visible_transaction_queries(user, tx):

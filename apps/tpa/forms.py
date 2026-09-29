@@ -330,8 +330,15 @@ class InboundEmailForm(forms.ModelForm):
     )
     transaction_type = forms.ChoiceField(
         required=False,
-        choices=(("", "Let AI identify"), *MemberTransaction.Type.choices),
-        help_text="Optional transaction type hint.",
+        choices=(
+            ("", "Let AI identify"),
+            *[
+                choice
+                for choice in MemberTransaction.Type.choices
+                if choice[0] != MemberTransaction.Type.NEW_POLICY_ENROLLMENT
+            ],
+        ),
+        help_text="Optional endorsement type hint. Initial policy enrollment is created from its dedicated setup page.",
     )
     effective_date = forms.DateField(
         required=False,

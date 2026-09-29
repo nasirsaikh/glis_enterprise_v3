@@ -58,6 +58,11 @@ urlpatterns = [
         name="transaction_reprocess_source",
     ),
     path(
+        "transactions/<str:reference>/sources/<int:document_id>/download/",
+        views.transaction_source_document,
+        name="transaction_source_document",
+    ),
+    path(
         "transactions/<str:reference>/members/add/",
         views.transaction_add_member,
         name="transaction_add_member",

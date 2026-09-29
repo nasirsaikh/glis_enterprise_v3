@@ -442,7 +442,7 @@ class TPAEmailAuthority(TimeStampedModel):
         constraints=[
             models.UniqueConstraint(fields=["email_address","organization","policy"], name="tpa_unique_email_authority")
         ]
-        indexes=[models.Index(fields=["email_address","active"])]
+        indexes=[models.Index(fields=["email_address","active"], name="tpa_email_a_email_a_4fd468_idx")]
     def __str__(self):
         scope=self.policy.policy_number if self.policy_id else self.organization.name_en
         return f"{self.email_address} · {scope}"

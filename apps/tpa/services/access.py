@@ -176,9 +176,8 @@ def can_view_query_attachment(user, message):
 def visible_shared_internal_messages(user, tx):
     if not user or not user.is_authenticated or _is_internal_tpa_user(user, tx):
         return TransactionQueryMessage.objects.none()
-    if user.pk != tx.requester_id:
-        return TransactionQueryMessage.objects.none()
-    return (
+
+    qs = (
         TransactionQueryMessage.objects.select_related(
             "sender",
             "ticket_comment",
@@ -190,7 +189,11 @@ def visible_shared_internal_messages(user, tx):
             audience=TransactionQuery.Audience.INSURER_TPA_INTERNAL,
             shared_with_client_at__isnull=False,
         )
-        .order_by("created_at", "pk")
+    )
+    if user.pk == tx.requester_id:
+        return qs.order_by("created_at", "pk")
+    return qs.filter(query__selected_participants=user).distinct().order_by(
+        "created_at", "pk"
     )
 
 

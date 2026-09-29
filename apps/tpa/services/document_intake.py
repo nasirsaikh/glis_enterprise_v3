@@ -6,7 +6,7 @@ from pathlib import Path
 
 from django.core.exceptions import ValidationError
 
-from apps.ai.models import AIExtractionProfile
+from apps.ai.models import AIExtractionProfile, AIInteraction
 from apps.ai.runtime import generate_json, generate_text
 
 from ..models import MemberAction, SourceDocument
@@ -25,6 +25,18 @@ SUPPORTED_EXTENSIONS = {
     ".webp",
 }
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+
+def _confidence_percent(value):
+    if value in (None, ""):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if number <= 1:
+        number *= 100
+    return max(0.0, min(number, 100.0))
 
 
 def _read_bytes(field):
@@ -137,7 +149,7 @@ def _system_prompt(profile):
     )
 
 
-def _map_evidence_text(tx, evidence_text):
+def _map_evidence_text(tx, evidence_text, actor=None):
     provider = (
         select_provider(sensitive=True, capability="member_field_mapping")
         or select_provider(sensitive=True, capability="document_extraction")
@@ -157,7 +169,26 @@ def _map_evidence_text(tx, evidence_text):
         system_prompt=_system_prompt(profile),
         user_prompt=_member_prompt(tx, evidence_text),
     )
-    return normalize_ai_payload(payload), provider, profile, duration_ms
+    normalized = normalize_ai_payload(payload)
+    AIInteraction.objects.create(
+        user=actor,
+        ticket=tx.ticket,
+        purpose="tpa_document_mapping",
+        provider=f"{provider.provider}:{provider.model_name or provider.name}",
+        request_summary={
+            "transaction_reference": tx.reference,
+            "policy_number": tx.policy.policy_number,
+            "profile_id": profile.pk if profile else None,
+            "evidence_characters": len(evidence_text),
+        },
+        response=normalized,
+        confidence=(
+            (_confidence_percent(normalized.get("confidence")) or 0) / 100
+        ),
+        duration_ms=max(duration_ms, 0),
+        succeeded=True,
+    )
+    return normalized, provider, profile, duration_ms
 
 
 def _ocr_image(tx, content, mime_type):
@@ -222,6 +253,8 @@ def _create_actions(tx, rows, *, confidence=None):
     created = []
     for offset, row in enumerate(rows, start=1):
         normalized = normalize_member_row(row)
+        if row.get("member_id") and not normalized.get("tpa_member_id"):
+            normalized["tpa_member_id"] = str(row.get("member_id")).strip()
         for key in (
             "employee_id",
             "first_name",
@@ -239,13 +272,9 @@ def _create_actions(tx, rows, *, confidence=None):
             if key in row and row.get(key) not in (None, ""):
                 normalized[key] = str(row.get(key)).strip()
 
-        row_confidence = row.get("confidence", confidence)
-        try:
-            row_confidence = float(row_confidence)
-            if row_confidence <= 1:
-                row_confidence *= 100
-        except (TypeError, ValueError):
-            row_confidence = confidence
+        row_confidence = _confidence_percent(
+            row.get("confidence", confidence)
+        )
 
         if not any(value not in (None, "") for value in normalized.values()):
             continue
@@ -388,6 +417,7 @@ def process_source_bundle(tx, documents, actor=None):
             mapped, provider, profile, _ = _map_evidence_text(
                 tx,
                 "\n\n".join(evidence),
+                actor=actor,
             )
             ai_provider = provider
             ai_profile = profile
@@ -408,10 +438,14 @@ def process_source_bundle(tx, documents, actor=None):
                     payload["ai_profile"] = profile.name if profile else ""
                     document.extracted_payload = payload
                     document.ai_profile = profile
+                    document.extraction_confidence = _confidence_percent(
+                        mapped.get("confidence")
+                    )
                     document.save(
                         update_fields=[
                             "extracted_payload",
                             "ai_profile",
+                            "extraction_confidence",
                             "updated_at",
                         ]
                     )

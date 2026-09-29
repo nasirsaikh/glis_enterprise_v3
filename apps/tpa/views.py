@@ -843,6 +843,11 @@ def transaction_detail(request, reference):
         and tx.transaction_type != tx.Type.POLICY_CANCEL,
         "can_approve": can_approve_tpa_transaction(request.user, tx),
         "can_process": can_process_tpa_transaction(request.user, tx),
+        "can_view_ai_source": (
+            request.user.is_superuser
+            or request.user.has_perm("tpa.view_ai_source_data")
+            or request.user.has_perm("tpa.configure_tpa")
+        ),
         "ticket_approval_pending": bool(
             tx.ticket_id and tx.ticket.approval_state == "pending"
         ),
@@ -920,6 +925,22 @@ def transaction_upload_sources(request, reference):
     except (ValidationError, RuntimeError, ValueError) as exc:
         messages.error(request, str(exc))
     return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_source_document(request, reference, document_id):
+    _require_tpa_access(request.user)
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    document = get_object_or_404(tx.source_documents, pk=document_id)
+    if not document.file:
+        raise PermissionDenied("This source does not have a downloadable file.")
+    document.file.open("rb")
+    return FileResponse(
+        document.file,
+        as_attachment=True,
+        filename=document.original_name,
+        content_type=document.content_type or "application/octet-stream",
+    )
 
 
 @login_required

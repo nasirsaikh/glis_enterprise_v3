@@ -166,9 +166,15 @@ def _resolve_policy(payload, hints, email):
 def _resolve_transaction_type(payload, hints):
     value = hints.get("transaction_type") or payload.get("transaction_type") or ""
     normalized = str(value).strip().upper().replace("-", " ")
-    return TRANSACTION_ALIASES.get(normalized) or TRANSACTION_ALIASES.get(
+    resolved = TRANSACTION_ALIASES.get(normalized) or TRANSACTION_ALIASES.get(
         normalized.replace("_", " ")
     )
+    if resolved == MemberTransaction.Type.NEW_POLICY_ENROLLMENT:
+        raise ValueError(
+            "Initial policy enrollment must be created from TPA → Initial Policy Enrollment. "
+            "Email intake is reserved for endorsements on an enrolled policy."
+        )
+    return resolved
 
 
 def _log_interaction(*, actor, provider, profile, email, normalized, duration_ms, succeeded, error_code=""):

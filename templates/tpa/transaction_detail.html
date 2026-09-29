@@ -437,7 +437,15 @@
           <form class="grid gap-3 md:grid-cols-2 xl:grid-cols-3" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_card_dispatch' tx.reference %}">
             {% csrf_token %}
             {% for field in card_dispatch_form %}<fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}</fieldset>{% endfor %}
-            <fieldset class="fieldset"><legend class="fieldset-legend">{% translate "Proof of delivery / collection" %}</legend><input class="file-input file-input-bordered file-input-sm w-full" type="file" name="proof"></fieldset>
+            <fieldset class="fieldset">
+              <legend class="fieldset-legend">{% translate "Proof of delivery / collection" %}</legend>
+              <input class="file-input file-input-bordered file-input-sm w-full" type="file" name="proof">
+              {% if card_dispatch.proof_attachment and can_tpa_process %}
+              <a class="link link-primary mt-1 text-xs" href="{% url 'portal:download_attachment' card_dispatch.proof_attachment.pk %}">
+                <i class="bi bi-paperclip"></i>{{ card_dispatch.proof_attachment.original_name }}
+              </a>
+              {% endif %}
+            </fieldset>
             <div class="md:col-span-2 xl:col-span-3 flex justify-end"><button class="btn btn-primary">{% translate "Save Dispatch" %}</button></div>
           </form>
         </div>

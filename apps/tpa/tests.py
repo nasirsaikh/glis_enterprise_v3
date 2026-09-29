@@ -184,13 +184,99 @@ class TPACoreTests(TestCase):
         tx.refresh_from_db()
 
         self.assertEqual(tx.status, MemberTransaction.Status.COMPLETED)
-        self.assertTrue(
-            MemberPolicyEnrollment.objects.filter(
-                policy=self.policy,
-                member__employee_id="E-100",
-                enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
-            ).exists()
+        enrollment = MemberPolicyEnrollment.objects.get(
+            policy=self.policy,
+            member__employee_id="E-100",
+            enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
         )
+        self.assertEqual(enrollment.card_number, "CARD-E-100")
+        self.assertEqual(enrollment.coverage_start_date, date(2026, 7, 1))
+        self.assertEqual(str(enrollment.premium_amount), "184.000")
+        self.assertEqual(
+            enrollment.premium_calculation_basis["tpa_final_amount"],
+            "184.000",
+        )
+
+    def test_initial_policy_enrollment_activates_policy_only_after_tpa_completion(self):
+        policy = Policy.objects.create(
+            sponsor=self.sponsor,
+            insurance_company=self.insurer,
+            tpa_organization=self.tpa,
+            policy_number="POL-OPENING-1",
+            policy_name="Opening Census Policy",
+            start_date=date(2026, 1, 1),
+            expiry_date=date(2026, 12, 31),
+            status=Policy.Status.DRAFT,
+            stp_enabled=False,
+            allowed_backdating_days=3650,
+        )
+        BenefitPlan.objects.create(
+            policy=policy,
+            code="GOLD",
+            name="Gold",
+            annual_premium="365.000",
+            premium_configuration={"method": "PRORATA", "denominator": 365},
+        )
+        tx = MemberTransaction.objects.create(
+            sponsor=self.sponsor,
+            insurer=self.insurer,
+            policy=policy,
+            transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
+            effective_date=date(2026, 1, 1),
+            requester=self.user,
+            requester_organization=self.sponsor,
+            status=MemberTransaction.Status.PENDING_VALIDATION,
+        )
+        action = MemberAction.objects.create(
+            transaction=tx,
+            action=tx.transaction_type,
+            row_number=1,
+            corrected_data={
+                "employee_id": "OPEN-EMP-1",
+                "first_name": "Opening",
+                "last_name": "Member",
+                "date_of_birth": "1988-01-01",
+                "gender": "Male",
+                "relationship": "PRINCIPAL",
+                "plan_code": "GOLD",
+                "national_id": "OPEN-CID-1",
+            },
+        )
+
+        run_validation(tx, actor=self.user)
+        tx.refresh_from_db()
+        policy.refresh_from_db()
+        self.assertEqual(tx.status, MemberTransaction.Status.PENDING_APPROVAL)
+        self.assertEqual(policy.status, Policy.Status.DRAFT)
+        self.assertIsNone(policy.initial_enrollment_completed_at)
+
+        self.user.is_superuser = True
+        self.user.is_staff = True
+        self.user.save(update_fields=["is_superuser", "is_staff"])
+
+        approve_transaction(tx, self.user)
+        start_tpa_processing(tx, self.user)
+        action.refresh_from_db()
+        update_tpa_action(
+            action,
+            self.user,
+            card_number="OPEN-CARD-1",
+            effective_date=date(2026, 1, 1),
+            amount=action.calculated_premium,
+        )
+        complete_tpa_transaction(tx, self.user)
+
+        tx.refresh_from_db()
+        policy.refresh_from_db()
+        enrollment = MemberPolicyEnrollment.objects.get(
+            policy=policy,
+            member__employee_id="OPEN-EMP-1",
+        )
+        self.assertEqual(tx.status, MemberTransaction.Status.COMPLETED)
+        self.assertEqual(policy.status, Policy.Status.ACTIVE)
+        self.assertIsNotNone(policy.initial_enrollment_completed_at)
+        self.assertEqual(policy.initial_enrollment_completed_by_id, self.user.pk)
+        self.assertEqual(enrollment.card_number, "OPEN-CARD-1")
 
     def test_dependent_manual_form_requires_parent_principal(self):
         tx = self._transaction()

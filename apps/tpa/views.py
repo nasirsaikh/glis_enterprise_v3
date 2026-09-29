@@ -958,6 +958,13 @@ def transaction_add_member(request, reference):
         row_number=row_number,
         submitted_data=_serialize_form_data(form.cleaned_data),
         corrected_data=_serialize_form_data(form.cleaned_data),
+        provenance=[
+            {
+                "source": "manual",
+                "actor_id": request.user.pk,
+                "at": timezone.now().isoformat(),
+            }
+        ],
     )
 
     if tx.status == tx.Status.DRAFT:
@@ -966,6 +973,106 @@ def transaction_add_member(request, reference):
         run_validation(tx, actor=request.user)
 
     messages.success(request, f"Member row {row_number} added.")
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_select_members(request, reference):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    if tx.status not in INTAKE_EDITABLE_STATUSES:
+        raise PermissionDenied("Member selection is closed for this transaction.")
+    if tx.transaction_type not in {
+        tx.Type.MEMBER_DELETE,
+        tx.Type.MEMBER_TERMINATE,
+        tx.Type.MEMBER_SUSPEND,
+        tx.Type.MEMBER_REACTIVATE,
+    }:
+        raise PermissionDenied("This transaction does not select existing members.")
+
+    selected_ids = [
+        int(value)
+        for value in request.POST.getlist("enrollment_ids")
+        if str(value).isdigit()
+    ]
+    selected = list(selectable_enrollments(tx).filter(pk__in=selected_ids))
+    if selected:
+        add_enrollments_to_transaction(
+            tx,
+            selected,
+            source=f"policy_selection:user:{request.user.pk}",
+        )
+
+    card_numbers = request.POST.get("card_numbers", "")
+    if card_numbers.strip():
+        result = resolve_card_numbers(tx, card_numbers)
+        if result["matched"]:
+            add_enrollments_to_transaction(
+                tx,
+                result["matched"],
+                source=f"bulk_card_selection:user:{request.user.pk}",
+            )
+        if result["not_found"]:
+            messages.warning(
+                request,
+                "Card numbers not found: " + ", ".join(result["not_found"]),
+            )
+        if result["inactive"]:
+            messages.warning(
+                request,
+                "Inactive/ineligible card numbers: " + ", ".join(result["inactive"]),
+            )
+        if result["duplicates"]:
+            messages.info(
+                request,
+                "Duplicate pasted card numbers ignored: " + ", ".join(result["duplicates"]),
+            )
+
+    for action in tx.member_actions.all():
+        validate_action(action)
+    messages.success(
+        request,
+        f"{tx.member_actions.count()} member row(s) are now in the endorsement.",
+    )
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_reprocess_source(request, reference, document_id):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    if tx.status not in INTAKE_EDITABLE_STATUSES:
+        raise PermissionDenied("Evidence reprocessing is closed for this transaction.")
+    document = get_object_or_404(tx.source_documents, pk=document_id)
+    document.processing_state = SourceDocument.State.RECEIVED
+    document.processing_error = ""
+    document.processed = False
+    document.save(
+        update_fields=[
+            "processing_state",
+            "processing_error",
+            "processed",
+            "updated_at",
+        ]
+    )
+    actions = process_source_bundle(tx, [document], actor=request.user)
+    for action in actions:
+        validate_action(action)
+    TransactionEvent.objects.create(
+        transaction=tx,
+        actor=request.user,
+        event_type="evidence_reprocessed",
+        summary=f"Evidence reprocessed: {document.original_name}",
+        details={"source_document_id": document.pk},
+    )
+    messages.success(
+        request,
+        f"Evidence reprocessed; {len(actions)} row(s) created or updated.",
+    )
     return redirect("tpa:transaction_detail", reference=reference)
 
 
@@ -1182,6 +1289,8 @@ def transaction_tpa_action(request, reference, action_id):
                 card_number=form.cleaned_data["card_number"],
                 effective_date=form.cleaned_data["effective_date"],
                 amount=form.cleaned_data["amount"],
+                override_reason=form.cleaned_data.get("override_reason") or "",
+                comments=form.cleaned_data.get("comments") or "",
             )
             messages.success(request, "TPA member processing data updated.")
         except (PermissionError, ValueError) as exc:
@@ -1207,15 +1316,17 @@ def transaction_raise_query(request, reference):
     form = QueryRaiseForm(request.POST)
     if form.is_valid():
         try:
-            raise_tpa_query(
+            raise_transaction_query(
                 tx,
                 request.user,
                 form.cleaned_data["subject"],
                 form.cleaned_data["message"],
+                purpose=form.cleaned_data["purpose"],
+                audience=form.cleaned_data["audience"],
             )
             messages.warning(
                 request,
-                "TPA query raised. The conversation is available below in this workflow step.",
+                "Discussion opened inside this transaction.",
             )
         except (PermissionError, ValueError) as exc:
             messages.error(request, str(exc))
@@ -1242,15 +1353,16 @@ def transaction_query_message(request, reference, query_id):
     form = QueryMessageForm(request.POST, request.FILES)
     if form.is_valid():
         try:
-            comment = post_query_message(
+            query_message = post_query_message(
                 query,
                 request.user,
                 form.cleaned_data["message"],
+                audience=form.cleaned_data.get("audience") or None,
             )
             for uploaded in form.cleaned_data.get("attachments") or []:
                 TicketAttachment.objects.create(
                     ticket=query.ticket,
-                    comment=comment,
+                    comment=query_message.ticket_comment,
                     uploaded_by=request.user,
                     file=uploaded,
                     original_name=uploaded.name,
@@ -1285,6 +1397,114 @@ def transaction_resolve_query(request, reference, query_id):
 
 
 @login_required
+def transaction_share_query_message(request, reference, message_id):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    query_message = get_object_or_404(
+        TransactionQueryMessage.objects.select_related(
+            "query",
+            "query__transaction",
+            "ticket_comment",
+        ),
+        pk=message_id,
+        query__transaction=tx,
+    )
+    try:
+        share_query_message_with_client(query_message, request.user)
+        messages.success(request, "Selected internal message shared with the client.")
+    except (PermissionError, ValueError) as exc:
+        messages.error(request, str(exc))
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_query_attachment(request, reference, attachment_id):
+    _require_tpa_access(request.user)
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    attachment = get_object_or_404(
+        TicketAttachment.objects.select_related(
+            "comment",
+            "comment__tpa_query_message",
+            "comment__tpa_query_message__query",
+        ),
+        pk=attachment_id,
+        comment__tpa_query_message__query__transaction=tx,
+    )
+    query_message = attachment.comment.tpa_query_message
+    if not can_view_query_message(request.user, query_message):
+        raise PermissionDenied("You do not have access to this conversation attachment.")
+    attachment.file.open("rb")
+    return FileResponse(
+        attachment.file,
+        as_attachment=True,
+        filename=attachment.original_name,
+        content_type=attachment.content_type or "application/octet-stream",
+    )
+
+
+@login_required
+def transaction_card_dispatch(request, reference):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    try:
+        dispatch = tx.card_dispatch
+    except CardDispatch.DoesNotExist:
+        dispatch = CardDispatch(transaction=tx)
+
+    form = CardDispatchForm(request.POST, instance=dispatch)
+    if not form.is_valid():
+        messages.error(
+            request,
+            "; ".join(
+                error
+                for errors in form.errors.values()
+                for error in errors
+            ),
+        )
+        return redirect("tpa:transaction_detail", reference=reference)
+
+    proof_attachment = None
+    proof = request.FILES.get("proof")
+    if proof:
+        if not tx.ticket_id:
+            create_ticket_for_transaction(tx, actor=request.user)
+            tx.refresh_from_db(fields=["ticket"])
+        proof_attachment = TicketAttachment.objects.create(
+            ticket=tx.ticket,
+            uploaded_by=request.user,
+            file=proof,
+            original_name=proof.name,
+            content_type=getattr(proof, "content_type", "") or "application/octet-stream",
+            size=proof.size,
+            is_restricted=True,
+            scan_status="clean",
+            source_field="tpa_card_dispatch",
+        )
+
+    try:
+        update_card_dispatch(
+            tx,
+            request.user,
+            proof_attachment=proof_attachment,
+            **form.cleaned_data,
+        )
+        tx.refresh_from_db()
+        messages.success(
+            request,
+            "Card dispatch updated."
+            if tx.status == tx.Status.CARD_DISPATCH
+            else "Card delivery/collection completed and endorsement finalized.",
+        )
+    except (PermissionError, ValueError) as exc:
+        messages.error(request, str(exc))
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
 def transaction_tpa_complete(request, reference):
     _require_tpa_access(request.user)
     if request.method != "POST":
@@ -1293,10 +1513,16 @@ def transaction_tpa_complete(request, reference):
     try:
         complete_tpa_transaction(tx, request.user)
         tx.refresh_from_db()
-        messages.success(
-            request,
-            "TPA processing completed. Member/policy records have been updated.",
-        )
+        if tx.status == tx.Status.CARD_DISPATCH:
+            messages.success(
+                request,
+                "TPA processing completed. Physical card dispatch/collection is now required.",
+            )
+        else:
+            messages.success(
+                request,
+                "TPA processing completed. Member/policy records have been updated.",
+            )
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
     return redirect("tpa:transaction_detail", reference=reference)

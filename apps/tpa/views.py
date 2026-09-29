@@ -100,7 +100,34 @@ def dashboard(request):
     _require_tpa_access(request.user)
     policies = visible_policies(request.user)
     txs = visible_transactions(request.user)
+    status_rows = list(
+        txs.values("status")
+        .annotate(total=models.Count("id"))
+        .order_by("-total", "status")
+    )
+    source_rows = list(
+        txs.values("source")
+        .annotate(total=models.Count("id"))
+        .order_by("-total", "source")
+    )
+    status_labels = dict(MemberTransaction.Status.choices)
+    source_labels = dict(MemberTransaction.Source.choices)
+
     context = {
+        "status_chart": [
+            {
+                "label": status_labels.get(row["status"], row["status"]),
+                "value": row["total"],
+            }
+            for row in status_rows
+        ],
+        "source_chart": [
+            {
+                "label": source_labels.get(row["source"], row["source"]),
+                "value": row["total"],
+            }
+            for row in source_rows
+        ],
         "active_sponsors": TPAOrganization.objects.filter(
             organization_type="CORPORATE",
             is_active=True,

@@ -608,12 +608,18 @@ def transaction_create(request):
         tx.sponsor = tx.policy.sponsor
         tx.insurer = tx.policy.insurance_company
         tx.requester = request.user
+        tx.physical_card_required = (
+            tx.policy.physical_card_required
+            and tx.transaction_type == MemberTransaction.Type.MEMBER_ADD
+        )
         access = tx.policy.access_entries.filter(
             user=request.user,
             active=True,
         ).select_related("organization").first()
         tx.requester_organization = access.organization if access else tx.policy.sponsor
         tx.save()
+        if tx.transaction_type == MemberTransaction.Type.POLICY_CANCEL:
+            populate_policy_cancellation(tx)
         TransactionEvent.objects.create(
             transaction=tx,
             actor=request.user,
@@ -722,6 +728,8 @@ def transaction_detail(request, reference):
         elif tx.transaction_type in {
             tx.Type.MEMBER_TERMINATE,
             tx.Type.MEMBER_DELETE,
+            tx.Type.MEMBER_SUSPEND,
+            tx.Type.MEMBER_REACTIVATE,
         }:
             action.edit_form = MemberLookupRowForm(initial=display_data)
         else:
@@ -766,11 +774,39 @@ def transaction_detail(request, reference):
             result_count = payload.get("rows_created")
         document.result_count = result_count
 
+    visible_query_threads = list(
+        visible_transaction_queries(request.user, tx).order_by("-created_at")
+    )
+    for query in visible_query_threads:
+        query.visible_messages = [
+            message
+            for message in query.messages.all()
+            if can_view_query_message(request.user, message)
+        ]
+
+    selectable_members = []
+    if tx.transaction_type in {
+        tx.Type.MEMBER_DELETE,
+        tx.Type.MEMBER_TERMINATE,
+        tx.Type.MEMBER_SUSPEND,
+        tx.Type.MEMBER_REACTIVATE,
+    }:
+        selectable_members = list(selectable_enrollments(tx))
+
+    try:
+        card_dispatch = tx.card_dispatch
+    except CardDispatch.DoesNotExist:
+        card_dispatch = None
+
     context = {
         "tx": tx,
         "actions": actions,
         "events": tx.events.all(),
         "member_form": member_form,
+        "bulk_card_form": BulkCardSelectionForm(),
+        "selectable_members": selectable_members,
+        "card_dispatch": card_dispatch,
+        "card_dispatch_form": CardDispatchForm(instance=card_dispatch),
         "upload_form": MemberUploadForm(),
         "can_edit_intake": tx.status in INTAKE_EDITABLE_STATUSES
         and tx.transaction_type != tx.Type.POLICY_CANCEL,
@@ -794,22 +830,15 @@ def transaction_detail(request, reference):
         ),
         "initial_setup": tx.transaction_type == tx.Type.NEW_POLICY_ENROLLMENT,
         "source_documents": source_documents,
-        "open_query": tx.queries.filter(
-            status=TransactionQuery.Status.OPEN
-        ).select_related("ticket").prefetch_related(
-            "messages__sender",
-            "messages__ticket_comment",
-            "messages__ticket_comment__attachments",
-        ).first(),
-        "query_history": tx.queries.select_related(
-            "ticket",
-            "raised_by",
-            "resolved_by",
-        ).prefetch_related(
-            "messages__sender",
-            "messages__ticket_comment",
-            "messages__ticket_comment__attachments",
+        "open_query": next(
+            (
+                query
+                for query in visible_query_threads
+                if query.status == TransactionQuery.Status.OPEN
+            ),
+            None,
         ),
+        "query_history": visible_query_threads,
         "query_raise_form": QueryRaiseForm(),
         "query_message_form": QueryMessageForm(),
         "can_start_tpa": (
@@ -1063,6 +1092,12 @@ def transaction_submit(request, reference):
 
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
     if tx.status != tx.Status.DRAFT:
+        return redirect("tpa:transaction_detail", reference=reference)
+
+    if tx.transaction_type == tx.Type.POLICY_CANCEL and not tx.member_actions.exists():
+        populate_policy_cancellation(tx)
+    if tx.transaction_type != tx.Type.POLICY_CANCEL and not tx.member_actions.exists():
+        messages.error(request, "At least one member is required before continuing.")
         return redirect("tpa:transaction_detail", reference=reference)
 
     tx.submitted_at = timezone.now()

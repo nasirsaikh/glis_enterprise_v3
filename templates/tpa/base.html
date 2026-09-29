@@ -1,15 +1,8 @@
 {% extends "base_portal.html" %}
 {% load static i18n %}
 
-{% block extra_head %}
-  {{ block.super }}
-  <link rel="stylesheet" href="{% static 'css/tpa.css' %}">
-{% endblock %}
-
-{% block main_class %}tpa-main{% endblock %}
-
 {% block content %}
-<div class="tpa-app mx-auto w-full max-w-[1800px]">
+<div class="w-full">
   {% block tpa_content %}{% endblock %}
 </div>
 {% endblock %}

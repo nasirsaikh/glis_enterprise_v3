@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.utils import timezone
 
 from ..models import Member, MemberAction, MemberPolicyEnrollment, Policy
-from .pricing import calculate_member_premium
+from .pricing import calculate_member_premium, calculate_member_refund
 
 
 NON_BYPASSABLE = {
@@ -76,33 +76,40 @@ def _find_principal_reference(tx, data, current_action=None):
     return None
 
 
-def _find_active_enrollment(tx, data):
-    qs = MemberPolicyEnrollment.objects.select_related("member").filter(
+def _find_enrollment(tx, data, statuses):
+    qs = MemberPolicyEnrollment.objects.select_related(
+        "member", "benefit_plan", "policy"
+    ).filter(
         policy=tx.policy,
-        enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
+        enrollment_status__in=statuses,
     )
     employee_id = str(data.get("employee_id") or "").strip()
     national_id = str(data.get("national_id") or "").strip()
     passport_number = str(data.get("passport_number") or "").strip()
     member_id = str(data.get("tpa_member_id") or "").strip()
+    card_number = str(data.get("card_number") or "").strip()
 
-    if member_id:
-        match = qs.filter(member__tpa_member_id=member_id).first()
-        if match:
-            return match
-    if employee_id:
-        match = qs.filter(member__employee_id=employee_id).first()
-        if match:
-            return match
-    if national_id:
-        match = qs.filter(member__national_id=national_id).first()
-        if match:
-            return match
-    if passport_number:
-        match = qs.filter(member__passport_number=passport_number).first()
-        if match:
-            return match
+    lookups = (
+        ("member__tpa_member_id", member_id),
+        ("card_number", card_number),
+        ("member__employee_id", employee_id),
+        ("member__national_id", national_id),
+        ("member__passport_number", passport_number),
+    )
+    for field, value in lookups:
+        if value:
+            match = qs.filter(**{field: value}).first()
+            if match:
+                return match
     return None
+
+
+def _find_active_enrollment(tx, data):
+    return _find_enrollment(tx, data, [MemberPolicyEnrollment.Status.ACTIVE])
+
+
+def _find_suspended_enrollment(tx, data):
+    return _find_enrollment(tx, data, [MemberPolicyEnrollment.Status.SUSPENDED])
 
 
 def validate_action(action):
@@ -110,6 +117,18 @@ def validate_action(action):
     data = _payload(action)
     errors = []
     warnings = []
+    for provenance in action.provenance or []:
+        for conflict in provenance.get("conflicts") or []:
+            warnings.append(
+                {
+                    "code": "SOURCE_CONFLICT",
+                    "message": (
+                        conflict.get("message")
+                        or f"Conflicting source value for {conflict.get('field')}: "
+                        f"kept {conflict.get('kept')!r}, incoming {conflict.get('incoming')!r}."
+                    ),
+                }
+            )
 
     if (
         tx.policy.status != Policy.Status.ACTIVE
@@ -226,6 +245,38 @@ def validate_action(action):
                     "National/Civil ID is already active under this policy.",
                 )
             )
+        passport_number = str(data.get("passport_number") or "").strip()
+        if passport_number and MemberPolicyEnrollment.objects.filter(
+            policy=tx.policy,
+            enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
+            member__passport_number=passport_number,
+        ).exists():
+            errors.append(
+                error(
+                    "DUPLICATE_PASSPORT",
+                    "passport_number",
+                    "Passport number is already active under this policy.",
+                )
+            )
+
+        duplicate_fields = []
+        for field in ("employee_id", "national_id", "passport_number"):
+            value = str(data.get(field) or "").strip()
+            if not value:
+                continue
+            for other in tx.member_actions.exclude(pk=action.pk):
+                other_data = _payload(other)
+                if str(other_data.get(field) or "").strip().casefold() == value.casefold():
+                    duplicate_fields.append(field)
+                    break
+        for field in sorted(set(duplicate_fields)):
+            errors.append(
+                error(
+                    "DUPLICATE_TRANSACTION_ROW",
+                    field,
+                    f"{field.replace('_', ' ').title()} is duplicated in this transaction.",
+                )
+            )
 
         if plan and not any(item["blocking"] for item in errors):
             amount, snapshot = calculate_member_premium(
@@ -239,11 +290,13 @@ def validate_action(action):
     elif tx.transaction_type in {
         tx.Type.MEMBER_TERMINATE,
         tx.Type.MEMBER_DELETE,
+        tx.Type.MEMBER_SUSPEND,
     }:
         if not any(
             data.get(field)
             for field in (
                 "tpa_member_id",
+                "card_number",
                 "employee_id",
                 "national_id",
                 "passport_number",
@@ -253,7 +306,7 @@ def validate_action(action):
                 error(
                     "MEMBER_IDENTIFIER_REQUIRED",
                     "member",
-                    "Provide TPA member ID, employee ID, national ID or passport number.",
+                    "Provide card/member ID, employee ID, national ID or passport number.",
                 )
             )
         enrollment = _find_active_enrollment(tx, data)
@@ -267,6 +320,82 @@ def validate_action(action):
             )
         if enrollment:
             action.member = enrollment.member
+            if tx.transaction_type == tx.Type.MEMBER_DELETE:
+                if tx.refund_basis == tx.RefundBasis.NONE:
+                    errors.append(
+                        error(
+                            "REFUND_BASIS_REQUIRED",
+                            "refund_basis",
+                            "Choose Full Refund or Pro-Rata Refund for member deletion.",
+                        )
+                    )
+                elif not any(item["blocking"] for item in errors):
+                    amount, snapshot = calculate_member_refund(
+                        enrollment,
+                        tx.effective_date,
+                        tx.refund_basis,
+                    )
+                    action.calculated_premium = amount
+                    action.calculation_snapshot = snapshot
+
+    elif tx.transaction_type == tx.Type.MEMBER_REACTIVATE:
+        if not any(
+            data.get(field)
+            for field in (
+                "tpa_member_id",
+                "card_number",
+                "employee_id",
+                "national_id",
+                "passport_number",
+            )
+        ):
+            errors.append(
+                error(
+                    "MEMBER_IDENTIFIER_REQUIRED",
+                    "member",
+                    "Provide card/member ID, employee ID, national ID or passport number.",
+                )
+            )
+        enrollment = _find_suspended_enrollment(tx, data)
+        if not errors and not enrollment:
+            errors.append(
+                error(
+                    "SUSPENDED_MEMBER_NOT_FOUND",
+                    "member",
+                    "Only a currently suspended member on this policy can be reactivated.",
+                )
+            )
+        if enrollment:
+            action.member = enrollment.member
+            if enrollment.expected_reactivation_date and tx.effective_date < enrollment.suspension_date:
+                errors.append(
+                    error(
+                        "INVALID_REACTIVATION_DATE",
+                        "effective_date",
+                        "Reactivation date cannot be before the suspension date.",
+                    )
+                )
+
+    elif tx.transaction_type == tx.Type.POLICY_CANCEL:
+        enrollment = _find_active_enrollment(tx, data)
+        if enrollment:
+            action.member = enrollment.member
+            if tx.refund_basis == tx.RefundBasis.NONE:
+                errors.append(
+                    error(
+                        "REFUND_BASIS_REQUIRED",
+                        "refund_basis",
+                        "Choose Full Refund or Pro-Rata Refund for policy cancellation.",
+                    )
+                )
+            elif not any(item["blocking"] for item in errors):
+                amount, snapshot = calculate_member_refund(
+                    enrollment,
+                    tx.effective_date,
+                    tx.refund_basis,
+                )
+                action.calculated_premium = amount
+                action.calculation_snapshot = snapshot
 
     if (
         action.extraction_confidence is not None
@@ -310,11 +439,13 @@ def validate_transaction(tx):
         tx.premium_adjustment = Decimal("0")
         tx.premium_after = tx.premium_before
         tx.status = tx.Status.NEEDS_INFORMATION
+        tx.validation_completed_at = timezone.now()
         tx.save(
             update_fields=[
                 "validation_score",
                 "premium_adjustment",
                 "premium_after",
+                "validation_completed_at",
                 "status",
                 "updated_at",
             ]
@@ -333,18 +464,24 @@ def validate_transaction(tx):
         premium += action.calculated_premium or Decimal("0")
 
     if tx.transaction_type == tx.Type.POLICY_CANCEL and not actions:
-        tx.validation_score = Decimal("100")
+        if tx.refund_basis == tx.RefundBasis.NONE:
+            tx.validation_score = Decimal("0")
+            has_errors = True
+        else:
+            tx.validation_score = Decimal("100")
     else:
         tx.validation_score = Decimal(str(round((passed / len(actions)) * 100, 2)))
 
     tx.premium_adjustment = premium
     tx.premium_after = (tx.premium_before or Decimal("0")) + premium
+    tx.validation_completed_at = timezone.now()
     tx.status = tx.Status.VALIDATION_FAILED if has_errors else tx.Status.PENDING_APPROVAL
     tx.save(
         update_fields=[
             "validation_score",
             "premium_adjustment",
             "premium_after",
+            "validation_completed_at",
             "status",
             "updated_at",
         ]

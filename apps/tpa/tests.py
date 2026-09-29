@@ -209,11 +209,7 @@ class TPACoreTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "ocr-id.pdf")
-        self.assertContains(
-            response,
-            '<td class="max-w-md text-xs">0</td>',
-            html=True,
-        )
+        self.assertContains(response, "0 row(s)")
 
     def test_tpa_ai_provider_selection_prefers_ollama(self):
         AIProviderConfig.objects.create(

@@ -34,10 +34,19 @@ def get_scheduler():
     return _scheduler
 
 
+def effective_cron_expression(job: ScheduledJob):
+    if job.handler == "tpa.poll_inbound_mailbox":
+        override = str(getattr(settings, "TPA_MAIL_SYNC_CRON", "") or "").strip()
+        if override:
+            return override
+    return job.cron_expression
+
+
 def build_cron_trigger(job: ScheduledJob):
-    parts = job.cron_expression.strip().split()
+    expression = effective_cron_expression(job)
+    parts = expression.strip().split()
     if len(parts) != 5:
-        raise ValueError(f"Invalid 5-part cron expression: {job.cron_expression}")
+        raise ValueError(f"Invalid 5-part cron expression: {expression}")
     minute, hour, day, month, weekday = parts
     return CronTrigger(
         minute=minute,

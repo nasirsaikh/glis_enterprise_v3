@@ -17,6 +17,7 @@ from ..models import (
     Policy,
     SourceDocument,
 )
+from .document_intake import process_source_bundle
 from .extraction import normalize_ai_payload, select_profile, select_provider
 from .intake import import_member_spreadsheet
 from .ticketing import create_ticket_for_transaction
@@ -366,82 +367,81 @@ def _process_image_attachment(tx, email, attachment, actor, hints):
 
 
 def _process_attachments(tx, email, actor):
+    documents = []
+    attachment_map = {}
+
     for attachment in email.attachments.all().order_by("pk"):
-        if attachment.processing_state == InboundEmailAttachment.State.PROCESSED:
-            continue
-        attachment.processing_state = InboundEmailAttachment.State.PROCESSING
-        attachment.processing_error = ""
-        attachment.save(
-            update_fields=["processing_state", "processing_error", "updated_at"]
-        )
-        ticket_attachment = _copy_attachment_to_ticket(tx, attachment, actor)
-        suffix = attachment.original_name.lower().rsplit(".", 1)[-1] if "." in attachment.original_name else ""
-
-        try:
-            if suffix in {"csv", "xlsx"}:
-                attachment.file.open("rb")
-                try:
-                    actions = import_member_spreadsheet(tx, attachment.file, actor=actor)
-                finally:
-                    attachment.file.close()
-                attachment.extracted_payload = {"rows_created": len(actions)}
-                attachment.processing_state = InboundEmailAttachment.State.PROCESSED
-                attachment.save(
-                    update_fields=[
-                        "extracted_payload",
-                        "processing_state",
-                        "updated_at",
-                    ]
-                )
-            elif (attachment.content_type or "").startswith("image/"):
-                _process_image_attachment(
-                    tx,
-                    email,
-                    attachment,
-                    actor,
-                    email.processing_hints or {},
-                )
-            else:
-                attachment.processing_state = InboundEmailAttachment.State.REVIEW
-                attachment.processing_error = (
-                    "Attachment retained for audit. Automated extraction currently supports "
-                    "CSV/XLSX and vision-capable image files."
-                )
-                attachment.save(
-                    update_fields=[
-                        "processing_state",
-                        "processing_error",
-                        "updated_at",
-                    ]
-                )
-
-            if ticket_attachment:
-                SourceDocument.objects.get_or_create(
-                    transaction=tx,
-                    ticket_attachment=ticket_attachment,
-                    defaults={
-                        "original_name": attachment.original_name,
-                        "document_kind": "EMAIL_ATTACHMENT",
-                        "extraction_method": (
-                            "STRUCTURED_IMPORT"
-                            if suffix in {"csv", "xlsx"}
-                            else "VISION_AI"
-                            if (attachment.content_type or "").startswith("image/")
-                            else "MANUAL_REVIEW"
-                        ),
-                        "processed": attachment.processing_state
-                        == InboundEmailAttachment.State.PROCESSED,
-                        "processing_error": attachment.processing_error,
-                        "extracted_payload": attachment.extracted_payload,
-                        "uploaded_by": actor,
-                    },
-                )
-        except Exception as exc:
-            attachment.processing_state = InboundEmailAttachment.State.REVIEW
-            attachment.processing_error = str(exc)
+        existing = tx.source_documents.filter(source_hash=attachment.sha256).first()
+        if existing:
+            attachment.processing_state = (
+                InboundEmailAttachment.State.PROCESSED
+                if existing.processed
+                else InboundEmailAttachment.State.REVIEW
+            )
+            attachment.extracted_payload = existing.extracted_payload
+            attachment.processing_error = existing.processing_error
             attachment.save(
                 update_fields=[
                     "processing_state",
+                    "extracted_payload",
+                    "processing_error",
+                    "updated_at",
+                ]
+            )
+            continue
+
+        ticket_attachment = _copy_attachment_to_ticket(tx, attachment, actor)
+        source = SourceDocument(
+            transaction=tx,
+            ticket_attachment=ticket_attachment,
+            original_name=attachment.original_name,
+            content_type=attachment.content_type or "",
+            size=attachment.size,
+            document_kind="EMAIL_ATTACHMENT",
+            processing_state=SourceDocument.State.RECEIVED,
+            processed=False,
+            source_hash=attachment.sha256,
+            uploaded_by=actor,
+        )
+        attachment.file.open("rb")
+        try:
+            source.file.save(
+                attachment.original_name,
+                File(attachment.file),
+                save=False,
+            )
+            source.save()
+        finally:
+            attachment.file.close()
+
+        attachment.processing_state = InboundEmailAttachment.State.PROCESSING
+        attachment.processing_error = ""
+        attachment.save(
+            update_fields=[
+                "processing_state",
+                "processing_error",
+                "updated_at",
+            ]
+        )
+        documents.append(source)
+        attachment_map[source.pk] = attachment
+
+    if documents:
+        process_source_bundle(tx, documents, actor=actor)
+        for document in documents:
+            document.refresh_from_db()
+            attachment = attachment_map[document.pk]
+            attachment.processing_state = (
+                InboundEmailAttachment.State.PROCESSED
+                if document.processed
+                else InboundEmailAttachment.State.REVIEW
+            )
+            attachment.extracted_payload = document.extracted_payload
+            attachment.processing_error = document.processing_error
+            attachment.save(
+                update_fields=[
+                    "processing_state",
+                    "extracted_payload",
                     "processing_error",
                     "updated_at",
                 ]

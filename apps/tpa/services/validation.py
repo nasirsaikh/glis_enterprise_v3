@@ -111,7 +111,10 @@ def validate_action(action):
     errors = []
     warnings = []
 
-    if tx.policy.status != Policy.Status.ACTIVE:
+    if (
+        tx.policy.status != Policy.Status.ACTIVE
+        and tx.transaction_type != tx.Type.NEW_POLICY_ENROLLMENT
+    ):
         errors.append(error("POLICY_NOT_ACTIVE", "policy", "Policy is not active."))
 
     if not (tx.policy.start_date <= tx.effective_date <= tx.policy.expiry_date):

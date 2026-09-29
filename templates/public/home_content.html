@@ -1,35 +1,81 @@
 {% load cms_tags i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 
-<div class="tw:overflow-hidden tw:bg-base-100 tw:text-base-content">
-  <section class="gl-home-hero">
-    <div class="gl-home-orb gl-home-orb-left" aria-hidden="true"></div>
-    <div class="gl-home-orb gl-home-orb-right" aria-hidden="true"></div>
+<div class="gl-home-page tw:overflow-hidden tw:bg-base-100 tw:text-base-content">
+  <section class="gl-home-hero gl-home-hero--cinematic">
+    <div class="gl-home-starfield" aria-hidden="true"></div>
     <div class="gl-home-container gl-home-hero-grid">
       <div class="gl-home-copy" data-reveal>
+        <span class="gl-home-kicker"><i class="bi bi-heart-pulse-fill"></i>{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_eyebrow_ar|default:hero.hero_eyebrow_en }}{% else %}{{ hero.hero_eyebrow_en }}{% endif %}</span>
         <h1>{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_title_ar|default:hero.hero_title_en }}{% else %}{{ hero.hero_title_en }}{% endif %}</h1>
         <p>{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_subtitle_ar|default:hero.hero_subtitle_en }}{% else %}{{ hero.hero_subtitle_en }}{% endif %}</p>
         <div class="gl-home-actions">
           <a class="gl-btn gl-btn-primary" href="{{ hero.hero_primary_cta_url|default:'#network-providers' }}">
             {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_primary_cta_ar|default:hero.hero_primary_cta_en }}{% else %}{{ hero.hero_primary_cta_en }}{% endif %}
-            <i class="bi bi-geo-alt"></i>
+            <i class="bi bi-arrow-up-right"></i>
           </a>
           <a class="gl-btn gl-btn-secondary" href="#network-providers">{% translate "Healthcare Network" %}<i class="bi bi-grid"></i></a>
+        </div>
+        <div class="gl-home-proof">
+          <span><i class="bi bi-shield-check"></i>{% translate "Secure by design" %}</span>
+          <span><i class="bi bi-translate"></i>{% translate "English & Arabic" %}</span>
+          <span><i class="bi bi-clock-history"></i>{% translate "Track every request" %}</span>
         </div>
       </div>
 
       <div class="gl-home-visual" data-reveal data-parallax-scene>
         <div class="gl-home-image-card" data-depth="1">
-          {% if hero.hero_image %}
-          <img src="{{ hero.hero_image.url }}" alt="{% if LANGUAGE_CODE == 'ar' %}{{ hero.hero_title_ar|default:hero.hero_title_en }}{% else %}{{ hero.hero_title_en }}{% endif %}">
-          {% else %}
-          <div class="gl-home-image-placeholder"><i class="bi bi-shield-heart"></i></div>
-          {% endif %}
+          <div class="gl-orbit-ring gl-orbit-ring-one" data-depth="2"></div>
+          <div class="gl-orbit-ring gl-orbit-ring-two" data-depth="3"></div>
+          <div class="gl-medical-globe">
+            <div class="gl-globe-surface">
+              {% if hero.hero_image %}
+              <img class="gl-globe-photo" src="{{ hero.hero_image.url }}" alt="" aria-hidden="true">
+              {% endif %}
+            </div>
+            <svg class="gl-globe-wireframe" viewBox="0 0 420 420" role="presentation" aria-hidden="true">
+              <defs>
+                <radialGradient id="gl-globe-fill" cx="38%" cy="28%" r="75%">
+                  <stop offset="0%" stop-color="#b7ffe0" stop-opacity=".24"/>
+                  <stop offset="55%" stop-color="#23c98b" stop-opacity=".12"/>
+                  <stop offset="100%" stop-color="#061b20" stop-opacity=".46"/>
+                </radialGradient>
+                <linearGradient id="gl-globe-line" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#a2ffe0" stop-opacity=".84"/>
+                  <stop offset="52%" stop-color="#38e0bd" stop-opacity=".43"/>
+                  <stop offset="100%" stop-color="#82a8ff" stop-opacity=".76"/>
+                </linearGradient>
+                <clipPath id="gl-globe-clip"><circle cx="210" cy="210" r="127"/></clipPath>
+              </defs>
+              <circle cx="210" cy="210" r="127" fill="url(#gl-globe-fill)" stroke="url(#gl-globe-line)" stroke-width="1.4"/>
+              <g class="gl-globe-latitudes" clip-path="url(#gl-globe-clip)" fill="none" stroke="url(#gl-globe-line)" stroke-width="1">
+                <ellipse cx="210" cy="210" rx="55" ry="127"/>
+                <ellipse cx="210" cy="210" rx="95" ry="127"/>
+                <ellipse cx="210" cy="210" rx="127" ry="46"/>
+                <ellipse cx="210" cy="210" rx="127" ry="91"/>
+                <path d="M83 210h254M98 153c36 20 188 20 224 0M98 267c36-20 188-20 224 0"/>
+              </g>
+              <g class="gl-globe-nodes" fill="#c8ffe9">
+                <circle cx="210" cy="83" r="3"/><circle cx="337" cy="210" r="3"/>
+                <circle cx="210" cy="337" r="3"/><circle cx="83" cy="210" r="3"/>
+                <circle cx="120" cy="120" r="2.5"/><circle cx="299" cy="123" r="2.5"/>
+                <circle cx="118" cy="297" r="2.5"/><circle cx="302" cy="293" r="2.5"/>
+              </g>
+            </svg>
+            <div class="gl-globe-core"><i class="bi bi-heart-pulse-fill"></i></div>
+          </div>
+          <div class="gl-home-floating gl-home-floating-top" data-depth="2">
+            <span class="gl-live-dot"></span><i class="bi bi-hospital"></i>
+            <span><strong>{% translate "Provider network" %}</strong><small>{% translate "Connected care" %}</small></span>
+          </div>
+          <div class="gl-home-floating gl-home-floating-bottom" data-depth="3">
+            <i class="bi bi-shield-check"></i>
+            <span><strong>{% translate "Secure by design" %}</strong><small>{% translate "Every request, traceable" %}</small></span>
+          </div>
         </div>
-        <div class="gl-home-floating gl-home-floating-top" data-depth="2"><i class="bi bi-hospital"></i><span>{% translate "Connected provider network" %}</span></div>
-        <div class="gl-home-floating gl-home-floating-bottom" data-depth="3"><i class="bi bi-shield-check"></i><span>{% translate "Secure healthcare services" %}</span></div>
       </div>
     </div>
+    <a class="gl-home-scroll" href="#services" aria-label="{% translate 'Explore services' %}"><span></span></a>
   </section>
 
   <section class="gl-quick-services">

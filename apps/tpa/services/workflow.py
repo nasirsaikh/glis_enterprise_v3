@@ -538,11 +538,29 @@ def _process_add(tx, action):
         member=member,
         policy=tx.policy,
         benefit_plan=plan,
-        coverage_start_date=tx.effective_date,
+        coverage_start_date=action.tpa_effective_date or tx.effective_date,
         coverage_end_date=tx.policy.expiry_date,
         enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
-        premium_amount=action.calculated_premium,
-        premium_calculation_basis=action.calculation_snapshot,
+        card_number=action.card_number,
+        premium_amount=(
+            action.tpa_premium_amount
+            if action.tpa_premium_amount is not None
+            else action.calculated_premium
+        ),
+        premium_calculation_basis={
+            **(action.calculation_snapshot or {}),
+            "system_calculated_amount": str(action.calculated_premium),
+            "tpa_final_amount": (
+                str(action.tpa_premium_amount)
+                if action.tpa_premium_amount is not None
+                else str(action.calculated_premium)
+            ),
+            "tpa_effective_date": (
+                action.tpa_effective_date.isoformat()
+                if action.tpa_effective_date
+                else tx.effective_date.isoformat()
+            ),
+        },
     )
     action.member = member
     action.after_data = {
@@ -565,7 +583,7 @@ def _process_termination(tx, action, void=False):
         enrollment.save(update_fields=["enrollment_status", "voided_at", "updated_at"])
     else:
         enrollment.enrollment_status = MemberPolicyEnrollment.Status.TERMINATED
-        enrollment.termination_date = tx.effective_date
+        enrollment.termination_date = action.tpa_effective_date or tx.effective_date
         enrollment.termination_reason = tx.remarks
         member.status = Member.Status.TERMINATED
         enrollment.save(
@@ -588,12 +606,11 @@ def _process_termination(tx, action, void=False):
 @transaction.atomic
 def process_transaction(tx, actor):
     original_status = tx.status
-    if tx.status not in {
-        tx.Status.APPROVED,
-        tx.Status.AUTO_APPROVED,
-        tx.Status.TPA_IN_PROGRESS,
-    }:
-        raise ValueError("Transaction must be approved or in TPA processing before processing.")
+    if tx.status != tx.Status.TPA_IN_PROGRESS:
+        raise ValueError(
+            "Final processing is allowed only from TPA In Progress. "
+            "Use the approval/dispatch/start-processing workflow first."
+        )
     if not can_process_tpa_transaction(actor, tx):
         raise PermissionError("You do not have TPA processing authority.")
 

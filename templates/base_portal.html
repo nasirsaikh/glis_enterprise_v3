@@ -29,7 +29,7 @@
   <div class="drawer lg:drawer-open">
     <input id="portal-drawer" type="checkbox" class="drawer-toggle">
 
-    <div class="drawer-content min-h-screen bg-base-200">
+    <div class="drawer-content min-h-screen min-w-0 bg-base-200">
       <header class="navbar sticky top-0 z-40 min-h-16 border-b border-base-300 bg-base-100/95 px-3 shadow-sm backdrop-blur-xl sm:px-4">
         <div class="navbar-start min-w-0 gap-1 sm:gap-2">
           <label for="portal-drawer" class="btn btn-ghost btn-circle lg:hidden" aria-label="{% translate 'Open navigation' %}">
@@ -135,8 +135,10 @@
       </div>
       {% endif %}
 
-      <main id="portal-main" class="min-h-[calc(100vh-4rem)] p-3 sm:p-4 lg:p-4 {% block main_class %}{% endblock %}">
-        {% block content %}{% endblock %}
+      <main id="portal-main" class="min-h-[calc(100vh-4rem)] p-4 sm:p-5 lg:p-6 {% block main_class %}{% endblock %}">
+        <div class="{% block content_width_class %}mx-auto w-full max-w-[100rem]{% endblock %}">
+          {% block content %}{% endblock %}
+        </div>
       </main>
     </div>
 

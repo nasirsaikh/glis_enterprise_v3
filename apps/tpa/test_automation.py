@@ -37,6 +37,7 @@ from apps.tpa.services.access import (
 from apps.tpa.services.ai_intake import process_inbound_email
 from apps.tpa.services.authority import resolve_email_authority, sender_is_authorized
 from apps.tpa.services.mailbox import _graph_get, poll_office365_graph
+from apps.tpa.services.member_selection import resolve_card_numbers
 from apps.tpa.services.ticketing import create_ticket_for_transaction
 from apps.tpa.services.validation import validate_action
 from apps.tpa.services.workflow import (
@@ -291,6 +292,142 @@ class TPAAutomationTests(TestCase):
         self.assertEqual(email.ai_provider_name, "Test Provider")
         self.assertEqual(email.ai_model_name, "test-model")
         self.assertIsNone(email.transaction_id)
+
+    @patch("apps.tpa.services.ai_intake.extract_email_payload")
+    def test_non_endorsement_email_is_ignored_without_transaction(self, extract_payload):
+        provider = MagicMock(name="provider")
+        provider.name = "Test Provider"
+        provider.provider = "mock"
+        provider.model_name = "test-model"
+        extract_payload.return_value = (
+            {
+                "is_endorsement_request": False,
+                "classification": "NOT_ENDORSEMENT",
+                "confidence": 0.99,
+                "members": [],
+            },
+            provider,
+            None,
+            {"classification": "NOT_ENDORSEMENT"},
+        )
+        email = InboundEmail.objects.create(
+            provider="office365_graph",
+            provider_message_id="not-endorsement",
+            sender="newsletter@example.com",
+            recipient="tpa@example.com",
+            mailbox="tpa@example.com",
+            received_at=timezone.now(),
+        )
+
+        result = process_inbound_email(email, self.internal)
+
+        self.assertIsNone(result)
+        email.refresh_from_db()
+        self.assertEqual(email.processing_state, InboundEmail.State.IGNORED)
+        self.assertIsNone(email.transaction_id)
+
+    @patch("apps.tpa.services.ai_intake.extract_email_payload")
+    def test_missing_policy_email_goes_to_review(self, extract_payload):
+        provider = MagicMock(name="provider")
+        provider.name = "Test Provider"
+        provider.provider = "mock"
+        provider.model_name = "test-model"
+        extract_payload.return_value = (
+            {
+                "is_endorsement_request": True,
+                "classification": "MEMBER_ADD",
+                "transaction_type": "MEMBER_ADD",
+                "confidence": 0.99,
+                "policy_number": None,
+                "members": [],
+            },
+            provider,
+            None,
+            {"classification": "MEMBER_ADD"},
+        )
+        email = InboundEmail.objects.create(
+            provider="office365_graph",
+            provider_message_id="missing-policy",
+            sender="hr@example.com",
+            recipient="tpa@example.com",
+            mailbox="tpa@example.com",
+            received_at=timezone.now(),
+        )
+
+        result = process_inbound_email(email, self.internal)
+
+        self.assertIsNone(result)
+        email.refresh_from_db()
+        self.assertEqual(email.processing_state, InboundEmail.State.REVIEW)
+        self.assertEqual(email.processing_stage, "POLICY_MATCH")
+        self.assertIsNone(email.transaction_id)
+
+    @patch("apps.tpa.services.ai_intake.extract_email_payload")
+    def test_unauthorized_sender_is_blocked_before_transaction_creation(self, extract_payload):
+        provider = MagicMock(name="provider")
+        provider.name = "Test Provider"
+        provider.provider = "mock"
+        provider.model_name = "test-model"
+        extract_payload.return_value = (
+            {
+                "is_endorsement_request": True,
+                "classification": "MEMBER_ADD",
+                "transaction_type": "MEMBER_ADD",
+                "confidence": 0.99,
+                "policy_number": self.policy.policy_number,
+                "effective_date": "2026-09-29",
+                "members": [],
+            },
+            provider,
+            None,
+            {"classification": "MEMBER_ADD"},
+        )
+        email = InboundEmail.objects.create(
+            provider="office365_graph",
+            provider_message_id="unauthorized",
+            sender="unknown@example.com",
+            recipient="tpa@example.com",
+            mailbox="tpa@example.com",
+            received_at=timezone.now(),
+        )
+
+        result = process_inbound_email(email, self.internal)
+
+        self.assertIsNone(result)
+        email.refresh_from_db()
+        self.assertEqual(email.processing_state, InboundEmail.State.UNAUTHORIZED)
+        self.assertEqual(email.processing_stage, "SENDER_AUTHORITY")
+        self.assertIsNone(email.transaction_id)
+
+    def test_zero_member_transaction_cannot_submit(self):
+        tx = self._transaction()
+        self.client.force_login(self.requester)
+
+        response = self.client.post(
+            reverse("tpa:transaction_submit", args=[tx.reference])
+        )
+
+        self.assertEqual(response.status_code, 302)
+        tx.refresh_from_db()
+        self.assertEqual(tx.status, MemberTransaction.Status.DRAFT)
+        self.assertFalse(tx.member_actions.exists())
+
+    def test_bulk_card_resolution_separates_matches_duplicates_missing_and_inactive(self):
+        _, active = self._active_enrollment("BULK-ACTIVE")
+        _, inactive = self._active_enrollment("BULK-INACTIVE")
+        inactive.enrollment_status = MemberPolicyEnrollment.Status.TERMINATED
+        inactive.save(update_fields=["enrollment_status", "updated_at"])
+        tx = self._transaction(tx_type=MemberTransaction.Type.MEMBER_DELETE)
+
+        result = resolve_card_numbers(
+            tx,
+            f"{active.card_number}, {active.card_number}; MISSING-CARD {inactive.card_number}",
+        )
+
+        self.assertEqual([item.pk for item in result["matched"]], [active.pk])
+        self.assertEqual(result["duplicates"], [active.card_number])
+        self.assertEqual(result["not_found"], ["MISSING-CARD"])
+        self.assertEqual(result["inactive"], [inactive.card_number])
 
     def test_sender_authority_is_policy_and_transaction_specific(self):
         authority = TPAEmailAuthority.objects.create(

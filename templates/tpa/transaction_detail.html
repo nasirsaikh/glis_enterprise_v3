@@ -3,14 +3,83 @@
 {% block title %}{{ tx.reference }} · {% if initial_setup %}{% translate "Initial Policy Enrollment" %}{% else %}{% translate "Endorsement" %}{% endif %}{% endblock %}
 
 {% block tpa_content %}
-<div class="tw:space-y-5">
+<div class="tw:space-y-3">
 
-  <section class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl">
-    <div class="card-body tw:p-5">
-      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-4">
-        <div class="tw:min-w-0">
-          <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
-            {% if initial_setup %}
+  <header class="tpa-page-head">
+    <div class="tw:min-w-0">
+      <div class="tpa-kicker">
+        <i class="bi bi-diagram-3"></i>
+        {% if initial_setup %}{% translate "TPA / Onboarding / Case" %}{% else %}{% translate "TPA / Pipeline / Case" %}{% endif %}
+      </div>
+      <div class="tw:mt-1 tw:flex tw:flex-wrap tw:items-center tw:gap-1.5">
+        {% if initial_setup %}
+        <span class="badge badge-primary badge-soft">{% translate "Initial Policy Setup" %}</span>
+        {% else %}
+        <span class="badge badge-primary badge-soft">{{ tx.get_transaction_type_display }}</span>
+        {% endif %}
+        <span class="badge {% if tx.status == 'completed' %}badge-success badge-soft{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' %}badge-warning badge-soft{% elif tx.status == 'rejected' or tx.status == 'failed' %}badge-error badge-soft{% elif tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' %}badge-info badge-soft{% else %}badge-outline{% endif %}">{{ tx.get_status_display }}</span>
+        {% if tx.source != "PORTAL" %}<span class="badge badge-info badge-soft">{{ tx.get_source_display }}</span>{% endif %}
+        {% if tx.ai_extraction_status %}<span class="badge badge-secondary badge-soft"><i class="bi bi-stars"></i>AI {{ tx.ai_extraction_status }}</span>{% endif %}
+        {% if tx.ticket %}<span class="badge badge-ghost tpa-mono"><i class="bi bi-ticket-perforated"></i>{{ tx.ticket.reference }}</span>{% endif %}
+      </div>
+      <h1 class="tpa-title">{{ tx.reference }}</h1>
+      <p class="tpa-subtitle">
+        {{ tx.policy.policy_number }} · {{ tx.sponsor.name_en }} · {{ tx.insurer.name_en }}
+        {% if tx.policy.tpa_organization %} · {{ tx.policy.tpa_organization.name_en }}{% endif %}
+      </p>
+    </div>
+
+    <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-1.5">
+      {% if tx.status == "draft" %}
+      <form method="post" action="{% url 'tpa:transaction_submit' tx.reference %}">{% csrf_token %}
+        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-send"></i>{% translate "Submit & Validate" %}</button>
+      </form>
+      {% elif tx.status == "pending_validation" or tx.status == "needs_information" or tx.status == "validation_failed" %}
+      <form method="post" action="{% url 'tpa:transaction_validate' tx.reference %}">{% csrf_token %}
+        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-shield-check"></i>{% translate "Run Validation" %}</button>
+      </form>
+      {% endif %}
+
+      {% if tx.status == "pending_approval" %}
+        {% if ticket_approval_pending %}
+        <span class="badge badge-warning badge-soft"><i class="bi bi-hourglass-split"></i>{% translate "GLIS Approval Pending" %}</span>
+        {% elif can_approve %}
+        <form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}">{% csrf_token %}
+          <button class="btn btn-success btn-sm" type="submit"><i class="bi bi-check-lg"></i>{% translate "Approve & Dispatch" %}</button>
+        </form>
+        {% endif %}
+      {% endif %}
+
+      {% if can_start_tpa %}
+      <form method="post" action="{% url 'tpa:transaction_tpa_start' tx.reference %}">{% csrf_token %}
+        <button class="btn btn-info btn-sm" type="submit"><i class="bi bi-play-fill"></i>{% translate "Start TPA Processing" %}</button>
+      </form>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="tpa-workflow">
+    <ul class="steps steps-horizontal tw:w-full">
+      <li class="step step-primary">{% if initial_setup %}{% translate "Policy & Census" %}{% else %}{% translate "Intake & Correction" %}{% endif %}</li>
+      <li class="step {% if tx.status != 'draft' and tx.status != 'extracting' %}step-primary{% endif %}">{% translate "Validation" %}</li>
+      <li class="step {% if tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' or tx.status == 'processed' %}step-primary{% endif %}">{% translate "Approval" %}</li>
+      <li class="step {% if tx.status == 'tpa_in_progress' or tx.status == 'tpa_query' or tx.status == 'completed' %}step-primary{% endif %}">{% translate "TPA Processing" %}</li>
+      <li class="step {% if tx.status == 'completed' or tx.status == 'processed' %}step-primary{% endif %}">{% translate "Complete" %}</li>
+    </ul>
+  </section>
+
+  <section class="tw:grid tw:grid-cols-2 tw:gap-2 tw:md:grid-cols-4 tw:xl:grid-cols-8">
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Rows" %}</div><div class="stat-value">{{ actions|length }}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Valid" %}</div><div class="stat-value tw:text-success">{{ valid_count }}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Warnings" %}</div><div class="stat-value {% if warning_count %}tw:text-warning{% endif %}">{{ warning_count }}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Errors" %}</div><div class="stat-value {% if error_count %}tw:text-error{% endif %}">{{ error_count }}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Success" %}</div><div class="stat-value">{{ success_rate }}%</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Validation" %}</div><div class="stat-value">{{ tx.validation_score }}%</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "STP" %}</div><div class="stat-value {% if tx.stp_eligible %}tw:text-success{% else %}tw:text-warning{% endif %}">{{ tx.stp_eligible|yesno:"YES,NO" }}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Premium Impact" %}</div><div class="tw:mt-1 tpa-mono tw:text-sm tw:font-bold">{{ tx.currency }} {{ tx.premium_adjustment }}</div></div></div>
+  </section>
+
+  {% if initial_setup %}
             <span class="badge badge-primary badge-soft">{% translate "Initial Policy Setup" %}</span>
             {% else %}
             <span class="badge badge-primary badge-soft">{{ tx.get_transaction_type_display }}</span>
@@ -97,18 +166,14 @@
   </div>
 
   {% if initial_setup %}
-  <section class="card tw:border tw:border-primary/20 tw:bg-base-100">
-    <div class="card-body tw:p-5">
-      <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
-        <div>
-          <span class="badge badge-primary badge-soft">{% translate "Initial Setup" %}</span>
-          <h2 class="tw:mt-2 card-title">{% translate "Policy & Benefit Plans" %}</h2>
-          <p class="tw:text-sm tw:text-base-content/55">{% translate "This setup must complete before the policy appears in New Endorsement." %}</p>
-        </div>
-        <span class="badge {% if tx.policy.status == 'active' %}badge-success{% else %}badge-warning{% endif %}">{{ tx.policy.get_status_display }}</span>
-      </div>
-
-      <div class="tw:mt-4 tw:grid tw:gap-4 tw:lg:grid-cols-[1fr_1.2fr]">
+  <section class="card">
+    <div class="tpa-section-head">
+      <div><div class="tpa-eyebrow">{% translate "Opening policy setup" %}</div><h2 class="tpa-section-title">{% translate "POLICY & BENEFIT PLANS" %}</h2></div>
+      <span class="badge {% if tx.policy.status == 'active' %}badge-success badge-soft{% else %}badge-warning badge-soft{% endif %}">{{ tx.policy.get_status_display }}</span>
+    </div>
+    <div class="card-body">
+      <p class="tw:text-xs tw:opacity-55">{% translate "This setup must complete before the policy appears in New Endorsement." %}</p>
+      <div class="tw:grid tw:gap-3 tw:lg:grid-cols-[1fr_1.2fr]">
         <dl class="tw:grid tw:grid-cols-2 tw:gap-3 tw:text-sm">
           <div><dt class="tw:text-base-content/45">{% translate "Policy" %}</dt><dd class="tw:font-bold">{{ tx.policy.policy_number }}</dd></div>
           <div><dt class="tw:text-base-content/45">{% translate "Period" %}</dt><dd>{{ tx.policy.start_date|date:"d-M-Y" }} → {{ tx.policy.expiry_date|date:"d-M-Y" }}</dd></div>
@@ -151,28 +216,24 @@
   {% endif %}
 
   {% if can_edit_intake %}
-  <section class="card tw:border tw:border-base-300 tw:bg-base-100">
-    <div class="card-body tw:p-5">
-      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-3">
-        <div>
-          <h2 class="card-title"><i class="bi bi-cloud-arrow-up tw:text-primary"></i>{% translate "Source Documents & AI OCR" %}</h2>
-          <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{% translate "One intake zone for Excel/CSV, PDF, passport/ID images and multi-file front/back evidence. Structured files bypass AI; unstructured evidence is OCR'd then mapped to member JSON." %}</p>
-        </div>
-        <div class="tw:flex tw:flex-wrap tw:gap-2">
-          <a class="btn btn-outline btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'xlsx' %}"><i class="bi bi-file-earmark-excel"></i>{% translate "Sample XLSX" %}</a>
-          <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}"><i class="bi bi-filetype-csv"></i>{% translate "Sample CSV" %}</a>
-        </div>
+  <section class="card">
+    <div class="tpa-section-head">
+      <div><div class="tpa-eyebrow">{% translate "Unified evidence intake" %}</div><h2 class="tpa-section-title">{% translate "SOURCE DOCUMENTS & OLLAMA OCR" %}</h2></div>
+      <div class="tw:flex tw:flex-wrap tw:gap-1">
+        <a class="btn btn-outline btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'xlsx' %}"><i class="bi bi-file-earmark-excel"></i>{% translate "Sample XLSX" %}</a>
+        <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}"><i class="bi bi-filetype-csv"></i>{% translate "Sample CSV" %}</a>
       </div>
-
-      <form class="tw:mt-4 tw:rounded-2xl tw:border tw:border-dashed tw:border-primary/40 tw:bg-primary/5 tw:p-5" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_upload_sources' tx.reference %}">
+    </div>
+    <div class="card-body">
+      <p class="tw:text-xs tw:opacity-55">{% translate "Excel/CSV/XLS is parsed directly. PDF and images use Ollama vision OCR where required, followed by a separate Ollama text model for strict member JSON mapping. Multi-file front/back identity evidence is processed as one bundle." %}</p>
+      <form class="tpa-dropzone tw:p-3" data-tpa-dropzone method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_upload_sources' tx.reference %}">
         {% csrf_token %}
-        <div class="tw:grid tw:gap-4 tw:lg:grid-cols-[1fr_auto] tw:lg:items-end">
-          <label class="form-control">
-            <span class="tw:mb-1 tw:text-xs tw:font-bold">{% translate "Drag/drop or select source files" %}</span>
-            {{ source_upload_form.source_files }}
-            <span class="tw:mt-2 tw:text-xs tw:text-base-content/50">{{ source_upload_form.source_files.help_text }}</span>
-          </label>
-          <button class="btn btn-primary" type="submit"><i class="bi bi-stars"></i>{% translate "Extract & Add Rows" %}</button>
+        <div class="tw:grid tw:gap-2 tw:text-center">
+          <div class="tw:mx-auto tw:grid tw:h-10 tw:w-10 tw:place-items-center tw:rounded-box tw:bg-primary/10 tw:text-primary"><i class="bi bi-cloud-arrow-up tw:text-xl"></i></div>
+          <div><strong class="tpa-mono tw:text-xs">{% translate "DROP SOURCE FILES OR BROWSE" %}</strong><div class="tw:mt-1 tw:text-[10px] tw:opacity-50">{{ source_upload_form.source_files.help_text }}</div></div>
+          {{ source_upload_form.source_files }}
+          <div data-tpa-file-count class="tw:text-[10px] tw:font-bold tw:uppercase tw:tracking-wider tw:opacity-45">{% translate "No files selected" %}</div>
+          <div><button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-stars"></i>{% translate "Extract & Add Rows" %}</button></div>
         </div>
       </form>
 
@@ -197,10 +258,13 @@
     </div>
   </section>
 
-  <section class="card tw:border tw:border-base-300 tw:bg-base-100">
-    <div class="card-body tw:p-5">
-      <h2 class="card-title"><i class="bi bi-person-plus tw:text-primary"></i>{% translate "Manual Member Entry" %}</h2>
-      <p class="tw:text-sm tw:text-base-content/55">{% translate "Manual rows and AI/file rows use exactly the same deterministic validation and pricing rules." %}</p>
+  <section class="card">
+    <div class="tpa-section-head">
+      <div><div class="tpa-eyebrow">{% translate "Direct input" %}</div><h2 class="tpa-section-title">{% translate "MANUAL MEMBER ENTRY" %}</h2></div>
+      <i class="bi bi-person-plus tw:text-primary"></i>
+    </div>
+    <div class="card-body">
+      <p class="tw:text-xs tw:opacity-55">{% translate "Manual rows and AI/file rows use exactly the same deterministic validation and pricing rules." %}</p>
       <form class="tw:mt-4 tw:grid tw:gap-3 tw:md:grid-cols-2 tw:xl:grid-cols-3" method="post" action="{% url 'tpa:transaction_add_member' tx.reference %}">
         {% csrf_token %}
         {% for field in member_form %}
@@ -216,15 +280,13 @@
   </section>
   {% endif %}
 
-  <section class="card tw:border tw:border-base-300 tw:bg-base-100">
-    <div class="card-body tw:p-5">
-      <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
-        <div>
-          <h2 class="card-title">{% translate "Intake & Correction" %}</h2>
-          <p class="tw:text-sm tw:text-base-content/55">{% translate "Review extracted/manual values here before validation and downstream processing." %}</p>
-        </div>
-        <span class="badge badge-outline">{{ actions|length }} {% translate "row(s)" %}</span>
-      </div>
+  <section class="card">
+    <div class="tpa-section-head">
+      <div><div class="tpa-eyebrow">{% translate "Normalized records" %}</div><h2 class="tpa-section-title">{% translate "INTAKE & CORRECTION / MEMBER MATRIX" %}</h2></div>
+      <span class="badge badge-outline">{{ actions|length }} {% translate "ROWS" %}</span>
+    </div>
+    <div class="card-body">
+      <p class="tw:text-xs tw:opacity-55">{% translate "Review extracted/manual values here before validation and downstream processing." %}</p>
 
       <div class="tw:mt-3 tw:overflow-x-auto">
         <table class="table table-sm">
@@ -295,25 +357,22 @@
     </div>
   </section>
 
-  <div class="tw:grid tw:gap-4 tw:xl:grid-cols-2">
-    <section class="card tw:border tw:border-base-300 tw:bg-base-100"><div class="card-body tw:p-5"><h2 class="card-title">{% translate "Member Quality" %}</h2><div id="tpa-quality-chart" style="height:280px;"></div></div></section>
-    <section class="card tw:border tw:border-base-300 tw:bg-base-100"><div class="card-body tw:p-5"><h2 class="card-title">{% translate "Validation Error Analysis" %}</h2><div id="tpa-error-chart" style="height:280px;"></div></div></section>
+  <div class="tw:grid tw:gap-3 tw:xl:grid-cols-2">
+    <section class="card"><div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Quality telemetry" %}</div><h2 class="tpa-section-title">{% translate "MEMBER QUALITY" %}</h2></div></div><div class="card-body"><div id="tpa-quality-chart" class="tpa-chart"></div></div></section>
+    <section class="card"><div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Exception analysis" %}</div><h2 class="tpa-section-title">{% translate "VALIDATION ERRORS" %}</h2></div></div><div class="card-body"><div id="tpa-error-chart" class="tpa-chart"></div></div></section>
   </div>
 
   {% if tx.stp_blockers %}
   <div class="alert alert-warning"><i class="bi bi-signpost-split"></i><div><strong>{% translate "STP blockers" %}</strong><div class="tw:mt-1 tw:flex tw:flex-wrap tw:gap-1">{% for blocker in tx.stp_blockers %}<span class="badge badge-outline">{{ blocker }}</span>{% endfor %}</div></div></div>
   {% endif %}
 
-  <section class="card tw:border tw:border-info/30 tw:bg-base-100">
-    <div class="card-body tw:p-5">
-      <div class="tw:flex tw:flex-wrap tw:items-start tw:justify-between tw:gap-3">
-        <div>
-          <span class="badge badge-info badge-soft">{% translate "Step 4" %}</span>
-          <h2 class="tw:mt-2 card-title">{% translate "TPA Processing & Query" %}</h2>
-          <p class="tw:text-sm tw:text-base-content/55">{% translate "TPA processing and all requester communication stay inside this case. The linked GLIS ticket remains the audit/SLA record underneath." %}</p>
-        </div>
-        <span class="badge badge-outline">{{ tx.get_status_display }}</span>
-      </div>
+  <section class="card">
+    <div class="tpa-section-head">
+      <div><div class="tpa-eyebrow">{% translate "Step 04 / TPA Operations" %}</div><h2 class="tpa-section-title">{% translate "TPA PROCESSING & CASE CONVERSATION" %}</h2></div>
+      <span class="badge {% if tx.status == 'tpa_query' %}badge-warning badge-soft{% elif tx.status == 'completed' %}badge-success badge-soft{% else %}badge-info badge-soft{% endif %}">{{ tx.get_status_display }}</span>
+    </div>
+    <div class="card-body">
+      <p class="tw:text-xs tw:opacity-55">{% translate "TPA processing and requester communication stay inside this case. GLIS tickets remain the underlying SLA and audit record." %}</p>
 
       {% if tx.status == "sent_to_tpa" %}
       <div class="alert alert-info tw:mt-4"><i class="bi bi-send-check"></i><span>{% translate "Approved and dispatched to the TPA queue. A TPA processor must start processing." %}</span></div>
@@ -354,7 +413,7 @@
       {% endif %}
 
       {% if open_query %}
-      <div class="tw:mt-5 tw:rounded-2xl tw:border tw:border-warning/30 tw:bg-warning/5 tw:p-4">
+      <div class="card tw:mt-3 tw:border-warning/30 tw:bg-warning/5"><div class="card-body">
         <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
           <div>
             <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
@@ -386,7 +445,7 @@
           {{ query_message_form.attachments }}
           <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-send"></i>{% translate "Send Reply" %}</button>
         </form>
-      </div>
+      </div></div>
       {% elif can_tpa_process and tx.status == "tpa_in_progress" %}
       <details class="collapse collapse-arrow tw:mt-5 tw:border tw:border-warning/30">
         <summary class="collapse-title tw:text-sm tw:font-bold"><i class="bi bi-question-circle tw:me-2"></i>{% translate "Raise Query to Requester" %}</summary>
@@ -438,10 +497,10 @@
     </div>
   </section>
 
-  <div class="tw:grid tw:gap-4 tw:xl:grid-cols-2">
-    <section class="card tw:border tw:border-base-300 tw:bg-base-100">
-      <div class="card-body tw:p-5">
-        <h2 class="card-title">{% translate "Workflow Status" %}</h2>
+  <div class="tw:grid tw:gap-3 tw:xl:grid-cols-2">
+    <section class="card">
+      <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Case control" %}</div><h2 class="tpa-section-title">{% translate "WORKFLOW STATUS" %}</h2></div></div>
+      <div class="card-body">
         <dl class="tw:mt-2 tw:space-y-3 tw:text-sm">
           <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "Current Status" %}</dt><dd class="tw:font-bold">{{ tx.get_status_display }}</dd></div>
           <div class="tw:flex tw:justify-between tw:gap-4"><dt class="tw:text-base-content/50">{% translate "GLIS Approval" %}</dt><dd class="tw:font-bold">{% if tx.ticket %}{{ tx.ticket.get_approval_state_display }}{% else %}—{% endif %}</dd></div>
@@ -453,9 +512,9 @@
       </div>
     </section>
 
-    <section class="card tw:border tw:border-base-300 tw:bg-base-100">
-      <div class="card-body tw:p-5">
-        <h2 class="card-title">{% translate "Activity Timeline" %}</h2>
+    <section class="card">
+      <div class="tpa-section-head"><div><div class="tpa-eyebrow">{% translate "Audit trail" %}</div><h2 class="tpa-section-title">{% translate "ACTIVITY TIMELINE" %}</h2></div></div>
+      <div class="card-body">
         <ul class="timeline timeline-vertical tw:mt-2">
           {% for e in events %}
           <li>{% if not forloop.first %}<hr>{% endif %}<div class="timeline-middle"><i class="bi bi-check-circle"></i></div><div class="timeline-end timeline-box"><strong>{{ e.summary }}</strong><div class="tw:text-xs tw:text-base-content/50">{{ e.created_at|date:"d-M-Y H:i" }}</div></div>{% if not forloop.last %}<hr>{% endif %}</li>
@@ -468,51 +527,4 @@
 
 {{ quality_chart|json_script:"tpa-quality-data" }}
 {{ error_chart|json_script:"tpa-error-data" }}
-{% endblock %}
-
-{% block extra_js %}
-<script>
-window.addEventListener("load", function () {
-  const relationship = document.querySelector('[name="relationship"]');
-  const principalField = document.getElementById("principal-reference-field");
-  const principalSelect = document.querySelector('[name="principal_reference"]');
-  function syncPrincipalField() {
-    if (!relationship || !principalField) return;
-    const needed = relationship.value && relationship.value !== "PRINCIPAL";
-    principalField.style.display = needed ? "" : "none";
-    if (!needed && principalSelect) principalSelect.value = "";
-  }
-  if (relationship) { relationship.addEventListener("change", syncPrincipalField); syncPrincipalField(); }
-
-  if (!window.Plotly) return;
-  const quality = JSON.parse(document.getElementById("tpa-quality-data").textContent || "[]");
-  const errors = JSON.parse(document.getElementById("tpa-error-data").textContent || "[]");
-  const transparent = "rgba(0,0,0,0)";
-
-  Plotly.newPlot("tpa-quality-chart", [{
-    type: "pie", hole: 0.62,
-    labels: quality.map(x => x.label), values: quality.map(x => x.value),
-    textinfo: "label+value", hovertemplate: "%{label}: %{value}<extra></extra>"
-  }], {
-    margin: {l:20,r:20,t:15,b:15}, paper_bgcolor:transparent, plot_bgcolor:transparent, showlegend:false
-  }, {displayModeBar:false,responsive:true});
-
-  if (errors.length) {
-    Plotly.newPlot("tpa-error-chart", [{
-      type:"bar", orientation:"h",
-      y:errors.map(x=>x.label).reverse(), x:errors.map(x=>x.value).reverse(),
-      hovertemplate:"%{y}: %{x}<extra></extra>"
-    }], {
-      margin:{l:150,r:20,t:15,b:35}, paper_bgcolor:transparent, plot_bgcolor:transparent,
-      xaxis:{title:"Rows",dtick:1}
-    }, {displayModeBar:false,responsive:true});
-  } else {
-    Plotly.newPlot("tpa-error-chart", [], {
-      margin:{l:20,r:20,t:20,b:20}, paper_bgcolor:transparent, plot_bgcolor:transparent,
-      xaxis:{visible:false}, yaxis:{visible:false},
-      annotations:[{text:"No validation errors",x:.5,y:.5,xref:"paper",yref:"paper",showarrow:false}]
-    }, {displayModeBar:false,responsive:true});
-  }
-});
-</script>
 {% endblock %}

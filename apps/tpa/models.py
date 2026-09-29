@@ -86,7 +86,11 @@ class BenefitPlan(TimeStampedModel):
 
 class Member(TimeStampedModel):
     class Status(models.TextChoices):
-        ACTIVE="active","Active"; TERMINATED="terminated","Terminated"; VOIDED="voided","Deleted / Voided"; CANCELLED="cancelled","Cancelled"
+        ACTIVE="active","Active"
+        SUSPENDED="suspended","Temporarily Suspended"
+        TERMINATED="terminated","Terminated"
+        VOIDED="voided","Deleted / Voided"
+        CANCELLED="cancelled","Cancelled"
     class Relationship(models.TextChoices):
         PRINCIPAL="PRINCIPAL","Principal"; SPOUSE="SPOUSE","Spouse"; CHILD="CHILD","Child"; OTHER="OTHER","Other"
     tpa_member_id=models.CharField(max_length=40, unique=True, null=True, blank=True, editable=False)
@@ -114,7 +118,12 @@ class Member(TimeStampedModel):
 
 class MemberPolicyEnrollment(TimeStampedModel):
     class Status(models.TextChoices):
-        PENDING="pending","Pending"; ACTIVE="active","Active"; TERMINATED="terminated","Terminated"; VOIDED="voided","Voided"; CANCELLED="cancelled","Cancelled"
+        PENDING="pending","Pending"
+        ACTIVE="active","Active"
+        SUSPENDED="suspended","Temporarily Suspended"
+        TERMINATED="terminated","Terminated"
+        VOIDED="voided","Voided"
+        CANCELLED="cancelled","Cancelled"
     member=models.ForeignKey(Member, related_name="enrollments", on_delete=models.PROTECT)
     policy=models.ForeignKey(Policy, related_name="enrollments", on_delete=models.PROTECT)
     benefit_plan=models.ForeignKey(BenefitPlan, related_name="enrollments", on_delete=models.PROTECT)
@@ -128,14 +137,24 @@ class MemberPolicyEnrollment(TimeStampedModel):
     termination_date=models.DateField(null=True, blank=True)
     voided_at=models.DateTimeField(null=True, blank=True)
     cancellation_date=models.DateField(null=True, blank=True)
+    suspension_date=models.DateField(null=True, blank=True)
+    suspension_reason=models.TextField(blank=True)
+    expected_reactivation_date=models.DateField(null=True, blank=True)
+    reactivation_date=models.DateField(null=True, blank=True)
 
 class MemberTransaction(TimeStampedModel):
     class Type(models.TextChoices):
         NEW_POLICY_ENROLLMENT="NEW_POLICY_ENROLLMENT","New Policy Enrollment"
         MEMBER_ADD="MEMBER_ADD","Member Addition"
         MEMBER_TERMINATE="MEMBER_TERMINATE","Member Termination"
+        MEMBER_SUSPEND="MEMBER_SUSPEND","Temporary Suspension"
+        MEMBER_REACTIVATE="MEMBER_REACTIVATE","Member Reactivation"
         MEMBER_DELETE="MEMBER_DELETE","Member Deletion / Void"
         POLICY_CANCEL="POLICY_CANCEL","Policy Cancellation"
+    class RefundBasis(models.TextChoices):
+        NONE="NONE","Not Applicable"
+        FULL="FULL","Full Refund"
+        PRO_RATA="PRO_RATA","Pro-Rata Refund"
     class Source(models.TextChoices):
         PORTAL="PORTAL","Portal"; EMAIL="EMAIL","Email"; API="API","API"; ADMIN="ADMIN","Admin"; IMPORT="IMPORT","Import"
     class Status(models.TextChoices):
@@ -170,6 +189,11 @@ class MemberTransaction(TimeStampedModel):
     validation_bypassed_by=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="tpa_validation_bypasses", on_delete=models.SET_NULL)
     validation_bypassed_at=models.DateTimeField(null=True, blank=True)
     remarks=models.TextField(blank=True)
+    refund_basis=models.CharField(max_length=20, choices=RefundBasis.choices, default=RefundBasis.NONE, db_index=True)
+    classification=models.CharField(max_length=40, blank=True, db_index=True)
+    classification_confidence=models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    validation_completed_at=models.DateTimeField(null=True, blank=True)
+    physical_card_required=models.BooleanField(default=False)
     submitted_at=models.DateTimeField(null=True, blank=True)
     processed_at=models.DateTimeField(null=True, blank=True)
     approved_at=models.DateTimeField(null=True, blank=True)
@@ -218,6 +242,7 @@ class MemberAction(TimeStampedModel):
     processing_status=models.CharField(max_length=30, blank=True)
     processing_message=models.TextField(blank=True)
     processed_at=models.DateTimeField(null=True, blank=True)
+    provenance=models.JSONField(default=list, blank=True)
 
 class PolicyAccess(TimeStampedModel):
     organization=models.ForeignKey(TPAOrganization, related_name="policy_access", on_delete=models.CASCADE)
@@ -271,6 +296,14 @@ class TransactionQuery(TimeStampedModel):
     class Status(models.TextChoices):
         OPEN="OPEN","Open"
         RESOLVED="RESOLVED","Resolved"
+    class Purpose(models.TextChoices):
+        APPROVAL="APPROVAL","Approval Query"
+        TPA="TPA","TPA Query"
+        CLIENT="CLIENT","Client Query"
+    class Audience(models.TextChoices):
+        CLIENT_VISIBLE="CLIENT_VISIBLE","Client Visible"
+        INSURER_TPA_INTERNAL="INSURER_TPA_INTERNAL","Insurer / TPA Internal"
+        SELECTED_PARTICIPANTS="SELECTED_PARTICIPANTS","Selected Participants"
     transaction=models.ForeignKey(MemberTransaction, related_name="queries", on_delete=models.CASCADE)
     ticket=models.OneToOneField(
         "tickets.Ticket",
@@ -280,6 +313,9 @@ class TransactionQuery(TimeStampedModel):
         on_delete=models.SET_NULL,
     )
     subject=models.CharField(max_length=255)
+    purpose=models.CharField(max_length=20, choices=Purpose.choices, default=Purpose.TPA, db_index=True)
+    audience=models.CharField(max_length=30, choices=Audience.choices, default=Audience.CLIENT_VISIBLE, db_index=True)
+    selected_participants=models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="selected_tpa_queries", blank=True)
     raised_by=models.ForeignKey(settings.AUTH_USER_MODEL, related_name="raised_tpa_queries", on_delete=models.PROTECT)
     pre_query_status=models.CharField(max_length=30, blank=True)
     status=models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN, db_index=True)
@@ -300,6 +336,9 @@ class TransactionQueryMessage(TimeStampedModel):
     ticket_comment=models.OneToOneField("tickets.TicketComment", related_name="tpa_query_message", on_delete=models.CASCADE)
     sender=models.ForeignKey(settings.AUTH_USER_MODEL, related_name="tpa_query_messages", on_delete=models.PROTECT)
     kind=models.CharField(max_length=12, choices=Kind.choices, default=Kind.REPLY)
+    audience=models.CharField(max_length=30, choices=TransactionQuery.Audience.choices, default=TransactionQuery.Audience.CLIENT_VISIBLE, db_index=True)
+    shared_with_client_at=models.DateTimeField(null=True, blank=True)
+    shared_with_client_by=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="shared_tpa_query_messages", on_delete=models.SET_NULL)
     class Meta:
         ordering=["created_at"]
 
@@ -311,18 +350,33 @@ class InboundEmail(TimeStampedModel):
         REVIEW="REVIEW","Needs review"
         PROCESSED="PROCESSED","Processed"
         FAILED="FAILED","Failed"
+        IGNORED="IGNORED","Not Endorsement / Ignored"
+        UNAUTHORIZED="UNAUTHORIZED","Unauthorized Sender"
     provider=models.CharField(max_length=40, blank=True)
     created_by=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="tpa_inbound_emails", on_delete=models.SET_NULL)
     provider_message_id=models.CharField(max_length=255)
+    graph_message_id=models.CharField(max_length=255, blank=True, db_index=True)
+    internet_message_id=models.CharField(max_length=500, blank=True, db_index=True)
+    conversation_id=models.CharField(max_length=255, blank=True, db_index=True)
+    mailbox=models.EmailField(blank=True, db_index=True)
+    sender_name=models.CharField(max_length=255, blank=True)
     sender=models.EmailField()
     recipient=models.EmailField()
+    to_addresses=models.JSONField(default=list, blank=True)
+    cc_addresses=models.JSONField(default=list, blank=True)
     subject=models.CharField(max_length=500, blank=True)
     received_at=models.DateTimeField()
     body_text=models.TextField(blank=True)
+    body_html=models.TextField(blank=True)
+    source_hash=models.CharField(max_length=64, blank=True, db_index=True)
     attachment_metadata=models.JSONField(default=list, blank=True)
     processing_hints=models.JSONField(default=dict, blank=True)
     ai_extracted_payload=models.JSONField(default=dict, blank=True)
+    raw_ai_output=models.JSONField(default=dict, blank=True)
     ai_confidence=models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    classification=models.CharField(max_length=40, blank=True, db_index=True)
+    classification_confidence=models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    processing_stage=models.CharField(max_length=50, blank=True)
     processing_state=models.CharField(max_length=20, choices=State.choices, default=State.RECEIVED, db_index=True)
     transaction=models.ForeignKey(MemberTransaction, null=True, blank=True, related_name="source_emails", on_delete=models.SET_NULL)
     processing_error=models.TextField(blank=True)
@@ -348,3 +402,97 @@ class InboundEmailAttachment(TimeStampedModel):
     processing_error=models.TextField(blank=True)
     def __str__(self):
         return self.original_name
+
+class TPAMailboxSyncState(TimeStampedModel):
+    provider=models.CharField(max_length=40, default="office365_graph")
+    mailbox=models.EmailField()
+    folder=models.CharField(max_length=120, default="Inbox")
+    delta_link=models.TextField(blank=True)
+    last_attempted_at=models.DateTimeField(null=True, blank=True)
+    last_successful_at=models.DateTimeField(null=True, blank=True)
+    last_error=models.TextField(blank=True)
+    messages_processed=models.PositiveIntegerField(default=0)
+    messages_review=models.PositiveIntegerField(default=0)
+    messages_ignored=models.PositiveIntegerField(default=0)
+    messages_failed=models.PositiveIntegerField(default=0)
+    scheduler_enabled=models.BooleanField(default=True)
+    class Meta:
+        constraints=[models.UniqueConstraint(fields=["provider","mailbox","folder"], name="tpa_unique_mailbox_sync_state")]
+    def __str__(self):
+        return f"{self.provider} · {self.mailbox} · {self.folder}"
+
+
+class TPAEmailAuthority(TimeStampedModel):
+    email_address=models.EmailField(db_index=True)
+    user=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="tpa_email_authorities", on_delete=models.SET_NULL)
+    organization=models.ForeignKey(TPAOrganization, related_name="email_authorities", on_delete=models.CASCADE)
+    policy=models.ForeignKey(Policy, null=True, blank=True, related_name="email_authorities", on_delete=models.CASCADE)
+    permitted_transaction_types=models.JSONField(default=list, blank=True)
+    valid_from=models.DateField(null=True, blank=True)
+    valid_until=models.DateField(null=True, blank=True)
+    active=models.BooleanField(default=True, db_index=True)
+    notes=models.TextField(blank=True)
+    class Meta:
+        constraints=[
+            models.UniqueConstraint(fields=["email_address","organization","policy"], name="tpa_unique_email_authority")
+        ]
+        indexes=[models.Index(fields=["email_address","active"])]
+    def __str__(self):
+        scope=self.policy.policy_number if self.policy_id else self.organization.name_en
+        return f"{self.email_address} · {scope}"
+
+
+class ExtractionAttempt(TimeStampedModel):
+    class Status(models.TextChoices):
+        STARTED="STARTED","Started"
+        SUCCESS="SUCCESS","Success"
+        REVIEW="REVIEW","Needs Review"
+        FAILED="FAILED","Failed"
+    source_document=models.ForeignKey(SourceDocument, null=True, blank=True, related_name="extraction_attempts", on_delete=models.CASCADE)
+    inbound_attachment=models.ForeignKey(InboundEmailAttachment, null=True, blank=True, related_name="extraction_attempts", on_delete=models.CASCADE)
+    provider=models.ForeignKey("ai.AIProviderConfig", null=True, blank=True, related_name="tpa_extraction_attempts", on_delete=models.SET_NULL)
+    stage=models.CharField(max_length=50)
+    status=models.CharField(max_length=20, choices=Status.choices, default=Status.STARTED, db_index=True)
+    model_name=models.CharField(max_length=120, blank=True)
+    error=models.TextField(blank=True)
+    raw_output=models.JSONField(default=dict, blank=True)
+    metadata=models.JSONField(default=dict, blank=True)
+    class Meta:
+        ordering=["-created_at"]
+
+
+class CardDispatch(TimeStampedModel):
+    class Method(models.TextChoices):
+        COURIER="COURIER","Courier"
+        HAND_DELIVERY="HAND_DELIVERY","Hand Delivery"
+        CLIENT_COLLECTION="CLIENT_COLLECTION","Collected by Client"
+        INSURER_COLLECTION="INSURER_COLLECTION","Collected by Insurance Company"
+        TPA_COLLECTION="TPA_COLLECTION","Collected from TPA"
+        OTHER="OTHER","Other"
+    class Status(models.TextChoices):
+        PENDING="PENDING","Pending"
+        READY="READY","Ready for Dispatch"
+        DISPATCHED="DISPATCHED","Dispatched"
+        IN_TRANSIT="IN_TRANSIT","In Transit"
+        READY_COLLECTION="READY_COLLECTION","Ready for Collection"
+        COLLECTED="COLLECTED","Collected"
+        DELIVERED="DELIVERED","Delivered"
+        FAILED="FAILED","Failed / Returned"
+        NOT_REQUIRED="NOT_REQUIRED","Not Required"
+    transaction=models.OneToOneField(MemberTransaction, related_name="card_dispatch", on_delete=models.CASCADE)
+    method=models.CharField(max_length=30, choices=Method.choices, blank=True)
+    status=models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING, db_index=True)
+    courier_company=models.CharField(max_length=160, blank=True)
+    tracking_number=models.CharField(max_length=120, blank=True, db_index=True)
+    dispatched_at=models.DateTimeField(null=True, blank=True)
+    expected_delivery_at=models.DateTimeField(null=True, blank=True)
+    delivered_or_collected_at=models.DateTimeField(null=True, blank=True)
+    recipient_name=models.CharField(max_length=160, blank=True)
+    recipient_organization=models.CharField(max_length=180, blank=True)
+    contact=models.CharField(max_length=100, blank=True)
+    remarks=models.TextField(blank=True)
+    proof_attachment=models.ForeignKey("tickets.TicketAttachment", null=True, blank=True, related_name="tpa_card_dispatch_proofs", on_delete=models.SET_NULL)
+    recorded_by=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="recorded_tpa_card_dispatches", on_delete=models.SET_NULL)
+    def __str__(self):
+        return f"{self.transaction.reference} · {self.get_status_display()}"
+

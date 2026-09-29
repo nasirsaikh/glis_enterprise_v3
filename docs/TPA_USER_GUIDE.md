@@ -48,17 +48,23 @@ The transaction page contains one Source Documents & AI OCR intake zone. Up to 2
 | scanned PDF | PyMuPDF page rendering → vision OCR → text-model mapping |
 | PNG/JPG/JPEG/WEBP | vision OCR → text-model mapping |
 
-Recommended AI configuration uses two providers:
+The default operational AI configuration uses two local Ollama providers:
 
-1. Vision/OCR provider, such as GLM-OCR or another vision-capable Ollama model:
-   - supports_vision=True
-   - allow_sensitive_data=True
-   - capability document_extraction
-2. Text mapping provider, such as qwen2.5:7b:
-   - supports_vision=False
-   - allow_sensitive_data=True
-   - capability member_field_mapping
-   - capability email_extraction where required
+1. **TPA Ollama Vision OCR** using `glm-ocr`:
+   - endpoint `http://127.0.0.1:11434`
+   - `supports_vision=True`
+   - `allow_sensitive_data=True`
+   - capability `document_extraction`
+   - 600 second timeout for scanned PDFs / image batches
+2. **TPA Ollama Text Mapping** using `qwen2.5:7b`:
+   - endpoint `http://127.0.0.1:11434`
+   - `supports_vision=False`
+   - `allow_sensitive_data=True`
+   - capability `member_field_mapping`
+   - capability `email_extraction`
+   - capability `structured_header_mapping`
+
+Keep OCR and JSON mapping separate. The vision model transcribes document evidence; the text model converts OCR/email evidence into strict canonical member JSON. Business decisions remain outside the LLM.
 
 The mapper uses the MEMBER_FIELD_MAPPING extraction profile and its training examples. AI interaction metadata and SourceDocument processing results remain auditable.
 
@@ -146,6 +152,18 @@ It searches unread mail, deduplicates using Message-ID/IMAP UID, stores body/att
 
 PolicyAccess additionally controls policy-scoped view/create/approve/process authority.
 
+## Local Ollama setup
+
+Install/pull the local TPA models before processing scanned documents or live email intake:
+
+```bash
+ollama pull glm-ocr
+ollama pull qwen2.5:7b
+ollama serve
+```
+
+The seed command creates the provider records in Django Admin. If your installed OCR model tag is different (for example a quantized tag), update **TPA Ollama Vision OCR → Model name** to the exact Ollama model tag installed on the server.
+
 ## AI provider configuration
 
 AIProviderConfig supports Mock, Ollama, OpenAI-compatible/OpenAI and Anthropic runtimes.
@@ -169,7 +187,9 @@ The idempotent seed creates/updates:
 - GOLD and SILVER plans
 - existing Principal/Spouse/Child family
 - PolicyAccess and TPA Demo Operators permissions
-- text-only Mock AI for safe email testing
+- TPA Ollama Vision OCR (`glm-ocr`) as the primary document OCR provider
+- TPA Ollama Text Mapping (`qwen2.5:7b`) as the primary member/email mapping provider
+- low-priority Mock AI only for deterministic offline sample-email processing and automated tests
 - email/document/member mapping profiles
 - valid and invalid sample inbound emails
 

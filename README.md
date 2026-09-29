@@ -2,7 +2,7 @@
 
 GLIS is a bilingual Django 6.1.1 enterprise service platform for insurance customers, hospitals and providers, brokers, insurers, support teams, managers, auditors and administrators. It combines an original corporate public website with a secure authenticated portal, ticket operations, CMS and theme controls, dynamic JSON forms, executable workflow/SLA automation, a knowledge base, audit history and a governed Vanna analytics console.
 
-The implementation intentionally uses Django templates, HTMX and Alpine.js progressive enhancement. It is not a React, Vue, Next.js or SPA project. Operational charts use Plotly only.
+The implementation intentionally uses Django templates, HTMX and Alpine.js progressive enhancement. It is not a React, Vue, Next.js or SPA project. Operational charts use ApexCharts with daisyUI theme variables.
 
 ## What is included
 
@@ -242,7 +242,7 @@ python manage.py makemessages -l ar
 python manage.py compilemessages -l ar
 ```
 
-Review translation completeness in the CMS before publishing a page. Arabic Chart/Plotly labels should be supplied from server-localized labels when adding new charts.
+Review translation completeness in the CMS before publishing a page. Arabic ApexCharts labels should be supplied from server-localized labels when adding new charts.
 
 ## CMS, theme and animation controls
 

@@ -1,27 +1,119 @@
-{% extends "tpa/base.html" %}{% load i18n %}
+{% extends "tpa/base.html" %}
+{% load i18n %}
 {% block title %}{% translate "TPA Member Management" %}{% endblock %}
+
 {% block tpa_content %}
-<div class="tw:space-y-6">
-<section class="card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl"><div class="card-body">
-<div class="tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-4"><div><span class="badge badge-primary badge-soft">{% translate "TPA Operations" %}</span><h1 class="tw:mt-3 tw:text-4xl tw:font-black">{% translate "TPA Member Management" %}</h1><p class="tw:mt-2 tw:text-base-content/60">{% translate "Corporate enrollment, member lifecycle and endorsement operations." %}</p></div>
-<div class="tw:flex tw:flex-wrap tw:gap-2">
-<a class="btn btn-ghost tw:rounded-full" href="{% url 'tpa:user_guide' %}"><i class="bi bi-book"></i>{% translate "User Guide" %}</a>
-<a class="btn btn-outline tw:rounded-full" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-building-add"></i>{% translate "Initial Policy Enrollment" %}</a>
-<a class="btn btn-outline tw:rounded-full" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-inbox"></i>{% translate "Inbound Emails" %}</a>
-{% if can_create_tpa_transaction %}<a class="btn btn-secondary tw:rounded-full" href="{% url 'tpa:inbound_email_create' %}"><i class="bi bi-envelope-plus"></i>{% translate "Add Inbound Email" %}</a>{% endif %}
-{% if can_create_endorsement %}<a class="btn btn-primary tw:rounded-full" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>{% endif %}
-</div></div></div></section>
-<div style="display:flex;gap:.75rem;overflow-x:auto;padding-bottom:.25rem;">
-<div class="stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 165px;"><div class="stat-title">Active Sponsors</div><div class="stat-value tw:text-2xl">{{ active_sponsors }}</div></div>
-<div class="stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 165px;"><div class="stat-title">Active Policies</div><div class="stat-value tw:text-2xl">{{ active_policies }}</div></div>
-<div class="stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 165px;"><div class="stat-title">Active Members</div><div class="stat-value tw:text-2xl">{{ active_members }}</div></div>
-<div class="stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 165px;"><div class="stat-title">Open Transactions</div><div class="stat-value tw:text-2xl">{{ open_transactions }}</div></div>
-<div class="stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 165px;"><div class="stat-title">Needs Info / Query</div><div class="stat-value tw:text-2xl">{{ needs_information }}</div></div>
-<div class="stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 165px;"><div class="stat-title">Pending Approval</div><div class="stat-value tw:text-2xl">{{ pending_approval }}</div></div>
-<div class="stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 165px;"><div class="stat-title">STP Rate</div><div class="stat-value tw:text-2xl">{{ stp_rate }}%</div></div>
-<div class="stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 165px;"><div class="stat-title">AI Providers</div><div class="stat-value tw:text-2xl">{{ ai_provider_count }}</div></div>
-<div class="stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 165px;"><div class="stat-title">Inbound Review</div><div class="stat-value tw:text-2xl">{{ inbound_review }}</div></div>
+<div class="tw:space-y-3">
+  <header class="tpa-page-head">
+    <div class="tw:min-w-0">
+      <div class="tpa-kicker"><i class="bi bi-bezier2"></i>{% translate "TPA / Operations / Live Control" %}</div>
+      <h1 class="tpa-title">{% translate "TPA MEMBER MANAGEMENT" %}</h1>
+      <p class="tpa-subtitle">{% translate "Individual and corporate policy enrollment, AI-assisted intake, deterministic validation, endorsement processing and TPA completion." %}</p>
+    </div>
+    <div class="tw:flex tw:flex-wrap tw:gap-1.5">
+      <a class="btn btn-ghost btn-sm" href="{% url 'tpa:user_guide' %}"><i class="bi bi-book"></i>{% translate "Guide" %}</a>
+      <a class="btn btn-outline btn-sm" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-building-add"></i>{% translate "Initial Enrollment" %}</a>
+      <a class="btn btn-outline btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-inbox"></i>{% translate "Inbound Email" %}</a>
+      {% if can_create_tpa_transaction %}
+      <a class="btn btn-secondary btn-sm" href="{% url 'tpa:inbound_email_create' %}"><i class="bi bi-envelope-plus"></i>{% translate "Add Email" %}</a>
+      {% endif %}
+      {% if can_create_endorsement %}
+      <a class="btn btn-primary btn-sm" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if needs_information or pending_approval or inbound_review %}
+  <div role="alert" class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    <div class="tw:flex-1">
+      <strong>{% translate "Operational attention required" %}</strong>
+      <div class="tw:mt-0.5 tw:text-xs tw:opacity-60">
+        {{ needs_information }} {% translate "needs information/query" %} ·
+        {{ pending_approval }} {% translate "pending approval" %} ·
+        {{ inbound_review }} {% translate "inbound review" %}
+      </div>
+    </div>
+    <a class="btn btn-warning btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "Open Pipeline" %}</a>
+  </div>
+  {% endif %}
+
+  <section class="tw:grid tw:grid-cols-2 tw:gap-2 tw:md:grid-cols-3 tw:xl:grid-cols-6">
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Active Sponsors" %}</div><div class="stat-value">{{ active_sponsors }}</div><div class="stat-desc">{% translate "accessible portfolio" %}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Active Policies" %}</div><div class="stat-value">{{ active_policies }}</div><div class="stat-desc">{% translate "endorsement enabled" %}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Active Members" %}</div><div class="stat-value">{{ active_members }}</div><div class="stat-desc">{% translate "covered lives" %}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Open Pipeline" %}</div><div class="stat-value">{{ open_transactions }}</div><div class="stat-desc">{% translate "active transactions" %}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Needs Info / Query" %}</div><div class="stat-value {% if needs_information %}tw:text-warning{% endif %}">{{ needs_information }}</div><div class="stat-desc">{% translate "exceptions" %}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "Pending Approval" %}</div><div class="stat-value {% if pending_approval %}tw:text-info{% endif %}">{{ pending_approval }}</div><div class="stat-desc">{% translate "decision queue" %}</div></div></div>
+  </section>
+
+  <section class="tw:grid tw:grid-cols-2 tw:gap-2 tw:md:grid-cols-3">
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "STP Rate" %}</div><div class="stat-value tw:text-success">{{ stp_rate }}%</div><div class="stat-desc">{% translate "straight-through eligible" %}</div></div></div>
+    <div class="stats"><div class="stat"><div class="stat-title">{% translate "AI Providers" %}</div><div class="stat-value">{{ ai_provider_count }}</div><div class="stat-desc">{% translate "sensitive-data approved" %}</div></div></div>
+    <div class="stats tw:col-span-2 tw:md:col-span-1"><div class="stat"><div class="stat-title">{% translate "Inbound Review" %}</div><div class="stat-value {% if inbound_review %}tw:text-warning{% endif %}">{{ inbound_review }}</div><div class="stat-desc">{% translate "email/OCR exceptions" %}</div></div></div>
+  </section>
+
+  <div class="tw:grid tw:gap-3 tw:xl:grid-cols-2">
+    <section class="card">
+      <div class="tpa-section-head">
+        <div><div class="tpa-eyebrow">{% translate "Pipeline telemetry" %}</div><h2 class="tpa-section-title">{% translate "TRANSACTIONS BY STATUS" %}</h2></div>
+        <span class="badge badge-outline">{{ open_transactions }} {% translate "OPEN" %}</span>
+      </div>
+      <div class="card-body"><div id="tpa-status-chart" class="tpa-chart"></div></div>
+    </section>
+
+    <section class="card">
+      <div class="tpa-section-head">
+        <div><div class="tpa-eyebrow">{% translate "Intake channels" %}</div><h2 class="tpa-section-title">{% translate "TRANSACTIONS BY SOURCE" %}</h2></div>
+        <span class="badge badge-ghost"><i class="bi bi-cpu"></i>{% translate "AI READY" %}</span>
+      </div>
+      <div class="card-body"><div id="tpa-source-chart" class="tpa-chart"></div></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="tpa-section-head">
+      <div><div class="tpa-eyebrow">{% translate "Live workflow feed" %}</div><h2 class="tpa-section-title">{% translate "RECENT TRANSACTIONS" %}</h2></div>
+      <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "View All" %}<i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="tw:overflow-x-auto">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>{% translate "Reference" %}</th>
+            <th>{% translate "Policy / Sponsor" %}</th>
+            <th>{% translate "Request" %}</th>
+            <th>{% translate "Source" %}</th>
+            <th>{% translate "Validation" %}</th>
+            <th>{% translate "STP" %}</th>
+            <th>{% translate "Status" %}</th>
+            <th>{% translate "Created" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tx in transactions %}
+          <tr>
+            <td>
+              <a class="link link-primary tpa-mono tw:font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.reference }}</a>
+              {% if tx.ticket %}<div class="tw:mt-0.5 tw:text-[10px] tw:opacity-45">{{ tx.ticket.reference }}</div>{% endif %}
+            </td>
+            <td><strong>{{ tx.policy.policy_number }}</strong><div class="tw:text-[10px] tw:opacity-50">{{ tx.sponsor.name_en }}</div></td>
+            <td>{{ tx.get_transaction_type_display }}</td>
+            <td><span class="badge badge-ghost">{{ tx.get_source_display }}</span></td>
+            <td class="tpa-mono">{{ tx.validation_score }}%</td>
+            <td>{% if tx.stp_eligible %}<span class="badge badge-success badge-soft">YES</span>{% else %}<span class="badge badge-ghost">NO</span>{% endif %}</td>
+            <td><span class="badge badge-outline">{{ tx.get_status_display }}</span></td>
+            <td class="tpa-mono tw:text-[10px]">{{ tx.created_at|date:"d-M-Y H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="tw:py-8 tw:text-center tw:opacity-45">{% translate "No transactions yet." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>
-<section class="card tw:border tw:border-base-300 tw:bg-base-100"><div class="card-body"><div class="tw:flex tw:items-center tw:justify-between"><h2 class="card-title">Recent Transactions</h2><a class="btn btn-ghost btn-sm" href="{% url 'tpa:transaction_list' %}">View all</a></div>
-<div class="tw:overflow-x-auto"><table class="table"><thead><tr><th>Reference</th><th>GLIS Ticket</th><th>Sponsor</th><th>Policy</th><th>Type</th><th>Source</th><th>Validation</th><th>STP</th><th>Status</th><th>Created</th></tr></thead><tbody>{% for tx in transactions %}<tr><td><a class="tw:link tw:link-primary" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.reference }}</a></td><td>{% if tx.ticket %}<a class="tw:link" href="{% url 'portal:ticket_detail' tx.ticket.reference %}">{{ tx.ticket.reference }}</a>{% else %}—{% endif %}</td><td>{{ tx.sponsor.name_en }}</td><td>{{ tx.policy.policy_number }}</td><td>{{ tx.get_transaction_type_display }}</td><td>{{ tx.get_source_display }}</td><td>{{ tx.validation_score }}%</td><td>{% if tx.stp_eligible %}<span class="badge badge-success">YES</span>{% else %}<span class="badge">NO</span>{% endif %}</td><td><span class="badge badge-outline">{{ tx.get_status_display }}</span></td><td>{{ tx.created_at|date:"d-M-Y H:i" }}</td></tr>{% empty %}<tr><td colspan="10" class="tw:text-center tw:text-base-content/50">No transactions yet.</td></tr>{% endfor %}</tbody></table></div></div></section>
-</div>{% endblock %}
+
+{{ status_chart|json_script:"tpa-dashboard-status-data" }}
+{{ source_chart|json_script:"tpa-dashboard-source-data" }}
+{% endblock %}

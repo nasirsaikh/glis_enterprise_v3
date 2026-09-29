@@ -942,7 +942,7 @@ def _process_suspension(tx, action):
     enrollment.enrollment_status = MemberPolicyEnrollment.Status.SUSPENDED
     enrollment.suspension_date = action.tpa_effective_date or tx.effective_date
     enrollment.suspension_reason = tx.remarks
-    expected = (tx.metadata or {}).get("temporary_until")
+    expected = tx.expected_reactivation_date or (tx.metadata or {}).get("temporary_until")
     enrollment.expected_reactivation_date = _as_date(expected) if expected else None
     enrollment.save(
         update_fields=[

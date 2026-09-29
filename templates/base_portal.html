@@ -128,9 +128,9 @@
       </header>
 
       {% if messages %}
-      <div class="toast toast-top toast-end tw:z-[140] tw:top-20 tw:w-[min(92vw,26rem)]" aria-live="polite">
+      <div class="toast tw:d-toast toast-top tw:d-toast-top toast-end tw:d-toast-end tw:z-[140] tw:top-20 tw:w-[min(92vw,26rem)]" aria-live="polite">
         {% for message in messages %}
-        <div role="alert" class="alert {% if 'error' in message.tags %}alert-error{% elif 'warning' in message.tags %}alert-warning{% elif 'success' in message.tags %}alert-success{% else %}alert-info{% endif %} tw:border tw:border-base-300 tw:shadow-2xl">
+        <div role="alert" class="alert tw:d-alert {% if 'error' in message.tags %}alert-error tw:d-alert-error{% elif 'warning' in message.tags %}alert-warning tw:d-alert-warning{% elif 'success' in message.tags %}alert-success tw:d-alert-success{% else %}alert-info tw:d-alert-info{% endif %} tw:border tw:border-base-300 tw:shadow-2xl">
           <i class="bi {% if 'error' in message.tags %}bi-x-octagon{% elif 'warning' in message.tags %}bi-exclamation-triangle{% elif 'success' in message.tags %}bi-check-circle{% else %}bi-info-circle{% endif %}"></i>
           <span>{{ message }}</span>
         </div>

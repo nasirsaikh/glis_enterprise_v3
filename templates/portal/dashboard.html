@@ -3,7 +3,7 @@
 {% block title %}{% translate "Overview" %}{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-[100rem] space-y-6">
+<div class="space-y-5">
 
   <section class="card overflow-hidden border border-base-300 bg-base-100 shadow-lg">
     <div class="card-body grid gap-6 p-6 lg:grid-cols-[1.35fr_.65fr] lg:items-center">
@@ -13,42 +13,19 @@
           <span class="badge badge-outline"><i class="bi bi-calendar3"></i>{% now "d M Y" %}</span>
           <span class="badge badge-primary badge-soft"><i class="bi bi-shield-check"></i>{% translate "Secure workspace" %}</span>
         </div>
-        <h1 class="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl lg:text-5xl">{% blocktranslate with name=user.first_name|default:user.email %}Welcome back, {{ name }}{% endblocktranslate %}</h1>
+        <h1 class="mt-2 text-3xl font-black tracking-[-.04em] sm:text-4xl">{% blocktranslate with name=user.first_name|default:user.email %}Welcome back, {{ name }}{% endblocktranslate %}</h1>
       </div>
     </div>
   </section>
 
-  <section class="overflow-x-auto" aria-label="{% translate 'Key metrics' %}">
-    <div class="stats stats-horizontal w-full min-w-[72rem] border border-base-300 bg-base-100 shadow-sm">
-      <div class="stat">
-        <div class="stat-figure text-primary"><i class="bi bi-inbox text-2xl"></i></div>
-        <div class="stat-title">{% translate "Open tickets" %}</div><div class="stat-value text-primary">{{ metrics.open }}</div><div class="stat-desc">{% translate "Active workload" %}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-figure text-info"><i class="bi bi-person-check text-2xl"></i></div>
-        <div class="stat-title">{% translate "Assigned to me" %}</div><div class="stat-value">{{ metrics.assigned }}</div><div class="stat-desc">{% translate "Direct and shared" %}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-figure text-error"><i class="bi bi-exclamation-triangle text-2xl"></i></div>
-        <div class="stat-title">{% translate "Overdue" %}</div><div class="stat-value text-error">{{ metrics.overdue }}</div><div class="stat-desc">{% translate "Requires action" %}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-figure text-success"><i class="bi bi-check2-circle text-2xl"></i></div>
-        <div class="stat-title">{% translate "Resolved" %}</div><div class="stat-value">{{ metrics.resolved_month }}</div><div class="stat-desc">{% translate "This month" %}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-figure text-secondary"><i class="bi bi-reply text-2xl"></i></div>
-        <div class="stat-title">{% translate "First response" %}</div><div class="stat-value">{{ metrics.first_response_tat }}h</div><div class="stat-desc">{% translate "Average TAT" %}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-figure text-accent"><i class="bi bi-stopwatch text-2xl"></i></div>
-        <div class="stat-title">{% translate "Resolution TAT" %}</div><div class="stat-value">{{ metrics.resolution_tat }}h</div><div class="stat-desc">{% translate "Average TAT" %}</div>
-      </div>
-      <div class="stat">
-        <div class="stat-figure text-primary"><i class="bi bi-bullseye text-2xl"></i></div>
-        <div class="stat-title">{% translate "SLA attainment" %}</div><div class="stat-value">{{ metrics.sla_attainment }}%</div><div class="stat-desc">{% translate "Within target" %}</div>
-      </div>
-    </div>
+  <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7" aria-label="{% translate 'Key metrics' %}">
+    <article class="card border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-figure text-primary"><i class="bi bi-inbox text-2xl"></i></div><div class="stat-title">{% translate "Open tickets" %}</div><div class="stat-value text-primary">{{ metrics.open }}</div><div class="stat-desc">{% translate "Active workload" %}</div></div></article>
+    <article class="card border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-figure text-info"><i class="bi bi-person-check text-2xl"></i></div><div class="stat-title">{% translate "Assigned to me" %}</div><div class="stat-value">{{ metrics.assigned }}</div><div class="stat-desc">{% translate "Direct and shared" %}</div></div></article>
+    <article class="card border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-figure text-error"><i class="bi bi-exclamation-triangle text-2xl"></i></div><div class="stat-title">{% translate "Overdue" %}</div><div class="stat-value text-error">{{ metrics.overdue }}</div><div class="stat-desc">{% translate "Requires action" %}</div></div></article>
+    <article class="card border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-figure text-success"><i class="bi bi-check2-circle text-2xl"></i></div><div class="stat-title">{% translate "Resolved" %}</div><div class="stat-value">{{ metrics.resolved_month }}</div><div class="stat-desc">{% translate "This month" %}</div></div></article>
+    <article class="card border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-figure text-secondary"><i class="bi bi-reply text-2xl"></i></div><div class="stat-title">{% translate "First response" %}</div><div class="stat-value">{{ metrics.first_response_tat }}h</div><div class="stat-desc">{% translate "Average TAT" %}</div></div></article>
+    <article class="card border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-figure text-accent"><i class="bi bi-stopwatch text-2xl"></i></div><div class="stat-title">{% translate "Resolution TAT" %}</div><div class="stat-value">{{ metrics.resolution_tat }}h</div><div class="stat-desc">{% translate "Average TAT" %}</div></div></article>
+    <article class="card border border-base-300 bg-base-100 shadow-sm sm:col-span-2 lg:col-span-1"><div class="stat"><div class="stat-figure text-primary"><i class="bi bi-bullseye text-2xl"></i></div><div class="stat-title">{% translate "SLA attainment" %}</div><div class="stat-value">{{ metrics.sla_attainment }}%</div><div class="stat-desc">{% translate "Within target" %}</div></div></article>
   </section>
 
   <section class="grid gap-6 xl:grid-cols-12">

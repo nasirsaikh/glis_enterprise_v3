@@ -154,6 +154,11 @@ urlpatterns = [
         name="transaction_card_dispatch",
     ),
     path(
+        "transactions/<str:reference>/card-dispatch/proof/",
+        views.transaction_card_dispatch_proof,
+        name="transaction_card_dispatch_proof",
+    ),
+    path(
         "transactions/<str:reference>/tpa/complete/",
         views.transaction_tpa_complete,
         name="transaction_tpa_complete",

@@ -73,12 +73,25 @@ class Command(BaseCommand):
                 "is_active": True,
             },
         )
+        tpa, _ = TPAOrganization.objects.update_or_create(
+            code="DEMO-TPA",
+            defaults={
+                "name_en": "NextCare Demo TPA",
+                "name_ar": "مدير مطالبات تجريبي",
+                "organization_type": TPAOrganization.Type.TPA,
+                "contact_name": "Demo TPA Operations",
+                "contact_email": "tpa.demo@example.com",
+                "contact_phone": "+968 9000 0003",
+                "is_active": True,
+            },
+        )
 
         policy, _ = Policy.objects.update_or_create(
             policy_number=f"DEMO-MED-{year}",
             defaults={
                 "sponsor": sponsor,
                 "insurance_company": insurer,
+                "tpa_organization": tpa,
                 "policy_name": f"Demo Corporate Medical {year}",
                 "start_date": date(year, 1, 1),
                 "expiry_date": date(year, 12, 31),
@@ -93,6 +106,8 @@ class Command(BaseCommand):
                     "seeded": True,
                     "notes": "Sample policy for TPA workflow testing.",
                 },
+                "initial_enrollment_completed_at": timezone.now(),
+                "initial_enrollment_completed_by": actor,
             },
         )
 
@@ -376,7 +391,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("TPA sample data seeded successfully."))
         self.stdout.write(f"Actor: {actor.get_username()}")
         self.stdout.write(f"Group: {group.name}")
-        self.stdout.write(f"Policy: {policy.policy_number}")
+        self.stdout.write(f"Policy: {policy.policy_number} (initial enrollment completed)")
+        self.stdout.write(f"TPA: {tpa.name_en}")
         self.stdout.write("Plans: GOLD, SILVER")
         self.stdout.write(
             f"Existing family: {principal.tpa_member_id}, "

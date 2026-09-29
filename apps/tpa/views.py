@@ -112,9 +112,20 @@ def dashboard(request):
             enrollments__enrollment_status="active",
         ).distinct().count(),
         "open_transactions": txs.exclude(
-            status__in=["processed", "rejected", "cancelled"]
+            status__in=[
+                MemberTransaction.Status.PROCESSED,
+                MemberTransaction.Status.COMPLETED,
+                MemberTransaction.Status.REJECTED,
+                MemberTransaction.Status.CANCELLED,
+                MemberTransaction.Status.FAILED,
+            ]
         ).count(),
-        "needs_information": txs.filter(status="needs_information").count(),
+        "needs_information": txs.filter(
+            status__in=[
+                MemberTransaction.Status.NEEDS_INFORMATION,
+                MemberTransaction.Status.TPA_QUERY,
+            ]
+        ).count(),
         "pending_approval": txs.filter(status="pending_approval").count(),
         "stp_rate": round(
             (txs.filter(stp_eligible=True).count() / txs.count() * 100), 1

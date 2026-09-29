@@ -328,6 +328,15 @@ def raise_transaction_query(
             f"{query.get_purpose_display()}: {query.subject}",
             str(message or "").strip(),
         )
+    elif audience == TransactionQuery.Audience.SELECTED_PARTICIPANTS:
+        for participant in query.selected_participants.filter(is_active=True):
+            if participant.pk != actor.pk:
+                _notify_query_user(
+                    participant,
+                    query,
+                    f"{query.get_purpose_display()}: {query.subject}",
+                    str(message or "").strip(),
+                )
     return query
 
 
@@ -407,6 +416,15 @@ def post_query_message(query, actor, message, *, kind=None, audience=None):
                 f"{query.get_purpose_display()} updated: {query.subject}",
                 text,
             )
+    elif message_audience == TransactionQuery.Audience.SELECTED_PARTICIPANTS:
+        for participant in query.selected_participants.filter(is_active=True):
+            if participant.pk != actor.pk:
+                _notify_query_user(
+                    participant,
+                    query,
+                    f"{query.get_purpose_display()} updated: {query.subject}",
+                    text,
+                )
 
     _event(
         tx,

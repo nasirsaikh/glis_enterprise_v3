@@ -451,124 +451,128 @@ class LocalVannaOllama:
             domain=session.domain,
             vanna_settings=vanna_settings,
         )
-        synced_documents = await sync_to_async(memory.sync_from_admin, thread_sensitive=True)()
-        retrieved = await sync_to_async(memory.retrieve, thread_sensitive=True)(question)
-        retrieved_context = "\n\n".join(
-            f"[{item['source_type']}] {item['content']}" for item in retrieved
-        )
-        prompt = await sync_to_async(_system_prompt, thread_sensitive=True)(
-            vanna_settings=vanna_settings,
-            domain=session.domain,
-            user=user,
-            session=session,
-            retrieved_context=retrieved_context,
-        )
-
-        client = ollama.Client(host=host, timeout=vanna_settings.timeout_seconds)
-        sql_format = {
-            "type": "object",
-            "properties": {"sql": {"type": "string"}},
-            "required": ["sql"],
-            "additionalProperties": False,
-        }
-        generation_messages = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": question},
-        ]
-        response = await sync_to_async(client.chat, thread_sensitive=True)(
-            model=model,
-            messages=generation_messages,
-            format=sql_format,
-            options={
-                "num_ctx": context_window,
-                "temperature": 0.0,
-            },
-        )
-        generated_sql = _extract_sql_candidate((response.get("message") or {}).get("content"))
-        if not generated_sql:
-            generation_messages.append(
-                {
-                    "role": "user",
-                    "content": "Return the required JSON now. The sql value must start with SELECT.",
-                }
+        try:
+            synced_documents = await sync_to_async(memory.sync_from_admin, thread_sensitive=True)()
+            retrieved = await sync_to_async(memory.retrieve, thread_sensitive=True)(question)
+            retrieved_context = "\n\n".join(
+                f"[{item['source_type']}] {item['content']}" for item in retrieved
             )
+            prompt = await sync_to_async(_system_prompt, thread_sensitive=True)(
+                vanna_settings=vanna_settings,
+                domain=session.domain,
+                user=user,
+                session=session,
+                retrieved_context=retrieved_context,
+            )
+
+            client = ollama.Client(host=host, timeout=vanna_settings.timeout_seconds)
+            sql_format = {
+                "type": "object",
+                "properties": {"sql": {"type": "string"}},
+                "required": ["sql"],
+                "additionalProperties": False,
+            }
+            generation_messages = [
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": question},
+            ]
             response = await sync_to_async(client.chat, thread_sensitive=True)(
                 model=model,
                 messages=generation_messages,
                 format=sql_format,
-                options={"num_ctx": context_window, "temperature": 0.0},
+                options={
+                    "num_ctx": context_window,
+                    "temperature": 0.0,
+                },
             )
-            generated_sql = _extract_sql_candidate(
-                (response.get("message") or {}).get("content")
-            )
-        if not generated_sql:
-            raise RuntimeError("Ollama did not return structured SQL after ChromaDB retrieval.")
+            generated_sql = _extract_sql_candidate((response.get("message") or {}).get("content"))
+            if not generated_sql:
+                generation_messages.append(
+                    {
+                        "role": "user",
+                        "content": "Return the required JSON now. The sql value must start with SELECT.",
+                    }
+                )
+                response = await sync_to_async(client.chat, thread_sensitive=True)(
+                    model=model,
+                    messages=generation_messages,
+                    format=sql_format,
+                    options={"num_ctx": context_window, "temperature": 0.0},
+                )
+                generated_sql = _extract_sql_candidate(
+                    (response.get("message") or {}).get("content")
+                )
+            if not generated_sql:
+                raise RuntimeError("Ollama did not return structured SQL after ChromaDB retrieval.")
 
-        tool_context = ToolContext(
-            user=vanna_user,
-            conversation_id=str(session.pk),
-            request_id=uuid4().hex,
-            agent_memory=memory.agent_memory,
-            metadata={
-                "django_user_id": user.pk,
-                "domain": session.domain.slug,
-                "role": role,
+            tool_context = ToolContext(
+                user=vanna_user,
+                conversation_id=str(session.pk),
+                request_id=uuid4().hex,
+                agent_memory=memory.agent_memory,
+                metadata={
+                    "django_user_id": user.pk,
+                    "domain": session.domain.slug,
+                    "role": role,
+                }
+            )
+            run_sql = RunSqlTool(
+                sql_runner=DjangoSqlRunner(),
+                file_system=NoopFileSystem(),
+                custom_tool_description="Execute one governed read-only SELECT query.",
+            )
+            tool_result = await run_sql.execute(
+                tool_context,
+                RunSqlToolArgs(sql=generated_sql),
+            )
+            if not tool_result.success:
+                raise RuntimeError(tool_result.error or tool_result.result_for_llm)
+            rows = [
+                {column: _json_value(value) for column, value in row.items()}
+                for row in tool_result.metadata.get("results", [])
+            ][:max_rows]
+
+            summary_response = await sync_to_async(client.chat, thread_sensitive=True)(
+                model=model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "Summarize governed analytics results accurately and concisely. "
+                            "Use the same language as the user's question. Do not invent values."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Question: {question}\nSQL: {governor.last_generated_sql}\n"
+                            f"Rows ({len(rows)}): {json.dumps(rows[:50], ensure_ascii=False, default=str)}"
+                        ),
+                    },
+                ],
+                options={"num_ctx": context_window, "temperature": temperature},
+            )
+            summary = str((summary_response.get("message") or {}).get("content") or "").strip()
+            if not summary:
+                summary = f"Vanna returned {len(rows)} row(s)."
+            await sync_to_async(memory.remember_success, thread_sensitive=True)(
+                question=question,
+                sql=governor.last_generated_sql,
+                summary=summary,
+            )
+            return {
+                "sql": governor.last_effective_sql,
+                "summary": summary,
+                "data": rows,
+                "chart": _chart_spec(question, rows),
+                "followups": _followups(rows),
+                "provider": "ollama_vanna",
+                "model": model,
+                "execution_mode": "chroma_rag_vanna_run_sql",
+                "chroma_collection": memory.collection_name,
+                "chroma_memories": len(retrieved),
+                "chroma_synced": synced_documents,
             }
-        )
-        run_sql = RunSqlTool(
-            sql_runner=DjangoSqlRunner(),
-            file_system=NoopFileSystem(),
-            custom_tool_description="Execute one governed read-only SELECT query.",
-        )
-        tool_result = await run_sql.execute(
-            tool_context,
-            RunSqlToolArgs(sql=generated_sql),
-        )
-        if not tool_result.success:
-            raise RuntimeError(tool_result.error or tool_result.result_for_llm)
-        rows = [
-            {column: _json_value(value) for column, value in row.items()}
-            for row in tool_result.metadata.get("results", [])
-        ][:max_rows]
 
-        summary_response = await sync_to_async(client.chat, thread_sensitive=True)(
-            model=model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Summarize governed analytics results accurately and concisely. "
-                        "Use the same language as the user's question. Do not invent values."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": (
-                        f"Question: {question}\nSQL: {governor.last_generated_sql}\n"
-                        f"Rows ({len(rows)}): {json.dumps(rows[:50], ensure_ascii=False, default=str)}"
-                    ),
-                },
-            ],
-            options={"num_ctx": context_window, "temperature": temperature},
-        )
-        summary = str((summary_response.get("message") or {}).get("content") or "").strip()
-        if not summary:
-            summary = f"Vanna returned {len(rows)} row(s)."
-        await sync_to_async(memory.remember_success, thread_sensitive=True)(
-            question=question,
-            sql=governor.last_generated_sql,
-            summary=summary,
-        )
-        return {
-            "sql": governor.last_effective_sql,
-            "summary": summary,
-            "data": rows,
-            "chart": _chart_spec(question, rows),
-            "followups": _followups(rows),
-            "provider": "ollama_vanna",
-            "model": model,
-            "execution_mode": "chroma_rag_vanna_run_sql",
-            "chroma_collection": memory.collection_name,
-            "chroma_memories": len(retrieved),
-            "chroma_synced": synced_documents,
-        }
+        finally:
+            await sync_to_async(memory.close, thread_sensitive=True)()

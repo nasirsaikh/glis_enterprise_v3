@@ -126,7 +126,8 @@
           <h2 class="tpa-section-title"><i class="bi bi-gear tw:text-primary"></i>{% translate "8. Administrator Setup" %}</h2>
           <div role="alert" class="alert alert-info"><i class="bi bi-cpu"></i><div><strong>{% translate "Local Ollama models" %}</strong><pre class="tw:mt-2">ollama pull glm-ocr
 ollama pull qwen2.5:7b
-ollama serve</pre></div></div>
+ollama serve
+python manage.py configure_tpa_ollama</pre></div></div>
           <ul class="tw:list-disc tw:space-y-2 tw:ps-6">
             <li>{% translate "Assign create_enrollment separately from create_endorsement where duties differ." %}</li>
             <li>{% translate "Create Policy Access rows for policy-scoped view/create/approve/process authority." %}</li>

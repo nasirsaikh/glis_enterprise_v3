@@ -342,7 +342,7 @@ SECURE_REFERRER_POLICY = "same-origin"
 #         "default-src": ["'self'"],
 #         "script-src": [
 #             "'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net",
-#             "https://unpkg.com", "https://cdn.plot.ly",
+#             "https://unpkg.com", 
 #         ],
 #         "worker-src": ["'self'", "blob:"],
 #         "style-src": [
@@ -370,7 +370,7 @@ CONTENT_SECURITY_POLICY = {
             "'unsafe-inline'",
             "https://cdn.jsdelivr.net",
             "https://unpkg.com",
-            "https://cdn.plot.ly",
+            
         ],
 
         "worker-src": [

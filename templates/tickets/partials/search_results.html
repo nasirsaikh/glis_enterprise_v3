@@ -1,17 +1,17 @@
 {% load i18n %}
 {% if term %}
-<div class="card tw:overflow-hidden tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-2xl">
-  <ul class="menu tw:w-full tw:p-2">
+<div class="card overflow-hidden border border-base-300 bg-base-100 shadow-2xl">
+  <ul class="menu w-full p-2">
     {% for ticket in tickets %}
     <li>
-      <a class="tw:gap-3 tw:rounded-xl" href="{% url 'portal:ticket_detail' ticket.reference %}">
-        <span class="tw:grid tw:h-9 tw:w-9 tw:shrink-0 tw:place-items-center tw:rounded-xl tw:bg-primary/10 tw:text-primary"><i class="bi bi-ticket-perforated"></i></span>
-        <span class="tw:min-w-0 tw:flex-1"><strong class="tw:block">{{ ticket.reference }}</strong><small class="tw:block tw:truncate tw:text-base-content/45">{{ ticket.subject }}</small></span>
+      <a class="gap-3 rounded-xl" href="{% url 'portal:ticket_detail' ticket.reference %}">
+        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><i class="bi bi-ticket-perforated"></i></span>
+        <span class="min-w-0 flex-1"><strong class="block">{{ ticket.reference }}</strong><small class="block truncate text-base-content/45">{{ ticket.subject }}</small></span>
         <span class="badge badge-outline badge-sm">{{ ticket.get_status_display }}</span>
       </a>
     </li>
     {% empty %}
-    <li class="tw:px-4 tw:py-8 tw:text-center tw:text-sm tw:text-base-content/45">{% translate "No permitted tickets found." %}</li>
+    <li class="px-4 py-8 text-center text-sm text-base-content/45">{% translate "No permitted tickets found." %}</li>
     {% endfor %}
   </ul>
 </div>

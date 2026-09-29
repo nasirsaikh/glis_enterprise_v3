@@ -522,7 +522,14 @@ class QueryRaiseForm(forms.Form):
         choices=TransactionQuery.Audience.choices,
         initial=TransactionQuery.Audience.CLIENT_VISIBLE,
     )
-    message = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}))
+    message = forms.CharField(
+        widget=forms.Textarea(
+            attrs={
+                "rows": 3,
+                "class": "textarea textarea-bordered textarea-sm w-full richtext-source",
+            }
+        )
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -538,7 +545,14 @@ class QueryRaiseForm(forms.Form):
 
 
 class QueryMessageForm(forms.Form):
-    message = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}))
+    message = forms.CharField(
+        widget=forms.Textarea(
+            attrs={
+                "rows": 3,
+                "class": "textarea textarea-bordered textarea-sm w-full richtext-source",
+            }
+        )
+    )
     audience = forms.ChoiceField(
         choices=TransactionQuery.Audience.choices,
         required=False,
@@ -557,7 +571,7 @@ class QueryMessageForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["message"].widget.attrs.setdefault(
-            "class", "textarea textarea-bordered textarea-sm w-full"
+            "class", "textarea textarea-bordered textarea-sm w-full richtext-source"
         )
         self.fields["audience"].widget.attrs.setdefault(
             "class", "select select-bordered select-sm w-full"
@@ -625,6 +639,10 @@ class TPAProcessingRowForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget.attrs.setdefault(
-                "class", "input input-bordered input-sm w-full"
-            )
+            if isinstance(field.widget, forms.Textarea):
+                css = "textarea textarea-bordered textarea-sm w-full"
+            elif isinstance(field.widget, forms.Select):
+                css = "select select-bordered select-sm w-full"
+            else:
+                css = "input input-bordered input-sm w-full"
+            field.widget.attrs.setdefault("class", css)

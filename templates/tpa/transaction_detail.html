@@ -291,7 +291,22 @@
           {% elif tx.status == "pending_approval" %}
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div><strong>{% translate "Manual approval required" %}</strong><div class="text-xs opacity-50">{% if ticket_approval_pending %}{% translate "The linked GLIS approval workflow is pending." %}{% else %}{% translate "An authorized approver can approve, reject or open a discussion." %}{% endif %}</div></div>
-            {% if can_approve and not ticket_approval_pending %}<form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}">{% csrf_token %}<button class="btn btn-success btn-sm">{% translate "Approve & Dispatch" %}</button></form>{% endif %}
+            {% if can_approve and not ticket_approval_pending %}
+            <div class="flex gap-2">
+              <form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}">{% csrf_token %}<button class="btn btn-success btn-sm">{% translate "Approve & Dispatch" %}</button></form>
+              <button class="btn btn-error btn-outline btn-sm" type="button" onclick="document.getElementById('reject-transaction').showModal()">{% translate "Reject" %}</button>
+            </div>
+            <dialog id="reject-transaction" class="modal">
+              <div class="modal-box">
+                <h3 class="font-bold">{% translate "Reject Endorsement" %}</h3>
+                <form class="mt-3 space-y-3" method="post" action="{% url 'tpa:transaction_reject' tx.reference %}">
+                  {% csrf_token %}
+                  <textarea class="textarea textarea-bordered w-full" rows="4" name="reason" required placeholder="{% translate 'Rejection reason' %}"></textarea>
+                  <div class="modal-action"><button class="btn btn-error">{% translate "Reject" %}</button><button class="btn" type="button" onclick="document.getElementById('reject-transaction').close()">{% translate "Cancel" %}</button></div>
+                </form>
+              </div>
+            </dialog>
+            {% endif %}
           </div>
           {% else %}
           <div class="alert alert-success py-2"><i class="bi bi-check-circle"></i><span>{% translate "Approval completed" %} · {{ tx.approved_at|date:"d-M-Y H:i"|default:"—" }}</span></div>

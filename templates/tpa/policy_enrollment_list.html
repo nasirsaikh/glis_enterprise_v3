@@ -20,7 +20,7 @@
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Opening census control" %}</div><h2 class="tpa-section-title">{% translate "POLICY ONBOARDING QUEUE" %}</h2></div>
-      <span class="badge badge-outline tw:d-badge-outline">{{ policy_rows|length }} {% translate "POLICIES" %}</span>
+      <span class="badge badge-outline tw:d-badge-outline tw:d-badge-outline">{{ policy_rows|length }} {% translate "POLICIES" %}</span>
     </div>
     <div class="tw:overflow-x-auto">
       <table class="table table-sm tw:d-table-sm">
@@ -40,14 +40,14 @@
             <td class="tpa-mono">{{ row.policy.plans.count }}</td>
             <td>
               {% if row.policy.initial_enrollment_completed_at %}
-              <span class="badge badge-success tw:d-badge-success badge-soft tw:d-badge-soft">{% translate "Completed" %}</span>
+              <span class="badge badge-success tw:d-badge-success tw:d-badge-success badge-soft tw:d-badge-soft tw:d-badge-soft">{% translate "Completed" %}</span>
               {% elif row.transaction %}
-              <span class="badge badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft">{{ row.transaction.get_status_display }}</span>
+              <span class="badge badge-warning tw:d-badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft tw:d-badge-soft">{{ row.transaction.get_status_display }}</span>
               {% else %}
               <span class="badge badge-ghost tw:d-badge-ghost">{% translate "Not Started" %}</span>
               {% endif %}
             </td>
-            <td><span class="badge tw:d-badge {% if row.policy.status == 'active' %}badge-success badge-soft{% else %}badge-outline{% endif %}">{{ row.policy.get_status_display }}</span></td>
+            <td><span class="badge tw:d-badge {% if row.policy.status == 'active' %}badge-success tw:d-badge-success badge-soft tw:d-badge-soft{% else %}badge-outline tw:d-badge-outline{% endif %}">{{ row.policy.get_status_display }}</span></td>
           </tr>
         {% empty %}
           <tr><td colspan="7" class="tw:py-8 tw:text-center tw:opacity-45">{% translate "No policies have been enrolled yet." %}</td></tr>

@@ -530,6 +530,16 @@ def process_inbound_email(email, actor):
             actor=actor,
         )
         email.raw_ai_output = raw_ai_output
+        email.ai_provider_name = provider.name or provider.provider
+        email.ai_model_name = provider.model_name or ""
+        email.save(
+            update_fields=[
+                "raw_ai_output",
+                "ai_provider_name",
+                "ai_model_name",
+                "updated_at",
+            ]
+        )
         classification = str(
             payload.get("classification")
             or payload.get("transaction_type")

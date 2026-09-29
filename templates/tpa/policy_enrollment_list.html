@@ -10,9 +10,9 @@
       <p class="tpa-subtitle">{% translate "Create the policy, benefit plans and opening member census. Successful TPA completion activates the policy for endorsements." %}</p>
     </div>
     <div class="tw:flex tw:flex-wrap tw:gap-1.5">
-      <a class="btn btn-ghost btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "Dashboard" %}</a>
+      <a class="btn btn-ghost tw:d-btn-ghost btn-sm tw:d-btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "Dashboard" %}</a>
       {% if can_create_policy_enrollment %}
-      <a class="btn btn-primary btn-sm" href="{% url 'tpa:policy_enrollment_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Policy Enrollment" %}</a>
+      <a class="btn btn-primary tw:d-btn-primary btn-sm tw:d-btn-sm" href="{% url 'tpa:policy_enrollment_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Policy Enrollment" %}</a>
       {% endif %}
     </div>
   </header>
@@ -20,17 +20,17 @@
   <section class="card tw:d-card">
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Opening census control" %}</div><h2 class="tpa-section-title">{% translate "POLICY ONBOARDING QUEUE" %}</h2></div>
-      <span class="badge badge-outline">{{ policy_rows|length }} {% translate "POLICIES" %}</span>
+      <span class="badge badge-outline tw:d-badge-outline">{{ policy_rows|length }} {% translate "POLICIES" %}</span>
     </div>
     <div class="tw:overflow-x-auto">
-      <table class="table table-sm">
+      <table class="table table-sm tw:d-table-sm">
         <thead><tr><th>{% translate "Policy" %}</th><th>{% translate "Sponsor" %}</th><th>{% translate "Insurer" %}</th><th>{% translate "TPA" %}</th><th>{% translate "Plans" %}</th><th>{% translate "Initial Enrollment" %}</th><th>{% translate "Policy Status" %}</th></tr></thead>
         <tbody>
         {% for row in policy_rows %}
           <tr>
             <td>
               {% if row.transaction %}
-              <a class="link link-primary tpa-mono tw:font-bold" href="{% url 'tpa:transaction_detail' row.transaction.reference %}">{{ row.policy.policy_number }}</a>
+              <a class="link link-primary tw:d-link-primary tpa-mono tw:font-bold" href="{% url 'tpa:transaction_detail' row.transaction.reference %}">{{ row.policy.policy_number }}</a>
               {% else %}<strong class="tpa-mono">{{ row.policy.policy_number }}</strong>{% endif %}
               <div class="tw:text-[10px] tw:opacity-45">{{ row.policy.policy_name }}</div>
             </td>
@@ -40,14 +40,14 @@
             <td class="tpa-mono">{{ row.policy.plans.count }}</td>
             <td>
               {% if row.policy.initial_enrollment_completed_at %}
-              <span class="badge badge-success badge-soft">{% translate "Completed" %}</span>
+              <span class="badge badge-success tw:d-badge-success badge-soft tw:d-badge-soft">{% translate "Completed" %}</span>
               {% elif row.transaction %}
-              <span class="badge badge-warning badge-soft">{{ row.transaction.get_status_display }}</span>
+              <span class="badge badge-warning tw:d-badge-warning badge-soft tw:d-badge-soft">{{ row.transaction.get_status_display }}</span>
               {% else %}
-              <span class="badge badge-ghost">{% translate "Not Started" %}</span>
+              <span class="badge badge-ghost tw:d-badge-ghost">{% translate "Not Started" %}</span>
               {% endif %}
             </td>
-            <td><span class="badge {% if row.policy.status == 'active' %}badge-success badge-soft{% else %}badge-outline{% endif %}">{{ row.policy.get_status_display }}</span></td>
+            <td><span class="badge tw:d-badge {% if row.policy.status == 'active' %}badge-success badge-soft{% else %}badge-outline{% endif %}">{{ row.policy.get_status_display }}</span></td>
           </tr>
         {% empty %}
           <tr><td colspan="7" class="tw:py-8 tw:text-center tw:opacity-45">{% translate "No policies have been enrolled yet." %}</td></tr>

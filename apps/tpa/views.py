@@ -536,6 +536,80 @@ def transaction_detail(request, reference):
         action.display_employee_id = display_data.get("employee_id") or "—"
         action.display_plan_code = display_data.get("plan_code") or "—"
 
+        if tx.transaction_type in {
+            tx.Type.NEW_POLICY_ENROLLMENT,
+            tx.Type.MEMBER_ADD,
+        }:
+            principal_reference = ""
+            principal_action_id = str(display_data.get("principal_action_id") or "").strip()
+            principal_member_id = str(display_data.get("principal_member_id") or "").strip()
+            principal_employee_id = str(display_data.get("principal_employee_id") or "").strip()
+
+            if principal_action_id.isdigit():
+                principal_reference = f"action:{principal_action_id}"
+            elif principal_member_id:
+                if principal_member_id.isdigit():
+                    principal_reference = f"member:{principal_member_id}"
+                else:
+                    principal_member = Member.objects.filter(
+                        tpa_member_id=principal_member_id
+                    ).first()
+                    if principal_member:
+                        principal_reference = f"member:{principal_member.pk}"
+            elif principal_employee_id:
+                principal_action = next(
+                    (
+                        item
+                        for item in actions
+                        if item.pk != action.pk
+                        and str(
+                            {
+                                **(item.submitted_data or {}),
+                                **(item.extracted_data or {}),
+                                **(item.corrected_data or {}),
+                            }.get("employee_id")
+                            or ""
+                        ).strip()
+                        == principal_employee_id
+                        and str(
+                            {
+                                **(item.submitted_data or {}),
+                                **(item.extracted_data or {}),
+                                **(item.corrected_data or {}),
+                            }.get("relationship")
+                            or ""
+                        ).upper()
+                        == Member.Relationship.PRINCIPAL
+                    ),
+                    None,
+                )
+                if principal_action:
+                    principal_reference = f"action:{principal_action.pk}"
+                else:
+                    principal_member = Member.objects.filter(
+                        employee_id=principal_employee_id,
+                        relationship=Member.Relationship.PRINCIPAL,
+                        enrollments__policy=tx.policy,
+                        enrollments__enrollment_status="active",
+                    ).first()
+                    if principal_member:
+                        principal_reference = f"member:{principal_member.pk}"
+
+            action.edit_form = MemberRowForm(
+                transaction=tx,
+                initial={
+                    **display_data,
+                    "principal_reference": principal_reference,
+                },
+            )
+        elif tx.transaction_type in {
+            tx.Type.MEMBER_TERMINATE,
+            tx.Type.MEMBER_DELETE,
+        }:
+            action.edit_form = MemberLookupRowForm(initial=display_data)
+        else:
+            action.edit_form = None
+
     valid_count = sum(a.validation_status == MemberAction.Result.VALID for a in actions)
     warning_count = sum(a.validation_status == MemberAction.Result.WARNING for a in actions)
     error_count = sum(a.validation_status == MemberAction.Result.ERROR for a in actions)
@@ -771,6 +845,70 @@ def transaction_upload_members(request, reference):
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
 
+    return redirect("tpa:transaction_detail", reference=reference)
+
+
+@login_required
+def transaction_edit_member(request, reference, action_id):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    if tx.status not in INTAKE_EDITABLE_STATUSES:
+        raise PermissionDenied("Member correction is closed for this transaction.")
+
+    action = get_object_or_404(tx.member_actions, pk=action_id)
+    is_add = tx.transaction_type in {
+        tx.Type.NEW_POLICY_ENROLLMENT,
+        tx.Type.MEMBER_ADD,
+    }
+    form = (
+        MemberRowForm(request.POST, transaction=tx)
+        if is_add
+        else MemberLookupRowForm(request.POST)
+    )
+    if not form.is_valid():
+        messages.error(
+            request,
+            "Member correction was not saved: "
+            + "; ".join(
+                error
+                for errors in form.errors.values()
+                for error in errors
+            ),
+        )
+        return redirect("tpa:transaction_detail", reference=reference)
+
+    before = {
+        **(action.submitted_data or {}),
+        **(action.extracted_data or {}),
+        **(action.corrected_data or {}),
+    }
+    corrected = _serialize_form_data(form.cleaned_data)
+    action.corrected_data = corrected
+    action.save(update_fields=["corrected_data", "updated_at"])
+    TransactionEvent.objects.create(
+        transaction=tx,
+        actor=request.user,
+        event_type="member_row_corrected",
+        summary=f"Member row {action.row_number or action.pk} corrected",
+        details={
+            "action_id": action.pk,
+            "before": before,
+            "after": corrected,
+        },
+    )
+
+    if tx.status == tx.Status.DRAFT:
+        validate_action(action)
+    else:
+        run_validation(tx, actor=request.user)
+
+    messages.success(
+        request,
+        f"Member row {action.row_number or action.pk} corrected and revalidated.",
+    )
     return redirect("tpa:transaction_detail", reference=reference)
 
 

@@ -734,6 +734,12 @@ def process_inbound_email(email, actor):
                     classification=classification or transaction_type,
                     classification_confidence=confidence,
                     refund_basis=refund_basis,
+                    expected_reactivation_date=(
+                        _as_date(payload.get("temporary_until"))
+                        if transaction_type == MemberTransaction.Type.MEMBER_SUSPEND
+                        and payload.get("temporary_until")
+                        else None
+                    ),
                     physical_card_required=(
                         policy.physical_card_required
                         and transaction_type == MemberTransaction.Type.MEMBER_ADD

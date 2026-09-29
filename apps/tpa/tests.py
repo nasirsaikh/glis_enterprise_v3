@@ -2,9 +2,13 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
+
+from apps.ai.models import AIExtractionProfile, AIProviderConfig
 
 from .models import (
     BenefitPlan,
+    InboundEmail,
     Member,
     MemberAction,
     MemberPolicyEnrollment,
@@ -15,6 +19,7 @@ from .models import (
 )
 from .forms import MemberRowForm
 from .services.access import can_access_tpa, can_create_tpa_transaction
+from .services.ai_intake import process_inbound_email
 from .services.pricing import calculate_member_premium
 from .services.workflow import approve_transaction, process_transaction, run_validation
 
@@ -250,4 +255,70 @@ class TPACoreTests(TestCase):
         parent = Member.objects.get(employee_id="E-FAMILY-1")
         child = Member.objects.get(employee_id="E-FAMILY-2")
         self.assertEqual(child.principal_id, parent.pk)
+
+    def test_inbound_email_mock_ai_creates_transaction_and_member_row(self):
+        AIProviderConfig.objects.create(
+            name="Test TPA Mock AI",
+            provider=AIProviderConfig.Provider.MOCK,
+            model_name="mock",
+            allow_sensitive_data=True,
+            supports_vision=True,
+            task_capabilities=["email_extraction", "document_extraction"],
+            priority=1,
+            is_active=True,
+        )
+        AIExtractionProfile.objects.create(
+            name="Test email extraction",
+            task=AIExtractionProfile.Task.EMAIL_EXTRACTION,
+            applicable_product="MEDICAL",
+            instructions="Return strict member JSON.",
+            priority=1,
+            is_active=True,
+        )
+        email = InboundEmail.objects.create(
+            provider="test",
+            provider_message_id="mock-email-1",
+            created_by=self.user,
+            sender="hr@example.com",
+            recipient="tpa@example.com",
+            subject="Add member",
+            received_at=timezone.now(),
+            body_text=(
+                f"Policy Number: {self.policy.policy_number}\n"
+                "Transaction Type: MEMBER_ADD\n"
+                "Effective Date: 2026-07-01\n"
+                "--- member ---\n"
+                "Employee ID: E-AI-100\n"
+                "First Name: AI\n"
+                "Middle Name:\n"
+                "Last Name: Member\n"
+                "Date of Birth: 1991-02-03\n"
+                "Gender: Male\n"
+                "Relationship: PRINCIPAL\n"
+                "Principal Employee ID:\n"
+                "Principal Member ID:\n"
+                "National ID: CID-AI-100\n"
+                "Passport Number: P-AI-100\n"
+                "Plan Code: GOLD\n"
+            ),
+            processing_hints={
+                "policy_id": self.policy.pk,
+                "policy_number": self.policy.policy_number,
+                "transaction_type": "MEMBER_ADD",
+                "effective_date": "2026-07-01",
+            },
+        )
+
+        tx = process_inbound_email(email, self.user)
+        email.refresh_from_db()
+        tx.refresh_from_db()
+
+        self.assertEqual(email.processing_state, InboundEmail.State.PROCESSED)
+        self.assertEqual(email.transaction_id, tx.pk)
+        self.assertEqual(tx.source, MemberTransaction.Source.EMAIL)
+        self.assertIsNotNone(tx.ticket_id)
+        self.assertEqual(tx.member_actions.count(), 1)
+        action = tx.member_actions.get()
+        self.assertEqual(action.extracted_data["employee_id"], "E-AI-100")
+        self.assertEqual(action.validation_status, MemberAction.Result.VALID)
 

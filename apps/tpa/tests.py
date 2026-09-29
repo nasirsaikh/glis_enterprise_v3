@@ -2,6 +2,7 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -134,6 +135,26 @@ class TPACoreTests(TestCase):
         self.assertNotIn(MemberTransaction.Type.NEW_POLICY_ENROLLMENT, values)
         self.assertIn(MemberTransaction.Type.MEMBER_ADD, values)
         self.assertIn(self.policy, form.fields["policy"].queryset)
+
+    def test_configure_tpa_ollama_creates_separate_vision_and_text_providers(self):
+        call_command(
+            "configure_tpa_ollama",
+            endpoint="http://127.0.0.1:11434",
+            ocr_model="glm-ocr:test",
+            text_model="qwen2.5:7b",
+            verbosity=0,
+        )
+
+        vision = AIProviderConfig.objects.get(name="TPA Ollama Vision OCR")
+        text = AIProviderConfig.objects.get(name="TPA Ollama Text Mapping")
+        self.assertEqual(vision.provider, AIProviderConfig.Provider.OLLAMA)
+        self.assertTrue(vision.supports_vision)
+        self.assertIn("document_extraction", vision.task_capabilities)
+        self.assertEqual(vision.model_name, "glm-ocr:test")
+        self.assertEqual(text.provider, AIProviderConfig.Provider.OLLAMA)
+        self.assertFalse(text.supports_vision)
+        self.assertIn("member_field_mapping", text.task_capabilities)
+        self.assertIn("email_extraction", text.task_capabilities)
 
     def test_redesigned_dashboard_renders_with_apexcharts_shell(self):
         tx = self._transaction()

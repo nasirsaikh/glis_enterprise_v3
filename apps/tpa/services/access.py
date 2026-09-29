@@ -23,16 +23,36 @@ def can_access_tpa(user):
     return MemberTransaction.objects.filter(requester=user).exists()
 
 
-def can_create_tpa_transaction(user):
+def can_create_policy_enrollment(user):
     if not user or not user.is_authenticated:
         return False
     if user.is_superuser or user.has_perm("tpa.configure_tpa"):
         return True
-    if user.has_perm("tpa.create_enrollment") or user.has_perm("tpa.create_endorsement"):
+    if user.has_perm("tpa.create_enrollment"):
         return True
-    return PolicyAccess.objects.filter(user=user, active=True).filter(
-        Q(can_create_enrollment=True) | Q(can_create_endorsement=True)
+    return PolicyAccess.objects.filter(
+        user=user,
+        active=True,
+        can_create_enrollment=True,
     ).exists()
+
+
+def can_create_endorsement(user):
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser or user.has_perm("tpa.configure_tpa"):
+        return True
+    if user.has_perm("tpa.create_endorsement"):
+        return True
+    return PolicyAccess.objects.filter(
+        user=user,
+        active=True,
+        can_create_endorsement=True,
+    ).exists()
+
+
+def can_create_tpa_transaction(user):
+    return can_create_policy_enrollment(user) or can_create_endorsement(user)
 
 
 def can_approve_tpa_transaction(user, tx):

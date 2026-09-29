@@ -5,7 +5,7 @@ from django.core.files import File
 from django.db import transaction
 from django.utils import timezone
 
-from apps.ai.models import AIExtractionProfile, AIInteraction
+from apps.ai.models import AIExtractionProfile, AIInteraction, AIProviderConfig
 from apps.ai.runtime import generate_json
 from apps.tickets.models import TicketAttachment
 
@@ -195,7 +195,30 @@ def _log_interaction(*, actor, provider, profile, email, normalized, duration_ms
 
 def extract_email_payload(email, actor=None):
     hints = email.processing_hints or {}
-    provider = select_provider(sensitive=True, capability="email_extraction")
+    provider = None
+    hinted_provider_id = hints.get("ai_provider_id")
+    if hinted_provider_id:
+        provider = (
+            AIProviderConfig.objects.filter(
+                pk=hinted_provider_id,
+                is_active=True,
+                allow_sensitive_data=True,
+            )
+            .order_by("priority", "id")
+            .first()
+        )
+        if provider:
+            capabilities = {
+                str(item).strip().lower()
+                for item in (provider.task_capabilities or [])
+            }
+            if "email_extraction" not in capabilities:
+                provider = None
+
+    provider = provider or select_provider(
+        sensitive=True,
+        capability="email_extraction",
+    )
     if not provider:
         raise RuntimeError(
             "No active AI provider allows sensitive data and has the email_extraction capability."

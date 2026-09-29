@@ -13,6 +13,8 @@ from .models import (
     SourceDocument,
     TPAOrganization,
     TransactionEvent,
+    TransactionQuery,
+    TransactionQueryMessage,
 )
 
 
@@ -29,10 +31,12 @@ class PolicyAdmin(admin.ModelAdmin):
         "policy_number",
         "sponsor",
         "insurance_company",
+        "tpa_organization",
         "status",
         "start_date",
         "expiry_date",
         "stp_enabled",
+        "initial_enrollment_completed_at",
     )
     list_filter = ("status", "product_type", "stp_enabled")
     search_fields = ("policy_number", "policy_name")
@@ -106,6 +110,9 @@ class ActionAdmin(admin.ModelAdmin):
         "validation_status",
         "extraction_confidence",
         "calculated_premium",
+        "card_number",
+        "tpa_effective_date",
+        "tpa_premium_amount",
     )
     list_filter = ("validation_status", "action")
 
@@ -148,10 +155,11 @@ class SourceDocumentAdmin(admin.ModelAdmin):
         "transaction",
         "document_kind",
         "extraction_method",
+        "processing_state",
         "processed",
         "extraction_confidence",
     )
-    list_filter = ("processed", "document_kind", "extraction_method")
+    list_filter = ("processing_state", "processed", "document_kind", "extraction_method")
     search_fields = ("original_name", "transaction__reference", "source_hash")
     readonly_fields = ("source_hash", "extracted_payload", "processing_error")
 
@@ -223,4 +231,66 @@ class InboundEmailAttachmentAdmin(admin.ModelAdmin):
         "sha256",
         "extracted_payload",
         "processing_error",
+    )
+
+
+
+class TransactionQueryMessageInline(admin.TabularInline):
+    model = TransactionQueryMessage
+    extra = 0
+    readonly_fields = ("ticket_comment", "sender", "kind", "created_at")
+
+
+@admin.register(TransactionQuery)
+class TransactionQueryAdmin(admin.ModelAdmin):
+    list_display = (
+        "transaction",
+        "subject",
+        "status",
+        "raised_by",
+        "resolved_by",
+        "resolved_at",
+        "created_at",
+    )
+    list_filter = ("status",)
+    search_fields = (
+        "transaction__reference",
+        "subject",
+        "raised_by__username",
+    )
+    readonly_fields = (
+        "transaction",
+        "raised_by",
+        "pre_query_status",
+        "resolved_by",
+        "resolved_at",
+        "created_at",
+        "updated_at",
+    )
+    inlines = (TransactionQueryMessageInline,)
+
+
+@admin.register(TransactionQueryMessage)
+class TransactionQueryMessageAdmin(admin.ModelAdmin):
+    list_display = (
+        "query",
+        "sender",
+        "kind",
+        "ticket_comment",
+        "created_at",
+    )
+    list_filter = ("kind",)
+    search_fields = (
+        "query__transaction__reference",
+        "query__subject",
+        "sender__username",
+        "ticket_comment__body",
+    )
+    readonly_fields = (
+        "query",
+        "ticket_comment",
+        "sender",
+        "kind",
+        "created_at",
+        "updated_at",
     )

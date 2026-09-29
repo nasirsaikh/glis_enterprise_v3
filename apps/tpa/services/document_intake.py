@@ -154,26 +154,87 @@ def _system_prompt(profile):
 
 
 def _map_evidence_text(tx, evidence_text, actor=None):
+    # OCR and semantic mapping are deliberately separate stages. A vision OCR
+    # model such as GLM-OCR may return {"ocr_text": ...}; it must never be used
+    # as the text-to-member-JSON mapper.
     provider = (
-        select_provider(sensitive=True, capability="member_field_mapping")
-        or select_provider(sensitive=True, capability="document_extraction")
+        select_provider(
+            vision=False,
+            sensitive=True,
+            capability="member_field_mapping",
+        )
+        or select_provider(
+            vision=False,
+            sensitive=True,
+            capability="structured_header_mapping",
+        )
+        or select_provider(
+            vision=False,
+            sensitive=True,
+            capability="email_extraction",
+        )
+        or select_provider(
+            vision=False,
+            sensitive=True,
+            capability="document_extraction",
+        )
     )
     if not provider:
         raise RuntimeError(
-            "No active text AI provider allows sensitive data and has member_field_mapping "
-            "or document_extraction capability."
+            "OCR succeeded, but no active non-vision text AI provider is configured "
+            "for member JSON mapping. Configure a text model such as qwen2.5:7b with "
+            "Supports vision disabled, Allow sensitive data enabled, and the "
+            "member_field_mapping capability."
         )
+
     profile = select_profile(
         AIExtractionProfile.Task.MEMBER_FIELD_MAPPING,
         product=tx.policy.product_type,
         transaction_type=tx.transaction_type,
     )
+    system_prompt = _system_prompt(profile)
+    user_prompt = _member_prompt(tx, evidence_text)
     payload, duration_ms = generate_json(
         provider,
-        system_prompt=_system_prompt(profile),
-        user_prompt=_member_prompt(tx, evidence_text),
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
     )
-    normalized = normalize_ai_payload(payload)
+
+    try:
+        normalized = normalize_ai_payload(payload)
+    except (TypeError, ValueError) as first_error:
+        retry_prompt = (
+            user_prompt
+            + "\n\nIMPORTANT CORRECTION: The previous response was not canonical member JSON. "
+            "Return JSON only in exactly this shape: "
+            '{"members":[{"employee_id":null,"member_id":null,"first_name":null,'
+            '"middle_name":null,"last_name":null,"full_name":null,'
+            '"date_of_birth":null,"gender":null,"relationship":null,'
+            '"principal_employee_id":null,"principal_member_id":null,'
+            '"national_id":null,"passport_number":null,"plan_code":null,'
+            '"effective_date":null,"confidence":0.0}],"confidence":0.0}. '
+            "Do not return ocr_text, page_count, commentary or markdown."
+        )
+        retry_payload, retry_duration = generate_json(
+            provider,
+            system_prompt=system_prompt,
+            user_prompt=retry_prompt,
+        )
+        duration_ms += retry_duration
+        try:
+            normalized = normalize_ai_payload(retry_payload)
+        except (TypeError, ValueError) as retry_error:
+            received_keys = (
+                ", ".join(sorted(str(key) for key in retry_payload.keys()))
+                if isinstance(retry_payload, dict)
+                else type(retry_payload).__name__
+            )
+            raise ValueError(
+                f"Text mapping provider '{provider.name}' ({provider.model_name or provider.provider}) "
+                "did not return canonical member JSON after retry. "
+                f"Received: {received_keys or 'empty payload'}."
+            ) from retry_error
+
     AIInteraction.objects.create(
         user=actor,
         ticket=tx.ticket,

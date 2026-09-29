@@ -577,13 +577,16 @@ def process_inbound_email(email, actor):
             )
             return None
 
-        if classification in {"NEEDS_REVIEW", "UNCERTAIN"} or (
-            confidence is not None and confidence < _classification_minimum()
+        if (
+            is_endorsement is None
+            or classification in {"NEEDS_REVIEW", "UNCERTAIN"}
+            or confidence is None
+            or confidence < _classification_minimum()
         ):
             email.processing_state = InboundEmail.State.REVIEW
             email.processing_stage = "CLASSIFICATION"
             email.processing_error = (
-                "Email classification confidence is below the configured threshold."
+                "Email classification is incomplete or below the configured confidence threshold."
             )
             email.save(
                 update_fields=[

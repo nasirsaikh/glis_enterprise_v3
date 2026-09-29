@@ -65,3 +65,54 @@ def calculate_member_premium(policy, plan, effective_date, end_date=None):
     amount = amount.quantize(MONEY_QUANTUM, rounding=ROUND_HALF_UP)
     snapshot["calculated_amount"] = str(amount)
     return amount, snapshot
+
+
+def calculate_member_refund(enrollment, effective_date, refund_basis):
+    """
+    Deterministic refund calculation. Refund values are returned as negative
+    transaction impact amounts so they reduce premium_after.
+    """
+    basis = str(refund_basis or "NONE").upper()
+    original = _decimal(enrollment.premium_amount)
+    if basis == "FULL":
+        refund = original
+        snapshot = {
+            "method": "FULL_REFUND",
+            "original_premium": str(original),
+            "coverage_start_date": enrollment.coverage_start_date.isoformat(),
+            "coverage_end_date": (
+                enrollment.coverage_end_date.isoformat()
+                if enrollment.coverage_end_date
+                else enrollment.policy.expiry_date.isoformat()
+            ),
+            "effective_date": effective_date.isoformat(),
+        }
+    elif basis == "PRO_RATA":
+        finish = enrollment.coverage_end_date or enrollment.policy.expiry_date
+        start = enrollment.coverage_start_date
+        total_days = max((finish - start).days + 1, 1)
+        remaining_days = max((finish - effective_date).days + 1, 0)
+        refund = original * Decimal(remaining_days) / Decimal(total_days)
+        snapshot = {
+            "method": "PRO_RATA_REFUND",
+            "original_premium": str(original),
+            "coverage_start_date": start.isoformat(),
+            "coverage_end_date": finish.isoformat(),
+            "effective_date": effective_date.isoformat(),
+            "total_days": total_days,
+            "remaining_days": remaining_days,
+        }
+    else:
+        refund = Decimal("0")
+
+        snapshot = {
+            "method": "NO_REFUND",
+            "original_premium": str(original),
+            "effective_date": effective_date.isoformat(),
+        }
+
+    refund = refund.quantize(MONEY_QUANTUM, rounding=ROUND_HALF_UP)
+    impact = -refund
+    snapshot["refund_amount"] = str(refund)
+    snapshot["calculated_amount"] = str(impact)
+    return impact, snapshot

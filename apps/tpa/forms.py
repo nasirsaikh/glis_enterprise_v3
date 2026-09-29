@@ -63,21 +63,20 @@ class TransactionForm(forms.ModelForm):
             if self.is_bound
             else getattr(self.instance, "transaction_type", "")
         )
+        self.fields["remarks"].label = "Reason / Remarks"
+        self.fields["expected_reactivation_date"].label = (
+            "Expected Reactivation Date (Temporary Suspension only)"
+        )
+        self.fields["expected_reactivation_date"].help_text = (
+            "Optional. Used only for Temporary Suspension; ignored for other endorsement types."
+        )
         if tx_type == MemberTransaction.Type.MEMBER_SUSPEND:
             self.fields["remarks"].label = "Suspension Reason"
             self.fields["remarks"].required = True
-            self.fields["expected_reactivation_date"].label = "Expected Reactivation Date"
-            self.fields["expected_reactivation_date"].help_text = (
-                "Optional expected date; the actual reactivation date is recorded by the reactivation endorsement."
-            )
         elif tx_type == MemberTransaction.Type.MEMBER_TERMINATE:
             self.fields["remarks"].label = "Termination Reason"
-            self.fields["expected_reactivation_date"].widget = forms.HiddenInput()
         elif tx_type == MemberTransaction.Type.POLICY_CANCEL:
             self.fields["remarks"].label = "Cancellation Reason"
-            self.fields["expected_reactivation_date"].widget = forms.HiddenInput()
-        else:
-            self.fields["expected_reactivation_date"].widget = forms.HiddenInput()
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",

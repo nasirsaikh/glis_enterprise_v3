@@ -94,6 +94,8 @@ def generate_json(config, *, system_prompt, user_prompt, images=None):
 
     if provider == "ollama":
         endpoint = _endpoint(config, "http://127.0.0.1:11434")
+        runtime_options = dict(config.runtime_options or {})
+        keep_alive = runtime_options.pop("keep_alive", "15m")
         user_message = {"role": "user", "content": user_prompt}
         if images:
             user_message["images"] = [
@@ -110,8 +112,9 @@ def generate_json(config, *, system_prompt, user_prompt, images=None):
             ],
             "options": {
                 "temperature": float(config.temperature or 0),
-                **(config.runtime_options or {}),
+                **runtime_options,
             },
+            "keep_alive": keep_alive,
         }
         with httpx.Client(timeout=timeout) as client:
             response = client.post(f"{endpoint}/api/chat", json=body)
@@ -218,9 +221,11 @@ def generate_text(config, *, system_prompt, user_prompt, images=None):
 
     if provider == "ollama":
         endpoint = _endpoint(config, "http://127.0.0.1:11434")
+        runtime_options = dict(config.runtime_options or {})
+        keep_alive = runtime_options.pop("keep_alive", "15m")
         options = {
             "temperature": float(config.temperature or 0),
-            **(config.runtime_options or {}),
+            **runtime_options,
         }
         if images:
             body = {
@@ -232,7 +237,7 @@ def generate_text(config, *, system_prompt, user_prompt, images=None):
                     for item in images
                 ],
                 "options": options,
-                "keep_alive": (config.runtime_options or {}).get("keep_alive", "15m"),
+                "keep_alive": keep_alive,
             }
             if system_prompt:
                 body["system"] = system_prompt
@@ -249,7 +254,7 @@ def generate_text(config, *, system_prompt, user_prompt, images=None):
                     {"role": "user", "content": user_prompt},
                 ],
                 "options": options,
-                "keep_alive": (config.runtime_options or {}).get("keep_alive", "15m"),
+                "keep_alive": keep_alive,
             }
             with httpx.Client(timeout=timeout) as client:
                 response = client.post(f"{endpoint}/api/chat", json=body)

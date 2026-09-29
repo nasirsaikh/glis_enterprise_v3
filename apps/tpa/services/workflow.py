@@ -712,6 +712,11 @@ def approve_transaction(tx, actor):
         raise ValueError("Transaction is not awaiting approval.")
     if not can_approve_tpa_transaction(actor, tx):
         raise PermissionError("You do not have TPA approval authority.")
+    if tx.queries.filter(
+        status=TransactionQuery.Status.OPEN,
+        purpose=TransactionQuery.Purpose.APPROVAL,
+    ).exists():
+        raise ValueError("Resolve the open approval query before approving the transaction.")
     if tx.ticket_id:
         tx.ticket.refresh_from_db(fields=["approval_state"])
         if tx.ticket.approval_state == "pending":

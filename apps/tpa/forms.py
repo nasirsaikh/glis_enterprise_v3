@@ -22,11 +22,21 @@ from .services.access import visible_policies
 class TransactionForm(forms.ModelForm):
     class Meta:
         model = MemberTransaction
-        fields = ["policy", "transaction_type", "effective_date", "refund_basis", "remarks"]
+        fields = [
+            "policy",
+            "transaction_type",
+            "effective_date",
+            "refund_basis",
+            "expected_reactivation_date",
+            "remarks",
+        ]
         widgets = {
             "effective_date": forms.DateInput(
                 attrs={"type": "date", "class": "input input-bordered input-sm w-full"}
-            )
+            ),
+            "expected_reactivation_date": forms.DateInput(
+                attrs={"type": "date", "class": "input input-bordered input-sm w-full"}
+            ),
         }
 
     def __init__(self, *args, user=None, **kwargs):
@@ -48,6 +58,26 @@ class TransactionForm(forms.ModelForm):
             for choice in MemberTransaction.Type.choices
             if choice[0] != MemberTransaction.Type.NEW_POLICY_ENROLLMENT
         ]
+        tx_type = (
+            self.data.get("transaction_type")
+            if self.is_bound
+            else getattr(self.instance, "transaction_type", "")
+        )
+        if tx_type == MemberTransaction.Type.MEMBER_SUSPEND:
+            self.fields["remarks"].label = "Suspension Reason"
+            self.fields["remarks"].required = True
+            self.fields["expected_reactivation_date"].label = "Expected Reactivation Date"
+            self.fields["expected_reactivation_date"].help_text = (
+                "Optional expected date; the actual reactivation date is recorded by the reactivation endorsement."
+            )
+        elif tx_type == MemberTransaction.Type.MEMBER_TERMINATE:
+            self.fields["remarks"].label = "Termination Reason"
+            self.fields["expected_reactivation_date"].widget = forms.HiddenInput()
+        elif tx_type == MemberTransaction.Type.POLICY_CANCEL:
+            self.fields["remarks"].label = "Cancellation Reason"
+            self.fields["expected_reactivation_date"].widget = forms.HiddenInput()
+        else:
+            self.fields["expected_reactivation_date"].widget = forms.HiddenInput()
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
@@ -71,6 +101,18 @@ class TransactionForm(forms.ModelForm):
                 )
         else:
             data["refund_basis"] = MemberTransaction.RefundBasis.NONE
+
+        if tx_type != MemberTransaction.Type.MEMBER_SUSPEND:
+            data["expected_reactivation_date"] = None
+        elif (
+            data.get("expected_reactivation_date")
+            and data.get("effective_date")
+            and data["expected_reactivation_date"] < data["effective_date"]
+        ):
+            self.add_error(
+                "expected_reactivation_date",
+                "Expected reactivation date cannot be before the suspension effective date.",
+            )
         return data
 
 

@@ -116,6 +116,7 @@ class MemberPolicyEnrollment(TimeStampedModel):
     coverage_start_date=models.DateField()
     coverage_end_date=models.DateField(null=True, blank=True)
     enrollment_status=models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True)
+    card_number=models.CharField(max_length=100, blank=True)
     premium_amount=models.DecimalField(max_digits=14, decimal_places=3, default=Decimal("0"))
     premium_calculation_basis=models.JSONField(default=dict, blank=True)
     termination_reason=models.TextField(blank=True)

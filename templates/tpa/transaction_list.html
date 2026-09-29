@@ -19,7 +19,7 @@
 
   <section class="card border border-base-300 bg-base-100 shadow-sm">
     <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
-      <div><div class="mb-1 text-xs font-bold uppercase tracking-[.08em] text-primary">{% translate "Accessible work queue" %}</div><h2 class="text-lg font-black tracking-tight">{% translate "ALL ENDORSEMENTS" %}</h2></div>
+      <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Accessible work queue" %}</div><h2 class="text-lg font-black ">{% translate "ALL ENDORSEMENTS" %}</h2></div>
       <span class="badge badge-outline">{{ transactions|length }} {% translate "ROWS" %}</span>
     </div>
     <div class="overflow-x-auto">
@@ -28,7 +28,7 @@
         <tbody>
         {% for tx in transactions %}
           <tr>
-            <td><a class="link link-primary font-mono font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.reference }}</a></td>
+            <td><a class="link link-primary font-semibold font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.reference }}</a></td>
             <td><strong>{{ tx.policy.policy_number }}</strong><div class="text-[10px] opacity-45">{{ tx.sponsor.name_en }}</div></td>
             <td>{{ tx.get_transaction_type_display }}</td>
             <td><span class="badge badge-ghost">{{ tx.get_source_display }}</span></td>
@@ -36,7 +36,7 @@
               <span class="badge {% if tx.status == 'completed' %}badge-success badge-soft{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' %}badge-warning badge-soft{% elif tx.status == 'rejected' or tx.status == 'failed' %}badge-error badge-soft{% elif tx.status == 'sent_to_tpa' or tx.status == 'tpa_in_progress' %}badge-info badge-soft{% else %}badge-outline{% endif %}">{{ tx.get_status_display }}</span>
             </td>
             <td>{% if tx.stp_eligible %}<span class="badge badge-success badge-soft">YES</span>{% else %}<span class="badge badge-ghost">NO</span>{% endif %}</td>
-            <td>{% if tx.ticket %}<a class="link font-mono text-[10px]" href="{% url 'portal:ticket_detail' tx.ticket.reference %}">{{ tx.ticket.reference }}</a>{% else %}—{% endif %}</td>
+            <td>{% if tx.ticket %}<a class="link font-semibold text-[10px]" href="{% url 'portal:ticket_detail' tx.ticket.reference %}">{{ tx.ticket.reference }}</a>{% else %}—{% endif %}</td>
           </tr>
         {% empty %}
           <tr><td colspan="7" class="py-8 text-center opacity-45">{% translate "No endorsements yet." %}</td></tr>

@@ -2,7 +2,7 @@
 {% load i18n %}
 {% block title %}{% translate "New Endorsement" %}{% endblock %}
 {% block tpa_content %}
-<div class="tw:mx-auto tw:max-w-5xl tw:space-y-3">
+<div class="mx-auto max-w-5xl space-y-3">
   <header class="tpa-page-head">
     <div>
       <div class="tpa-kicker"><i class="bi bi-plus-square"></i>{% translate "TPA / Pipeline / Create" %}</div>
@@ -27,17 +27,17 @@
       {% if form.non_field_errors %}
       <div role="alert" class="alert alert-error"><i class="bi bi-x-octagon"></i><div>{{ form.non_field_errors }}</div></div>
       {% endif %}
-      <div class="tw:grid tw:gap-2.5 tw:md:grid-cols-2">
+      <div class="grid gap-2.5 md:grid-cols-2">
         {% for field in form %}
-        <fieldset class="fieldset {% if field.name == 'remarks' %}tw:md:col-span-2{% endif %}">
+        <fieldset class="fieldset {% if field.name == 'remarks' %}md:col-span-2{% endif %}">
           <legend class="fieldset-legend">{{ field.label }}</legend>
           {{ field }}
-          {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
-          {% for error in field.errors %}<p class="label tw:text-error">{{ error }}</p>{% endfor %}
+          {% if field.help_text %}<p class="label text-[10px] opacity-50">{{ field.help_text }}</p>{% endif %}
+          {% for error in field.errors %}<p class="label text-error">{{ error }}</p>{% endfor %}
         </fieldset>
         {% endfor %}
       </div>
-      <div class="tw:flex tw:justify-end tw:gap-2 tw:border-t tw:border-base-300 tw:pt-3">
+      <div class="flex justify-end gap-2 border-t border-base-300 pt-3">
         <a class="btn btn-ghost btn-sm" href="{% url 'tpa:transaction_list' %}">{% translate "Cancel" %}</a>
         <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-arrow-right"></i>{% translate "Create Endorsement" %}</button>
       </div>

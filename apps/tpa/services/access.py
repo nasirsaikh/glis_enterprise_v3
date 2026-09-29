@@ -1,6 +1,12 @@
 from django.db.models import Q
 
-from ..models import (\n    MemberTransaction,\n    Policy,\n    PolicyAccess,\n    TransactionQuery,\n    TransactionQueryMessage,\n)
+from ..models import (
+    MemberTransaction,
+    Policy,
+    PolicyAccess,
+    TransactionQuery,
+    TransactionQueryMessage,
+)
 
 
 TPA_ENTRY_PERMISSIONS = (

@@ -1,0 +1,47 @@
+{% extends "base_portal.html" %}{% load i18n %}
+{% block title %}{% translate "TPA Inbound Emails" %}{% endblock %}
+{% block content %}
+<div class="tw:space-y-5">
+  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-lg">
+    <div class="tw:d-card-body tw:p-5">
+      <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-4">
+        <div>
+          <span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft">{% translate "AI Intake" %}</span>
+          <h1 class="tw:mt-2 tw:text-3xl tw:font-black">{% translate "Inbound Emails" %}</h1>
+          <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{% translate "Email requests can be extracted by AI, converted to member rows, linked to a GLIS ticket and validated by deterministic rules." %}</p>
+        </div>
+        <div class="tw:flex tw:flex-wrap tw:gap-2">
+          <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "TPA Dashboard" %}</a>
+          {% if can_create_tpa_transaction %}
+          <a class="tw:d-btn tw:d-btn-primary tw:d-btn-sm" href="{% url 'tpa:inbound_email_create' %}"><i class="bi bi-envelope-plus"></i>{% translate "Add Inbound Email" %}</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+    <div class="tw:d-card-body tw:p-0">
+      <div class="tw:overflow-x-auto">
+        <table class="tw:d-table">
+          <thead><tr><th>{% translate "Received" %}</th><th>{% translate "Sender" %}</th><th>{% translate "Subject" %}</th><th>{% translate "State" %}</th><th>{% translate "AI Confidence" %}</th><th>{% translate "Transaction" %}</th></tr></thead>
+          <tbody>
+          {% for email in emails %}
+            <tr>
+              <td>{{ email.received_at|date:"d-M-Y H:i" }}</td>
+              <td>{{ email.sender }}</td>
+              <td><a class="tw:link tw:link-primary" href="{% url 'tpa:inbound_email_detail' email.pk %}">{{ email.subject|default:"(No subject)" }}</a></td>
+              <td><span class="tw:d-badge {% if email.processing_state == 'PROCESSED' %}tw:d-badge-success{% elif email.processing_state == 'REVIEW' or email.processing_state == 'FAILED' %}tw:d-badge-warning{% else %}tw:d-badge-outline{% endif %}">{{ email.get_processing_state_display }}</span></td>
+              <td>{% if email.ai_confidence is not None %}{{ email.ai_confidence }}%{% else %}—{% endif %}</td>
+              <td>{% if email.transaction %}<a class="tw:link" href="{% url 'tpa:transaction_detail' email.transaction.reference %}">{{ email.transaction.reference }}</a>{% else %}—{% endif %}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="tw:py-10 tw:text-center tw:text-base-content/45">{% translate "No inbound emails are available yet." %}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

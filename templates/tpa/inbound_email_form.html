@@ -1,38 +1,38 @@
-{% extends "base_portal.html" %}{% load i18n %}
+{% extends "tpa/base.html" %}{% load i18n %}
 {% block title %}{% translate "Add Inbound Email" %}{% endblock %}
-{% block content %}
+{% block tpa_content %}
 <div class="tw:mx-auto tw:max-w-5xl tw:space-y-5">
-  <section class="tw:d-card tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl">
-    <div class="tw:d-card-body tw:p-5">
+  <section class="card tw:border tw:border-primary/20 tw:bg-base-100 tw:shadow-xl">
+    <div class="card-body tw:p-5">
       <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
         <div>
-          <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">{% translate "AI Email Intake" %}</span>
+          <span class="badge badge-primary badge-soft">{% translate "AI Email Intake" %}</span>
           <h1 class="tw:mt-2 tw:text-3xl tw:font-black">{% translate "Add Inbound Email" %}</h1>
           <p class="tw:mt-1 tw:text-sm tw:text-base-content/55">{% translate "Paste the incoming email and optionally attach member files. Policy/type/date hints are optional and help the AI when the email is ambiguous." %}</p>
         </div>
-        <a class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
+        <a class="btn btn-ghost btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
       </div>
     </div>
   </section>
 
-  <div class="tw:d-alert tw:d-alert-info">
+  <div class="alert alert-info">
     <i class="bi bi-stars"></i>
     <span>{% translate "AI extracts and maps the request only. Policy eligibility, member validation, pricing, STP and approval remain deterministic GLIS rules." %}</span>
   </div>
 
-  <form method="post" enctype="multipart/form-data" class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100">
+  <form method="post" enctype="multipart/form-data" class="card tw:border tw:border-base-300 tw:bg-base-100">
     {% csrf_token %}
-    <div class="tw:d-card-body tw:grid tw:gap-4 tw:md:grid-cols-2">
-      {% if form.non_field_errors %}<div class="tw:d-alert tw:d-alert-error tw:md:col-span-2">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="card-body tw:grid tw:gap-4 tw:md:grid-cols-2">
+      {% if form.non_field_errors %}<div class="alert alert-error tw:md:col-span-2">{{ form.non_field_errors }}</div>{% endif %}
       {% for field in form %}
         {% if field.name == "body_text" or field.name == "attachments" %}
-        <label class="tw:d-form-control tw:md:col-span-2">
+        <label class="form-control tw:md:col-span-2">
         {% elif field.name == "process_with_ai" %}
-        <label class="tw:d-form-control tw:md:col-span-2">
+        <label class="form-control tw:md:col-span-2">
         {% else %}
-        <label class="tw:d-form-control">
+        <label class="form-control">
         {% endif %}
-          <span class="tw:d-label-text tw:mb-1 tw:text-xs tw:font-bold">{{ field.label }}</span>
+          <span class="label-text tw:mb-1 tw:text-xs tw:font-bold">{{ field.label }}</span>
           {% if field.name == "process_with_ai" %}
           <div class="tw:flex tw:items-center tw:gap-3">{{ field }}<span>{% translate "Save and immediately process with the configured AI provider" %}</span></div>
           {% else %}
@@ -43,7 +43,7 @@
         </label>
       {% endfor %}
       <div class="tw:md:col-span-2 tw:flex tw:justify-end">
-        <button class="tw:d-btn tw:d-btn-primary" type="submit"><i class="bi bi-stars"></i>{% translate "Save Inbound Email" %}</button>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-stars"></i>{% translate "Save Inbound Email" %}</button>
       </div>
     </div>
   </form>

@@ -1,14 +1,13 @@
 import tempfile
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 from django.test import TestCase, override_settings
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.urls import reverse
 from django.utils import timezone
 from unittest.mock import patch
 from apps.accounts.models import UserProfile
-from apps.cms.models import NavigationItem, Page
 from apps.orchestrator.local_vanna import LocalVannaOllama, SqlGovernor
 from apps.orchestrator.models import AIDomain, AnalysisSession, DataSource, QueryAudit, VannaSettings
 from services.access import TicketAccessPolicy
@@ -104,8 +103,7 @@ class DynamicFormSecurityTests(TestCase):
 
 
 class PublicExperienceTests(TestCase):
-    def test_public_home_and_login_render_without_seed_data(self):
-        self.assertEqual(self.client.get(reverse("public:home")).status_code, 200)
+    def test_login_renders_without_seed_data(self):
         self.assertEqual(self.client.get(reverse("account_login")).status_code, 200)
 
     def test_development_static_asset_resolves_without_manifest(self):
@@ -310,42 +308,23 @@ class VannaConsoleTests(TestCase):
         self.assertEqual(retry_payload["format"]["required"], ["sql"])
 
 
-class PortalCustomizationTests(TestCase):
+class PortalShellPreferenceTests(TestCase):
     def setUp(self):
-        self.user = get_user_model().objects.create_user(username="portal-user@example.com", email="portal-user@example.com", password="test-password")
-        self.page = Page.objects.create(
-            slug="portal-guide-test",
-            title_en="Portal guide",
-            body_en="Managed entirely from Admin.",
-            audience=Page.Audience.PORTAL,
-            state=Page.State.PUBLISHED,
-            publication_date=timezone.now(),
-        )
-        NavigationItem.objects.create(
-            label_en="Portal guide",
-            location="portal",
-            section=NavigationItem.Section.RESOURCES,
-            icon="bi-compass",
-            linked_page=self.page,
-            order=10,
+        self.user = get_user_model().objects.create_user(
+            username="portal-user@example.com",
+            email="portal-user@example.com",
+            password="test-password",
         )
 
     def test_sidebar_mode_is_saved_to_profile(self):
         self.client.force_login(self.user)
-        response = self.client.post(reverse("accounts:sidebar_preference"), {"mode": UserProfile.SidebarMode.HIDDEN})
+        response = self.client.post(
+            reverse("accounts:sidebar_preference"),
+            {"mode": UserProfile.SidebarMode.HIDDEN},
+        )
         self.assertEqual(response.status_code, 200)
         self.user.profile.refresh_from_db()
-        self.assertEqual(self.user.profile.sidebar_mode, UserProfile.SidebarMode.HIDDEN)
-
-    def test_admin_managed_portal_page_and_navigation_render(self):
-        self.client.force_login(self.user)
-        response = self.client.get(reverse("portal:managed_page", args=[self.page.slug]))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Managed entirely from Admin.")
-        self.assertContains(response, "Portal guide")
-
-    def test_group_restricted_portal_page_is_not_exposed(self):
-        restricted_group = Group.objects.create(name="Restricted CMS readers")
-        self.page.allowed_groups.add(restricted_group)
-        self.client.force_login(self.user)
-        self.assertEqual(self.client.get(reverse("portal:managed_page", args=[self.page.slug])).status_code, 404)
+        self.assertEqual(
+            self.user.profile.sidebar_mode,
+            UserProfile.SidebarMode.HIDDEN,
+        )

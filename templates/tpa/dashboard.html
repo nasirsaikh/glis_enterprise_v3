@@ -6,9 +6,10 @@
 <div class="tw:flex tw:flex-wrap tw:items-end tw:justify-between tw:gap-4"><div><span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft">{% translate "TPA Operations" %}</span><h1 class="tw:mt-3 tw:text-4xl tw:font-black">{% translate "TPA Member Management" %}</h1><p class="tw:mt-2 tw:text-base-content/60">{% translate "Corporate enrollment, member lifecycle and endorsement operations." %}</p></div>
 <div class="tw:flex tw:flex-wrap tw:gap-2">
 <a class="tw:d-btn tw:d-btn-ghost tw:rounded-full" href="{% url 'tpa:user_guide' %}"><i class="bi bi-book"></i>{% translate "User Guide" %}</a>
+<a class="tw:d-btn tw:d-btn-outline tw:rounded-full" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-building-add"></i>{% translate "Initial Policy Enrollment" %}</a>
 <a class="tw:d-btn tw:d-btn-outline tw:rounded-full" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-inbox"></i>{% translate "Inbound Emails" %}</a>
 {% if can_create_tpa_transaction %}<a class="tw:d-btn tw:d-btn-secondary tw:rounded-full" href="{% url 'tpa:inbound_email_create' %}"><i class="bi bi-envelope-plus"></i>{% translate "Add Inbound Email" %}</a>{% endif %}
-{% if can_create_tpa_transaction %}<a class="tw:d-btn tw:d-btn-primary tw:rounded-full" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>{% endif %}
+{% if can_create_endorsement %}<a class="tw:d-btn tw:d-btn-primary tw:rounded-full" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>{% endif %}
 </div></div></div></section>
 <div style="display:flex;gap:.75rem;overflow-x:auto;padding-bottom:.25rem;">
 <div class="tw:d-stat tw:rounded-2xl tw:border tw:border-base-300 tw:bg-base-100" style="flex:1 0 165px;"><div class="tw:d-stat-title">Active Sponsors</div><div class="tw:d-stat-value tw:text-2xl">{{ active_sponsors }}</div></div>

@@ -126,7 +126,7 @@ class TPACoreTests(TestCase):
 
     def test_member_add_can_validate_approve_and_process(self):
         tx = self._transaction(status=MemberTransaction.Status.PENDING_VALIDATION)
-        MemberAction.objects.create(
+        action = MemberAction.objects.create(
             transaction=tx,
             action=tx.transaction_type,
             row_number=1,
@@ -153,10 +153,22 @@ class TPACoreTests(TestCase):
         self.user.save(update_fields=["is_superuser", "is_staff"])
 
         approve_transaction(tx, self.user)
-        process_transaction(tx, self.user)
+        tx.refresh_from_db()
+        self.assertEqual(tx.status, MemberTransaction.Status.SENT_TO_TPA)
+
+        start_tpa_processing(tx, self.user)
+        action.refresh_from_db()
+        update_tpa_action(
+            action,
+            self.user,
+            card_number="CARD-E-100",
+            effective_date=date(2026, 7, 1),
+            amount=action.calculated_premium,
+        )
+        complete_tpa_transaction(tx, self.user)
         tx.refresh_from_db()
 
-        self.assertEqual(tx.status, MemberTransaction.Status.PROCESSED)
+        self.assertEqual(tx.status, MemberTransaction.Status.COMPLETED)
         self.assertTrue(
             MemberPolicyEnrollment.objects.filter(
                 policy=self.policy,
@@ -227,7 +239,7 @@ class TPACoreTests(TestCase):
 
     def test_dependent_is_linked_to_principal_during_processing(self):
         tx = self._transaction(status=MemberTransaction.Status.PENDING_VALIDATION)
-        MemberAction.objects.create(
+        parent_action = MemberAction.objects.create(
             transaction=tx,
             action=tx.transaction_type,
             row_number=1,
@@ -242,7 +254,7 @@ class TPACoreTests(TestCase):
                 "national_id": "CID-FAMILY-1",
             },
         )
-        MemberAction.objects.create(
+        child_action = MemberAction.objects.create(
             transaction=tx,
             action=tx.transaction_type,
             row_number=2,
@@ -269,7 +281,20 @@ class TPACoreTests(TestCase):
         self.user.save(update_fields=["is_superuser", "is_staff"])
 
         approve_transaction(tx, self.user)
-        process_transaction(tx, self.user)
+        start_tpa_processing(tx, self.user)
+        for action, card in (
+            (parent_action, "CARD-FAMILY-1"),
+            (child_action, "CARD-FAMILY-2"),
+        ):
+            action.refresh_from_db()
+            update_tpa_action(
+                action,
+                self.user,
+                card_number=card,
+                effective_date=date(2026, 7, 1),
+                amount=action.calculated_premium,
+            )
+        complete_tpa_transaction(tx, self.user)
 
         parent = Member.objects.get(employee_id="E-FAMILY-1")
         child = Member.objects.get(employee_id="E-FAMILY-2")

@@ -288,18 +288,20 @@
             <tr>
               <td><strong>{{ a.display_first_name }} {{ a.display_last_name }}</strong><div class="tw:text-xs tw:text-base-content/45">{{ a.display_employee_id }}</div></td>
               {% if can_tpa_process and tx.status == "tpa_in_progress" %}
-              <form method="post" action="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}">
-                {% csrf_token %}
-                <td><input class="tw:d-input tw:d-input-bordered tw:d-input-sm tw:w-40" name="card_number" value="{{ a.card_number }}" {% if tx.transaction_type == 'MEMBER_ADD' or initial_setup %}required{% endif %}></td>
-                <td><input class="tw:d-input tw:d-input-bordered tw:d-input-sm" type="date" name="effective_date" value="{% if a.tpa_effective_date %}{{ a.tpa_effective_date|date:'Y-m-d' }}{% else %}{{ tx.effective_date|date:'Y-m-d' }}{% endif %}" required></td>
-                <td><input class="tw:d-input tw:d-input-bordered tw:d-input-sm tw:w-36" name="amount" type="number" step="0.001" value="{% if a.tpa_premium_amount is not None %}{{ a.tpa_premium_amount }}{% else %}{{ a.calculated_premium }}{% endif %}" required></td>
+                <td>
+                  <form id="tpa-action-{{ a.pk }}" method="post" action="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}">
+                    {% csrf_token %}
+                  </form>
+                  <input class="tw:d-input tw:d-input-bordered tw:d-input-sm tw:w-40" form="tpa-action-{{ a.pk }}" name="card_number" value="{{ a.card_number }}" {% if tx.transaction_type == 'MEMBER_ADD' or initial_setup %}required{% endif %}>
+                </td>
+                <td><input class="tw:d-input tw:d-input-bordered tw:d-input-sm" form="tpa-action-{{ a.pk }}" type="date" name="effective_date" value="{% if a.tpa_effective_date %}{{ a.tpa_effective_date|date:'Y-m-d' }}{% else %}{{ tx.effective_date|date:'Y-m-d' }}{% endif %}" required></td>
+                <td><input class="tw:d-input tw:d-input-bordered tw:d-input-sm tw:w-36" form="tpa-action-{{ a.pk }}" name="amount" type="number" step="0.001" value="{% if a.tpa_premium_amount != None %}{{ a.tpa_premium_amount }}{% else %}{{ a.calculated_premium }}{% endif %}" required></td>
                 <td>{{ a.processing_status|default:"Pending" }}</td>
-                <td><button class="tw:d-btn tw:d-btn-info tw:d-btn-xs" type="submit">{% translate "Save" %}</button></td>
-              </form>
+                <td><button class="tw:d-btn tw:d-btn-info tw:d-btn-xs" form="tpa-action-{{ a.pk }}" type="submit">{% translate "Save" %}</button></td>
               {% else %}
                 <td>{{ a.card_number|default:"—" }}</td>
                 <td>{{ a.tpa_effective_date|date:"d-M-Y"|default:"—" }}</td>
-                <td>{% if a.tpa_premium_amount is not None %}{{ tx.currency }} {{ a.tpa_premium_amount }}{% else %}—{% endif %}</td>
+                <td>{% if a.tpa_premium_amount != None %}{{ tx.currency }} {{ a.tpa_premium_amount }}{% else %}—{% endif %}</td>
                 <td>{{ a.processing_status|default:"Pending" }}</td><td></td>
               {% endif %}
             </tr>
@@ -314,7 +316,13 @@
       {% if open_query %}
       <div class="tw:mt-5 tw:rounded-2xl tw:border tw:border-warning/30 tw:bg-warning/5 tw:p-4">
         <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-3">
-          <div><span class="tw:d-badge tw:d-badge-warning tw:d-badge-soft">{% translate "Open Query" %}</span><h3 class="tw:mt-1 tw:font-black">{{ open_query.subject }}</h3></div>
+          <div>
+            <div class="tw:flex tw:flex-wrap tw:items-center tw:gap-2">
+              <span class="tw:d-badge tw:d-badge-warning tw:d-badge-soft">{% translate "Open Query" %}</span>
+              {% if open_query.ticket %}<span class="tw:d-badge tw:d-badge-ghost">{{ open_query.ticket.reference }}</span>{% endif %}
+            </div>
+            <h3 class="tw:mt-1 tw:font-black">{{ open_query.subject }}</h3>
+          </div>
           {% if can_tpa_process %}
           <form method="post" action="{% url 'tpa:transaction_resolve_query' tx.reference open_query.pk %}">{% csrf_token %}<button class="tw:d-btn tw:d-btn-success tw:d-btn-sm" type="submit"><i class="bi bi-check2"></i>{% translate "Resolve & Resume" %}</button></form>
           {% endif %}
@@ -349,6 +357,32 @@
             {{ query_raise_form.message }}
             <button class="tw:d-btn tw:d-btn-warning tw:d-btn-sm" type="submit"><i class="bi bi-chat-dots"></i>{% translate "Raise Query" %}</button>
           </form>
+        </div>
+      </details>
+      {% endif %}
+
+      {% if query_history %}
+      <details class="tw:d-collapse tw:d-collapse-arrow tw:mt-5 tw:border tw:border-base-300">
+        <summary class="tw:d-collapse-title tw:text-sm tw:font-bold">{% translate "Previous Query Conversations" %}</summary>
+        <div class="tw:d-collapse-content tw:space-y-4">
+          {% for q in query_history %}
+            {% if q.status == "RESOLVED" %}
+            <div class="tw:rounded-xl tw:border tw:border-base-300 tw:p-4">
+              <div class="tw:flex tw:flex-wrap tw:items-center tw:justify-between tw:gap-2">
+                <div><strong>{{ q.subject }}</strong>{% if q.ticket %}<span class="tw:d-badge tw:d-badge-ghost tw:ms-2">{{ q.ticket.reference }}</span>{% endif %}</div>
+                <span class="tw:d-badge tw:d-badge-success tw:d-badge-soft">{% translate "Resolved" %}</span>
+              </div>
+              <div class="tw:mt-3 tw:space-y-2">
+                {% for msg in q.messages.all %}
+                <div class="tw:d-chat {% if msg.sender_id == request.user.id %}tw:d-chat-end{% else %}tw:d-chat-start{% endif %}">
+                  <div class="tw:d-chat-header tw:text-xs">{{ msg.sender.get_full_name|default:msg.sender.username }} · {{ msg.created_at|date:"d-M-Y H:i" }}</div>
+                  <div class="tw:d-chat-bubble">{{ msg.ticket_comment.body|linebreaksbr }}</div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          {% endfor %}
         </div>
       </details>
       {% endif %}

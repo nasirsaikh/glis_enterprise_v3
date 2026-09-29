@@ -3,9 +3,16 @@ from datetime import date, datetime
 from django.db import transaction
 from django.utils import timezone
 
-from apps.tickets.models import TicketEvent
+from apps.tickets.models import TicketComment, TicketEvent
 
-from ..models import Member, MemberPolicyEnrollment, MemberTransaction, TransactionEvent
+from ..models import (
+    Member,
+    MemberPolicyEnrollment,
+    MemberTransaction,
+    TransactionEvent,
+    TransactionQuery,
+    TransactionQueryMessage,
+)
 from .access import can_approve_tpa_transaction, can_process_tpa_transaction
 from .stp import evaluate_stp
 from .validation import validate_transaction
@@ -49,6 +56,230 @@ def _data(action):
         **(action.extracted_data or {}),
         **(action.corrected_data or {}),
     }
+
+
+@transaction.atomic
+def dispatch_to_tpa(tx, actor=None):
+    if tx.status not in {tx.Status.APPROVED, tx.Status.AUTO_APPROVED}:
+        raise ValueError("Transaction must be approved before dispatch to TPA.")
+    tx.status = tx.Status.SENT_TO_TPA
+    tx.metadata = {
+        **(tx.metadata or {}),
+        "tpa_route": {
+            "organization_id": tx.policy.tpa_organization_id,
+            "organization": (
+                tx.policy.tpa_organization.name_en
+                if tx.policy.tpa_organization_id
+                else "GLIS TPA Operations"
+            ),
+            "dispatched_at": timezone.now().isoformat(),
+        },
+    }
+    tx.save(update_fields=["status", "metadata", "updated_at"])
+    _event(
+        tx,
+        actor,
+        "sent_to_tpa",
+        "Transaction dispatched to TPA processing.",
+        {"tpa_organization_id": tx.policy.tpa_organization_id},
+    )
+    return tx
+
+
+@transaction.atomic
+def start_tpa_processing(tx, actor):
+    if tx.status != tx.Status.SENT_TO_TPA:
+        raise ValueError("Transaction is not waiting for TPA processing.")
+    if not can_process_tpa_transaction(actor, tx):
+        raise PermissionError("You do not have TPA processing authority.")
+    tx.status = tx.Status.TPA_IN_PROGRESS
+    tx.save(update_fields=["status", "updated_at"])
+    _event(tx, actor, "tpa_started", "TPA processing started.")
+    return tx
+
+
+@transaction.atomic
+def update_tpa_action(action, actor, *, card_number="", effective_date=None, amount=None):
+    tx = action.transaction
+    if tx.status != tx.Status.TPA_IN_PROGRESS:
+        raise ValueError("TPA member processing is available only while TPA processing is in progress.")
+    if not can_process_tpa_transaction(actor, tx):
+        raise PermissionError("You do not have TPA processing authority.")
+
+    action.card_number = str(card_number or "").strip()
+    action.tpa_effective_date = _as_date(effective_date) if effective_date else tx.effective_date
+    action.tpa_premium_amount = (
+        amount if amount not in (None, "") else action.calculated_premium
+    )
+    action.save(
+        update_fields=[
+            "card_number",
+            "tpa_effective_date",
+            "tpa_premium_amount",
+            "updated_at",
+        ]
+    )
+    _event(
+        tx,
+        actor,
+        "tpa_member_updated",
+        f"TPA processing data updated for row {action.row_number or action.pk}.",
+        {
+            "action_id": action.pk,
+            "card_number": action.card_number,
+            "effective_date": action.tpa_effective_date.isoformat()
+            if action.tpa_effective_date
+            else None,
+            "amount": str(action.tpa_premium_amount)
+            if action.tpa_premium_amount is not None
+            else None,
+        },
+    )
+    return action
+
+
+@transaction.atomic
+def raise_tpa_query(tx, actor, subject, message):
+    if tx.status not in {tx.Status.SENT_TO_TPA, tx.Status.TPA_IN_PROGRESS}:
+        raise ValueError("A TPA query can be raised only during TPA processing.")
+    if not can_process_tpa_transaction(actor, tx):
+        raise PermissionError("You do not have TPA processing authority.")
+
+    if not tx.ticket_id:
+        from .ticketing import create_ticket_for_transaction
+
+        create_ticket_for_transaction(tx, actor=actor)
+        tx.refresh_from_db(fields=["ticket"])
+
+    query = TransactionQuery.objects.create(
+        transaction=tx,
+        subject=str(subject or "").strip() or "Additional information required",
+        raised_by=actor,
+        pre_query_status=tx.status,
+    )
+    comment = TicketComment.objects.create(
+        ticket=tx.ticket,
+        author=actor,
+        body=(
+            f"TPA QUERY — {query.subject}\n\n"
+            f"{str(message or '').strip()}"
+        ),
+        is_internal=False,
+    )
+    TransactionQueryMessage.objects.create(
+        query=query,
+        ticket_comment=comment,
+        sender=actor,
+        kind=TransactionQueryMessage.Kind.QUERY,
+    )
+    tx.status = tx.Status.TPA_QUERY
+    tx.save(update_fields=["status", "updated_at"])
+    _event(
+        tx,
+        actor,
+        "tpa_query_raised",
+        f"TPA query raised: {query.subject}",
+        {"query_id": query.pk, "ticket_comment_id": comment.pk},
+    )
+    return query
+
+
+@transaction.atomic
+def post_query_message(query, actor, message, *, kind=None):
+    if query.status != TransactionQuery.Status.OPEN:
+        raise ValueError("This query is already resolved.")
+    tx = query.transaction
+    if not tx.ticket_id:
+        raise ValueError("The query is not linked to a GLIS ticket.")
+    text = str(message or "").strip()
+    if not text:
+        raise ValueError("Query message cannot be empty.")
+
+    comment = TicketComment.objects.create(
+        ticket=tx.ticket,
+        author=actor,
+        body=text,
+        is_internal=False,
+    )
+    TransactionQueryMessage.objects.create(
+        query=query,
+        ticket_comment=comment,
+        sender=actor,
+        kind=kind or TransactionQueryMessage.Kind.REPLY,
+    )
+    _event(
+        tx,
+        actor,
+        "tpa_query_message",
+        f"Query message added to {query.subject}.",
+        {"query_id": query.pk, "ticket_comment_id": comment.pk},
+    )
+    return comment
+
+
+@transaction.atomic
+def resolve_tpa_query(query, actor):
+    tx = query.transaction
+    if query.status != TransactionQuery.Status.OPEN:
+        return tx
+    if not can_process_tpa_transaction(actor, tx):
+        raise PermissionError("You do not have TPA processing authority.")
+
+    query.status = TransactionQuery.Status.RESOLVED
+    query.resolved_by = actor
+    query.resolved_at = timezone.now()
+    query.save(
+        update_fields=[
+            "status",
+            "resolved_by",
+            "resolved_at",
+            "updated_at",
+        ]
+    )
+    tx.status = query.pre_query_status or tx.Status.TPA_IN_PROGRESS
+    if tx.status == tx.Status.SENT_TO_TPA:
+        tx.status = tx.Status.TPA_IN_PROGRESS
+    tx.save(update_fields=["status", "updated_at"])
+    _event(
+        tx,
+        actor,
+        "tpa_query_resolved",
+        f"TPA query resolved: {query.subject}",
+        {"query_id": query.pk},
+    )
+    return tx
+
+
+@transaction.atomic
+def complete_tpa_transaction(tx, actor):
+    if tx.status != tx.Status.TPA_IN_PROGRESS:
+        raise ValueError("Transaction must be in TPA processing before completion.")
+    if not can_process_tpa_transaction(actor, tx):
+        raise PermissionError("You do not have TPA processing authority.")
+    if tx.queries.filter(status=TransactionQuery.Status.OPEN).exists():
+        raise ValueError("Resolve all open queries before completing the transaction.")
+
+    if tx.transaction_type != tx.Type.POLICY_CANCEL:
+        for action in tx.member_actions.all():
+            if action.validation_status == action.Result.ERROR:
+                raise ValueError("Resolve member validation errors before completion.")
+            if not action.tpa_effective_date:
+                raise ValueError(
+                    f"TPA effective date is required for row {action.row_number or action.pk}."
+                )
+            if action.tpa_premium_amount is None:
+                raise ValueError(
+                    f"TPA premium/refund amount is required for row {action.row_number or action.pk}."
+                )
+            if tx.transaction_type in {
+                tx.Type.NEW_POLICY_ENROLLMENT,
+                tx.Type.MEMBER_ADD,
+            } and not action.card_number:
+                raise ValueError(
+                    f"Card/member number is required for row {action.row_number or action.pk}."
+                )
+
+    return process_transaction(tx, actor)
 
 
 @transaction.atomic
@@ -102,6 +333,8 @@ def run_validation(tx, actor=None):
         f"Validation completed: {tx.validation_score}% · {tx.get_status_display()}",
         {"stp_eligible": eligible, "stp_blockers": blockers},
     )
+    if tx.status == tx.Status.AUTO_APPROVED:
+        return dispatch_to_tpa(tx, actor=actor)
     return tx
 
 
@@ -123,7 +356,7 @@ def approve_transaction(tx, actor):
     tx.approved_by = actor
     tx.save(update_fields=["status", "approved_at", "approved_by", "updated_at"])
     _event(tx, actor, "approved", "TPA transaction approved")
-    return tx
+    return dispatch_to_tpa(tx, actor=actor)
 
 
 @transaction.atomic
@@ -149,6 +382,7 @@ def sync_from_ticket_approval(tx, actor=None):
         tx.approved_by = approver
         tx.save(update_fields=["status", "approved_at", "approved_by", "updated_at"])
         _event(tx, approver or actor, "approved", "Linked GLIS approval completed")
+        return dispatch_to_tpa(tx, actor=approver or actor)
     return tx
 
 
@@ -290,8 +524,13 @@ def _process_termination(tx, action, void=False):
 
 @transaction.atomic
 def process_transaction(tx, actor):
-    if tx.status not in {tx.Status.APPROVED, tx.Status.AUTO_APPROVED}:
-        raise ValueError("Transaction must be approved before processing.")
+    original_status = tx.status
+    if tx.status not in {
+        tx.Status.APPROVED,
+        tx.Status.AUTO_APPROVED,
+        tx.Status.TPA_IN_PROGRESS,
+    }:
+        raise ValueError("Transaction must be approved or in TPA processing before processing.")
     if not can_process_tpa_transaction(actor, tx):
         raise PermissionError("You do not have TPA processing authority.")
 
@@ -366,15 +605,37 @@ def process_transaction(tx, actor):
         tx.status = tx.Status.FAILED
         tx.metadata = {**(tx.metadata or {}), "processing_errors": errors}
     else:
-        tx.status = tx.Status.PROCESSED
+        tx.status = (
+            tx.Status.COMPLETED
+            if original_status == tx.Status.TPA_IN_PROGRESS
+            else tx.Status.PROCESSED
+        )
         tx.processed_at = timezone.now()
+        if tx.transaction_type == tx.Type.NEW_POLICY_ENROLLMENT:
+            tx.policy.status = tx.policy.Status.ACTIVE
+            tx.policy.initial_enrollment_completed_at = tx.processed_at
+            tx.policy.initial_enrollment_completed_by = actor
+            tx.policy.save(
+                update_fields=[
+                    "status",
+                    "initial_enrollment_completed_at",
+                    "initial_enrollment_completed_by",
+                    "updated_at",
+                ]
+            )
 
     tx.save(update_fields=["status", "processed_at", "metadata", "updated_at"])
     _event(
         tx,
         actor,
         "processed" if not errors else "processing_failed",
-        "TPA transaction processed" if not errors else "TPA transaction processing failed",
+        (
+            "TPA transaction completed"
+            if not errors and tx.status == tx.Status.COMPLETED
+            else "TPA transaction processed"
+            if not errors
+            else "TPA transaction processing failed"
+        ),
         {"errors": errors},
     )
     return tx

@@ -2,6 +2,8 @@ from django.contrib import admin
 
 from .models import (
     BenefitPlan,
+    CardDispatch,
+    ExtractionAttempt,
     InboundEmail,
     InboundEmailAttachment,
     Member,
@@ -11,6 +13,8 @@ from .models import (
     Policy,
     PolicyAccess,
     SourceDocument,
+    TPAEmailAuthority,
+    TPAMailboxSyncState,
     TPAOrganization,
     TransactionEvent,
     TransactionQuery,
@@ -192,22 +196,29 @@ class InboundEmailAdmin(admin.ModelAdmin):
         "sender",
         "subject",
         "provider",
+        "mailbox",
+        "classification",
         "processing_state",
         "ai_confidence",
         "transaction",
         "created_by",
     )
-    list_filter = ("provider", "processing_state")
+    list_filter = ("provider", "processing_state", "classification", "mailbox")
     search_fields = (
         "provider_message_id",
+        "graph_message_id",
+        "internet_message_id",
+        "conversation_id",
         "sender",
         "recipient",
         "subject",
         "transaction__reference",
     )
     readonly_fields = (
+        "raw_ai_output",
         "ai_extracted_payload",
         "ai_confidence",
+        "classification_confidence",
         "processing_error",
         "processed_at",
     )
@@ -240,7 +251,7 @@ class InboundEmailAttachmentAdmin(admin.ModelAdmin):
 class TransactionQueryMessageInline(admin.TabularInline):
     model = TransactionQueryMessage
     extra = 0
-    readonly_fields = ("ticket_comment", "sender", "kind", "created_at")
+    readonly_fields = ("ticket_comment", "sender", "kind", "audience", "created_at")
 
 
 @admin.register(TransactionQuery)
@@ -248,13 +259,15 @@ class TransactionQueryAdmin(admin.ModelAdmin):
     list_display = (
         "transaction",
         "subject",
+        "purpose",
+        "audience",
         "status",
         "raised_by",
         "resolved_by",
         "resolved_at",
         "created_at",
     )
-    list_filter = ("status",)
+    list_filter = ("status", "purpose", "audience")
     search_fields = (
         "transaction__reference",
         "subject",
@@ -278,10 +291,11 @@ class TransactionQueryMessageAdmin(admin.ModelAdmin):
         "query",
         "sender",
         "kind",
+        "audience",
         "ticket_comment",
         "created_at",
     )
-    list_filter = ("kind",)
+    list_filter = ("kind", "audience")
     search_fields = (
         "query__transaction__reference",
         "query__subject",
@@ -296,3 +310,80 @@ class TransactionQueryMessageAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
+
+
+
+@admin.register(TPAEmailAuthority)
+class TPAEmailAuthorityAdmin(admin.ModelAdmin):
+    list_display = (
+        "email_address",
+        "organization",
+        "policy",
+        "active",
+        "valid_from",
+        "valid_until",
+    )
+    list_filter = ("active", "organization")
+    search_fields = ("email_address", "organization__name_en", "policy__policy_number")
+    filter_horizontal = ()
+
+
+@admin.register(TPAMailboxSyncState)
+class TPAMailboxSyncStateAdmin(admin.ModelAdmin):
+    list_display = (
+        "provider",
+        "mailbox",
+        "folder",
+        "last_successful_at",
+        "last_attempted_at",
+        "messages_processed",
+        "messages_review",
+        "messages_ignored",
+        "messages_failed",
+    )
+    readonly_fields = (
+        "delta_link",
+        "last_attempted_at",
+        "last_successful_at",
+        "last_error",
+        "messages_processed",
+        "messages_review",
+        "messages_ignored",
+        "messages_failed",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(ExtractionAttempt)
+class ExtractionAttemptAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "stage", "status", "provider", "model_name")
+    list_filter = ("status", "stage")
+    readonly_fields = (
+        "source_document",
+        "inbound_attachment",
+        "provider",
+        "stage",
+        "status",
+        "model_name",
+        "error",
+        "raw_output",
+        "metadata",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(CardDispatch)
+class CardDispatchAdmin(admin.ModelAdmin):
+    list_display = (
+        "transaction",
+        "method",
+        "status",
+        "tracking_number",
+        "dispatched_at",
+        "delivered_or_collected_at",
+        "recorded_by",
+    )
+    list_filter = ("method", "status")
+    search_fields = ("transaction__reference", "tracking_number", "recipient_name")

@@ -39,6 +39,8 @@
           <div><dt class="opacity-45">{% translate "Internet Message ID" %}</dt><dd class="break-all tpa-mono">{{ email.internet_message_id|default:"—" }}</dd></div>
           <div><dt class="opacity-45">{% translate "Conversation ID" %}</dt><dd class="break-all tpa-mono">{{ email.conversation_id|default:"—" }}</dd></div>
           <div><dt class="opacity-45">{% translate "Processing stage" %}</dt><dd>{{ email.processing_stage|default:"—" }}</dd></div>
+          <div><dt class="opacity-45">{% translate "AI Provider" %}</dt><dd>{{ email.ai_provider_name|default:"—" }}</dd></div>
+          <div><dt class="opacity-45">{% translate "AI Model" %}</dt><dd class="tpa-mono">{{ email.ai_model_name|default:"—" }}</dd></div>
           <div><dt class="opacity-45">To</dt><dd>{{ email.to_addresses|default:"—" }}</dd></div>
           <div><dt class="opacity-45">CC</dt><dd>{{ email.cc_addresses|default:"—" }}</dd></div>
         </dl>

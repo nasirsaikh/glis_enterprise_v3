@@ -239,6 +239,7 @@ class InboundEmail(TimeStampedModel):
         PROCESSED="PROCESSED","Processed"
         FAILED="FAILED","Failed"
     provider=models.CharField(max_length=40, blank=True)
+    created_by=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="tpa_inbound_emails", on_delete=models.SET_NULL)
     provider_message_id=models.CharField(max_length=255)
     sender=models.EmailField()
     recipient=models.EmailField()

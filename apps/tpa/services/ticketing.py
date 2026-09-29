@@ -56,12 +56,16 @@ def create_query_ticket(tx, query, actor, message):
     now = timezone.now()
     sla = parent.sla_policy
     ticket = Ticket.objects.create(
-        subject=f"TPA Query · {tx.reference} · {query.subject}",
+        subject=f"{query.get_purpose_display()} · {tx.reference} · {query.subject}",
         description=(
-            f"Query raised during TPA processing for {tx.reference}.\n\n"
+            f"{query.get_purpose_display()} for {tx.reference}.\n\n"
             f"{str(message or '').strip()}"
         ),
-        requester=tx.requester,
+        requester=(
+            actor
+            if getattr(query, "audience", "") == "INSURER_TPA_INTERNAL"
+            else tx.requester
+        ),
         project=parent.project,
         product=parent.product,
         category=parent.category,
@@ -72,6 +76,8 @@ def create_query_ticket(tx, query, actor, message):
         tags=[
             "tpa",
             "tpa-query",
+            str(getattr(query, "purpose", "TPA")).lower(),
+            str(getattr(query, "audience", "CLIENT_VISIBLE")).lower(),
             tx.reference.lower(),
             tx.transaction_type.lower().replace("_", "-"),
         ],

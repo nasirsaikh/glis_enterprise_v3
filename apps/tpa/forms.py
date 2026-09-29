@@ -354,10 +354,10 @@ class InboundEmailForm(forms.ModelForm):
         widget=MultipleFileInput(
             attrs={
                 "multiple": True,
-                "accept": ".csv,.xlsx,.jpg,.jpeg,.png,.webp,.pdf",
+                "accept": ".csv,.xlsx,.xls,.jpg,.jpeg,.png,.webp,.pdf",
             }
         ),
-        help_text="CSV/XLSX are imported directly. Images use a vision AI provider. PDF is retained for review.",
+        help_text="CSV/XLSX/XLS are parsed directly. PDF and image evidence use text extraction/OCR plus AI field mapping when required.",
     )
     process_with_ai = forms.BooleanField(
         required=False,

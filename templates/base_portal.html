@@ -20,6 +20,8 @@
       x-data="siteShell"
       data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}"
       data-theme-preference-url="{% url 'accounts:theme_preference' %}"
+      data-sidebar-preference-url="{% url 'accounts:sidebar_preference' %}"
+      data-sidebar-mode="{{ user.profile.sidebar_mode|default:'mini' }}"
       data-user-theme="{{ user.profile.theme|default:'system' }}"
       data-user-name="{{ user.get_full_name|default:user.email }}"
       data-user-initial="{{ user.first_name|default:user.email|slice:':1'|upper }}">

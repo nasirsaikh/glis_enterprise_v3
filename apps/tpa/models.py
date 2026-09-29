@@ -27,7 +27,12 @@ class TPAOrganization(TimeStampedModel):
 class Policy(TimeStampedModel):
     class Status(models.TextChoices):
         DRAFT="draft","Draft"; ACTIVE="active","Active"; SUSPENDED="suspended","Suspended"; EXPIRED="expired","Expired"; CANCELLED="cancelled","Cancelled"
-    sponsor=models.ForeignKey(TPAOrganization, related_name="sponsored_policies", on_delete=models.PROTECT, limit_choices_to={"organization_type":"CORPORATE"})
+    sponsor=models.ForeignKey(
+        TPAOrganization,
+        related_name="sponsored_policies",
+        on_delete=models.PROTECT,
+        limit_choices_to={"organization_type__in": ["INDIVIDUAL", "CORPORATE"]},
+    )
     insurance_company=models.ForeignKey(TPAOrganization, related_name="insured_policies", on_delete=models.PROTECT, limit_choices_to={"organization_type":"INSURER"})
     tpa_organization=models.ForeignKey(
         TPAOrganization,

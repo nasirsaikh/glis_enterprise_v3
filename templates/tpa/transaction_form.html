@@ -17,20 +17,20 @@
     <span>{% translate "New policy onboarding and opening census are handled under Initial Policy Enrollment." %}</span>
   </div>
 
-  <form method="post" class="card">
+  <form method="post" class="card tw:d-card">
     {% csrf_token %}
     <div class="tpa-section-head">
       <div><div class="tpa-eyebrow">{% translate "Request control" %}</div><h2 class="tpa-section-title">{% translate "POLICY & ENDORSEMENT" %}</h2></div>
       <span class="badge badge-outline">{% translate "REQUIRED" %}</span>
     </div>
-    <div class="card-body">
+    <div class="card-body tw:d-card-body">
       {% if form.non_field_errors %}
       <div role="alert" class="alert alert-error"><i class="bi bi-x-octagon"></i><div>{{ form.non_field_errors }}</div></div>
       {% endif %}
       <div class="tw:grid tw:gap-2.5 tw:md:grid-cols-2">
         {% for field in form %}
         <fieldset class="fieldset {% if field.name == 'remarks' %}tw:md:col-span-2{% endif %}">
-          <legend class="fieldset-legend">{{ field.label }}</legend>
+          <legend class="fieldset-legend tw:d-fieldset-legend">{{ field.label }}</legend>
           {{ field }}
           {% if field.help_text %}<p class="label tw:text-[10px] tw:opacity-50">{{ field.help_text }}</p>{% endif %}
           {% for error in field.errors %}<p class="label tw:text-error">{{ error }}</p>{% endfor %}

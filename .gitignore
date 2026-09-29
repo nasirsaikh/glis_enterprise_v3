@@ -54,3 +54,9 @@ node_modules/
 # Temporary files
 *.tmp
 *.bak
+
+# Local Tailwind/daisyUI build tools (output.css is committed)
+static/css/tailwindcss
+static/css/tailwindcss.exe
+static/css/daisyui.mjs
+static/css/daisyui-theme.mjs

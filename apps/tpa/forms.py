@@ -209,9 +209,10 @@ class MemberRowForm(forms.Form):
     national_id = forms.CharField(required=False, label="Civil / National ID")
     passport_number = forms.CharField(required=False)
 
-    def __init__(self, *args, transaction=None, **kwargs):
+    def __init__(self, *args, transaction=None, current_action=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.transaction = transaction
+        self.current_action = current_action
 
         plans = transaction.policy.plans.filter(is_active=True).order_by("code") if transaction else []
         self.fields["plan_code"].choices = [
@@ -295,6 +296,43 @@ class MemberRowForm(forms.Form):
             data["principal_member_id"] = reference.split(":", 1)[1]
         elif reference.startswith("action:"):
             data["principal_action_id"] = reference.split(":", 1)[1]
+
+        if self.transaction:
+            active = MemberPolicyEnrollment.objects.filter(
+                policy=self.transaction.policy,
+                enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
+            )
+            duplicate_checks = (
+                ("employee_id", "member__employee_id", "Employee number"),
+                ("national_id", "member__national_id", "Civil/National ID"),
+                ("passport_number", "member__passport_number", "Passport number"),
+            )
+            for field_name, lookup, label in duplicate_checks:
+                value = str(data.get(field_name) or "").strip()
+                if not value:
+                    continue
+                if active.filter(**{f"{lookup}__iexact": value}).exists():
+                    self.add_error(
+                        field_name,
+                        f"{label} is already active under this policy.",
+                    )
+                    continue
+
+                rows = self.transaction.member_actions.all()
+                if self.current_action is not None and self.current_action.pk:
+                    rows = rows.exclude(pk=self.current_action.pk)
+                for action in rows:
+                    row = {
+                        **(action.submitted_data or {}),
+                        **(action.extracted_data or {}),
+                        **(action.corrected_data or {}),
+                    }
+                    if str(row.get(field_name) or "").strip().casefold() == value.casefold():
+                        self.add_error(
+                            field_name,
+                            f"{label} already exists in this endorsement.",
+                        )
+                        break
 
         return data
 

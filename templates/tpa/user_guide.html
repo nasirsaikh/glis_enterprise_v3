@@ -1,7 +1,7 @@
 {% extends "tpa/base.html" %}{% load i18n %}
 {% block title %}{% translate "TPA User Guide" %}{% endblock %}
 {% block tpa_content %}
-<div class="tw:mx-auto tw:max-w-7xl tw:space-y-3">
+<div class="mx-auto max-w-7xl space-y-3">
   <header class="tpa-page-head">
     <div>
       <div class="tpa-kicker"><i class="bi bi-book"></i>{% translate "TPA / Operations Manual" %}</div>
@@ -11,12 +11,12 @@
     <a class="btn btn-outline btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "TPA Dashboard" %}</a>
   </header>
 
-  <div class="tw:grid tw:gap-3 tw:lg:grid-cols-[16rem_minmax(0,1fr)]">
-    <aside class="tw:h-fit tw:lg:sticky tw:lg:top-20">
+  <div class="grid gap-3 lg:grid-cols-[16rem_minmax(0,1fr)]">
+    <aside class="h-fit lg:sticky lg:top-20">
       <div class="card">
-        <div class="card-body tw:p-4">
-          <h2 class="tw:font-black">{% translate "Guide contents" %}</h2>
-          <ul class="menu tw:mt-2 tw:w-full tw:p-0">
+        <div class="card-body p-4">
+          <h2 class="font-black">{% translate "Guide contents" %}</h2>
+          <ul class="menu mt-2 w-full p-0">
             <li><a href="#architecture"><i class="bi bi-diagram-3"></i>{% translate "Workflow model" %}</a></li>
             <li><a href="#initial"><i class="bi bi-building-add"></i>{% translate "Initial policy enrollment" %}</a></li>
             <li><a href="#endorsement"><i class="bi bi-arrow-left-right"></i>{% translate "Endorsements" %}</a></li>
@@ -30,11 +30,11 @@
       </div>
     </aside>
 
-    <div class="tw:space-y-3">
+    <div class="space-y-3">
       <section id="architecture" class="card">
         <div class="card-body">
           <h2 class="tpa-section-title">{% translate "1. Workflow model" %}</h2>
-          <div class="steps steps-horizontal tw:w-full tw:overflow-x-auto tw:py-2">
+          <div class="steps steps-horizontal w-full overflow-x-auto py-2">
             <div class="step step-primary">{% translate "Intake & Correction" %}</div>
             <div class="step step-primary">{% translate "Validation" %}</div>
             <div class="step step-primary">{% translate "Approval" %}</div>
@@ -48,9 +48,9 @@
 
       <section id="initial" class="card">
         <div class="card-body">
-          <h2 class="tpa-section-title"><i class="bi bi-building-add tw:text-primary"></i>{% translate "2. Initial Policy Enrollment" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-building-add text-primary"></i>{% translate "2. Initial Policy Enrollment" %}</h2>
           <p>{% translate "Use TPA Operations → Initial Policy Enrollment for a brand-new policy. New Policy Enrollment is intentionally not available in the Endorsement menu." %}</p>
-          <ol class="tw:list-decimal tw:space-y-2 tw:ps-6">
+          <ol class="list-decimal space-y-2 ps-6">
             <li>{% translate "Select an Individual or Corporate Sponsor, Insurance Company and optional TPA route." %}</li>
             <li>{% translate "Enter policy number/name, start/end dates, currency, STP and backdating settings." %}</li>
             <li>{% translate "Create the first benefit plan; additional plans can be added inside the setup case." %}</li>
@@ -63,9 +63,9 @@
 
       <section id="endorsement" class="card">
         <div class="card-body">
-          <h2 class="tpa-section-title"><i class="bi bi-arrow-left-right tw:text-primary"></i>{% translate "3. Endorsements" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-arrow-left-right text-primary"></i>{% translate "3. Endorsements" %}</h2>
           <p>{% translate "The Endorsement workspace is for post-enrollment changes only." %}</p>
-          <div class="tw:grid tw:gap-3 tw:md:grid-cols-2">
+          <div class="grid gap-3 md:grid-cols-2">
             <div class="alert"><span><strong>{% translate "Member Addition" %}</strong> — {% translate "add a new principal/dependent." %}</span></div>
             <div class="alert"><span><strong>{% translate "Member Termination" %}</strong> — {% translate "terminate an active enrollment." %}</span></div>
             <div class="alert"><span><strong>{% translate "Member Deletion / Void" %}</strong> — {% translate "void an enrollment/member." %}</span></div>
@@ -77,9 +77,9 @@
 
       <section id="ocr" class="card">
         <div class="card-body">
-          <h2 class="tpa-section-title"><i class="bi bi-stars tw:text-primary"></i>{% translate "4. File Upload & AI OCR" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-stars text-primary"></i>{% translate "4. File Upload & AI OCR" %}</h2>
           <p>{% translate "Use the single Source Documents & Ollama OCR upload zone. Up to 20 files can be submitted together so ID front/back, passport pages and related evidence can be treated as one bundle." %}</p>
-          <div class="tw:overflow-x-auto">
+          <div class="overflow-x-auto">
             <table class="table table-sm">
               <thead><tr><th>{% translate "Source" %}</th><th>{% translate "Processing" %}</th></tr></thead>
               <tbody>
@@ -96,7 +96,7 @@
 
       <section id="validation" class="card">
         <div class="card-body">
-          <h2 class="tpa-section-title"><i class="bi bi-shield-check tw:text-primary"></i>{% translate "5. Validation, Pricing & Approval" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-shield-check text-primary"></i>{% translate "5. Validation, Pricing & Approval" %}</h2>
           <p>{% translate "Validation checks policy period/backdating, mandatory fields, plan validity, duplicates, active-member lookup and dependent/principal relationships. Premium/refund calculations use Decimal arithmetic and the policy-plan configuration." %}</p>
           <p>{% translate "Clean STP-eligible cases auto-approve and dispatch to the TPA queue. Otherwise the linked GLIS approval workflow or a permitted approver completes approval. Approval now means dispatch to TPA; it does not immediately mutate member records." %}</p>
         </div>
@@ -104,7 +104,7 @@
 
       <section id="tpa" class="card">
         <div class="card-body">
-          <h2 class="tpa-section-title"><i class="bi bi-hospital tw:text-primary"></i>{% translate "6. TPA Processing & Embedded Query Chat" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-hospital text-primary"></i>{% translate "6. TPA Processing & Embedded Query Chat" %}</h2>
           <p>{% translate "A TPA processor starts the dispatched case, records card/member number, TPA effective date and TPA premium/refund amount per row, then completes the transaction. These TPA-final values are persisted to the permanent enrollment where applicable." %}</p>
           <p>{% translate "If information is missing, Raise Query creates a dedicated GLIS query ticket related to the main transaction ticket and pauses the case in TPA Query. The requester and TPA exchange messages/attachments through DaisyUI chat displayed inside this step. Resolving the query closes the query ticket and resumes TPA processing." %}</p>
           <div class="alert alert-success"><i class="bi bi-chat-dots"></i><span>{% translate "Users do not need to leave the TPA case to answer a query. Previous resolved conversations remain available inside the same workflow section." %}</span></div>
@@ -113,22 +113,22 @@
 
       <section id="email" class="card">
         <div class="card-body">
-          <h2 class="tpa-section-title"><i class="bi bi-envelope tw:text-primary"></i>{% translate "7. Email Intake" %}</h2>
+          <h2 class="tpa-section-title"><i class="bi bi-envelope text-primary"></i>{% translate "7. Email Intake" %}</h2>
           <p>{% translate "Email endorsements use the same downstream workflow as portal uploads. Email body AI extracts policy/type/date/member information; attached Excel/PDF/images enter the same unified document OCR pipeline." %}</p>
           <p>{% translate "Manual testing is available under TPA Inbound Emails → Add Inbound Email. Automatic mailbox reading is available through IMAP and deduplicates by Message-ID/UID." %}</p>
-          <pre class="tw:overflow-x-auto tw:rounded-xl tw:bg-base-200 tw:p-4 tw:text-xs">python manage.py process_tpa_mailbox --username YOUR_USERNAME</pre>
+          <pre class="overflow-x-auto rounded-xl bg-base-200 p-4 text-xs">python manage.py process_tpa_mailbox --username YOUR_USERNAME</pre>
           <p>{% translate "The same reader is registered in GLIS Job Center as tpa.poll_inbound_mailbox for recurring scheduled execution." %}</p>
         </div>
       </section>
 
       <section id="admin" class="card">
         <div class="card-body">
-          <h2 class="tpa-section-title"><i class="bi bi-gear tw:text-primary"></i>{% translate "8. Administrator Setup" %}</h2>
-          <div role="alert" class="alert alert-info"><i class="bi bi-cpu"></i><div><strong>{% translate "Local Ollama models" %}</strong><pre class="tw:mt-2">ollama pull glm-ocr
+          <h2 class="tpa-section-title"><i class="bi bi-gear text-primary"></i>{% translate "8. Administrator Setup" %}</h2>
+          <div role="alert" class="alert alert-info"><i class="bi bi-cpu"></i><div><strong>{% translate "Local Ollama models" %}</strong><pre class="mt-2">ollama pull glm-ocr
 ollama pull qwen2.5:7b
 ollama serve
 python manage.py configure_tpa_ollama</pre></div></div>
-          <ul class="tw:list-disc tw:space-y-2 tw:ps-6">
+          <ul class="list-disc space-y-2 ps-6">
             <li>{% translate "Assign create_enrollment separately from create_endorsement where duties differ." %}</li>
             <li>{% translate "Create Policy Access rows for policy-scoped view/create/approve/process authority." %}</li>
             <li>{% translate "The sample setup creates TPA Ollama Text Mapping using qwen2.5:7b with member_field_mapping/email_extraction capability." %}</li>

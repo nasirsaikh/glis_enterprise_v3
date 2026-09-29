@@ -1,4 +1,5 @@
 from datetime import date
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -27,7 +28,11 @@ from .models import (
 from .forms import MemberRowForm, TransactionForm
 from .services.access import can_access_tpa, can_create_tpa_transaction
 from .services.ai_intake import process_inbound_email
-from .services.document_intake import create_source_documents, process_source_bundle
+from .services.document_intake import (
+    _map_evidence_text,
+    create_source_documents,
+    process_source_bundle,
+)
 from .services.extraction import select_provider
 from .services.pricing import calculate_member_premium
 from .services.workflow import (
@@ -241,6 +246,63 @@ class TPACoreTests(TestCase):
             capability="member_field_mapping",
         )
         self.assertEqual(selected.pk, ollama.pk)
+
+    @patch("apps.tpa.services.document_intake.generate_json")
+    def test_document_mapping_uses_text_provider_and_retries_ocr_payload(self, generate_json):
+        AIProviderConfig.objects.create(
+            name="Misconfigured vision mapper",
+            provider=AIProviderConfig.Provider.OLLAMA,
+            model_name="glm-ocr",
+            endpoint="http://127.0.0.1:11434",
+            allow_sensitive_data=True,
+            supports_vision=True,
+            task_capabilities=["document_extraction", "member_field_mapping"],
+            priority=1,
+            is_active=True,
+        )
+        text_provider = AIProviderConfig.objects.create(
+            name="Text member mapper",
+            provider=AIProviderConfig.Provider.OLLAMA,
+            model_name="qwen2.5:7b",
+            endpoint="http://127.0.0.1:11434",
+            allow_sensitive_data=True,
+            supports_vision=False,
+            task_capabilities=["member_field_mapping"],
+            priority=20,
+            is_active=True,
+        )
+        generate_json.side_effect = [
+            ({"ocr_text": "NASIR ALI", "page_count": 2}, 5),
+            (
+                {
+                    "members": [
+                        {
+                            "full_name": "NASIR ALI",
+                            "date_of_birth": "1991-06-01",
+                            "gender": "Male",
+                            "national_id": "112448291",
+                            "confidence": 0.98,
+                        }
+                    ],
+                    "confidence": 0.98,
+                },
+                7,
+            ),
+        ]
+
+        mapped, selected, _, duration_ms = _map_evidence_text(
+            self._transaction(),
+            "NASIR ALI\n112448291\n9106019M2611158IND<<<<<<<<<<<4",
+            actor=self.user,
+        )
+
+        self.assertEqual(selected.pk, text_provider.pk)
+        self.assertFalse(selected.supports_vision)
+        self.assertEqual(generate_json.call_count, 2)
+        self.assertEqual(duration_ms, 12)
+        self.assertEqual(mapped["members"][0]["full_name"], "NASIR ALI")
+        self.assertEqual(mapped["members"][0]["date_of_birth"], "1991-06-01")
+        self.assertEqual(mapped["members"][0]["national_id"], "112448291")
 
     def test_structured_source_bundle_does_not_require_ai(self):
         tx = self._transaction()

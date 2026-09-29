@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
-from apps.tickets.models import Category, Product, Project, SLAPolicy, Ticket, TicketDynamicData, TicketEvent
+from apps.tickets.models import Category, Product, Project, RelatedTicket, SLAPolicy, Ticket, TicketDynamicData, TicketEvent
 from services.ticket_workflow import initialize_approval_workflow
 from ..models import TransactionEvent
 
@@ -38,4 +38,83 @@ def create_ticket_for_transaction(tx, actor=None):
     TicketEvent.objects.create(ticket=ticket,actor=actor,event_type="tpa_transaction",summary=f"TPA transaction linked: {tx.reference}",details={"transaction_reference":tx.reference})
     TransactionEvent.objects.create(transaction=tx,actor=actor,event_type="ticket_created",summary=f"GLIS ticket {ticket.reference} created")
     initialize_approval_workflow(ticket)
+    return ticket
+
+
+
+@transaction.atomic
+def create_query_ticket(tx, query, actor, message):
+    if query.ticket_id:
+        return query.ticket
+
+    parent = create_ticket_for_transaction(tx, actor=actor)
+    now = timezone.now()
+    sla = parent.sla_policy
+    ticket = Ticket.objects.create(
+        subject=f"TPA Query · {tx.reference} · {query.subject}",
+        description=(
+            f"Query raised during TPA processing for {tx.reference}.\n\n"
+            f"{str(message or '').strip()}"
+        ),
+        requester=tx.requester,
+        project=parent.project,
+        product=parent.product,
+        category=parent.category,
+        status=Ticket.Status.PENDING_CUSTOMER,
+        priority=parent.priority,
+        visibility="restricted",
+        is_sensitive=True,
+        tags=[
+            "tpa",
+            "tpa-query",
+            tx.reference.lower(),
+            tx.transaction_type.lower().replace("_", "-"),
+        ],
+        sla_policy=sla,
+        first_response_due_at=(
+            now + timedelta(minutes=sla.first_response_minutes)
+            if sla
+            else None
+        ),
+        resolution_due_at=(
+            now + timedelta(minutes=sla.resolution_minutes)
+            if sla
+            else None
+        ),
+    )
+    groups = list(parent.groups.all())
+    if groups:
+        ticket.groups.add(*groups)
+
+    query.ticket = ticket
+    query.save(update_fields=["ticket", "updated_at"])
+
+    RelatedTicket.objects.get_or_create(
+        source=parent,
+        target=ticket,
+        defaults={"relationship": "tpa_query"},
+    )
+    TicketDynamicData.objects.update_or_create(
+        ticket=ticket,
+        defaults={
+            "reporting_values": {
+                "tpa_transaction_reference": tx.reference,
+                "tpa_query_id": query.pk,
+                "policy_number": tx.policy.policy_number,
+                "transaction_type": tx.transaction_type,
+                "query_subject": query.subject,
+            }
+        },
+    )
+    TicketEvent.objects.create(
+        ticket=ticket,
+        actor=actor,
+        event_type="tpa_query_created",
+        summary=f"TPA query raised for {tx.reference}",
+        details={
+            "transaction_reference": tx.reference,
+            "query_id": query.pk,
+            "parent_ticket": parent.reference,
+        },
+    )
     return ticket

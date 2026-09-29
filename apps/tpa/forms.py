@@ -86,9 +86,12 @@ class PolicyEnrollmentForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["sponsor"].queryset = TPAOrganization.objects.filter(
-            organization_type=TPAOrganization.Type.CORPORATE,
+            organization_type__in=[
+                TPAOrganization.Type.INDIVIDUAL,
+                TPAOrganization.Type.CORPORATE,
+            ],
             is_active=True,
-        ).order_by("name_en")
+        ).order_by("organization_type", "name_en")
         self.fields["insurance_company"].queryset = TPAOrganization.objects.filter(
             organization_type=TPAOrganization.Type.INSURER,
             is_active=True,

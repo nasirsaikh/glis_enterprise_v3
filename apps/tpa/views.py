@@ -6,7 +6,7 @@ from datetime import date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -469,10 +469,13 @@ def policy_plan_add(request, reference):
 @login_required
 def transaction_list(request):
     _require_tpa_access(request.user)
+    endorsements = visible_transactions(request.user).exclude(
+        transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT
+    )
     return render(
         request,
         "tpa/transaction_list.html",
-        {"transactions": visible_transactions(request.user)},
+        {"transactions": endorsements},
     )
 
 

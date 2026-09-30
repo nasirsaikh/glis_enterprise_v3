@@ -22,6 +22,12 @@ class SupportGroup(TimeStampedModel):
     auth_group = models.OneToOneField(Group, null=True, blank=True, on_delete=models.SET_NULL)
     members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="support_groups", blank=True)
     managers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="managed_support_groups", blank=True)
+    organizations = models.ManyToManyField(
+        "tpa.TPAOrganization",
+        related_name="support_groups",
+        blank=True,
+        help_text="Organizations whose users may use this support group for ticket routing and reassignment.",
+    )
     description = models.TextField(blank=True)
     can_view_all_group_tickets = models.BooleanField(default=True)
     can_edit_group_tickets = models.BooleanField(default=True)

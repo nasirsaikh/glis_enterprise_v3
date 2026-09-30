@@ -75,10 +75,21 @@ class VannaGateway:
         table_policies = list(session.domain.table_policies.values("table_name", "access", "allowed_roles"))
         column_policies = list(session.domain.column_policies.values("table_name", "column_name", "sensitivity", "default_access", "mask_pattern"))
         row_policies = list(session.domain.row_policies.filter(is_active=True).values("name", "table_name", "predicate_template", "allowed_roles"))
+        from services.tenancy import organization_ids, membership_group_ids
+        from services.access import TicketAccessPolicy
+        from apps.tpa.services.access import visible_policies, visible_transactions
+        scope = {
+            "organization_ids": organization_ids(user),
+            "support_group_ids": membership_group_ids(user),
+            "ticket_ids": list(TicketAccessPolicy.visible_queryset(user).values_list("pk", flat=True)),
+            "policy_ids": list(visible_policies(user).values_list("pk", flat=True)),
+            "transaction_ids": list(visible_transactions(user).values_list("pk", flat=True)),
+            "system_administrator": user.is_superuser,
+        }
         payload = {
             "question": question,
             "session_id": str(session.pk),
-            "user": {"id": str(user.pk), "email": user.email, "role": role},
+            "user": {"id": str(user.pk), "email": user.email, "role": role, "scope": scope},
             "domain": {"slug": session.domain.slug, "collection": session.domain.collection_name, "max_rows": session.domain.max_rows},
             "context": {"schema": session.domain.schema_context, "business_rules": rules, "policies": {"tables": table_policies, "columns": column_policies, "rows": row_policies}},
         }

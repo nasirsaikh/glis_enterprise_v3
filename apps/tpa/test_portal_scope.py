@@ -142,3 +142,22 @@ class TPAPortalScopeTests(TestCase):
         self.other_email.save()
         self.assertNotIn(self.other_email, visible_inbound_emails(self.actor))
         self.assertEqual(self.client.post(reverse("tpa:inbound_email_sync_now")).status_code, 403)
+
+    def test_vanna_policy_and_related_rows_use_portal_scope(self):
+        from apps.orchestrator.local_vanna import SqlGovernor
+        from apps.orchestrator.models import AIDomain, DataSource
+        source = DataSource.objects.create(name="Policy analytics", engine="sqlite", is_read_only=True)
+        domain = AIDomain.objects.create(name="Policy analytics", slug="policy-scope",
+                                        allowed_tables=["tickets_ticket", "tpa_policy", "tpa_memberaction"])
+        domain.data_sources.add(source)
+        governor = SqlGovernor(domain=domain, user=self.actor)
+        sql = governor.govern("SELECT policy_number FROM tpa_policy")
+        self.assertIn(f'WHERE id IN ({self.policy.pk})', sql)
+        self.assertNotIn(str(self.other_policy.pk), sql.split("WHERE id IN (", 1)[1].split(")", 1)[0])
+        sql = governor.govern("SELECT row_number FROM tpa_memberaction")
+        self.assertIn(f'WHERE transaction_id IN ({self.tx.pk})', sql)
+        joined = governor.govern("SELECT p.policy_number FROM tpa_policy p JOIN tickets_ticket t ON t.id = p.id")
+        self.assertEqual(joined.count("WITH "), 1)
+        self.assertIn("tickets_ticket AS", joined)
+        with self.assertRaises(ValueError):
+            governor.govern("SELECT policy_number FROM main.tpa_policy")

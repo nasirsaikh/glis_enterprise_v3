@@ -2,7 +2,7 @@
 .glis-portal-app #portal-main .card-body { gap: .65rem; padding: 1rem; }
 .glis-portal-app #portal-main .fieldset { min-width: 0; padding-block: .15rem; gap: .3rem; }
 .glis-portal-app #portal-main .fieldset-legend { padding-block: .2rem; font-size: .75rem; }
-.glis-portal-app #portal-main :is(input.input,select.select,.file-input) { min-height: 2.15rem; height: 2.15rem; font-size: .8rem; padding-block: .2rem; }
+.glis-portal-app #portal-main :is(input.input,select.select:not([multiple]),.file-input) { min-height: 2.15rem; height: 2.15rem; font-size: .8rem; padding-block: .2rem; }
 .glis-portal-app #portal-main textarea.textarea { min-height: 4.5rem; font-size: .85rem; line-height: 1.5; }
 .glis-portal-app #portal-main .btn:not(.btn-circle):not(.btn-xs) { min-height: 2.2rem; height: auto; padding-block: .4rem; font-size: .8rem; }
 .glis-portal-app #portal-main form :is(.mt-7,.mt-6) { margin-top: 1rem; }
@@ -73,3 +73,5 @@
 }
 
 .glis-portal-app table tr[hidden], .table-search-empty[hidden] { display: none !important; }
+
+.glis-portal-app #portal-main select.select[multiple] { min-height: 5rem; height: auto; font-size: .8rem; }

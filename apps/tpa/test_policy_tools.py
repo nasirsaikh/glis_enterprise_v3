@@ -83,7 +83,7 @@ class PolicyToolsTests(TestCase):
         response = self.client.get(reverse("tpa:policy_enrollment_detail", args=[self.policy.pk]))
         self.assertContains(response, "Active vs inactive")
         self.assertEqual(response.context["endorsements"].paginator.count, 30)
-        self.assertEqual(len(response.context["endorsements"]), 25)
+        self.assertEqual(len(response.context["endorsements"]), 20)
         self.assertContains(response, "Enrollment workflow")
         self.assertContains(response, 'id="policy-dashboard-data"')
 

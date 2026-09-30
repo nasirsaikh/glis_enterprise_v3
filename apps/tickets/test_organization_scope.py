@@ -94,8 +94,9 @@ class PortalOrganizationTests(TestCase):
 
     def test_vanna_view_all_permission_keeps_organization_scope(self):
         source = DataSource.objects.create(name="Scoped analytics", engine="sqlite", is_read_only=True)
-        domain = AIDomain.objects.create(name="Scoped tickets", slug="scoped-tickets", data_source=source,
+        domain = AIDomain.objects.create(name="Scoped tickets", slug="scoped-tickets",
                                         allowed_tables=["tickets_ticket"])
+        domain.data_sources.add(source)
         governed = SqlGovernor(domain=domain, user=self.actor).govern("SELECT id, subject FROM tickets_ticket")
         self.assertIn("WITH tickets_ticket AS", governed)
         self.assertIn(f"WHERE id IN ({self.own_ticket.pk})", governed)

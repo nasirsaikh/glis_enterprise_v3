@@ -104,6 +104,7 @@ class SqlGovernor:
         references = self._validate_tables(generated)
         self._validate_columns(generated)
         effective = self._scope_tickets(generated, references)
+        effective = self._scope_portal_records(effective, generated, references)
         self.last_generated_sql = generated
         self.last_effective_sql = effective
         return effective
@@ -192,6 +193,65 @@ class SqlGovernor:
         if re.match(r"^with\b", sql, re.IGNORECASE):
             return re.sub(r"^with\s+", f"WITH {scope_cte}, ", sql, count=1, flags=re.IGNORECASE)
         return f"WITH {scope_cte} {sql}"
+
+
+    def _scope_portal_records(self, sql: str, generated: str, references: set[str]) -> str:
+        if self.user.is_superuser:
+            return sql
+        from services.tenancy import visible_support_groups, visible_users
+        from apps.tpa.models import MemberPolicyEnrollment
+        from apps.tpa.services.access import visible_inbound_emails, visible_policies, visible_transactions
+
+        # A domain allowlist grants table access, never a different tenant's rows.
+        # Scope related records even when a query omits the parent ticket/policy.
+        rules = {
+            "tickets_ticketcomment": ("ticket_id", lambda: self.visible_ticket_ids),
+            "tickets_ticketattachment": ("ticket_id", lambda: self.visible_ticket_ids),
+            "tickets_ticketdynamicdata": ("ticket_id", lambda: self.visible_ticket_ids),
+            "tickets_ticketevent": ("ticket_id", lambda: self.visible_ticket_ids),
+            "tickets_ticketapproval": ("ticket_id", lambda: self.visible_ticket_ids),
+            "tickets_ticketshare": ("ticket_id", lambda: self.visible_ticket_ids),
+            "auth_user": ("id", lambda: list(visible_users(self.user).values_list("pk", flat=True))),
+            "accounts_userprofile": ("user_id", lambda: list(visible_users(self.user).values_list("pk", flat=True))),
+            "tickets_supportgroup": ("id", lambda: list(visible_support_groups(self.user).values_list("pk", flat=True))),
+            "tpa_inboundemail": ("id", lambda: list(visible_inbound_emails(self.user).values_list("pk", flat=True))),
+            "tpa_inboundemailattachment": ("inbound_email_id", lambda: list(visible_inbound_emails(self.user).values_list("pk", flat=True))),
+            "tpa_policy": ("id", lambda: list(visible_policies(self.user).values_list("pk", flat=True))),
+            "tpa_benefitplan": ("policy_id", lambda: list(visible_policies(self.user).values_list("pk", flat=True))),
+            "tpa_membertransaction": ("id", lambda: list(visible_transactions(self.user).values_list("pk", flat=True))),
+            "tpa_memberaction": ("transaction_id", lambda: list(visible_transactions(self.user).values_list("pk", flat=True))),
+            "tpa_sourcedocument": ("transaction_id", lambda: list(visible_transactions(self.user).values_list("pk", flat=True))),
+            "tpa_transactionevent": ("transaction_id", lambda: list(visible_transactions(self.user).values_list("pk", flat=True))),
+            "tpa_transactionquery": ("transaction_id", lambda: list(visible_transactions(self.user).values_list("pk", flat=True))),
+            "tpa_memberpolicyenrollment": ("policy_id", lambda: list(visible_policies(self.user).values_list("pk", flat=True))),
+            "tpa_member": ("id", lambda: list(MemberPolicyEnrollment.objects.filter(
+                policy__in=visible_policies(self.user)).values_list("member_id", flat=True).distinct())),
+        }
+        ctes = []
+        for table in sorted(references.intersection(rules)):
+            for raw in TABLE_REFERENCE.findall(generated):
+                normalized = _identifier(raw)
+                if normalized.split(".")[-1] == table and normalized != table:
+                    raise ValueError(f"Use the unqualified {table} table in scoped analytics queries.")
+            column, get_ids = rules[table]
+            ids = ",".join(str(pk) for pk in get_ids()) or "NULL"
+            vendor = connection.vendor
+            if vendor == "sqlite":
+                physical = f'main."{table}"'
+            elif vendor in {"microsoft", "mssql"}:
+                physical = f'[{getattr(django_settings, "VANNA_DB_SCHEMA", "dbo")}].[{table}]'
+            elif vendor == "mysql":
+                database = connection.settings_dict["NAME"]
+                physical = f'`{database}`.`{table}`'
+            else:
+                physical = f'"{getattr(django_settings, "VANNA_DB_SCHEMA", "public")}"."{table}"'
+            ctes.append(f"{table} AS (SELECT * FROM {physical} WHERE {column} IN ({ids}))")
+        if not ctes:
+            return sql
+        prefix = ", ".join(ctes)
+        if re.match(r"^with\b", sql, re.IGNORECASE):
+            return re.sub(r"^with\s+", f"WITH {prefix}, ", sql, count=1, flags=re.IGNORECASE)
+        return f"WITH {prefix} {sql}"
 
     def mask_rows(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         mask_columns = {

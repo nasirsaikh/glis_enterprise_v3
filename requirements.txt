@@ -161,7 +161,7 @@ tenacity==9.1.4
 tinycss2==1.5.1
 tokenizers==0.23.1
 tqdm==4.70.0
-typer==0.27.1
+typer>=0.19,<0.27
 typing-inspection==0.4.4
 typing_extensions==4.16.0
 tzdata==2026.3
@@ -183,5 +183,5 @@ pypdf==6.1.1
 PyMuPDF==1.26.4
 xlrd==2.0.2
 
-docling>=2.55,<3
-easyocr>=1.7,<2
+docling==2.131.0
+easyocr==1.7.2

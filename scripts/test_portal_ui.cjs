@@ -89,7 +89,7 @@ test("small and server-paginated tables do not receive duplicate controls", asyn
 });
 
 test("Vanna renders ApexCharts, preserves null values and cleans up charts on new chat", async () => {
-  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><div id="vanna-workbench" class="vanna-workspace" data-session-detail-template="/sessions/00000000-0000-0000-0000-000000000000/"><section><div id="vanna-conversation"><div id="vanna-welcome"></div><div id="vanna-history-loading"></div></div><form id="vanna-form" action="https://example.test/ask"><input id="vanna-session" name="session_id"><textarea id="vanna-question"></textarea><button id="vanna-send">Send</button></form><div id="vanna-error"></div></section><div id="vanna-session-list"></div><button id="vanna-new-session">New chat</button><div id="vanna-diagnostic-log"></div><span id="vanna-diagnostic-count"></span></div></main></body>');
+  const page = await fixture('<body class="glis-portal-app"><button id="vanna-new-session">New chat</button><main id="portal-main"><div id="vanna-workbench" class="vanna-workspace" data-session-detail-template="/sessions/00000000-0000-0000-0000-000000000000/"><section><div id="vanna-conversation" class="flex-1 overflow-y-auto"><div id="vanna-welcome"></div><div id="vanna-history-loading"></div></div><form id="vanna-form" action="https://example.test/ask"><input id="vanna-session" name="session_id"><textarea id="vanna-question"></textarea><button id="vanna-send">Send</button></form><div id="vanna-error"></div></section><div id="vanna-session-list"></div><div id="vanna-diagnostic-log"></div><span id="vanna-diagnostic-count"></span></div></main></body>');
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   try {

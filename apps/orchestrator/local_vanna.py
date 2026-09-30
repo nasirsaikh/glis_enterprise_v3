@@ -167,7 +167,7 @@ class SqlGovernor:
 
     def _scope_tickets(self, sql: str, references: set[str]) -> str:
         table = "tickets_ticket"
-        if table not in references or self.user.is_superuser or self.user.has_perm("tickets.view_all"):
+        if table not in references or self.user.is_superuser:
             return sql
 
         # A schema-qualified reference could bypass the scoped CTE, so scoped users

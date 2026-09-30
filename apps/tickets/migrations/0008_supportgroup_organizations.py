@@ -4,7 +4,7 @@ from django.db import migrations, models
 def backfill_support_group_organizations(apps, schema_editor):
     SupportGroup = apps.get_model("tickets", "SupportGroup")
     UserProfile = apps.get_model("accounts", "UserProfile")
-    for group in SupportGroup.objects.prefetch_related("members", "managers").iterator():
+    for group in SupportGroup.objects.prefetch_related("members", "managers").iterator(chunk_size=200):
         user_ids = list(group.members.values_list("pk", flat=True))
         user_ids.extend(group.managers.values_list("pk", flat=True))
         organization_ids = (

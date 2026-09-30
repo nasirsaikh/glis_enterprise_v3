@@ -1001,3 +1001,285 @@ html[data-theme="light"] .gl-home-scroll span { background:var(--gl-green); }
   .gl-home-scroll span { animation:none!important; }
   .gl-home-hero--cinematic .gl-home-image-card { transform:none!important; }
 }
+
+
+/* Public inner-page compatibility and CMS layout */
+
+/*
+ * The homepage is implemented with the current Tailwind/daisyUI public design,
+ * while several inner CMS templates still use Bootstrap utility/component
+ * classes. Keep those legacy templates theme-aware and visually consistent
+ * without changing the homepage.
+ */
+.public-shell {
+  --bs-body-bg: var(--gl-bg);
+  --bs-body-color: var(--gl-text);
+  --bs-emphasis-color: var(--gl-text);
+  --bs-secondary-color: var(--gl-muted);
+  --bs-tertiary-color: var(--gl-muted);
+  --bs-secondary-bg: var(--gl-surface-2);
+  --bs-tertiary-bg: var(--gl-bg-2);
+  --bs-border-color: var(--gl-border);
+  --bs-border-color-translucent: color-mix(in srgb, var(--gl-border) 72%, transparent);
+  --bs-primary: var(--color-primary);
+  --bs-link-color: var(--color-primary);
+  --bs-link-hover-color: var(--gl-green-bright);
+  --bs-card-bg: var(--gl-card);
+  --bs-card-color: var(--gl-text);
+}
+
+html[data-theme="light"] .public-shell {
+  --bs-body-bg-rgb: 245,248,246;
+  --bs-body-color-rgb: 19,36,28;
+  --bs-secondary-bg-rgb: 244,248,245;
+  --bs-tertiary-bg-rgb: 237,245,240;
+  --bs-primary-rgb: 20,122,80;
+  --bs-success-rgb: 21,150,94;
+  --bs-info-rgb: 43,126,184;
+  --bs-warning-rgb: 207,134,29;
+  --bs-danger-rgb: 201,73,73;
+}
+
+html[data-theme="dark"] .public-shell {
+  --bs-body-bg-rgb: 7,17,12;
+  --bs-body-color-rgb: 238,249,243;
+  --bs-secondary-bg-rgb: 16,34,25;
+  --bs-tertiary-bg-rgb: 10,23,16;
+  --bs-primary-rgb: 69,207,141;
+  --bs-success-rgb: 69,207,141;
+  --bs-info-rgb: 102,181,229;
+  --bs-warning-rgb: 230,169,83;
+  --bs-danger-rgb: 238,119,119;
+}
+
+/* Common inner-page surfaces */
+.public-shell .about-hero,
+.public-shell .support-hero,
+.public-shell .download-hero,
+.public-shell .page-hero {
+  color: var(--gl-text);
+  background:
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 24rem),
+    linear-gradient(135deg, var(--gl-bg) 0%, var(--gl-bg-2) 62%, var(--gl-bg) 100%) !important;
+  border-color: var(--gl-border) !important;
+}
+
+.public-shell .bg-body {
+  background-color: var(--gl-card) !important;
+  color: var(--gl-text) !important;
+}
+.public-shell .bg-body-tertiary {
+  background-color: var(--gl-bg-2) !important;
+  color: var(--gl-text) !important;
+}
+.public-shell .border,
+.public-shell .border-top,
+.public-shell .border-bottom,
+.public-shell .border-start,
+.public-shell .border-end {
+  border-color: var(--gl-border) !important;
+}
+
+.public-shell .shadow,
+.public-shell .shadow-sm,
+.public-shell .shadow-lg {
+  box-shadow: var(--gl-shadow) !important;
+}
+
+.public-shell .about-feature-card,
+.public-shell .about-purpose-card,
+.public-shell .about-value-box,
+.public-shell .support-step-card,
+.public-shell .support-feature {
+  background: var(--gl-card) !important;
+  color: var(--gl-text);
+  border-color: var(--gl-border) !important;
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--gl-text) 6%, transparent);
+}
+
+.public-shell .about-feature-card:hover,
+.public-shell .about-purpose-card:hover,
+.public-shell .about-value-box:hover,
+.public-shell .support-step-card:hover,
+.public-shell .support-feature:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 38%, var(--gl-border)) !important;
+  box-shadow: var(--gl-shadow) !important;
+}
+
+.public-shell .about-cta,
+.public-shell .support-cta {
+  background: linear-gradient(135deg, var(--gl-green-deep), var(--gl-green)) !important;
+  color: #fff !important;
+}
+
+.public-shell .about-cta .btn-light,
+.public-shell .support-cta .btn-light {
+  background: #fff !important;
+  border-color: #fff !important;
+  color: var(--gl-green-deep) !important;
+}
+
+.public-shell .btn-primary {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary-content) !important;
+}
+.public-shell .btn-outline-primary {
+  background: transparent !important;
+  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--gl-border)) !important;
+  color: var(--color-primary) !important;
+}
+.public-shell .btn-outline-primary:hover {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary-content) !important;
+}
+
+.public-shell .bg-primary-subtle,
+.public-shell .bg-success-subtle,
+.public-shell .bg-info-subtle,
+.public-shell .bg-warning-subtle {
+  background: color-mix(in srgb, currentColor 10%, var(--gl-card)) !important;
+}
+
+/* Generic django-CMS content pages such as Services */
+.public-shell .public-content-card {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--gl-border);
+  border-radius: clamp(1.25rem, 2vw, 1.75rem);
+  background: var(--gl-card);
+  color: var(--gl-text);
+  padding: clamp(1.25rem, 3vw, 2.25rem);
+  box-shadow: var(--gl-shadow);
+}
+
+.public-shell .public-content-card > :first-child { margin-top: 0; }
+.public-shell .public-content-card > :last-child { margin-bottom: 0; }
+.public-shell .public-content-card img { max-width: 100%; height: auto; }
+.public-shell .public-content-card .row { row-gap: 1.25rem; }
+.public-shell .public-content-card .card {
+  height: 100%;
+  border-color: var(--gl-border);
+  background: var(--gl-card);
+  color: var(--gl-text);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--gl-text) 5%, transparent);
+}
+.public-shell .public-content-card .card-header,
+.public-shell .public-content-card .card-footer {
+  border-color: var(--gl-border);
+  background: var(--gl-surface-2);
+}
+.public-shell .public-content-card h1,
+.public-shell .public-content-card h2,
+.public-shell .public-content-card h3,
+.public-shell .public-content-card h4 {
+  color: var(--gl-text);
+}
+.public-shell .public-content-card p,
+.public-shell .public-content-card li {
+  color: var(--gl-muted);
+  line-height: 1.75;
+}
+.public-shell .public-content-card a:not(.btn) {
+  color: var(--color-primary);
+  text-decoration-thickness: .08em;
+  text-underline-offset: .18em;
+}
+
+/* Legacy non-CMS public content model */
+.public-shell .page-hero {
+  padding: clamp(3rem, 6vw, 5rem) 0;
+}
+.public-shell .page-hero .container,
+.public-shell .section-space .container {
+  width: min(100% - 2rem, 1180px);
+  margin-inline: auto;
+}
+.public-shell .section-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .45rem .8rem;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, var(--gl-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 9%, var(--gl-card));
+  color: var(--color-primary);
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.public-shell .page-hero h1 {
+  max-width: 900px;
+  margin: 1rem 0 0;
+  color: var(--gl-text);
+  font-size: clamp(2.2rem, 5vw, 4.25rem);
+  line-height: 1.05;
+}
+.public-shell .page-hero p {
+  max-width: 760px;
+  margin: 1rem 0 0;
+  color: var(--gl-muted);
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  line-height: 1.75;
+}
+.public-shell .section-space {
+  padding: clamp(2.75rem, 6vw, 5rem) 0;
+  background: var(--gl-bg);
+}
+.public-shell .content-prose {
+  color: var(--gl-muted);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+.public-shell .content-prose h2,
+.public-shell .content-prose h3 {
+  margin-top: 2rem;
+  color: var(--gl-text);
+}
+.public-shell .content-section {
+  margin-top: 1.5rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--gl-border);
+  border-radius: 1.25rem;
+  background: var(--gl-card);
+}
+.public-shell .preview-banner {
+  padding: .75rem 1rem;
+  background: color-mix(in srgb, var(--color-warning) 14%, var(--gl-card));
+  color: var(--gl-text);
+  border-bottom: 1px solid var(--gl-border);
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Inner-page responsive corrections */
+@media (max-width: 991.98px) {
+  .public-shell .about-hero,
+  .public-shell .support-hero {
+    text-align: center;
+  }
+  .public-shell .about-hero .d-flex.flex-wrap,
+  .public-shell .support-hero .d-flex.flex-wrap {
+    justify-content: center;
+  }
+  .public-shell .about-image-area,
+  .public-shell .support-visual {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .public-shell .public-content-card {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+  .public-shell .page-hero {
+    padding-block: 2.5rem;
+  }
+  .public-shell .page-hero h1 {
+    font-size: clamp(2rem, 10vw, 2.75rem);
+  }
+}

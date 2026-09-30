@@ -13,10 +13,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="{% static 'css/output.css' %}" rel="stylesheet" type="text/css">
+  <link href="{% static 'css/portal-polish.css' %}" rel="stylesheet" type="text/css">
 {% block extra_head %}{% endblock %}
 </head>
 
-<body class="min-h-screen bg-base-200 text-base-content antialiased"
+<body class="glis-portal-app min-h-screen bg-base-200 text-base-content antialiased"
       x-data="siteShell"
       data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}"
       data-theme-preference-url="{% url 'accounts:theme_preference' %}"

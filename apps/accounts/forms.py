@@ -30,7 +30,7 @@ class UserProfileForm(forms.Form):
     last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
     email = forms.EmailField(widget=forms.EmailInput(attrs={"class": "input input-bordered w-full"}))
     phone = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
-    organization = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
+    organization = forms.CharField(label=_("Organizations"), required=False, disabled=True, widget=forms.TextInput(attrs={"class": "input input-bordered w-full", "readonly": "readonly"}))
     job_title = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
     department = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
     bio = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 4}))
@@ -49,7 +49,7 @@ class UserProfileForm(forms.Form):
         profile = user.profile
         kwargs.setdefault("initial", {
             "first_name": user.first_name, "last_name": user.last_name, "email": user.email,
-            "phone": profile.phone, "organization": profile.organization, "job_title": profile.job_title,
+            "phone": profile.phone, "organization": ", ".join(profile.organizations.filter(is_active=True).values_list("name_en", flat=True)) or profile.organization, "job_title": profile.job_title,
             "department": profile.department, "bio": profile.bio, "preferred_language": profile.preferred_language,
             "theme": profile.theme if profile.theme in {"system", "light", "dark"} else "system",
             "email_notifications": profile.email_notifications,
@@ -77,7 +77,7 @@ class UserProfileForm(forms.Form):
                 primary.save(update_fields=["email", "verified"])
             else:
                 EmailAddress.objects.create(user=user, email=user.email, primary=True, verified=False)
-        for field in ("phone", "organization", "job_title", "department", "bio", "preferred_language", "theme", "email_notifications", "browser_notifications"):
+        for field in ("phone", "job_title", "department", "bio", "preferred_language", "theme", "email_notifications", "browser_notifications"):
             setattr(profile, field, self.cleaned_data[field])
         if self.cleaned_data.get("remove_avatar") and profile.avatar:
             profile.avatar.delete(save=False)

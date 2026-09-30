@@ -470,11 +470,6 @@ msgstr "فتح البوابة"
 msgid "Create request"
 msgstr "إنشاء طلب"
 
-
-#: ⁨.\templates\base_public copy.html⁩:94 .\templates\base_public.html:176
-#: ⁨.\templates\cms\glis_home copy.html⁩:528 .\templates\cms\home_content.html:68
-#, fuzzy
-#| msgid "Complaints"
 msgid "Company"
 msgstr "الشكاوى"
 
@@ -1690,20 +1685,18 @@ msgstr "خدمة ثنائية اللغة"
 msgid "Auditable outcomes"
 msgstr "نتائج قابلة للتدقيق"
 
-#: .\templates\public\home.html:64
-#, fuzzy
-#| msgid "Insurance services"
+msgid "Support across the"
+msgstr "الدعم عبر"
+
 msgid "Connected Services"
 msgstr "خدمات التأمين"
 
-#: .\templates\public\home.html:65
-msgid "Support across the insurance journey"
-msgstr "دعم عبر رحلة التأمين"
 
 
-#: .\templates\public\home.html:81
 msgid "Insurance services"
 msgstr "خدمات التأمين"
+
+
 
 
 #: .\templates\public\home.html:84
@@ -2550,9 +2543,6 @@ msgstr "عملية تتمحور حول العضو أولاً"
 msgid "Designed to reduce administrative friction for members, providers and insurers."
 msgstr "مصممة لتقليل الاحتكاك الإداري للأعضاء، المزودين وشركات التأمين."
 
-msgid "Medical Claim"
-msgstr "مطالبة طبية"
-
 msgid "Our Health Insurance Partners"
 msgstr "شركاؤنا في التأمين الصحي"
 
@@ -2618,9 +2608,6 @@ msgstr "ابحث عن مزود خدمة"
 msgid "Hospitals, clinics and pharmacies"
 msgstr "المستشفيات، العيادات والصيدليات"
 
-msgid "Pre-Authorization"
-msgstr "الموافقة المسبقة"
-
 msgid "Medical approval guidance"
 msgstr "إرشادات الموافقات الطبية"
 
@@ -2644,6 +2631,10 @@ msgstr "خدمات إدارة مطالبات الرعاية الصحية (TPA)"
 
 msgid "Healthcare management"
 msgstr "إدارة الرعاية الصحية"
+
+msgid "Medical Claim"
+msgstr "مطالبة طبية"
+
 
 msgid "Integrated health administration services connecting members, healthcare providers and insurance partners."
 msgstr "خدمات إدارة صحية متكاملة تربط بين الأعضاء، مزودي الرعاية الصحية وشركاء التأمين."
@@ -2728,3 +2719,9 @@ msgstr "الخريطة"
 
 msgid "made easier"
 msgstr "أصبحت أكثر سهولة"
+
+msgid "Pre-Authorization"
+msgstr "الموافقة المسبقة"
+
+msgid "Quick guidance about services, healthcare providers and medical administration."
+msgstr "إرشادات سريعة حول الخدمات ومقدمي الرعاية الصحية والإدارة الطبية"

@@ -6,8 +6,11 @@
     <div class="gl-home-starfield" aria-hidden="true"></div>
     <div class="gl-home-container gl-home-hero-grid">
       <div class="gl-home-copy" data-reveal>
-        {% if hero.hero_eyebrow_en or hero.hero_eyebrow_ar %}<span class="gl-home-kicker"><i class="bi bi-heart-pulse-fill" aria-hidden="true"></i>{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_eyebrow_ar|default:hero.hero_eyebrow_en }}{% else %}{{ hero.hero_eyebrow_en|default:hero.hero_eyebrow_ar }}{% endif %}</span>{% endif %}
-        <h1>{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_title_ar|default:hero.hero_title_en }}{% else %}{{ hero.hero_title_en }}{% endif %}</h1>
+        {% if hero.hero_eyebrow_en or hero.hero_eyebrow_ar %}
+        <span class="gl-home-kicker"><i class="bi bi-heart-pulse-fill" aria-hidden="true"></i>
+          {% if LANGUAGE_CODE == "ar" %}{{ hero.hero_eyebrow_ar|default:hero.hero_eyebrow_en }}{% else %}
+          {{ hero.hero_eyebrow_en|default:hero.hero_eyebrow_ar }}{% endif %}</span>{% endif %}
+        <h2 style="font-size: 60px;">{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_title_ar|default:hero.hero_title_en }}{% else %}{{ hero.hero_title_en }}{% endif %}</h2>
         <p>{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_subtitle_ar|default:hero.hero_subtitle_en }}{% else %}{{ hero.hero_subtitle_en }}{% endif %}</p>
         <div class="gl-home-actions">
           <a class="gl-btn gl-btn-primary" href="{{ hero.hero_primary_cta_url|default:'#network-providers' }}">
@@ -16,11 +19,11 @@
           </a>
           <a class="gl-btn gl-btn-secondary" href="#network-providers">{% translate "Healthcare Network" %}<i class="bi bi-grid"></i></a>
         </div>
-        <div class="gl-home-proof">
+        <!-- <div class="gl-home-proof">
           <span><i class="bi bi-shield-check"></i>{% translate "Secure by design" %}</span>
           <span><i class="bi bi-translate"></i>{% translate "English & Arabic" %}</span>
           <span><i class="bi bi-clock-history"></i>{% translate "Track every request" %}</span>
-        </div>
+        </div> -->
       </div>
 
       <div class="gl-home-visual" data-reveal data-parallax-scene>

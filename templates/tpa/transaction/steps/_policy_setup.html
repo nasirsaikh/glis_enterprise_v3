@@ -19,13 +19,25 @@
               </table>
             </div>
           </div>
+          {% if can_edit_intake and policy_details_form %}
+          <details class="collapse collapse-arrow mt-3 border border-base-300" {% if policy_details_form.errors %}open{% endif %}>
+            <summary class="collapse-title text-sm font-bold">{% translate "Edit policy details" %}</summary>
+            <div class="collapse-content">
+              <form class="grid gap-3 md:grid-cols-3" method="post" action="{% url 'tpa:policy_details_edit' tx.reference %}" hx-post="{% url 'tpa:policy_details_edit' tx.reference %}" data-tpa-hx-form>
+                {% csrf_token %}{% include "components/form_errors.html" with form=policy_details_form %}
+                {% for field in policy_details_form %}<label class="fieldset"><span class="fieldset-legend">{{ field.label }}</span>{{ field }}{{ field.errors }}</label>{% endfor %}
+                <div><button class="btn btn-primary btn-sm" type="submit">{% translate "Save policy details" %}</button></div>
+              </form>
+            </div>
+          </details>
+          {% endif %}
           {% if can_edit_intake and plan_form %}
           <details class="collapse collapse-arrow mt-3 border border-base-300" {% if plan_form.errors %}open{% endif %}>
             <summary class="collapse-title text-sm font-bold">{% translate "Add Benefit Plan" %}</summary>
             <div class="collapse-content">
-              <form class="grid gap-3 md:grid-cols-2" method="post" action="{% url 'tpa:policy_plan_add' tx.reference %}" hx-post="{% url 'tpa:policy_plan_add' tx.reference %}" data-tpa-hx-form>
+              <form class="compact-plan-row" method="post" action="{% url 'tpa:policy_plan_add' tx.reference %}" hx-post="{% url 'tpa:policy_plan_add' tx.reference %}" data-tpa-hx-form>
                 {% csrf_token %}{% include "components/form_errors.html" with form=plan_form %}{% for field in plan_form %}<fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}{{ field.errors }}</fieldset>{% endfor %}
-                <div class="md:col-span-2"><button class="btn btn-primary btn-sm">{% translate "Add Plan" %}</button></div>
+                <div><button class="btn btn-primary btn-sm">{% translate "Add Plan" %}</button></div>
               </form>
             </div>
           </details>

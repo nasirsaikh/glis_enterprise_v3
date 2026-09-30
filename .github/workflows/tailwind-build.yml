@@ -4,10 +4,15 @@ on:
   push:
     branches:
       - main
+      - "codex/**"
     paths:
       - "static/css/input.css"
       - "static/css/output.css"
       - "static/js/portal.js"
+      - "static/js/portal-tables.js"
+      - "static/css/portal-compact.css"
+      - "static/css/public-layout.css"
+      - "scripts/test_portal_ui.cjs"
       - "static/js/tpa.js"
       - "templates/**"
       - "apps/**"
@@ -19,6 +24,10 @@ on:
       - "static/css/input.css"
       - "static/css/output.css"
       - "static/js/portal.js"
+      - "static/js/portal-tables.js"
+      - "static/css/portal-compact.css"
+      - "static/css/public-layout.css"
+      - "scripts/test_portal_ui.cjs"
       - "static/js/tpa.js"
       - "templates/**"
       - "apps/**"
@@ -113,4 +122,13 @@ jobs:
       - name: Validate portal JavaScript syntax
         run: |
           node --check static/js/portal.js
+          node --check static/js/portal-tables.js
           node --check static/js/tpa.js
+
+      - name: Install browser regression runtime
+        run: |
+          npm install --prefix /tmp/glis-ui-tests --no-package-lock --no-save playwright@1.55.1
+          node /tmp/glis-ui-tests/node_modules/playwright/cli.js install --with-deps chromium
+
+      - name: Test responsive layouts, table paging and Vanna charts
+        run: NODE_PATH=/tmp/glis-ui-tests/node_modules node --test scripts/test_portal_ui.cjs

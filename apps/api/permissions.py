@@ -24,16 +24,9 @@ def visible_tickets_for_user(queryset, user):
     if user.is_superuser:
         return queryset
 
-    filters = (
-        Q(requester=user)
-        | Q(assignee=user)
-        | Q(assignees=user)
-        | Q(groups__members=user)
-        | Q(project__members=user)
-        | Q(project__groups__in=user.groups.all())
-    )
+    from services.access import TicketAccessPolicy
+    return queryset.filter(pk__in=TicketAccessPolicy.visible_queryset(user).values("pk"))
 
-    return queryset.filter(filters).distinct()
 
 
 class IsAuthenticatedAndActive(BasePermission):

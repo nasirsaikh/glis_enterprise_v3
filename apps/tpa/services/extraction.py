@@ -1,6 +1,7 @@
 import json
 
 from apps.ai.models import AIExtractionProfile, AIProviderConfig
+from .schemas import EmailEvidence, MemberEvidence
 
 
 CANONICAL_MEMBER_FIELDS = (
@@ -44,10 +45,14 @@ def apply_field_aliases(data, aliases):
 
 
 def canonical_member(data, field_aliases=None):
-    from .intake import normalize_member_row
+    from .intake import ALIASES, _key, normalize_member_row
     if not isinstance(data, dict):
         raise ValueError("Each AI member row must be a JSON object.")
     mapped = apply_field_aliases(data, field_aliases)
+    recognized = {_key(alias) for target, aliases in ALIASES.items() for alias in (target, *aliases)}
+    if any(_key(key) in recognized and isinstance(value, (dict, list, tuple, set)) for key, value in mapped.items()):
+        raise ValueError("A member field must be a scalar value.")
+    MemberEvidence.model_validate({key: value for key, value in mapped.items() if key in CANONICAL_MEMBER_FIELDS})
     normalized = normalize_member_row(mapped)
     return {key: normalized.get(key, mapped.get(key)) for key in CANONICAL_MEMBER_FIELDS}
 
@@ -61,7 +66,7 @@ def normalize_ai_payload(payload, *, field_aliases=None):
         raise ValueError("AI response did not contain the required members array.")
     payload = apply_field_aliases(payload, field_aliases)
 
-    return {
+    normalized = {
         "is_endorsement_request": payload.get("is_endorsement_request"),
         "classification": payload.get("classification") or payload.get("transaction_type"),
         "policy_number": payload.get("policy_number"),
@@ -78,6 +83,7 @@ def normalize_ai_payload(payload, *, field_aliases=None):
         "source_references": list(payload.get("source_references") or []),
         "members": [canonical_member(row, field_aliases) for row in payload["members"]],
     }
+    return EmailEvidence.model_validate(normalized).model_dump(mode="json")
 
 
 def select_provider(*, vision=None, sensitive=False, capability=None):

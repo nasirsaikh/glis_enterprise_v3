@@ -20,10 +20,11 @@
   <section class="card border border-base-300 bg-base-100 shadow-sm">
     <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
       <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Opening census control" %}</div><h2 class="text-lg font-black ">{% translate "POLICY ONBOARDING QUEUE" %}</h2></div>
-      <span class="badge badge-outline">{{ policy_rows|length }} {% translate "POLICIES" %}</span>
+      <span class="badge badge-outline">{{ page_obj.paginator.count }} {% translate "POLICIES" %}</span>
     </div>
+    {% include "components/table_search.html" %}
     <div class="overflow-x-auto">
-      <table class="table table-sm">
+      <table data-server-paginated="true" class="table table-sm">
         <thead><tr><th>{% translate "Policy" %}</th><th>{% translate "Sponsor" %}</th><th>{% translate "Insurer" %}</th><th>{% translate "TPA" %}</th><th>{% translate "Plans" %}</th><th>{% translate "Initial Enrollment" %}</th><th>{% translate "Policy Status" %}</th></tr></thead>
         <tbody>
         {% for row in policy_rows %}
@@ -54,6 +55,7 @@
         </tbody>
       </table>
     </div>
+    {% include "components/table_pagination.html" %}
   </section>
 </div>
 {% endblock %}

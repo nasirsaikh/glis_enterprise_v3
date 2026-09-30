@@ -16,6 +16,8 @@ from .extraction import normalize_ai_payload, select_profile, select_provider
 from .intake import normalize_member_row
 from .member_merge import merge_member_rows
 from .prompts import profile_guidance
+from .schemas import MemberBundle, missing_member_fields, merge_recovered_payload
+from .document_fallback import docling_text
 
 
 SUPPORTED_EXTENSIONS = {
@@ -185,6 +187,7 @@ def _map_evidence_text(tx, evidence_text, actor=None):
         provider,
         system_prompt=system_prompt,
         user_prompt=user_prompt,
+        response_schema=MemberBundle.model_json_schema(),
     )
 
     try:
@@ -206,6 +209,7 @@ def _map_evidence_text(tx, evidence_text, actor=None):
             provider,
             system_prompt=system_prompt,
             user_prompt=retry_prompt,
+            response_schema=MemberBundle.model_json_schema(),
         )
         duration_ms += retry_duration
         try:
@@ -347,6 +351,7 @@ def create_source_documents(tx, uploaded_files, actor=None):
 def process_source_bundle(tx, documents, actor=None):
     created_actions = []
     evidence = []
+    recovery_sources = []
     ai_profile = None
     ai_provider = None
 
@@ -369,6 +374,8 @@ def process_source_bundle(tx, documents, actor=None):
         )
 
         try:
+            if suffix in {".pdf", ".png", ".jpg", ".jpeg", ".webp"}:
+                recovery_sources.append((document, document.original_name, content))
             if suffix in {".csv", ".xlsx", ".xls"}:
                 raw_rows = _structured_rows(document.original_name, content)
                 actions = _create_actions(
@@ -436,9 +443,11 @@ def process_source_bundle(tx, documents, actor=None):
                         )
                         created_actions.extend(actions)
                     elif inner_suffix == ".pdf":
+                        recovery_sources.append((document, name, raw))
                         inner_text, _, _ = _pdf_text_or_ocr(tx, raw)
                         evidence.append(f"--- EMAIL ATTACHMENT: {name} ---\n{inner_text}")
                     elif inner_suffix in {".png", ".jpg", ".jpeg", ".webp"}:
+                        recovery_sources.append((document, name, raw))
                         inner_text, provider, _ = _ocr_image(
                             tx,
                             raw,
@@ -541,7 +550,7 @@ def process_source_bundle(tx, documents, actor=None):
                 },
             )
 
-    if evidence:
+    if evidence or recovery_sources:
         mapping_attempts = [
             ExtractionAttempt.objects.create(
                 source_document=document,
@@ -549,14 +558,56 @@ def process_source_bundle(tx, documents, actor=None):
                 status=ExtractionAttempt.Status.STARTED,
             )
             for document in documents
-            if document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME"}
+            if Path(document.original_name).suffix.lower() not in {".csv", ".xlsx", ".xls"}
         ]
         try:
-            mapped, provider, profile, _ = _map_evidence_text(
-                tx,
-                "\n\n".join(evidence),
-                actor=actor,
-            )
+            mapping_error = None
+            mapped = {"members": []}
+            try:
+                mapped, provider, profile, _ = _map_evidence_text(tx, "\n\n".join(evidence), actor=actor)
+            except Exception as exc:
+                mapping_error = exc
+            missing = missing_member_fields(mapped, tx.transaction_type)
+            recovery_warnings = []
+            recovered_documents = set()
+            if (mapping_error or missing) and recovery_sources:
+                recovered_text = []
+                for source_document, name, raw in recovery_sources:
+                    try:
+                        recovered_text.append(f"--- LOCAL OCR RECOVERY: {name} ---\n{docling_text(name, raw)}")
+                        recovered_documents.add(source_document.pk)
+                    except Exception as exc:
+                        recovery_warnings.append(f"{name}: {exc}")
+                if recovered_text:
+                    try:
+                        repaired, provider, profile, _ = _map_evidence_text(
+                            tx, "\n\n".join(evidence + recovered_text), actor=actor
+                        )
+                        # Fill only empty facts matched by stable member identifiers.
+                        # An unmatched recovery row never overwrites an existing member.
+                        mapped = merge_recovered_payload(mapped, repaired)
+                        mapping_error = None
+                    except Exception as exc:
+                        recovery_warnings.append(f"Recovery mapping: {exc}")
+            if mapping_error:
+                raise mapping_error
+            missing = missing_member_fields(mapped, tx.transaction_type)
+            recovery_warnings.extend(str(value) for value in mapped.get("warnings", []))
+            if not mapped.get("members"):
+                raise ValueError("No member data could be extracted; add readable evidence or enter the member manually.")
+            for document in documents:
+                if document.pk in recovered_documents:
+                    document.extraction_method = "DOCLING_RECOVERY"
+                    document.processed = True
+                    document.processing_state = SourceDocument.State.PROCESSED
+                    document.processing_error = ""
+                if missing or recovery_warnings:
+                    document.processing_state = SourceDocument.State.REVIEW
+                    document.processing_error = "Missing fields: " + ", ".join(missing) if missing else ""
+                    if recovery_warnings:
+                        document.processing_error += "\n" + "\n".join(recovery_warnings)
+                document.save(update_fields=["extraction_method", "processed", "processing_state", "processing_error", "updated_at"])
+
             ai_provider = provider
             ai_profile = profile
             actions = _create_actions(
@@ -569,7 +620,7 @@ def process_source_bundle(tx, documents, actor=None):
             for document in documents:
                 if (
                     document.processed
-                    and document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME"}
+                    and document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME", "DOCLING_RECOVERY"}
                 ):
                     payload = dict(document.extracted_payload or {})
                     payload["bundle_members_created"] = len(actions)
@@ -609,7 +660,7 @@ def process_source_bundle(tx, documents, actor=None):
                 )
         except Exception as exc:
             for document in documents:
-                if document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME"}:
+                if document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME", "DOCLING_RECOVERY"}:
                     document.processing_state = SourceDocument.State.REVIEW
                     document.processed = False
                     document.processing_error = (

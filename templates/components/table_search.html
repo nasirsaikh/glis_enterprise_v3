@@ -1,0 +1,8 @@
+{% load i18n %}
+{% if page_obj.paginator.count > 20 or query %}
+<form method="get" class="table-tools" role="search">
+  {% for name,value in request.GET.items %}{% if name != "q" and name != "page" %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}{% endfor %}
+  <label class="input input-bordered input-sm"><i class="bi bi-search" aria-hidden="true"></i><input type="search" name="q" value="{{ query }}" aria-label="{% translate 'Search records' %}" placeholder="{% translate 'Search records' %}"></label>
+  <button class="btn btn-outline btn-sm" type="submit">{% translate "Search" %}</button>
+</form>
+{% endif %}

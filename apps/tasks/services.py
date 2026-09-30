@@ -5,6 +5,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.tickets.models import SLAPolicy, Ticket, TicketEvent
+from services.tenancy import visible_support_groups
 from services.ticket_workflow import initialize_approval_workflow, notify_users
 
 from .models import RecurringTask, Task
@@ -73,8 +74,9 @@ def create_ticket_for_task(task: Task, *, actor=None):
     )
 
     ticket.assignees.add(task.owner)
-    default_groups = list(task.category.default_groups.filter(is_active=True))
-    if task.category.default_group and task.category.default_group not in default_groups:
+    allowed_groups = visible_support_groups(task.created_by or task.owner)
+    default_groups = list(task.category.default_groups.filter(pk__in=allowed_groups))
+    if task.category.default_group_id and allowed_groups.filter(pk=task.category.default_group_id).exists() and task.category.default_group not in default_groups:
         default_groups.append(task.category.default_group)
     if default_groups:
         ticket.groups.add(*default_groups)

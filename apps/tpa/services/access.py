@@ -1,7 +1,9 @@
 from django.db.models import Q
+from services.tenancy import scope_policies
 
 from ..models import (
     MemberTransaction,
+    InboundEmail,
     Policy,
     PolicyAccess,
     TransactionQuery,
@@ -70,6 +72,8 @@ def can_edit_tpa_intake(user, tx):
     """
     if not user or not user.is_authenticated:
         return False
+    if not visible_transactions(user).filter(pk=tx.pk).exists():
+        return False
     if user.is_superuser or user.has_perm("tpa.configure_tpa"):
         return True
 
@@ -96,6 +100,8 @@ def can_edit_tpa_intake(user, tx):
 def can_approve_tpa_transaction(user, tx):
     if not user or not user.is_authenticated:
         return False
+    if not visible_transactions(user).filter(pk=tx.pk).exists():
+        return False
     if user.is_superuser or user.has_perm("tpa.configure_tpa") or user.has_perm("tpa.approve_endorsement"):
         return True
     return PolicyAccess.objects.filter(
@@ -106,6 +112,8 @@ def can_approve_tpa_transaction(user, tx):
 def can_process_tpa_transaction(user, tx):
     if not user or not user.is_authenticated:
         return False
+    if not visible_transactions(user).filter(pk=tx.pk).exists():
+        return False
     if user.is_superuser or user.has_perm("tpa.configure_tpa") or user.has_perm("tpa.process_endorsement"):
         return True
     return PolicyAccess.objects.filter(
@@ -114,7 +122,7 @@ def can_process_tpa_transaction(user, tx):
 
 
 def visible_policies(user):
-    qs = Policy.objects.select_related("sponsor", "insurance_company")
+    qs = scope_policies(Policy.objects.select_related("sponsor", "insurance_company"), user)
     if not user.is_authenticated:
         return qs.none()
     if user.is_superuser or user.has_perm("tpa.configure_tpa"):
@@ -132,6 +140,7 @@ def visible_transactions(user):
     )
     if not user.is_authenticated:
         return qs.none()
+    qs = qs.filter(policy_id__in=visible_policies(user).values("pk"))
     if user.is_superuser or user.has_perm("tpa.configure_tpa"):
         return qs
     return qs.filter(
@@ -249,4 +258,19 @@ def visible_transaction_queries(user, tx):
     return qs.filter(
         Q(audience=TransactionQuery.Audience.CLIENT_VISIBLE)
         | Q(selected_participants=user)
+    ).distinct()
+
+
+def visible_inbound_emails(user):
+    qs = InboundEmail.objects.select_related("transaction", "transaction__policy", "created_by")
+    if not user or not user.is_authenticated:
+        return qs.none()
+    if user.is_superuser:
+        return qs
+    policies = visible_policies(user)
+    return qs.filter(
+        Q(created_by=user)
+        | Q(transaction_id__in=visible_transactions(user).values("pk"))
+        | Q(ai_extracted_payload__policy_number__in=policies.values("policy_number"))
+        | Q(processing_hints__policy_id__in=policies.values("pk"))
     ).distinct()

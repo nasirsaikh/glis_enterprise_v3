@@ -2,6 +2,7 @@ from django.db.models import Q
 from django.utils import timezone
 from apps.accounts.models import UserProfile
 from apps.tickets.models import Ticket
+from services.tenancy import scope_tickets
 
 
 class TicketAccessPolicy:
@@ -10,6 +11,7 @@ class TicketAccessPolicy:
         qs = Ticket.objects.select_related("requester", "assignee", "project", "product", "category", "sla_policy").prefetch_related("groups", "assignees")
         if not user.is_authenticated:
             return qs.none()
+        qs = scope_tickets(qs, user)
         if user.is_superuser or user.has_perm("tickets.view_all"):
             return qs
         profile = getattr(user, "profile", None)
@@ -18,10 +20,10 @@ class TicketAccessPolicy:
                 Q(requester=user)
                 | Q(task_item__tagged_users=user, task_item__is_deleted=False)
             ).distinct()
-        group_ids = user.support_groups.values_list("pk", flat=True)
+        group_ids = user.support_groups.filter(is_active=True, can_view_all_group_tickets=True).values_list("pk", flat=True)
         project_ids = user.ticket_projects.values_list("pk", flat=True)
         return qs.filter(
-            Q(requester=user) | Q(assignee=user) | Q(assignees=user) | Q(groups__in=group_ids) |
+            Q(requester=user) | Q(assignee=user) | Q(assignees=user) | Q(groups__in=group_ids) | Q(groups__managers=user, groups__is_active=True) |
             Q(project_id__in=project_ids) | Q(approvals__approver=user) |
             Q(task_item__tagged_users=user, task_item__is_deleted=False) |
             Q(shares__recipient=user, shares__is_active=True, shares__expires_at__gt=timezone.now())

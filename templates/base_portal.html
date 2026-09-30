@@ -16,6 +16,7 @@
   <link href="{% static 'css/output.css' %}" rel="stylesheet" type="text/css">
   <link href="{% static 'css/portal-polish.css' %}" rel="stylesheet" type="text/css">
   <link href="{% static 'css/ui.css' %}" rel="stylesheet" type="text/css">
+  <link href="{% static 'css/portal-compact.css' %}" rel="stylesheet" type="text/css">
 {% block extra_head %}{% endblock %}
 </head>
 
@@ -222,7 +223,7 @@
                 <i class="bi bi-inbox text-lg"></i><span data-sidebar-label class="hidden">{% translate "TPA Inbound Emails" %}</span>
               </a>
             </li>
-            {% if can_configure_tpa_ai %}<li data-sidebar-label class="hidden ps-5"><a href="{% url 'tpa:inbound_email_training' %}" class="{% if request.resolver_match.url_name == 'inbound_email_training' %}menu-active{% endif %}"><i class="bi bi-magic"></i>{% translate "AI prompts & examples" %}</a></li>{% endif %}
+            "><i class="bi bi-magic"></i>{% translate "AI prompts & examples" %}</a></li>{% endif %}
             {% if can_create_tpa_transaction %}
             <li data-sidebar-label class="hidden ps-5">
               <a class="{% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name == 'inbound_email_create' %}menu-active{% endif %}" href="{% url 'tpa:inbound_email_create' %}">
@@ -257,6 +258,7 @@
   <script src="https://unpkg.com/htmx.org@2.0.8" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts" defer></script>
   <script src="{% static 'js/portal.js' %}" defer></script>
+  <script src="{% static 'js/portal-tables.js' %}" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.15.8/dist/cdn.min.js" defer></script>
   {% block extra_js %}{% endblock %}
 </body>

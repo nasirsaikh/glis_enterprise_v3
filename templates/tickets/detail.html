@@ -43,7 +43,7 @@
   </section>
 
   <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-    <section class="card min-w-0 border border-base-300 bg-base-100 shadow-sm" data-reveal>
+    <section class="card ticket-conversation min-w-0 border border-base-300 bg-base-100 shadow-sm" data-reveal>
       <div class="flex items-center justify-between gap-4 border-b border-base-300 px-5 py-4 sm:px-6">
         <div><h2 class="flex items-center gap-2 text-xl font-black"><i class="bi bi-chat-left-text text-primary"></i>{% translate "Conversation" %}</h2><p class="mt-1 text-xs text-base-content/45">{{ comments|length }} {% translate "updates" %}</p></div>
         <span class="badge badge-ghost gap-1"><i class="bi bi-paperclip"></i>{{ ticket.attachments.count }} {% translate "files" %}</span>
@@ -51,7 +51,7 @@
 
       <div class="border-b border-base-300 p-5 sm:p-6">
         <div class="chat chat-start">
-          <div class="chat-image avatar placeholder">
+          <div class="chat-image avatar avatar-placeholder">
             <div class="w-10 rounded-full bg-primary text-primary-content"><span class="text-sm font-bold">{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span></div>
           </div>
           <div class="chat-header">

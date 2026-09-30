@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from services.pagination import table_page
 from django.db import transaction
 from django.db.models import Count
 from django.http import HttpResponse
@@ -44,10 +45,18 @@ def policy_enrollment_detail(request, policy_id):
         endorsements = endorsements.filter(status=status)
     else:
         status = ""
-    page = Paginator(endorsements.order_by("-created_at", "-pk"), 25).get_page(request.GET.get("page"))
+    query = request.GET.get("q", "").strip()
+    if query:
+        from django.db.models import Q
+        endorsements = endorsements.filter(
+            Q(reference__icontains=query) | Q(transaction_type__icontains=query)
+            | Q(ticket__reference__icontains=query)
+        )
+    pagination = table_page(request, endorsements.order_by("-created_at", "-pk"))
+    page = pagination["page_obj"]
     enrollment_tx = visible_transactions(request.user).filter(policy=policy, transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT).order_by("-created_at").first()
     return render(request, "tpa/policy_enrollment_detail.html", {
-        **data, "policy": policy, "endorsements": page, "enrollment_tx": enrollment_tx,
+        **data, **pagination, "policy": policy, "endorsements": page, "enrollment_tx": enrollment_tx,
         "status_filter": status, "status_choices": MemberTransaction.Status.choices,
         "policy_chart_data": {**{key: data[key] for key in ["status_chart", "relationship_chart", "plan_rows", "endorsement_chart"]},
                               "active_chart": [{"label": "Active", "total": data["active_members"]}, {"label": "Inactive", "total": data["inactive_members"]}]},
@@ -56,77 +65,10 @@ def policy_enrollment_detail(request, policy_id):
 
 @login_required
 def inbound_email_training(request):
+    # Prompt profiles and examples are maintained in Django admin.
     if not can_manage_prompts(request.user):
         raise PermissionDenied("AI prompt configuration requires TPA or AI configuration permission.")
-    profiles = AIExtractionProfile.objects.filter(task__in=PROMPT_TASKS).order_by("task", "priority", "pk")
-    profile_id = request.POST.get("profile_id") if request.method == "POST" else request.GET.get("profile")
-    profile = get_object_or_404(profiles, pk=profile_id) if profile_id else None
-    if request.method == "GET" and not profile_id and request.GET.get("new") != "1":
-        profile = select_profile(AIExtractionProfile.Task.EMAIL_EXTRACTION, product="MEDICAL")
-    form = ExtractionPromptForm(instance=profile, initial={"task": AIExtractionProfile.Task.EMAIL_EXTRACTION, "name": "Mailbox endorsement extraction"})
-    example_form = PromptExampleForm(prefix="example")
-    preview_form = PromptPreviewForm(prefix="preview")
-    result = None
-    error = ""
-    if request.method == "GET" and request.GET.get("email"):
-        email = get_object_or_404(InboundEmail, pk=request.GET["email"])
-        preview_form = PromptPreviewForm(prefix="preview", initial={"sample_text": f"Subject: {email.subject}\n\n{email.body_text}"})
-    if request.method == "POST":
-        action = request.POST.get("action", "save")
-        if action in {"save", "preview"}:
-            form = ExtractionPromptForm(request.POST, instance=profile)
-            if form.is_valid():
-                if action == "save":
-                    saved = form.save()
-                    AuditLog.record(request=request, action="tpa.prompt_saved", instance=saved, summary=f"Extraction prompt updated: {saved.name}", sensitivity="sensitive")
-                    messages.success(request, "Prompt saved. New email processing and manual reprocessing will use the applicable active profile.")
-                    return redirect(reverse("tpa:inbound_email_training") + f"?profile={saved.pk}")
-                preview_form = PromptPreviewForm(request.POST, prefix="preview")
-                if preview_form.is_valid():
-                    draft = form.save(commit=False)
-                    provider = select_provider(vision=False, sensitive=True, capability="email_extraction" if draft.task == AIExtractionProfile.Task.EMAIL_EXTRACTION else None)
-                    if not provider:
-                        error = "Configure an active text AI provider that allows sensitive data (email_extraction capability for mailbox prompts)."
-                    else:
-                        try:
-                            raw, duration = generate_json(provider, system_prompt=_profile_prompt(draft) if draft.task == AIExtractionProfile.Task.EMAIL_EXTRACTION else _system_prompt(draft), user_prompt=preview_form.cleaned_data["sample_text"])
-                            result = normalize_ai_payload(raw, field_aliases=draft.field_aliases)
-                            result["provider"] = provider.name
-                            result["duration_ms"] = duration
-                        except Exception as exc:
-                            error = str(exc)
-        elif action == "example" and profile:
-            example_form = PromptExampleForm(request.POST, prefix="example")
-            if example_form.is_valid():
-                example = example_form.save(commit=False)
-                example.profile = profile
-                example.save()
-                AuditLog.record(request=request, action="tpa.prompt_example_saved", instance=example, summary=f"Example added to {profile.name}", sensitivity="sensitive")
-                messages.success(request, "Example saved. Up to five active examples, ordered by sort order, are included in each prompt.")
-                return redirect(reverse("tpa:inbound_email_training") + f"?profile={profile.pk}")
-        elif action == "remove_example" and profile:
-            example = get_object_or_404(profile.examples, pk=request.POST.get("example_id"))
-            example.is_active = False
-            example.save(update_fields=["is_active", "updated_at"])
-            AuditLog.record(request=request, action="tpa.prompt_example_disabled", instance=example, summary=f"Example disabled: {example.name}")
-            return redirect(reverse("tpa:inbound_email_training") + f"?profile={profile.pk}")
-    return render(request, "tpa/partials/ai_training_workspace.html" if request.headers.get("HX-Request") == "true" else "tpa/inbound_email_training.html", {
-        "profiles": profiles, "profile": profile, "form": form, "example_form": example_form,
-        "preview_form": preview_form, "preview_result": result,
-        "preview_json": json.dumps(result, ensure_ascii=False, indent=2) if result else "",
-        "preview_error": error, "examples": profile.examples.all() if profile else [],
-    })
-
-
-def _editable_transaction(request, reference, *, lock=False):
-    qs = visible_transactions(request.user)
-    if lock:
-        # Lock the transaction row itself, without nullable joined ticket rows.
-        qs = MemberTransaction.objects.select_for_update().filter(pk__in=qs.values("pk"))
-    tx = get_object_or_404(qs, reference=reference)
-    if not can_edit_tpa_intake(request.user, tx) or tx.status not in EDITABLE_STATUSES:
-        raise PermissionDenied("Request details can be changed by an authorized intake user before approval.")
-    return tx
+    return redirect("admin:ai_aiextractionprofile_changelist")
 
 
 @login_required

@@ -6,6 +6,7 @@ from apps.tickets.models import Category, Product, Project, Ticket
 from apps.tickets.services.access import accessible_categories, accessible_products, accessible_projects
 
 from .models import Task
+from services.tenancy import visible_users
 
 
 class TaskForm(forms.ModelForm):
@@ -26,7 +27,7 @@ class TaskForm(forms.ModelForm):
         )
         widgets = {
             "title": forms.TextInput(attrs={"class": "input input-bordered w-full"}),
-            "description": forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 4}),
+            "description": forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 2}),
             "project": forms.Select(attrs={"class": "select select-bordered w-full"}),
             "product": forms.Select(attrs={"class": "select select-bordered w-full"}),
             "category": forms.Select(attrs={"class": "select select-bordered w-full"}),
@@ -40,12 +41,12 @@ class TaskForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.user = user
         User = get_user_model()
-        self.fields["owner"].queryset = User.objects.filter(is_active=True).order_by("first_name", "last_name", "email")
+        self.fields["owner"].queryset = visible_users(user).order_by("first_name", "last_name", "email")
         self.fields["tagged_users"].queryset = self.fields["owner"].queryset
         self.fields["status"].widget.attrs["class"] = "select select-bordered w-full"
 
         if user and user.is_authenticated:
-            if user.is_staff or user.is_superuser:
+            if user.is_superuser:
                 projects = Project.objects.filter(is_active=True)
                 products = Product.objects.filter(is_active=True)
                 categories = Category.objects.filter(is_active=True)

@@ -63,6 +63,8 @@ class TicketAccessPolicyTests(TestCase):
         permission = Permission.objects.get(codename="assign", content_type__app_label="tickets")
         self.agent.user_permissions.add(permission)
         second_group = SupportGroup.objects.create(name="Operations", code="operations")
+        second_group.members.add(self.agent)
+        self.support.members.add(self.other)
         self.client.force_login(self.agent)
         response = self.client.post(reverse("portal:assign_ticket", args=[self.group_ticket.reference]), {"users": [self.agent.pk, self.other.pk], "groups": [self.support.pk, second_group.pk], "replace_existing": "on"})
         self.assertEqual(response.status_code, 302)

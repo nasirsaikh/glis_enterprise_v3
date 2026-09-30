@@ -13,6 +13,7 @@ from apps.core.models import AuditLog
 from apps.tickets.models import Ticket, TicketEvent
 from .models import BenefitPlan, InboundEmail, Member, MemberAction, MemberPolicyEnrollment, MemberTransaction, Policy, PolicyAccess, TPAOrganization
 from .services.ai_intake import extract_email_payload, _profile_prompt
+from .forms import ExtractionPromptForm
 from .services.document_intake import _system_prompt
 from .services.extraction import normalize_ai_payload, select_profile
 from .services.policy_dashboard import policy_dashboard
@@ -182,8 +183,9 @@ class PolicyToolsTests(TestCase):
         self.assertEqual(ticket.status, "closed")
 
     def test_save_profile_and_aliases_are_used_for_email_extraction(self):
-        self.client.post(reverse("tpa:inbound_email_training"), self.prompt_data(action="save"))
-        profile = AIExtractionProfile.objects.get(name="Mailbox instructions")
+        form = ExtractionPromptForm(self.prompt_data())
+        self.assertTrue(form.is_valid(), form.errors)
+        profile = form.save()
         AIProviderConfig.objects.create(name="Tools mock", provider="mock", task_capabilities=["email_extraction"], allow_sensitive_data=True)
         email = InboundEmail.objects.create(provider_message_id="tools-email", sender="s@example.com", recipient="t@example.com", received_at=timezone.now(), body_text="CPR: 00123")
         with patch("apps.tpa.services.ai_intake.generate_json", return_value=({"members": [{"CPR": "00123"}], "confidence": .9}, 5)) as generate:
@@ -192,25 +194,19 @@ class PolicyToolsTests(TestCase):
         self.assertEqual(payload["members"][0]["national_id"], "00123")
         self.assertIn('"national_id": ["CPR"]', generate.call_args.kwargs["system_prompt"])
 
-    def test_preview_uses_unsaved_prompt_without_creating_workflows(self):
+    def test_portal_prompt_route_redirects_to_backend_without_mutation(self):
         profile = AIExtractionProfile.objects.create(name="Preview", task="EMAIL_EXTRACTION", instructions="Original")
-        AIProviderConfig.objects.create(name="Preview model", provider="mock", task_capabilities=["email_extraction"], allow_sensitive_data=True)
-        with patch("apps.tpa.management_views.generate_json", return_value=({"members": [{"CPR": "00123"}], "policy_number": "TOOLS-1"}, 5)) as generate:
-            response = self.client.post(reverse("tpa:inbound_email_training"), self.prompt_data(action="preview", profile_id=profile.pk, instructions="Updated", **{"preview-sample_text": "CPR: 00123"}), HTTP_HX_REQUEST="true")
+        response = self.client.post(reverse("tpa:inbound_email_training"), self.prompt_data(action="preview", profile_id=profile.pk, instructions="Updated"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], reverse("admin:ai_aiextractionprofile_changelist"))
         profile.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, "<!doctype html>")
         self.assertEqual(profile.instructions, "Original")
-        self.assertIn("Updated", generate.call_args.kwargs["system_prompt"])
-        self.assertEqual(response.context["preview_result"]["members"][0]["national_id"], "00123")
         self.assertEqual(MemberTransaction.objects.count(), 0)
 
     def test_examples_use_valid_json_in_email_and_attachment_prompts(self):
         profile = AIExtractionProfile.objects.create(name="Examples", task="EMAIL_EXTRACTION")
-        response = self.client.post(reverse("tpa:inbound_email_training"), {"action": "example", "profile_id": profile.pk,
-            "example-name": "Sample", "example-input_text": "Add member", "example-expected_output": '{"members":[],"policy_number":null}',
-            "example-sort_order": "0", "example-is_active": "on"}, HTTP_HX_REQUEST="true")
-        self.assertEqual(response.status_code, 204)
+        AITrainingExample.objects.create(profile=profile, name="Sample", input_text="Add member",
+                                        expected_output={"members": [], "policy_number": None}, is_active=True)
         self.assertEqual(profile.examples.count(), 1)
         self.assertIn('"policy_number": null', _profile_prompt(profile))
         self.assertIn('"policy_number": null', _system_prompt(profile))

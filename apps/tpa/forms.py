@@ -19,6 +19,7 @@ from .models import (
     TransactionQuery,
 )
 from .services.access import visible_policies
+from services.tenancy import organization_ids, visible_users
 
 
 class TransactionForm(forms.ModelForm):
@@ -245,24 +246,10 @@ class PolicyEnrollmentForm(forms.Form):
             is_active=True,
         ).order_by("organization_type", "name_en")
 
-        assigned_qs = TPAOrganization.objects.none()
-        profile = getattr(user, "profile", None) if user else None
-        if profile is not None:
-            assigned_qs = profile.organizations.filter(
-                organization_type__in=[
-                    TPAOrganization.Type.INDIVIDUAL,
-                    TPAOrganization.Type.CORPORATE,
-                ],
-                is_active=True,
-            ).order_by("organization_type", "name_en")
-
-        if user and user.is_authenticated:
-            if assigned_qs.exists():
-                sponsor_qs = assigned_qs
-            elif not (user.is_superuser or user.has_perm("tpa.configure_tpa")):
-                sponsor_qs = TPAOrganization.objects.none()
-        else:
-            sponsor_qs = TPAOrganization.objects.none()
+        if not user or not user.is_authenticated:
+            sponsor_qs = sponsor_qs.none()
+        elif not user.is_superuser:
+            sponsor_qs = sponsor_qs.filter(pk__in=organization_ids(user))
 
         self.fields["sponsor"].queryset = sponsor_qs
         if sponsor_qs.count() == 1:
@@ -352,7 +339,6 @@ class BenefitPlanSetupForm(forms.ModelForm):
         fields = (
             "code",
             "name",
-            "description",
             "annual_premium",
             "default_sum_insured",
             "is_active",
@@ -848,24 +834,20 @@ class QueryRaiseForm(forms.Form):
         ),
     )
 
-    def __init__(self, *args, transaction=None, **kwargs):
+    def __init__(self, *args, transaction=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.transaction = transaction
         if transaction is not None:
-            User = get_user_model()
-            self.fields["selected_participants"].queryset = (
-                User.objects.filter(is_active=True)
-                .filter(
-                    Q(pk=transaction.requester_id)
-                    | Q(
-                        tpa_policy_access__policy=transaction.policy,
-                        tpa_policy_access__active=True,
-                        tpa_policy_access__can_view=True,
-                    )
-                    | Q(is_staff=True)
-                )
-                .distinct()
-                .order_by("first_name", "last_name", "email", "username")
+            scope = (
+                Q(pk=transaction.requester_id)
+                | Q(tpa_policy_access__policy=transaction.policy,
+                    tpa_policy_access__active=True, tpa_policy_access__can_view=True)
+            )
+            if transaction.ticket_id:
+                scope |= Q(support_groups__in=transaction.ticket.groups.all())
+                scope |= Q(managed_support_groups__in=transaction.ticket.groups.all())
+            self.fields["selected_participants"].queryset = visible_users(user).filter(scope).distinct().order_by(
+                "first_name", "last_name", "email", "username"
             )
         for field in self.fields.values():
             field.widget.attrs.setdefault(
@@ -1001,3 +983,34 @@ class TPAProcessingRowForm(forms.Form):
             else:
                 css = "input input-bordered input-sm w-full"
             field.widget.attrs.setdefault("class", css)
+
+
+class PolicyDetailsForm(forms.ModelForm):
+    class Meta:
+        model = Policy
+        fields = ("policy_number", "policy_name", "start_date", "expiry_date", "currency",
+                  "stp_enabled", "allowed_backdating_days")
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "expiry_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = (
+                "checkbox checkbox-primary checkbox-sm" if isinstance(field.widget, forms.CheckboxInput)
+                else "input input-bordered input-sm w-full"
+            )
+
+    def clean_policy_number(self):
+        value = self.cleaned_data["policy_number"].strip()
+        if Policy.objects.filter(policy_number__iexact=value).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("A policy with this number already exists.")
+        return value
+
+    def clean_currency(self):
+        value = self.cleaned_data["currency"].strip().upper()
+        if len(value) != 3 or not value.isalpha():
+            raise forms.ValidationError("Use a three-letter currency code.")
+        return value

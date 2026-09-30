@@ -1,0 +1,11 @@
+{% load i18n %}
+{% if page_obj.has_other_pages %}
+<nav class="table-tools" aria-label="{% translate 'Table pages' %}">
+  <span role="status">{{ page_obj.start_index }}–{{ page_obj.end_index }} / {{ page_obj.paginator.count }}</span>
+  <div class="join">
+    {% if page_obj.has_previous %}<a class="btn btn-outline btn-sm" href="?{{ pagination_query }}&page={{ page_obj.previous_page_number }}" {% if pagination_target %}hx-get="?{{ pagination_query }}&page={{ page_obj.previous_page_number }}" hx-target="{{ pagination_target }}" hx-push-url="true"{% endif %}>{% translate "Previous" %}</a>{% endif %}
+    <span class="btn btn-ghost btn-sm">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a class="btn btn-outline btn-sm" href="?{{ pagination_query }}&page={{ page_obj.next_page_number }}" {% if pagination_target %}hx-get="?{{ pagination_query }}&page={{ page_obj.next_page_number }}" hx-target="{{ pagination_target }}" hx-push-url="true"{% endif %}>{% translate "Next" %}</a>{% endif %}
+  </div>
+</nav>
+{% endif %}

@@ -1,6 +1,7 @@
 {% extends "base_public.html" %}
 {% load i18n %}
 {% block title %}{% translate "Greenline Insurance Services — Insurance service, made clear" %}{% endblock %}
+{% block public_page_class %}public-home-page{% endblock %}
 {% block content %}
 <div id="home-content" hx-get="{% url 'home_content_html' %}" hx-trigger="load" hx-swap="innerHTML">
   <div class="mx-auto flex min-h-[65vh] max-w-7xl flex-col items-center justify-center gap-5 px-6">

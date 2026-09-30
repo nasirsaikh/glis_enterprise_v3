@@ -39,6 +39,7 @@ from apps.core.models import (
     City,
 )
 
+from services.tenancy import visible_support_groups, visible_users
 from .permissions import visible_tickets_for_user
 
 
@@ -885,17 +886,7 @@ def users(request):
         .strip()
     )
 
-    if request.user.is_staff:
-
-        queryset = User.objects.filter(
-            is_active=True
-        )
-
-    else:
-
-        queryset = User.objects.filter(
-            pk=request.user.pk
-        )
+    queryset = visible_users(request.user)
 
     if query:
 
@@ -931,7 +922,8 @@ def projects(request):
 
     if request.method == "GET":
 
-        queryset = Project.objects.all()
+        from apps.tickets.services.access import accessible_projects
+        queryset = accessible_projects(request.user)
 
         if not request.user.is_staff:
             queryset = queryset.filter(
@@ -1107,10 +1099,8 @@ def products(request):
 
     if request.method == "GET":
 
-        queryset = (
-            Product.objects
-            .select_related("project")
-        )
+        from apps.tickets.services.access import accessible_products
+        queryset = accessible_products(request.user).select_related("project")
 
         if not request.user.is_staff:
             queryset = queryset.filter(
@@ -1239,13 +1229,8 @@ def categories(request):
 
     if request.method == "GET":
 
-        queryset = (
-            Category.objects
-            .select_related(
-                "product",
-                "product__project",
-            )
-        )
+        from apps.tickets.services.access import accessible_categories
+        queryset = accessible_categories(request.user).select_related("product", "product__project")
 
         if not request.user.is_staff:
             queryset = queryset.filter(
@@ -1379,24 +1364,7 @@ def categories(request):
 @permission_classes([IsAuthenticated])
 def support_groups(request):
 
-    queryset = SupportGroup.objects.all()
-
-    if not request.user.is_staff:
-
-        queryset = queryset.filter(
-            Q(members=request.user)
-            | Q(managers=request.user)
-        )
-
-    if hasattr(
-        SupportGroup,
-        "is_active",
-    ):
-        queryset = queryset.filter(
-            is_active=True
-        )
-
-    queryset = queryset.distinct()
+    queryset = visible_support_groups(request.user)
 
     return Response({
         "success": True,
@@ -2000,7 +1968,7 @@ def tickets(request):
                 ]
 
             ticket.groups.set(
-                SupportGroup.objects.filter(
+                visible_support_groups(request.user).filter(
                     pk__in=group_ids
                 )
             )
@@ -2593,10 +2561,7 @@ def ticket_assign(
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    assignee = User.objects.filter(
-        pk=user_id,
-        is_active=True,
-    ).first()
+    assignee = visible_users(request.user).filter(pk=user_id).first()
 
     if not assignee:
 

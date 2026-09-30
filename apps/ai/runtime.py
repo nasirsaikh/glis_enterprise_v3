@@ -85,7 +85,7 @@ def _endpoint(config, default):
     return (config.endpoint or default).rstrip("/")
 
 
-def generate_json(config, *, system_prompt, user_prompt, images=None):
+def generate_json(config, *, system_prompt, user_prompt, images=None, response_schema=None):
     started = time.perf_counter()
     provider = config.provider
 
@@ -96,6 +96,8 @@ def generate_json(config, *, system_prompt, user_prompt, images=None):
     timeout = httpx.Timeout(float(config.timeout_seconds or 120))
     secret = _secret(config)
     images = images or []
+    if response_schema:
+        system_prompt += "\nReturn only JSON matching this schema:\n" + json.dumps(response_schema)
 
     if provider == "ollama":
         endpoint = _endpoint(config, "http://127.0.0.1:11434")
@@ -110,7 +112,7 @@ def generate_json(config, *, system_prompt, user_prompt, images=None):
         body = {
             "model": config.model_name,
             "stream": False,
-            "format": "json",
+            "format": response_schema or "json",
             "messages": [
                 {"role": "system", "content": system_prompt},
                 user_message,

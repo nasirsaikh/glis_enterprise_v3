@@ -10,7 +10,9 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.tickets.models import SLAPolicy, Ticket, TicketEvent
+from services.pagination import table_page
 from services.ticket_workflow import notify_users
+from services.tenancy import organization_ids, visible_support_groups
 
 from .forms import TaskForm
 from .models import Task
@@ -23,7 +25,14 @@ def _visible_tasks(user):
         .select_related("ticket", "project", "product", "category", "owner", "recurring_task")
         .prefetch_related("tagged_users")
     )
-    if user.is_staff or user.is_superuser or user.has_perm("tasks.manage_tasks"):
+    if user.is_superuser:
+        return queryset
+    queryset = queryset.filter(
+        Q(owner=user) | Q(created_by=user)
+        | Q(created_by__profile__organizations__pk__in=organization_ids(user))
+        | Q(ticket__groups__in=visible_support_groups(user))
+    ).distinct()
+    if user.is_staff or user.has_perm("tasks.manage_tasks"):
         return queryset
     return queryset.filter(Q(owner=user) | Q(tagged_users=user) | Q(created_by=user)).distinct()
 
@@ -87,8 +96,9 @@ def _sync_ticket_from_task(task, ticket, status):
     ticket.save()
     ticket.assignees.set([task.owner])
 
-    default_groups = list(task.category.default_groups.filter(is_active=True))
-    if task.category.default_group and task.category.default_group not in default_groups:
+    allowed_groups = visible_support_groups(task.created_by or task.owner)
+    default_groups = list(task.category.default_groups.filter(pk__in=allowed_groups))
+    if task.category.default_group_id and allowed_groups.filter(pk=task.category.default_group_id).exists() and task.category.default_group not in default_groups:
         default_groups.append(task.category.default_group)
     ticket.groups.set(default_groups)
 
@@ -117,8 +127,11 @@ def _apply_filters(request, queryset):
 
 def _task_context(request):
     queryset = _apply_filters(request, _visible_tasks(request.user)).order_by("due_date", "title")
+    pagination = table_page(request, queryset)
     return {
-        "tasks": queryset[:250],
+        **pagination,
+        "tasks": pagination["page_obj"].object_list,
+        "pagination_target": "#task-table",
         "status_choices": Ticket.Status.choices,
         "current_status": request.GET.get("status", ""),
         "current_source": request.GET.get("source", ""),

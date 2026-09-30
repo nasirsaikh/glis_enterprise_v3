@@ -4,43 +4,28 @@
   {% if plan_formset.non_form_errors %}<div class="alert alert-error py-2">{{ plan_formset.non_form_errors }}</div>{% endif %}
   <div class="space-y-3" data-plan-list>
     {% for plan_form in plan_formset %}
-    <div class="rounded-box border border-base-300 bg-base-200/35 p-4" data-plan-row>
+    <div class="compact-plan-row" data-plan-row>
       {{ plan_form.DELETE.as_hidden }}
-      <div class="mb-3 flex items-center justify-between gap-2">
-        <strong class="text-sm">{% translate "Benefit Plan" %} <span data-plan-number>{{ forloop.counter }}</span></strong>
-        <button class="btn btn-ghost btn-xs text-error" type="button" data-remove-plan><i class="bi bi-trash"></i>{% translate "Remove" %}</button>
-      </div>
-      {% include "components/form_errors.html" with form=plan_form %}
-      <div class="grid gap-3 md:grid-cols-2">
-        {% for field in plan_form.visible_fields %}
-        {% if field.name != "DELETE" %}
-        <fieldset class="fieldset {% if field.name == 'description' %}md:col-span-2{% endif %}">
-          <legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}{{ field.errors }}
-          {% if field.help_text %}<p class="label text-[10px] opacity-50">{{ field.help_text }}</p>{% endif %}
-        </fieldset>
-        {% endif %}
-        {% endfor %}
-      </div>
+      {% for field in plan_form.visible_fields %}{% if field.name != "DELETE" %}
+      {% if field.name == "is_active" %}<label class="plan-active">{{ field }} {{ field.label }}</label>
+      {% else %}<label class="fieldset"><span class="fieldset-legend">{{ field.label }}</span>{{ field }}{{ field.errors }}</label>{% endif %}
+      {% endif %}{% endfor %}
+      <button class="btn btn-ghost btn-xs text-error" type="button" data-remove-plan aria-label="{% translate 'Remove benefit plan' %}"><i class="bi bi-trash"></i></button>
+      <span data-plan-number hidden>{{ forloop.counter }}</span>
+      {% if plan_form.non_field_errors %}<div class="alert alert-error">{{ plan_form.non_field_errors }}</div>{% endif %}
     </div>
     {% endfor %}
   </div>
   <template data-plan-empty-form>
-    <div class="rounded-box border border-base-300 bg-base-200/35 p-4" data-plan-row>
+    <div class="compact-plan-row" data-plan-row>
       {{ plan_formset.empty_form.DELETE.as_hidden }}
-      <div class="mb-3 flex items-center justify-between gap-2">
-        <strong class="text-sm">{% translate "Benefit Plan" %} <span data-plan-number></span></strong>
-        <button class="btn btn-ghost btn-xs text-error" type="button" data-remove-plan><i class="bi bi-trash"></i>{% translate "Remove" %}</button>
-      </div>
-      <div class="grid gap-3 md:grid-cols-2">
-        {% for field in plan_formset.empty_form.visible_fields %}
-        {% if field.name != "DELETE" %}
-        <fieldset class="fieldset {% if field.name == 'description' %}md:col-span-2{% endif %}">
-          <legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}
-        </fieldset>
-        {% endif %}
-        {% endfor %}
-      </div>
+      {% for field in plan_formset.empty_form.visible_fields %}{% if field.name != "DELETE" %}
+      {% if field.name == "is_active" %}<label class="plan-active">{{ field }} {{ field.label }}</label>
+      {% else %}<label class="fieldset"><span class="fieldset-legend">{{ field.label }}</span>{{ field }}{{ field.errors }}</label>{% endif %}
+      {% endif %}{% endfor %}
+      <button class="btn btn-ghost btn-xs text-error" type="button" data-remove-plan aria-label="{% translate 'Remove benefit plan' %}"><i class="bi bi-trash"></i></button>
+      <span data-plan-number hidden></span>
     </div>
   </template>
-  <div class="flex justify-end"><button class="btn btn-outline btn-sm" type="button" data-add-plan><i class="bi bi-plus-lg"></i>{% translate "Add another benefit plan" %}</button></div>
+  <div class="flex justify-end"><button class="btn btn-outline btn-sm" type="button" data-add-plan><i class="bi bi-plus-lg"></i>{% translate "Add benefit plan" %}</button></div>
 </div>

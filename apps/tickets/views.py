@@ -23,6 +23,7 @@ from apps.ai.models import AIInteraction, AISettings
 from apps.ai.providers import get_provider
 from apps.core.models import AuditLog
 from services.access import TicketAccessPolicy
+from services.tenancy import visible_support_groups, visible_users
 from services.dynamic_forms import DynamicTicketForm
 from services.ticket_workflow import current_approval_sequence, decide_approval, initialize_approval_workflow, notify_users
 from .forms import (
@@ -159,7 +160,7 @@ def ticket_list(request):
 
     allowed_sorts = {"created_at", "-created_at", "priority", "-priority", "status", "resolution_due_at", "-resolution_due_at"}
     qs = qs.order_by(request.GET.get("sort") if request.GET.get("sort") in allowed_sorts else "-created_at")
-    page = Paginator(qs, min(int(request.GET.get("page_size", 20)), 100)).get_page(request.GET.get("page"))
+    page = Paginator(qs, 20).get_page(request.GET.get("page"))
     pagination_query = request.GET.copy()
     pagination_query.pop("page", None)
     template = "tickets/partials/table.html" if request.htmx else "tickets/list.html"
@@ -512,7 +513,11 @@ def create_ticket(request, step=1):
         return _render_ticket_wizard(
             request,"tickets/wizard/step1.html",{"form": form,"step": 1,},)
 
-    category = get_object_or_404(Category, pk=wizard["selection"]["category"])
+    selection_form = TicketCreateStep1Form(wizard["selection"], user=request.user)
+    if not selection_form.is_valid():
+        request.session.pop("ticket_wizard", None)
+        return redirect("portal:create_ticket", step=1)
+    category = selection_form.cleaned_data["category"]
     dynamic_form = DynamicForm.objects.filter(category=category, is_active=True, active_version__isnull=False).select_related("active_version").first()
     schema = dynamic_form.active_version.schema if dynamic_form else {"fields": []}
     if step == 2:
@@ -568,11 +573,12 @@ def create_ticket(request, step=1):
             first_response_due_at=now + timedelta(minutes=sla.first_response_minutes) if sla else None,
             resolution_due_at=now + timedelta(minutes=sla.resolution_minutes) if sla else None,
         )
-        default_groups = list(category.default_groups.filter(is_active=True))
-        if category.default_group and category.default_group not in default_groups:
+        allowed_group_ids = visible_support_groups(request.user).values_list("pk", flat=True)
+        default_groups = list(category.default_groups.filter(pk__in=allowed_group_ids, is_active=True))
+        if category.default_group and category.default_group not in default_groups and visible_support_groups(request.user).filter(pk=category.default_group_id).exists():
             default_groups.append(category.default_group)
         ticket.groups.add(*default_groups)
-        if category.default_user and category.default_user.is_active:
+        if category.default_user and visible_users(request.user).filter(pk=category.default_user_id).exists():
             ticket.assignee = category.default_user
             ticket.save(update_fields=["assignee", "updated_at"])
             ticket.assignees.add(category.default_user)
@@ -605,7 +611,28 @@ def create_ticket(request, step=1):
             response["HX-Redirect"] = reverse("portal:ticket_detail", args=[ticket.reference])
             return response
         return redirect("portal:ticket_detail", reference=ticket.reference)
-    return _render_ticket_wizard(request, "tickets/wizard/step4.html", {"form": form, "step": 4, "wizard": wizard, "analysis": analysis, "category": category, "attachment_specs": attachment_specs})
+    dynamic_review = DynamicTicketForm(
+        schema=schema, user=request.user, initial=wizard.get("dynamic", {})
+    )
+    review_fields = []
+    for name, field in dynamic_review.fields.items():
+        value = wizard.get("dynamic", {}).get(name)
+        if value in (None, "", []):
+            continue
+        choices = {str(key): str(label) for key, label in getattr(field, "choices", [])}
+        if isinstance(value, list):
+            display = ", ".join(choices.get(str(item), str(item)) for item in value)
+        elif isinstance(value, bool):
+            display = _("Yes") if value else _("No")
+        else:
+            display = choices.get(str(value), str(value))
+        review_fields.append({"label": field.label, "value": display})
+    return _render_ticket_wizard(request, "tickets/wizard/step4.html", {
+        "form": form, "step": 4, "wizard": wizard, "analysis": analysis,
+        "category": category, "project": category.product.project, "product": category.product,
+        "review_fields": review_fields, "clarification": wizard.get("answers", {}).get("answer_1", ""),
+        "attachment_specs": attachment_specs,
+    })
 
 
 # @login_required
@@ -897,7 +924,7 @@ def upload_attachments(request, reference):
 
 @login_required
 def notifications(request):
-    page = Paginator(Notification.objects.filter(user=request.user), 30).get_page(request.GET.get("page"))
+    page = Paginator(Notification.objects.filter(user=request.user), 20).get_page(request.GET.get("page"))
     return render(request, "notifications/list.html", {"page_obj": page})
 
 

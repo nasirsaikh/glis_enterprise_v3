@@ -641,15 +641,35 @@
       rows.forEach(row => { const tr = body.insertRow(); keys.forEach(key => { const td = tr.insertCell(); td.textContent = row[key] ?? ""; }); });
       return wrapper;
     };
+    const vannaCharts = new Map();
     const drawQueryChart = (id, rows, spec) => {
-      if (!rows.length || !window.Plotly) return;
+      if (!rows.length || !window.ApexCharts) return;
       const keys = Object.keys(rows[0]), x = spec.x || keys[0], y = spec.y || keys[1];
-      let trace;
-      if (spec.type === "pie") trace = {type: "pie", labels: rows.map(row => row[x]), values: rows.map(row => row[y]), hole: .45, textinfo: "label+percent"};
-      else if (spec.type === "line") trace = {type: "scatter", mode: "lines+markers", x: rows.map(row => row[x]), y: rows.map(row => row[y]), line: {color: "#147A50", width: 3}, marker: {color: "#147A50", size: 7}};
-      else trace = {type: "bar", x: rows.map(row => row[x]), y: rows.map(row => row[y]), marker: {color: "#147A50", cornerradius: 4}};
-      plot(id, [trace], {title: {text: spec.title || "", font: {size: 14}}, margin: {l: 44, r: 16, t: spec.title ? 46 : 18, b: 48}});
+      const values = rows.map(row => {
+        const value = row[y];
+        if (value === null || value === undefined || value === "") return null;
+        const number = Number(value);
+        return Number.isFinite(number) ? number : null;
+      });
+      const categories = rows.map(row => String(row[x] ?? "—"));
+      const type = spec.type === "pie" ? "donut" : spec.type === "line" ? "line" : "bar";
+      const options = {...baseChartOptions(type, 300), colors: chartColors(),
+        title: {text: spec.title || "", style: {fontSize: "13px"}},
+        series: type === "donut" ? values.map(value => value ?? 0) : [{name: y, data: values}],
+        ...(type === "donut" ? {labels: categories, legend: {position: "bottom"}}
+          : {xaxis: {categories}, stroke: {width: type === "line" ? 3 : 0, curve: "smooth"},
+             markers: {size: type === "line" ? 4 : 0}, plotOptions: {bar: {borderRadius: 4}},
+             yaxis: {labels: {formatter: value => value == null ? "" : Number(value).toLocaleString()}}}),
+      };
+      apex(id, options);
+      vannaCharts.set(id, {rows, spec});
     };
+    const clearConversation = () => {
+      vannaCharts.forEach((_, id) => { chartInstances.get(id)?.destroy(); chartInstances.delete(id); });
+      vannaCharts.clear();
+      conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
+    };
+    document.addEventListener("glis:theme", () => vannaCharts.forEach((data, id) => drawQueryChart(id, data.rows, data.spec)));
     const setDiagnostics = queryData => {
       diagnostics.innerHTML = "";
       const timestamp = new Date().toLocaleTimeString([], {hour12: false});
@@ -671,7 +691,7 @@
     };
     const addAnswer = queryData => {
       const article = document.createElement("article");
-      article.className = "chat chat-start ai-message";
+      article.className = "ai-message ai-answer";
       const header = document.createElement("div");
       header.className = "chat-header flex items-center gap-2";
       const label = document.createElement("strong");
@@ -682,8 +702,8 @@
       header.append(label, meta);
 
       const bubble = document.createElement("div");
-      bubble.className = "chat-bubble max-w-5xl";
-      if (queryData.status !== "completed") bubble.classList.add("chat-bubble-error");
+      bubble.className = "card vanna-answer-card";
+      if (queryData.status !== "completed") bubble.classList.add("vanna-answer-card-error");
 
       const summary = document.createElement("p");
       summary.className = "leading-6";
@@ -708,7 +728,7 @@
         chartId = `vanna-chart-${queryData.id || ++chartSequence}-${++chartSequence}`;
         const chart = document.createElement("div");
         chart.id = chartId;
-        chart.className = "mt-3 min-h-64 rounded-box bg-base-100";
+        chart.className = "vanna-chart rounded-box bg-base-100";
         bubble.appendChild(chart);
       }
       if (rows.length) bubble.appendChild(buildTable(rows));
@@ -738,16 +758,17 @@
       footer.textContent = formatTime(queryData.created_at);
       article.append(header, bubble, footer);
       conversation.appendChild(article);
+      document.dispatchEvent(new CustomEvent("glis:tables"));
       if (chartId) setTimeout(() => drawQueryChart(chartId, rows, spec), 10);
       setDiagnostics(queryData);
       scrollToLatest();
     };
     const showWelcome = () => {
-      conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
+      clearConversation();
       historyLoading.classList.add("hidden"); welcome.classList.remove("hidden");
     };
     const renderHistory = queries => {
-      conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
+      clearConversation();
       historyLoading.classList.add("hidden"); welcome.classList.toggle("hidden", Boolean(queries.length));
       queries.forEach(item => { addQuestion(item.question, item.created_at); addAnswer(item); });
       if (queries.length) setDiagnostics(queries[queries.length - 1]);

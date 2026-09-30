@@ -33,7 +33,7 @@ class UserProfileForm(forms.Form):
     organization = forms.CharField(label=_("Organizations"), required=False, disabled=True, widget=forms.TextInput(attrs={"class": "input input-bordered w-full", "readonly": "readonly"}))
     job_title = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
     department = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
-    bio = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 4}))
+    bio = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 2}))
     preferred_language = forms.ChoiceField(choices=UserProfile._meta.get_field("preferred_language").choices, widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
     theme = forms.ChoiceField(
         choices=[("system", _("System")), ("light", _("Light")), ("dark", _("Dark"))],

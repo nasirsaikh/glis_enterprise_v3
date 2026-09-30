@@ -1,10 +1,10 @@
 {% load i18n %}
 <section class="card border border-base-300 bg-base-100 shadow-xl" data-reveal>
   <div class="flex flex-col gap-3 border-b border-base-300 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-    <div><h2 class="text-xl font-black">{% blocktranslate count count=tasks|length %}{{ count }} task{% plural %}{{ count }} tasks{% endblocktranslate %}</h2><p class="mt-1 text-sm text-base-content/50">{% translate "Recurring occurrences and manually created tasks in one workspace." %}</p></div>
+    <div><h2 class="text-xl font-black">{% blocktranslate count count=page_obj.paginator.count %}{{ count }} task{% plural %}{{ count }} tasks{% endblocktranslate %}</h2><p class="mt-1 text-sm text-base-content/50">{% translate "Recurring occurrences and manually created tasks in one workspace." %}</p></div>
     <a class="btn btn-outline btn-sm" href="{% url 'portal:ticket_list' %}?tab=tasks"><i class="bi bi-ticket-perforated"></i>{% translate "Task tickets" %}</a>
   </div>
-  <div class="overflow-x-auto"><table class="table table-zebra">
+  <div class="overflow-x-auto"><table data-server-paginated="true" class="table table-zebra">
     <thead><tr><th>{% translate "Task" %}</th><th>{% translate "Owner / watchers" %}</th><th>{% translate "Due" %}</th><th>{% translate "Source" %}</th><th>{% translate "Priority" %}</th><th>{% translate "Status" %}</th><th>{% translate "Ticket" %}</th><th></th></tr></thead>
     <tbody>{% for task in tasks %}<tr class="hover:bg-primary/5">
       <td><strong class="block">{{ task.title }}</strong><small class="text-base-content/45">{{ task.project.name_en }} · {{ task.category.name_en }}</small></td>
@@ -16,4 +16,5 @@
       <td><div class="flex justify-end gap-1"><button class="btn btn-ghost btn-circle btn-sm" type="button" hx-get="{% url 'tasks:edit' task.pk %}" hx-target="#task-form-shell" hx-swap="innerHTML"><i class="bi bi-pencil"></i></button><button class="btn btn-ghost btn-circle btn-sm text-error" type="button" hx-post="{% url 'tasks:delete' task.pk %}" hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}' hx-confirm="{% translate 'Remove this task from the active list and close its linked ticket?' %}" hx-target="#task-table" hx-swap="innerHTML"><i class="bi bi-trash"></i></button></div></td>
     </tr>{% empty %}<tr><td colspan="8"><div class="flex flex-col items-center gap-3 py-14 text-base-content/45"><i class="bi bi-list-task text-3xl"></i><strong>{% translate "No matching tasks" %}</strong><p>{% translate "Adjust the filters or create a new task." %}</p></div></td></tr>{% endfor %}</tbody>
   </table></div>
+  {% include "components/table_pagination.html" %}
 </section>

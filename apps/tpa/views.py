@@ -5,6 +5,7 @@ from collections import Counter
 from datetime import date
 
 from django.contrib import messages
+from services.pagination import table_page
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models, transaction
@@ -20,6 +21,7 @@ from apps.tickets.models import TicketAttachment
 
 from .forms import (
     BenefitPlanSetupForm,
+    PolicyDetailsForm,
     BulkCardSelectionForm,
     CardDispatchForm,
     InboundEmailForm,
@@ -64,6 +66,7 @@ from .services.access import (
     can_view_query_message,
     can_view_transaction_query,
     visible_policies,
+    visible_inbound_emails,
     visible_shared_internal_messages,
     visible_transaction_queries,
     visible_transactions,
@@ -217,21 +220,7 @@ def dashboard(request):
             is_active=True,
             allow_sensitive_data=True,
         ).count(),
-        "inbound_review": (
-            InboundEmail.objects.filter(
-                processing_state=InboundEmail.State.REVIEW,
-            ).count()
-            if (
-                request.user.is_superuser
-                or request.user.has_perm("tpa.configure_tpa")
-            )
-            else InboundEmail.objects.filter(
-                processing_state=InboundEmail.State.REVIEW,
-            ).filter(
-                models.Q(created_by=request.user)
-                | models.Q(transaction_id__in=txs.values_list("pk", flat=True))
-            ).distinct().count()
-        ),
+        "inbound_review": visible_inbound_emails(request.user).filter(processing_state=InboundEmail.State.REVIEW).count(),
         "transactions": txs[:50],
     }
     return render(request, "tpa/dashboard.html", context)
@@ -246,39 +235,35 @@ def user_guide(request):
 @login_required
 def inbound_email_list(request):
     _require_tpa_access(request.user)
-    visible_tx_ids = visible_transactions(request.user).values_list("pk", flat=True)
-    emails = InboundEmail.objects.select_related(
-        "transaction",
-        "transaction__policy",
-    )
-    is_mail_admin = (
-        request.user.is_superuser
-        or request.user.has_perm("tpa.configure_tpa")
-    )
-    if not is_mail_admin:
+    emails = visible_inbound_emails(request.user).order_by("-received_at", "-pk")
+    is_mail_admin = request.user.is_superuser or request.user.has_perm("tpa.configure_tpa")
+    query = request.GET.get("q", "").strip()
+    if query:
         emails = emails.filter(
-            models.Q(created_by=request.user)
-            | models.Q(transaction_id__in=visible_tx_ids)
+            models.Q(subject__icontains=query) | models.Q(sender__icontains=query)
+            | models.Q(processing_state__icontains=query) | models.Q(transaction__reference__icontains=query)
+            | models.Q(transaction__policy__policy_number__icontains=query)
         )
-    emails = emails.distinct().order_by("-received_at", "-pk")
+    pagination = table_page(request, emails)
     health = mailbox_health()
-    health["awaiting_review"] = InboundEmail.objects.filter(
+    health["awaiting_review"] = visible_inbound_emails(request.user).filter(
         processing_state__in=[
             InboundEmail.State.REVIEW,
             InboundEmail.State.UNAUTHORIZED,
         ]
     ).count()
-    health["ignored"] = InboundEmail.objects.filter(
+    health["ignored"] = visible_inbound_emails(request.user).filter(
         processing_state=InboundEmail.State.IGNORED
     ).count()
-    health["failed"] = InboundEmail.objects.filter(
+    health["failed"] = visible_inbound_emails(request.user).filter(
         processing_state=InboundEmail.State.FAILED
     ).count()
     return render(
         request,
         "tpa/inbound_email_list.html",
         {
-            "emails": emails[:200],
+            **pagination,
+            "emails": pagination["page_obj"],
             "mailbox_health": health,
             "can_sync_mailbox": is_mail_admin,
         },
@@ -380,19 +365,7 @@ def inbound_email_create(request):
 @login_required
 def inbound_email_detail(request, email_id):
     _require_tpa_access(request.user)
-    visible_tx_ids = visible_transactions(request.user).values_list("pk", flat=True)
-    email_qs = InboundEmail.objects.select_related(
-        "transaction",
-        "transaction__policy",
-    ).prefetch_related("attachments")
-    if not (
-        request.user.is_superuser
-        or request.user.has_perm("tpa.configure_tpa")
-    ):
-        email_qs = email_qs.filter(
-            models.Q(created_by=request.user)
-            | models.Q(transaction_id__in=visible_tx_ids)
-        )
+    email_qs = visible_inbound_emails(request.user).prefetch_related("attachments")
     email = get_object_or_404(email_qs, pk=email_id)
     return render(
         request,
@@ -411,16 +384,7 @@ def inbound_email_detail(request, email_id):
 @login_required
 def inbound_email_attachment(request, email_id, attachment_id):
     _require_tpa_access(request.user)
-    visible_tx_ids = visible_transactions(request.user).values_list("pk", flat=True)
-    email_qs = InboundEmail.objects.all()
-    if not (
-        request.user.is_superuser
-        or request.user.has_perm("tpa.configure_tpa")
-    ):
-        email_qs = email_qs.filter(
-            models.Q(created_by=request.user)
-            | models.Q(transaction_id__in=visible_tx_ids)
-        )
+    email_qs = visible_inbound_emails(request.user)
     email = get_object_or_404(email_qs, pk=email_id)
     attachment = get_object_or_404(email.attachments, pk=attachment_id)
     attachment.file.open("rb")
@@ -437,10 +401,7 @@ def inbound_email_process(request, email_id):
     _require_tpa_access(request.user)
     if request.method != "POST":
         raise PermissionDenied
-    email = get_object_or_404(
-        InboundEmail,
-        pk=email_id,
-    )
+    email = get_object_or_404(visible_inbound_emails(request.user), pk=email_id)
     if not (
         request.user.is_superuser
         or request.user.has_perm("tpa.configure_tpa")
@@ -511,9 +472,15 @@ def policy_enrollment_list(request):
             models.Q(access_entries__user=request.user)
             | models.Q(transactions__requester=request.user)
         ).distinct()
-    policies = policies.order_by("-created_at")
+    query = request.GET.get("q", "").strip()
+    if query:
+        policies = policies.filter(
+            models.Q(policy_number__icontains=query) | models.Q(policy_name__icontains=query)
+            | models.Q(sponsor__name_en__icontains=query) | models.Q(insurance_company__name_en__icontains=query)
+        )
+    pagination = table_page(request, policies.order_by("-created_at", "-pk"))
     rows = []
-    for policy in policies:
+    for policy in pagination["page_obj"]:
         enrollment_tx = (
             policy.transactions.filter(
                 transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT
@@ -525,7 +492,7 @@ def policy_enrollment_list(request):
     return render(
         request,
         "tpa/policy_enrollment_list.html",
-        {"policy_rows": rows},
+        {"policy_rows": rows, **pagination},
     )
 
 
@@ -736,11 +703,17 @@ def transaction_list(request):
     endorsements = visible_transactions(request.user).exclude(
         transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT
     )
-    return render(
-        request,
-        "tpa/transaction_list.html",
-        {"transactions": endorsements},
-    )
+    query = request.GET.get("q", "").strip()
+    if query:
+        endorsements = endorsements.filter(
+            models.Q(reference__icontains=query) | models.Q(policy__policy_number__icontains=query)
+            | models.Q(sponsor__name_en__icontains=query) | models.Q(status__icontains=query)
+            | models.Q(transaction_type__icontains=query)
+        )
+    pagination = table_page(request, endorsements.order_by("-created_at", "-pk"))
+    return render(request, "tpa/transaction_list.html", {
+        "transactions": pagination["page_obj"], **pagination,
+    })
 
 
 @login_required
@@ -1081,6 +1054,7 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
             else None
         ),
         "initial_setup": tx.transaction_type == tx.Type.NEW_POLICY_ENROLLMENT,
+        "policy_details_form": PolicyDetailsForm(instance=tx.policy) if tx.transaction_type == tx.Type.NEW_POLICY_ENROLLMENT else None,
         "source_documents": source_documents,
         "open_query": next(
             (
@@ -1094,6 +1068,7 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
         "shared_internal_messages": shared_internal_messages,
         "query_raise_form": QueryRaiseForm(
             transaction=tx,
+            user=request.user,
             initial={"purpose": TransactionQuery.Purpose.APPROVAL
                      if wizard["active_step"]["key"] == "approval"
                      else TransactionQuery.Purpose.TPA},
@@ -1726,7 +1701,7 @@ def transaction_raise_query(request, reference):
     if request.method != "POST":
         raise PermissionDenied
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
-    form = QueryRaiseForm(request.POST, request.FILES, transaction=tx)
+    form = QueryRaiseForm(request.POST, request.FILES, transaction=tx, user=request.user)
     if form.is_valid():
         try:
             query = raise_transaction_query(
@@ -2011,3 +1986,61 @@ def transaction_process(request, reference):
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
     return _transaction_response(request, tx, step='')
+
+
+@login_required
+@transaction.atomic
+def policy_details_edit(request, reference):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference,
+                          transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT)
+    _require_intake_edit(request.user, tx)
+    # Lock shared policy setup so concurrent requests cannot save stale validation.
+    policy = Policy.objects.select_for_update().get(pk=tx.policy_id)
+    tx = MemberTransaction.objects.select_for_update().get(pk=tx.pk)
+    if tx.status not in INTAKE_EDITABLE_STATUSES or policy.initial_enrollment_completed_at:
+        raise PermissionDenied("Policy setup can be edited during initial intake only.")
+    if tx.member_actions.filter(processed_at__isnull=False).exists():
+        raise PermissionDenied("Policy setup cannot be edited after members have been processed.")
+    before = {name: str(getattr(policy, name)) for name in PolicyDetailsForm.Meta.fields}
+    form = PolicyDetailsForm(request.POST, instance=policy)
+    if not form.is_valid():
+        return _transaction_response(request, tx, step="policy_setup", forms={"policy_details_form": form})
+    policy = form.save()
+    tx.currency = policy.currency
+    if str(tx.effective_date) == before["start_date"]:
+        tx.effective_date = policy.start_date
+    tx.status = tx.Status.DRAFT
+    tx.validation_score = 0
+    tx.validation_completed_at = None
+    tx.stp_eligible = False
+    tx.stp_blockers = ["REVALIDATION_REQUIRED"]
+    tx.validation_bypassed = False
+    tx.validation_bypass_reason = ""
+    tx.validation_bypassed_at = None
+    tx.validation_bypassed_by = None
+    tx.submitted_at = None
+    tx.approved_at = None
+    tx.approved_by = None
+    tx.premium_adjustment = 0
+    tx.premium_after = tx.premium_before
+    tx.save()
+    for row in tx.member_actions.all():
+        values = dict(row.corrected_data or {})
+        if str(values.get("effective_date", "")) == before["start_date"]:
+            values["effective_date"] = tx.effective_date.isoformat()
+        row.corrected_data = values
+        row.validation_status = MemberAction.Result.ERROR
+        row.validation_errors = [{"code": "REVALIDATION_REQUIRED", "message": "Policy details changed. Run validation again."}]
+        row.calculated_premium = 0
+        row.calculation_snapshot = {}
+        row.save(update_fields=["corrected_data", "validation_status", "validation_errors", "calculated_premium", "calculation_snapshot", "updated_at"])
+    TransactionEvent.objects.create(
+        transaction=tx, actor=request.user, event_type="policy_details_updated",
+        summary="Policy details updated; validation is required again.",
+        details={"before": before, "after": {name: str(getattr(policy, name)) for name in before}},
+    )
+    messages.success(request, "Policy details saved. Validate the enrollment again before approval.")
+    return _transaction_response(request, tx, step="policy_setup")

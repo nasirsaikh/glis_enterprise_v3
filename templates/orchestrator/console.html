@@ -6,7 +6,7 @@
 {% if selected_domain %}
 {% url 'orchestrator:session_detail' '00000000-0000-0000-0000-000000000000' as session_detail_template %}
 <div id="vanna-workbench"
-     class="flex min-h-0 flex-col overflow-hidden bg-base-100" style="height:calc(100dvh - 5rem)"
+     class="vanna-workspace flex min-h-0 flex-col overflow-hidden bg-base-100"
      data-session-detail-template="{{ session_detail_template }}"
      data-session-list-url="{% url 'orchestrator:session_list' %}"
      data-domain-id="{{ selected_domain.pk }}">
@@ -25,8 +25,8 @@
       <div class="flex items-center justify-center gap-2 py-16 text-base-content/45" id="vanna-history-loading"><span class="loading loading-spinner loading-sm"></span>{% translate "Loading conversation…" %}</div>
       <div class="hidden mx-auto max-w-2xl py-16 text-center" id="vanna-welcome">
         <span class="aura aura-holo aura-lg rounded-[2rem]"><span class="grid h-20 w-20 place-items-center rounded-[2rem] bg-primary text-primary-content"><i class="bi bi-stars text-3xl"></i></span></span>
-        <h2 class="mt-6 text-3xl font-black tracking-[-.04em]">{% translate "Start a governed data conversation" %}</h2>
-        <p class="mt-3 leading-7 text-base-content/55">{% translate "Ask a business question. Vanna retrieves relevant ChromaDB context, applies access rules, runs read-only SQL and keeps every question in this session." %}</p>
+        <h2 class="mt-6 text-3xl font-black tracking-[-.04em]">{% translate "What would you like to analyze?" %}</h2>
+        <p class="mt-3 leading-7 text-base-content/55">{% translate "Ask about trends, totals or comparisons. Explore the chart and results in your conversation." %}</p>
       </div>
     </div>
 

@@ -10,7 +10,7 @@
       <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{% translate "The configured mailbox is monitored automatically. This page is for health, audit, review, failures and manual recovery." %}</p>
     </div>
     <div class="flex flex-wrap gap-2">
-      {% if can_configure_tpa_ai %}<a class="btn btn-outline btn-sm" href="{% url 'tpa:inbound_email_training' %}"><i class="bi bi-magic"></i>{% translate "AI prompts & examples" %}</a>{% endif %}
+      
       <a class="btn btn-ghost btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "Dashboard" %}</a>
       {% if can_sync_mailbox %}
       <form method="post" action="{% url 'tpa:inbound_email_sync_now' %}">
@@ -65,8 +65,9 @@
       <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Mailbox / audit" %}</div><h2 class="text-lg font-black ">{% translate "INBOUND EMAIL PROCESSING QUEUE" %}</h2></div>
       <span class="badge badge-info badge-soft"><i class="bi bi-shield-check"></i>{% translate "AUTOMATED" %}</span>
     </div>
+    {% include "components/table_search.html" %}
     <div class="overflow-x-auto">
-      <table class="table table-sm">
+      <table data-server-paginated="true" class="table table-sm">
         <thead>
           <tr>
             <th>{% translate "Received" %}</th>
@@ -99,6 +100,7 @@
         </tbody>
       </table>
     </div>
+    {% include "components/table_pagination.html" %}
   </section>
 </div>
 {% endblock %}

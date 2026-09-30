@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from apps.ai.models import default_questions
 from apps.tpa.models import TPAOrganization
 from .models import Category, Product, Project, SupportGroup, Ticket, TicketComment
+from services.tenancy import organization_ids, visible_support_groups, visible_users
 from .services.access import accessible_categories,accessible_products,accessible_projects
 
 # class TicketCreateStep1Form(forms.Form):
@@ -115,9 +116,7 @@ class TicketCreateStep1Form(forms.Form):
 class TicketIntakeForm(forms.Form):
     def __init__(self, *args, questions=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.questions = (questions or default_questions())[:4]
-        while len(self.questions) < 4:
-            self.questions.append(default_questions()[len(self.questions)])
+        self.questions = [dict((questions or default_questions())[0])]
         for index, question in enumerate(self.questions, start=1):
             self.fields[f"answer_{index}"] = forms.CharField(
                 label=_(question["text"]), required=not question.get("optional", False),
@@ -206,59 +205,16 @@ class TicketAssignmentForm(forms.Form):
 
     def __init__(self, *args, ticket=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        User = get_user_model()
-        users = User.objects.filter(is_active=True).select_related("profile").prefetch_related(
-            "profile__organizations"
+        users = visible_users(user).prefetch_related("profile__organizations")
+        groups = visible_support_groups(user).prefetch_related("organizations")
+        self.available_organizations = TPAOrganization.objects.filter(
+            is_active=True,
         )
-        groups = SupportGroup.objects.filter(is_active=True).prefetch_related(
-            "organizations",
-            "members__profile__organizations",
-            "managers__profile__organizations",
-        )
-
-        profile = getattr(user, "profile", None) if user else None
-        organization_ids = list(
-            profile.organizations.filter(is_active=True).values_list("pk", flat=True)
-        ) if profile else []
-        is_global_assigner = bool(
-            user
-            and user.is_authenticated
-            and (user.is_superuser or user.has_perm("tickets.assign"))
-        )
-
-        if is_global_assigner:
-            self.available_organizations = TPAOrganization.objects.filter(
-                is_active=True
-            ).order_by("organization_type", "name_en")
-        elif user and user.is_authenticated:
-            own_group_ids = list(
-                SupportGroup.objects.filter(
-                    Q(members=user) | Q(managers=user),
-                    is_active=True,
-                ).values_list("pk", flat=True)
-            )
-            user_scope = (
-                Q(profile__organizations__pk__in=organization_ids)
-                | Q(support_groups__pk__in=own_group_ids)
-                | Q(managed_support_groups__pk__in=own_group_ids)
-            )
-            group_scope = (
-                Q(pk__in=own_group_ids)
-                | Q(organizations__pk__in=organization_ids)
-            )
-            if ticket is not None:
-                user_scope |= Q(pk__in=ticket.assignees.values_list("pk", flat=True))
-                group_scope |= Q(pk__in=ticket.groups.values_list("pk", flat=True))
-            users = users.filter(user_scope).distinct()
-            groups = groups.filter(group_scope).distinct()
-            self.available_organizations = TPAOrganization.objects.filter(
-                pk__in=organization_ids,
-                is_active=True,
-            ).order_by("organization_type", "name_en")
-        else:
-            users = users.none()
-            groups = groups.none()
-            self.available_organizations = TPAOrganization.objects.none()
+        if not user or not user.is_authenticated:
+            self.available_organizations = self.available_organizations.none()
+        elif not user.is_superuser:
+            self.available_organizations = self.available_organizations.filter(pk__in=organization_ids(user))
+        self.available_organizations = self.available_organizations.order_by("organization_type", "name_en")
 
         self.fields["users"].queryset = users.order_by("first_name", "last_name", "email")
         self.fields["groups"].queryset = groups.order_by("name")
@@ -273,7 +229,7 @@ class TicketShareForm(forms.Form):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["recipient"].queryset = get_user_model().objects.filter(is_active=True).exclude(pk=getattr(user, "pk", None)).order_by("first_name", "last_name", "email")
+        self.fields["recipient"].queryset = visible_users(user).exclude(pk=getattr(user, "pk", None)).order_by("first_name", "last_name", "email")
 
 
 class TicketApprovalDecisionForm(forms.Form):
@@ -297,21 +253,11 @@ class TicketFilterForm(forms.Form):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["project"].queryset = accessible_projects(user) if user and user.is_authenticated else Project.objects.none()
+        self.fields["category"].queryset = accessible_categories(user) if user and user.is_authenticated else Category.objects.none()
         organizations = TPAOrganization.objects.filter(is_active=True)
-        if user and user.is_authenticated and not (
-            user.is_superuser
-            or user.has_perm("tickets.view_all")
-            or user.has_perm("tickets.assign")
-        ):
-            profile = getattr(user, "profile", None)
-            organizations = (
-                profile.organizations.filter(is_active=True)
-                if profile
-                else TPAOrganization.objects.none()
-            )
-        elif not user or not user.is_authenticated:
-            organizations = TPAOrganization.objects.none()
-        self.fields["organization"].queryset = organizations.order_by(
-            "organization_type", "name_en"
-        )
-
+        if not user or not user.is_authenticated:
+            organizations = organizations.none()
+        elif not user.is_superuser:
+            organizations = organizations.filter(pk__in=organization_ids(user))
+        self.fields["organization"].queryset = organizations.order_by("organization_type", "name_en")

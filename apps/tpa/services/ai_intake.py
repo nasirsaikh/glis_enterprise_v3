@@ -20,11 +20,13 @@ from ..models import (
     TransactionEvent,
 )
 from .authority import sender_is_authorized
+from .access import visible_policies
 from .document_intake import process_source_bundle
 from .extraction import normalize_ai_payload, select_profile, select_provider
 from .intake import import_member_spreadsheet
 from .member_merge import merge_member_rows
 from .prompts import profile_guidance
+from .schemas import EmailEvidence
 from .ticketing import create_ticket_for_transaction
 from .workflow import run_validation
 
@@ -251,19 +253,28 @@ def extract_email_payload(email, actor=None, *, profile_override=None):
     )
     prompt = _email_prompt(email, hints)
     try:
-        raw, duration_ms = generate_json(
-            provider,
-            system_prompt=_profile_prompt(profile),
-            user_prompt=prompt,
-        )
-        normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases if profile else None)
+        duration_ms = 0
+        for attempt in range(2):
+            try:
+                raw, elapsed = generate_json(
+                    provider, system_prompt=_profile_prompt(profile),
+                    user_prompt=prompt if attempt == 0 else prompt + "\nThe previous extraction did not match the schema. Return every available field as JSON and leave unknown values null.",
+                    response_schema=EmailEvidence.model_json_schema(),
+                )
+                duration_ms += elapsed
+                normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases if profile else None)
+                break
+            except (TypeError, ValueError):
+                if attempt == 1:
+                    raise
         if not profile_override:
             known_type = TRANSACTION_ALIASES.get(str(normalized.get("transaction_type") or "").upper())
             specialized = select_profile(AIExtractionProfile.Task.EMAIL_EXTRACTION, product=product, transaction_type=known_type or "")
             if specialized and specialized.applicable_transaction_type and (not profile or specialized.pk != profile.pk):
                 profile = specialized
                 raw, extra_duration = generate_json(provider, system_prompt=_profile_prompt(profile),
-                    user_prompt=_email_prompt(email, {**hints, "transaction_type": known_type}))
+                    user_prompt=_email_prompt(email, {**hints, "transaction_type": known_type}),
+                    response_schema=EmailEvidence.model_json_schema())
                 duration_ms += extra_duration
                 normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases)
         _log_interaction(
@@ -350,6 +361,7 @@ def _process_image_attachment(tx, email, attachment, actor, hints):
         provider,
         system_prompt=_profile_prompt(profile),
         user_prompt=_document_prompt(email, attachment, hints),
+        response_schema=EmailEvidence.model_json_schema(),
         images=[
             {
                 "bytes": raw_bytes,
@@ -390,7 +402,7 @@ def _process_attachments(tx, email, actor):
         if existing:
             attachment.processing_state = (
                 InboundEmailAttachment.State.PROCESSED
-                if existing.processed
+                if existing.processed and existing.processing_state == SourceDocument.State.PROCESSED
                 else InboundEmailAttachment.State.REVIEW
             )
             attachment.extracted_payload = existing.extracted_payload
@@ -448,7 +460,7 @@ def _process_attachments(tx, email, actor):
             attachment = attachment_map[document.pk]
             attachment.processing_state = (
                 InboundEmailAttachment.State.PROCESSED
-                if document.processed
+                if document.processed and document.processing_state == SourceDocument.State.PROCESSED
                 else InboundEmailAttachment.State.REVIEW
             )
             attachment.extracted_payload = document.extracted_payload
@@ -653,6 +665,12 @@ def process_inbound_email(email, actor):
             )
             return None
 
+        if actor and getattr(actor, "is_authenticated", False) and not visible_policies(actor).filter(pk=policy.pk).exists():
+            email.processing_state = InboundEmail.State.UNAUTHORIZED
+            email.processing_stage = "POLICY_ACCESS"
+            email.processing_error = "The resolved policy is outside the processing user's authorized organizations."
+            email.save(update_fields=["processing_state", "processing_stage", "processing_error", "updated_at"])
+            return None
         transaction_type = _resolve_transaction_type(payload, hints)
         if not transaction_type:
             email.processing_state = InboundEmail.State.REVIEW

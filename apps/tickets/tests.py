@@ -8,10 +8,12 @@ from django.urls import reverse
 from django.utils import timezone
 from unittest.mock import patch
 from apps.accounts.models import UserProfile
+from apps.tpa.models import TPAOrganization
 from apps.orchestrator.local_vanna import LocalVannaOllama, SqlGovernor
 from apps.orchestrator.models import AIDomain, AnalysisSession, DataSource, QueryAudit, VannaSettings
 from services.access import TicketAccessPolicy
 from services.dynamic_forms import DynamicTicketForm, build_api_payload, safe_schema_payload
+from .forms import TicketAssignmentForm, TicketFilterForm
 from .models import Category, Notification, Product, Project, SupportGroup, Ticket
 
 
@@ -66,6 +68,83 @@ class TicketAccessPolicyTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.group_ticket.assignees.count(), 2)
         self.assertEqual(self.group_ticket.groups.count(), 2)
+
+    def test_assignment_scope_uses_my_organizations_or_support_groups(self):
+        User = get_user_model()
+        company_a = TPAOrganization.objects.create(
+            code="COMP-A",
+            name_en="Company A",
+            organization_type=TPAOrganization.Type.CORPORATE,
+        )
+        company_b = TPAOrganization.objects.create(
+            code="COMP-B",
+            name_en="Company B",
+            organization_type=TPAOrganization.Type.CORPORATE,
+        )
+        self.agent.profile.organizations.add(company_a)
+        self.other.profile.organizations.add(company_b)
+        company_peer = User.objects.create_user(
+            username="company-peer@example.com",
+            email="company-peer@example.com",
+            password="test-password",
+        )
+        company_peer.profile.organizations.add(company_a)
+        group_peer = User.objects.create_user(
+            username="group-peer@example.com",
+            email="group-peer@example.com",
+            password="test-password",
+        )
+        self.support.members.add(group_peer)
+        self.support.can_assign_group_tickets = True
+        self.support.save(update_fields=["can_assign_group_tickets"])
+
+        company_group = SupportGroup.objects.create(
+            name="Company A Operations",
+            code="company-a-operations",
+        )
+        company_group.organizations.add(company_a)
+        outside_group = SupportGroup.objects.create(
+            name="Company B Operations",
+            code="company-b-operations",
+        )
+        outside_group.organizations.add(company_b)
+
+        form = TicketAssignmentForm(ticket=self.group_ticket, user=self.agent)
+        self.assertIn(company_peer, form.fields["users"].queryset)
+        self.assertIn(group_peer, form.fields["users"].queryset)
+        self.assertNotIn(self.other, form.fields["users"].queryset)
+        self.assertIn(self.support, form.fields["groups"].queryset)
+        self.assertIn(company_group, form.fields["groups"].queryset)
+        self.assertNotIn(outside_group, form.fields["groups"].queryset)
+
+        self.client.force_login(self.agent)
+        response = self.client.post(
+            reverse("portal:assign_ticket", args=[self.group_ticket.reference]),
+            {
+                "users": [self.other.pk],
+                "groups": [outside_group.pk],
+                "replace_existing": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(self.group_ticket.assignees.filter(pk=self.other.pk).exists())
+        self.assertFalse(self.group_ticket.groups.filter(pk=outside_group.pk).exists())
+
+    def test_ticket_organization_filter_is_scoped_to_user_companies(self):
+        company_a = TPAOrganization.objects.create(
+            code="FILTER-A",
+            name_en="Filter Company A",
+            organization_type=TPAOrganization.Type.CORPORATE,
+        )
+        company_b = TPAOrganization.objects.create(
+            code="FILTER-B",
+            name_en="Filter Company B",
+            organization_type=TPAOrganization.Type.CORPORATE,
+        )
+        self.agent.profile.organizations.add(company_a)
+        form = TicketFilterForm(user=self.agent)
+        self.assertIn(company_a, form.fields["organization"].queryset)
+        self.assertNotIn(company_b, form.fields["organization"].queryset)
 
     def test_export_returns_only_visible_tickets(self):
         self.client.force_login(self.guest)

@@ -135,7 +135,7 @@
 <dialog id="assignmentModal" class="modal">
   <div class="modal-box max-w-4xl">
     <div class="flex items-start justify-between gap-4">
-      <div><span class="badge badge-primary badge-soft mb-2">{% translate "Assignment" %}</span><h2 class="text-2xl font-black">{% translate "Assign groups and staff" %}</h2><p class="mt-1 text-sm text-base-content/50">{% translate "Select any number of staff members and support groups." %}</p></div>
+      <div><span class="badge badge-primary badge-soft mb-2">{% translate "Assignment" %}</span><h2 class="text-2xl font-black">{% translate "Assign groups and staff" %}</h2><p class="mt-1 text-sm text-base-content/50">{% translate "Assignment choices are limited to users in your organizations or support groups. Global ticket assigners retain full access." %}</p></div>
       <button class="btn btn-ghost btn-circle btn-sm" type="button" onclick="document.getElementById('assignmentModal').close()"><i class="bi bi-x-lg"></i></button>
     </div>
     <form class="mt-5" action="{% url 'portal:assign_ticket' ticket.reference %}" method="post">
@@ -143,26 +143,38 @@
       <div class="grid gap-6 md:grid-cols-2">
         <fieldset class="fieldset min-w-0">
           <legend class="fieldset-legend">{% translate "Staff members" %}</legend>
+          {% if assignment_form.available_organizations %}
+          <select class="select select-bordered mb-2 w-full" data-multiselect-filter="assignment-users" aria-label="{% translate 'Filter staff by organization' %}">
+            <option value="">{% translate "All available organizations" %}</option>
+            {% for organization in assignment_form.available_organizations %}<option value="{{ organization.pk }}">{{ organization.name_en }}</option>{% endfor %}
+          </select>
+          {% endif %}
           <input class="input input-bordered mb-2 w-full" type="search" placeholder="{% translate 'Search staff' %}" data-multiselect-search="assignment-users">
           <div id="assignment-users" class="max-h-64 overflow-y-auto rounded-box border border-base-300 bg-base-200/35 p-2">
             {% for member in assignment_form.users.field.queryset %}
-            <label class="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 hover:bg-base-100" data-multiselect-option data-search-text="{{ member.get_full_name|default:member.email|lower }} {{ member.email|lower }}">
+            <label class="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 hover:bg-base-100" data-multiselect-option data-filter-values="{% for organization in member.profile.organizations.all %}{{ organization.pk }}{% if not forloop.last %},{% endif %}{% endfor %}" data-search-text="{{ member.get_full_name|default:member.email|lower }} {{ member.email|lower }} {% for organization in member.profile.organizations.all %}{{ organization.name_en|lower }} {{ organization.code|lower }} {% endfor %}">
               <input class="checkbox checkbox-primary" type="checkbox" name="users" value="{{ member.pk }}" {% if member in ticket.assignees.all %}checked{% endif %}>
-              <span class="min-w-0"><strong class="block truncate text-sm">{{ member.get_full_name|default:member.email }}</strong><small class="block truncate text-xs text-base-content/45">{{ member.email }}</small></span>
+              <span class="min-w-0"><strong class="block truncate text-sm">{{ member.get_full_name|default:member.email }}</strong><small class="block truncate text-xs text-base-content/45">{{ member.email }}{% for organization in member.profile.organizations.all %} · {{ organization.name_en }}{% endfor %}</small></span>
             </label>
-            {% empty %}<div class="p-4 text-sm text-base-content/45">{% translate "No active staff members." %}</div>{% endfor %}
+            {% empty %}<div class="p-4 text-sm text-base-content/45">{% translate "No staff are available in your organization/group scope." %}</div>{% endfor %}
           </div>
         </fieldset>
         <fieldset class="fieldset min-w-0">
           <legend class="fieldset-legend">{% translate "Support groups" %}</legend>
+          {% if assignment_form.available_organizations %}
+          <select class="select select-bordered mb-2 w-full" data-multiselect-filter="assignment-groups" aria-label="{% translate 'Filter support groups by organization' %}">
+            <option value="">{% translate "All available organizations" %}</option>
+            {% for organization in assignment_form.available_organizations %}<option value="{{ organization.pk }}">{{ organization.name_en }}</option>{% endfor %}
+          </select>
+          {% endif %}
           <input class="input input-bordered mb-2 w-full" type="search" placeholder="{% translate 'Search groups' %}" data-multiselect-search="assignment-groups">
           <div id="assignment-groups" class="max-h-64 overflow-y-auto rounded-box border border-base-300 bg-base-200/35 p-2">
             {% for group in assignment_form.groups.field.queryset %}
-            <label class="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 hover:bg-base-100" data-multiselect-option data-search-text="{{ group.name|lower }}">
+            <label class="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 hover:bg-base-100" data-multiselect-option data-filter-values="{% for organization in group.organizations.all %}{{ organization.pk }}{% if not forloop.last %},{% endif %}{% endfor %}" data-search-text="{{ group.name|lower }} {% for organization in group.organizations.all %}{{ organization.name_en|lower }} {{ organization.code|lower }} {% endfor %}">
               <input class="checkbox checkbox-primary" type="checkbox" name="groups" value="{{ group.pk }}" {% if group in ticket.groups.all %}checked{% endif %}>
-              <span class="min-w-0"><strong class="block truncate text-sm">{{ group.name }}</strong>{% if group.description %}<small class="block truncate text-xs text-base-content/45">{{ group.description }}</small>{% endif %}</span>
+              <span class="min-w-0"><strong class="block truncate text-sm">{{ group.name }}</strong><small class="block truncate text-xs text-base-content/45">{% for organization in group.organizations.all %}{{ organization.name_en }}{% if not forloop.last %}, {% endif %}{% empty %}{{ group.description|default:"Cross-group access" }}{% endfor %}</small></span>
             </label>
-            {% empty %}<div class="p-4 text-sm text-base-content/45">{% translate "No active support groups." %}</div>{% endfor %}
+            {% empty %}<div class="p-4 text-sm text-base-content/45">{% translate "No support groups are available in your organization/group scope." %}</div>{% endfor %}
           </div>
         </fieldset>
       </div>

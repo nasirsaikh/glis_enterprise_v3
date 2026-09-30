@@ -161,3 +161,22 @@ class TPAPortalScopeTests(TestCase):
         self.assertIn("tickets_ticket AS", joined)
         with self.assertRaises(ValueError):
             governor.govern("SELECT policy_number FROM main.tpa_policy")
+
+    def test_vanna_parser_scopes_comma_joins_and_blocks_qualified_bypasses(self):
+        from django.db import connection
+        from apps.orchestrator.local_vanna import SqlGovernor
+        from apps.orchestrator.models import AIDomain
+        domain = AIDomain.objects.create(name="Join analytics", slug="join-scope",
+                                        allowed_tables=["tickets_ticket", "tpa_policy", "tpa_memberaction"])
+        governor = SqlGovernor(domain=domain, user=self.actor)
+        sql = governor.govern("SELECT policy_number FROM tpa_policy")
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            self.assertEqual(cursor.fetchall(), [(self.policy.policy_number,)])
+        comma = governor.govern("SELECT p.policy_number FROM tickets_ticket t, tpa_policy p")
+        self.assertIn("tpa_policy AS", comma)
+        self.assertIn("tickets_ticket AS", comma)
+        with self.assertRaises(ValueError):
+            governor.govern("SELECT p.policy_number FROM tickets_ticket t, main.tpa_policy p")
+        with self.assertRaises(ValueError):
+            governor.govern("SELECT p.policy_number FROM tickets_ticket t, auth_user p")

@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+
+from sqlglot import exp, parse
+from sqlglot.errors import ParseError
 import re
 from uuid import uuid4
 from datetime import date, datetime
@@ -130,12 +133,24 @@ class SqlGovernor:
             raise ValueError("Vanna generated a non-read-only SQL statement.")
 
     def _validate_tables(self, sql: str) -> set[str]:
-        cte_names = {_identifier(item) for item in CTE_NAME.findall(sql)}
+        dialect = {"sqlite": "sqlite", "mssql": "tsql", "microsoft": "tsql",
+                   "postgresql": "postgres", "mysql": "mysql"}.get(connection.vendor)
+        try:
+            statements = parse(sql, read=dialect)
+        except ParseError as exc:
+            raise ValueError("The generated SQL could not be safely parsed.") from exc
+        if len(statements) != 1 or not isinstance(statements[0], exp.Query):
+            raise ValueError("Only one read-only query is permitted.")
+        tree = statements[0]
+        cte_names = {cte.alias_or_name.lower() for cte in tree.find_all(exp.CTE)}
+        if cte_names.intersection(self.allowed_tables):
+            raise ValueError("Query aliases cannot shadow permitted portal tables.")
+        self.table_references = [
+            (table.name.lower(), table.db, table.catalog) for table in tree.find_all(exp.Table)
+        ]
         references: set[str] = set()
-        for raw in TABLE_REFERENCE.findall(sql):
-            normalized = _identifier(raw)
-            table = normalized.split(".")[-1]
-            if table in cte_names:
+        for table, database, catalog in self.table_references:
+            if table in cte_names and not database and not catalog:
                 continue
             references.add(table)
             if table not in self.allowed_tables:
@@ -173,9 +188,8 @@ class SqlGovernor:
 
         # A schema-qualified reference could bypass the scoped CTE, so scoped users
         # may only reference the unqualified logical table name.
-        for raw in TABLE_REFERENCE.findall(sql):
-            normalized = _identifier(raw)
-            if normalized.split(".")[-1] == table and normalized != table:
+        for name, database, catalog in self.table_references:
+            if name == table and (database or catalog):
                 raise ValueError("Use the unqualified tickets_ticket table in scoped analytics queries.")
 
         ids = ",".join(str(pk) for pk in self.visible_ticket_ids) or "NULL"
@@ -229,9 +243,8 @@ class SqlGovernor:
         }
         ctes = []
         for table in sorted(references.intersection(rules)):
-            for raw in TABLE_REFERENCE.findall(generated):
-                normalized = _identifier(raw)
-                if normalized.split(".")[-1] == table and normalized != table:
+            for name, database, catalog in self.table_references:
+                if name == table and (database or catalog):
                     raise ValueError(f"Use the unqualified {table} table in scoped analytics queries.")
             column, get_ids = rules[table]
             ids = ",".join(str(pk) for pk in get_ids()) or "NULL"

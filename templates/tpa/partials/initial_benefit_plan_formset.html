@@ -1,0 +1,46 @@
+{% load i18n %}
+<div data-benefit-plan-formset data-prefix="{{ plan_formset.prefix }}" class="space-y-3">
+  {{ plan_formset.management_form }}
+  {% if plan_formset.non_form_errors %}<div class="alert alert-error py-2">{{ plan_formset.non_form_errors }}</div>{% endif %}
+  <div class="space-y-3" data-plan-list>
+    {% for plan_form in plan_formset %}
+    <div class="rounded-box border border-base-300 bg-base-200/35 p-4" data-plan-row>
+      {{ plan_form.DELETE.as_hidden }}
+      <div class="mb-3 flex items-center justify-between gap-2">
+        <strong class="text-sm">{% translate "Benefit Plan" %} <span data-plan-number>{{ forloop.counter }}</span></strong>
+        <button class="btn btn-ghost btn-xs text-error" type="button" data-remove-plan><i class="bi bi-trash"></i>{% translate "Remove" %}</button>
+      </div>
+      {% include "components/form_errors.html" with form=plan_form %}
+      <div class="grid gap-3 md:grid-cols-2">
+        {% for field in plan_form.visible_fields %}
+        {% if field.name != "DELETE" %}
+        <fieldset class="fieldset {% if field.name == 'description' %}md:col-span-2{% endif %}">
+          <legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}{{ field.errors }}
+          {% if field.help_text %}<p class="label text-[10px] opacity-50">{{ field.help_text }}</p>{% endif %}
+        </fieldset>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <template data-plan-empty-form>
+    <div class="rounded-box border border-base-300 bg-base-200/35 p-4" data-plan-row>
+      {{ plan_formset.empty_form.DELETE.as_hidden }}
+      <div class="mb-3 flex items-center justify-between gap-2">
+        <strong class="text-sm">{% translate "Benefit Plan" %} <span data-plan-number></span></strong>
+        <button class="btn btn-ghost btn-xs text-error" type="button" data-remove-plan><i class="bi bi-trash"></i>{% translate "Remove" %}</button>
+      </div>
+      <div class="grid gap-3 md:grid-cols-2">
+        {% for field in plan_formset.empty_form.visible_fields %}
+        {% if field.name != "DELETE" %}
+        <fieldset class="fieldset {% if field.name == 'description' %}md:col-span-2{% endif %}">
+          <legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}
+        </fieldset>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </template>
+  <div class="flex justify-end"><button class="btn btn-outline btn-sm" type="button" data-add-plan><i class="bi bi-plus-lg"></i>{% translate "Add another benefit plan" %}</button></div>
+</div>

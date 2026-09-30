@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import BaseFormSet, formset_factory
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.utils import timezone
@@ -137,20 +138,12 @@ class PolicyEnrollmentForm(forms.Form):
     stp_enabled = forms.BooleanField(required=False, initial=True)
     allowed_backdating_days = forms.IntegerField(min_value=0, max_value=3650, initial=30)
 
-    plan_code = forms.CharField(max_length=50, initial="GOLD", label="Initial Plan Code")
-    plan_name = forms.CharField(max_length=160, initial="Gold", label="Initial Plan Name")
-    annual_premium = forms.DecimalField(
-        max_digits=14,
-        decimal_places=3,
-        initial="0.000",
-        label="Annual Premium",
-    )
-    default_sum_insured = forms.DecimalField(
-        max_digits=16,
-        decimal_places=3,
-        required=False,
-        label="Default Sum Insured",
-    )
+    # Legacy single-plan fields are retained for backward-compatible POSTs.
+    # The current browser UI uses InitialBenefitPlanFormSet instead.
+    plan_code = forms.CharField(max_length=50, required=False, widget=forms.HiddenInput())
+    plan_name = forms.CharField(max_length=160, required=False, widget=forms.HiddenInput())
+    annual_premium = forms.DecimalField(max_digits=14, decimal_places=3, required=False, widget=forms.HiddenInput())
+    default_sum_insured = forms.DecimalField(max_digits=16, decimal_places=3, required=False, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -208,9 +201,13 @@ class BenefitPlanSetupForm(forms.ModelForm):
     def __init__(self, *args, policy=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.policy = policy
+        if not self.is_bound and not getattr(self.instance, "pk", None):
+            self.fields["is_active"].initial = True
         for field in self.fields.values():
             if isinstance(field.widget, forms.CheckboxInput):
                 css = "checkbox checkbox-primary checkbox-sm"
+            elif isinstance(field.widget, forms.Textarea):
+                css = "textarea textarea-bordered textarea-sm w-full"
             else:
                 css = "input input-bordered input-sm w-full"
             field.widget.attrs.setdefault("class", css)
@@ -223,6 +220,39 @@ class BenefitPlanSetupForm(forms.ModelForm):
         ).exists():
             raise forms.ValidationError("This plan code already exists for the policy.")
         return value
+
+
+class InitialBenefitPlanFormSet(BaseFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        seen = set()
+        populated = 0
+        for form in self.forms:
+            data = getattr(form, "cleaned_data", {}) or {}
+            if data.get("DELETE"):
+                continue
+            code = str(data.get("code") or "").strip().upper()
+            name = str(data.get("name") or "").strip()
+            if not code and not name:
+                continue
+            populated += 1
+            if code in seen:
+                form.add_error("code", "Benefit plan codes must be unique within the policy.")
+            seen.add(code)
+        if populated < 1:
+            raise forms.ValidationError("Add at least one benefit plan.")
+
+
+InitialBenefitPlanFormSet = formset_factory(
+    BenefitPlanSetupForm,
+    formset=InitialBenefitPlanFormSet,
+    extra=0,
+    can_delete=True,
+    max_num=20,
+    validate_max=True,
+)
 
 
 class MemberRowForm(forms.Form):

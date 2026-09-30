@@ -10,9 +10,13 @@
       {% for step in creation_steps %}
       <section class="tpa-wizard-step" data-wizard-step="{{ forloop.counter }}" {% if not forloop.first %}hidden{% endif %} aria-labelledby="creation-step-{{ forloop.counter }}">
         <h3 id="creation-step-{{ forloop.counter }}" class="font-bold">{{ step.label }}</h3>
+        {% if step.template %}
+          {% include step.template %}
+        {% else %}
         <div class="grid gap-3 md:grid-cols-2">
           {% for field in step.fields %}<fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}{% if field.help_text %}<p class="label">{{ field.help_text }}</p>{% endif %}{{ field.errors }}</fieldset>{% endfor %}
         </div>
+        {% endif %}
       </section>
       {% endfor %}
       <div class="flex flex-wrap items-center justify-between gap-3 border-t border-base-300 pt-3">

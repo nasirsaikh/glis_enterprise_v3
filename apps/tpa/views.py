@@ -23,6 +23,7 @@ from .forms import (
     BulkCardSelectionForm,
     CardDispatchForm,
     InboundEmailForm,
+    InitialBenefitPlanFormSet,
     MemberLookupRowForm,
     MemberRowForm,
     MemberUploadForm,
@@ -536,108 +537,171 @@ def policy_enrollment_create(request):
         )
 
     form = PolicyEnrollmentForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        with transaction.atomic():
-            policy = Policy.objects.create(
-                sponsor=form.cleaned_data["sponsor"],
-                insurance_company=form.cleaned_data["insurance_company"],
-                tpa_organization=form.cleaned_data.get("tpa_organization"),
-                policy_number=form.cleaned_data["policy_number"],
-                policy_name=form.cleaned_data["policy_name"],
-                start_date=form.cleaned_data["start_date"],
-                expiry_date=form.cleaned_data["expiry_date"],
-                status=Policy.Status.DRAFT,
-                product_type="MEDICAL",
-                currency=form.cleaned_data["currency"].upper(),
-                stp_enabled=form.cleaned_data["stp_enabled"],
-                premium_calculation_enabled=True,
-                allowed_backdating_days=form.cleaned_data[
-                    "allowed_backdating_days"
-                ],
-                configuration={"initial_setup": True},
-            )
-            BenefitPlan.objects.create(
-                policy=policy,
-                code=form.cleaned_data["plan_code"].upper(),
-                name=form.cleaned_data["plan_name"],
-                annual_premium=form.cleaned_data["annual_premium"],
-                default_sum_insured=form.cleaned_data.get(
-                    "default_sum_insured"
-                ),
-                premium_configuration={"method": "PRORATA"},
-                is_active=True,
-            )
-            PolicyAccess.objects.update_or_create(
-                organization=policy.sponsor,
-                policy=policy,
-                user=request.user,
-                defaults={
-                    "can_view": True,
-                    "can_view_members": True,
-                    "can_create_enrollment": True,
-                    "can_create_endorsement": True,
-                    "can_view_premium": True,
-                    "can_approve": True,
-                    "can_process": True,
-                    "active": True,
-                },
-            )
-            tx = MemberTransaction.objects.create(
-                sponsor=policy.sponsor,
-                insurer=policy.insurance_company,
-                policy=policy,
-                transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
-                source=MemberTransaction.Source.PORTAL,
-                effective_date=policy.start_date,
-                requester=request.user,
-                requester_organization=policy.sponsor,
-                status=MemberTransaction.Status.DRAFT,
-                remarks="Initial policy enrollment and member census setup.",
-                metadata={"initial_policy_setup": True},
-            )
-            TransactionEvent.objects.create(
-                transaction=tx,
-                actor=request.user,
-                event_type="policy_enrollment_created",
-                summary="Initial policy enrollment created",
-            )
+    uses_formset = request.method != "POST" or "plans-TOTAL_FORMS" in request.POST
+    plan_formset = InitialBenefitPlanFormSet(
+        request.POST if request.method == "POST" and uses_formset else None,
+        prefix="plans",
+        initial=(
+            [{
+                "code": "GOLD",
+                "name": "Gold",
+                "annual_premium": "0.000",
+                "default_sum_insured": "",
+                "is_active": True,
+            }]
+            if request.method != "POST"
+            else None
+        ),
+    )
 
-        messages.success(
-            request,
-            "Policy setup created. Add plans and the initial member census, then submit for validation.",
-        )
-        if _is_htmx(request):
-            response = HttpResponse(status=204)
-            response["HX-Redirect"] = (
-                reverse("tpa:transaction_detail", args=[tx.reference]) + "?step=policy_setup"
-            )
-            return response
-        return redirect("tpa:transaction_detail", reference=tx.reference)
+    form_valid = form.is_valid() if request.method == "POST" else False
+    plans_valid = (
+        plan_formset.is_valid()
+        if request.method == "POST" and uses_formset
+        else True
+    )
+    plan_rows = []
+    if request.method == "POST" and form_valid and plans_valid:
+        if uses_formset:
+            for plan_form in plan_formset.forms:
+                data = getattr(plan_form, "cleaned_data", {}) or {}
+                if data.get("DELETE"):
+                    continue
+                if not str(data.get("code") or "").strip():
+                    continue
+                plan_rows.append(data)
+        else:
+            code = str(form.cleaned_data.get("plan_code") or "").strip()
+            name = str(form.cleaned_data.get("plan_name") or "").strip()
+            if code and name:
+                plan_rows.append({
+                    "code": code,
+                    "name": name,
+                    "description": "",
+                    "annual_premium": form.cleaned_data.get("annual_premium") or 0,
+                    "default_sum_insured": form.cleaned_data.get("default_sum_insured"),
+                    "is_active": True,
+                })
 
-    groups = [
-        (_("Policy & Routing"), ["sponsor", "insurance_company", "tpa_organization",
-                                 "policy_number", "policy_name"]),
-        (_("Period & Rules"), ["start_date", "expiry_date", "currency",
-                                "stp_enabled", "allowed_backdating_days"]),
-        (_("Benefit Plan & Create"), ["plan_code", "plan_name", "annual_premium",
-                                       "default_sum_insured"]),
+        if not plan_rows:
+            form.add_error(None, "Add at least one benefit plan.")
+        else:
+            with transaction.atomic():
+                policy = Policy.objects.create(
+                    sponsor=form.cleaned_data["sponsor"],
+                    insurance_company=form.cleaned_data["insurance_company"],
+                    tpa_organization=form.cleaned_data.get("tpa_organization"),
+                    policy_number=form.cleaned_data["policy_number"],
+                    policy_name=form.cleaned_data["policy_name"],
+                    start_date=form.cleaned_data["start_date"],
+                    expiry_date=form.cleaned_data["expiry_date"],
+                    status=Policy.Status.DRAFT,
+                    product_type="MEDICAL",
+                    currency=form.cleaned_data["currency"].upper(),
+                    stp_enabled=form.cleaned_data["stp_enabled"],
+                    premium_calculation_enabled=True,
+                    allowed_backdating_days=form.cleaned_data["allowed_backdating_days"],
+                    configuration={"initial_setup": True},
+                )
+                for plan_data in plan_rows:
+                    BenefitPlan.objects.create(
+                        policy=policy,
+                        code=str(plan_data["code"]).strip().upper(),
+                        name=str(plan_data["name"]).strip(),
+                        description=str(plan_data.get("description") or "").strip(),
+                        annual_premium=plan_data.get("annual_premium") or 0,
+                        default_sum_insured=plan_data.get("default_sum_insured"),
+                        premium_configuration={"method": "PRORATA"},
+                        is_active=bool(plan_data.get("is_active", True)),
+                    )
+                PolicyAccess.objects.update_or_create(
+                    organization=policy.sponsor,
+                    policy=policy,
+                    user=request.user,
+                    defaults={
+                        "can_view": True,
+                        "can_view_members": True,
+                        "can_create_enrollment": True,
+                        "can_create_endorsement": True,
+                        "can_view_premium": True,
+                        "can_approve": True,
+                        "can_process": True,
+                        "active": True,
+                    },
+                )
+                tx = MemberTransaction.objects.create(
+                    sponsor=policy.sponsor,
+                    insurer=policy.insurance_company,
+                    policy=policy,
+                    transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
+                    source=MemberTransaction.Source.PORTAL,
+                    effective_date=policy.start_date,
+                    requester=request.user,
+                    requester_organization=policy.sponsor,
+                    status=MemberTransaction.Status.DRAFT,
+                    remarks="Initial policy enrollment and member census setup.",
+                    metadata={"initial_policy_setup": True},
+                )
+                TransactionEvent.objects.create(
+                    transaction=tx,
+                    actor=request.user,
+                    event_type="policy_enrollment_created",
+                    summary="Initial policy enrollment created",
+                )
+
+            messages.success(
+                request,
+                f"Policy setup created with {len(plan_rows)} benefit plan(s). Add the initial member census, then submit for validation.",
+            )
+            if _is_htmx(request):
+                response = HttpResponse(status=204)
+                response["HX-Redirect"] = (
+                    reverse("tpa:transaction_detail", args=[tx.reference]) + "?step=policy_setup"
+                )
+                return response
+            return redirect("tpa:transaction_detail", reference=tx.reference)
+
+    creation_steps = [
+        {"label": _("Policy & Routing"), "fields": [form[name] for name in [
+            "sponsor", "insurance_company", "tpa_organization", "policy_number", "policy_name"
+        ]]},
+        {"label": _("Period & Rules"), "fields": [form[name] for name in [
+            "start_date", "expiry_date", "currency", "stp_enabled", "allowed_backdating_days"
+        ]]},
+        {"label": _("Benefit Plans & Create"), "fields": [],
+         "template": "tpa/partials/initial_benefit_plan_formset.html"},
     ]
-    creation_steps = [{"label": label, "fields": [form[name] for name in fields]}
-                      for label, fields in groups]
-    initial_step = next((index for index, step in enumerate(creation_steps, 1)
-                         if any(field.errors for field in step["fields"])), 1)
+    initial_step = next(
+        (
+            index
+            for index, step in enumerate(creation_steps, 1)
+            if any(field.errors for field in step["fields"])
+        ),
+        1,
+    )
+    if request.method == "POST" and uses_formset and (
+        plan_formset.non_form_errors() or any(plan_form.errors for plan_form in plan_formset.forms)
+    ):
+        initial_step = 3
     context = {
-        "form": form, "creation_steps": creation_steps,
+        "form": form,
+        "plan_formset": plan_formset,
+        "creation_steps": creation_steps,
         "creation_initial_step": initial_step,
         "creation_form_id": "policy-enrollment-wizard",
         "creation_url": reverse("tpa:policy_enrollment_create"),
         "creation_cancel_url": reverse("tpa:policy_enrollment_list"),
     }
-    return render(request, "components/creation_wizard_form.html" if _is_htmx(request)
-                  else "tpa/policy_enrollment_form.html", context)
+    return render(
+        request,
+        "components/creation_wizard_form.html" if _is_htmx(request)
+        else "tpa/policy_enrollment_form.html",
+        context,
+    )
 
 
 @login_required
+def policy_plan_add(request, reference):@login_required
 def policy_plan_add(request, reference):
     _require_tpa_access(request.user)
     if request.method != "POST":

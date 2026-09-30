@@ -418,3 +418,62 @@
   setupTransactionWizard();
   document.body?.addEventListener("htmx:afterSwap", (event) => setupTransactionWizard(document.getElementById(event.detail.target?.id) || event.target));
 })();
+
+
+(() => {
+  const setupBenefitPlanFormsets = (scope = document) => {
+    const roots = [];
+    if (scope.matches?.("[data-benefit-plan-formset]")) roots.push(scope);
+    roots.push(...(scope.querySelectorAll?.("[data-benefit-plan-formset]") || []));
+    roots.forEach((root) => {
+      if (root.dataset.planReady === "true") return;
+      root.dataset.planReady = "true";
+      const prefix = root.dataset.prefix || "plans";
+      const list = root.querySelector("[data-plan-list]");
+      const template = root.querySelector("template[data-plan-empty-form]");
+      const total = root.querySelector(`[name="${prefix}-TOTAL_FORMS"]`);
+      if (!list || !template || !total) return;
+
+      const renumber = () => {
+        let visible = 0;
+        list.querySelectorAll("[data-plan-row]").forEach((row) => {
+          if (row.hidden) return;
+          visible += 1;
+          const number = row.querySelector("[data-plan-number]");
+          if (number) number.textContent = String(visible);
+        });
+      };
+      const bindRemove = (row) => {
+        row.querySelector("[data-remove-plan]")?.addEventListener("click", () => {
+          const deleteInput = row.querySelector('input[name$="-DELETE"]');
+          if (deleteInput) deleteInput.value = "on";
+          row.hidden = true;
+          row.querySelectorAll("input,select,textarea").forEach((control) => {
+            if (!control.name.endsWith("-DELETE")) control.required = false;
+          });
+          renumber();
+        });
+      };
+      list.querySelectorAll("[data-plan-row]").forEach(bindRemove);
+      root.querySelector("[data-add-plan]")?.addEventListener("click", () => {
+        const index = Number(total.value || 0);
+        const holder = document.createElement("div");
+        holder.innerHTML = template.innerHTML.replaceAll("__prefix__", String(index)).trim();
+        const row = holder.firstElementChild;
+        if (!row) return;
+        list.appendChild(row);
+        total.value = String(index + 1);
+        bindRemove(row);
+        renumber();
+        row.querySelector("input,select,textarea")?.focus();
+      });
+      renumber();
+    });
+  };
+
+  document.addEventListener("DOMContentLoaded", () => setupBenefitPlanFormsets());
+  setupBenefitPlanFormsets();
+  document.body?.addEventListener("htmx:afterSwap", (event) =>
+    setupBenefitPlanFormsets(document.getElementById(event.detail.target?.id) || event.target)
+  );
+})();

@@ -345,6 +345,29 @@
     const sidebar = document.getElementById("portal-sidebar");
     if (!button || !sidebar) return;
 
+    const nav = sidebar.querySelector("nav");
+    if (nav && nav.dataset.scrollWatchReady !== "true") {
+      nav.dataset.scrollWatchReady = "true";
+      const syncNavOverflow = () => {
+        const needsScroll = nav.scrollHeight > nav.clientHeight + 1;
+        nav.dataset.scrollable = needsScroll ? "true" : "false";
+      };
+      const mutationObserver = new MutationObserver(() => window.requestAnimationFrame(syncNavOverflow));
+      mutationObserver.observe(nav, {
+        attributes: true,
+        childList: true,
+        subtree: true,
+        attributeFilter: ["class", "hidden"],
+      });
+      if ("ResizeObserver" in window) {
+        const resizeObserver = new ResizeObserver(syncNavOverflow);
+        resizeObserver.observe(nav);
+        resizeObserver.observe(sidebar);
+      }
+      window.addEventListener("resize", syncNavOverflow, {passive: true});
+      window.requestAnimationFrame(syncNavOverflow);
+    }
+
     const normalize = (value) => value === "full" ? "full" : "mini";
     let desktopMode = normalize(
       localStorage.getItem("glis-sidebar-mode")

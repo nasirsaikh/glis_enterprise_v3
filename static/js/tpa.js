@@ -300,3 +300,171 @@
     init(event.detail.target)
   );
 })();
+
+
+(() => {
+  const findForm = (event) => {
+    const element = event.detail?.elt;
+    if (!element) return null;
+    if (element.matches?.("form")) return element;
+    return element.form || element.closest?.("form") || null;
+  };
+
+  const setFormBusy = (form, busy) => {
+    if (!form) return;
+    form.classList.toggle("tpa-form-processing", busy);
+    if (busy) form.setAttribute("aria-busy", "true");
+    else form.removeAttribute("aria-busy");
+    Array.from(form.elements || []).forEach((control) => {
+      if (!control.matches?.('button[type="submit"], button:not([type]), input[type="submit"]')) return;
+      if (busy) {
+        control.dataset.tpaWasDisabled = String(control.disabled);
+        control.disabled = true;
+        let spinner = control.querySelector("[data-tpa-form-spinner]");
+        if (!spinner && !control.querySelector(".htmx-indicator")) {
+          spinner = document.createElement("span");
+          spinner.className = "tpa-form-spinner";
+          spinner.dataset.tpaFormSpinner = "";
+          spinner.setAttribute("aria-hidden", "true");
+          control.appendChild(spinner);
+        }
+        if (spinner) spinner.hidden = false;
+      } else {
+        if (control.dataset.tpaWasDisabled !== undefined) {
+          control.disabled = control.dataset.tpaWasDisabled === "true";
+          delete control.dataset.tpaWasDisabled;
+        }
+        const spinner = control.querySelector("[data-tpa-form-spinner]");
+        if (spinner) spinner.hidden = true;
+      }
+    });
+  };
+
+  const setupTransactionWizard = (scope = document) => {
+    const roots = [];
+    if (scope.matches?.("[data-transaction-wizard]")) roots.push(scope);
+    roots.push(...(scope.querySelectorAll?.("[data-transaction-wizard]") || []));
+    roots.forEach((wizard) => {
+      if (wizard.dataset.wizardReady === "true") return;
+      wizard.dataset.wizardReady = "true";
+      const form = wizard.querySelector("form");
+      const steps = Array.from(wizard.querySelectorAll("[data-wizard-step]"));
+      const indicators = Array.from(wizard.querySelectorAll("[data-wizard-indicator]"));
+      const previous = wizard.querySelector("[data-wizard-prev]");
+      const next = wizard.querySelector("[data-wizard-next]");
+      const submit = wizard.querySelector("[data-wizard-submit]");
+      const currentLabel = wizard.querySelector("[data-wizard-current]");
+      if (!form || !steps.length) return;
+      let activeStep = Math.max(0, Math.min(steps.length - 1, Number(wizard.dataset.initialStep || 1) - 1));
+
+      const selectedLabel = (name) => {
+        const control = form.elements.namedItem(name);
+        if (!control) return "—";
+        const selected = control.selectedOptions?.[0];
+        return selected && selected.value ? selected.textContent.trim() : "—";
+      };
+      const syncConditionalFields = () => {
+        const type = form.elements.namedItem("transaction_type")?.value || "";
+        const needsRefund = ["MEMBER_DELETE", "POLICY_CANCEL"].includes(type);
+        const isSuspension = type === "MEMBER_SUSPEND";
+        const refundFieldset = wizard.querySelector("[data-refund-fieldset]");
+        const reactivationFieldset = wizard.querySelector("[data-reactivation-fieldset]");
+        const refundControl = form.elements.namedItem("refund_basis");
+        const reactivationControl = form.elements.namedItem("expected_reactivation_date");
+        const remarksControl = form.elements.namedItem("remarks");
+        if (refundFieldset) refundFieldset.hidden = !needsRefund;
+        if (reactivationFieldset) reactivationFieldset.hidden = !isSuspension;
+        if (refundControl) {
+          refundControl.required = needsRefund;
+          if (!needsRefund && !refundControl.value) {
+            const notApplicable = Array.from(refundControl.options || []).find((option) => option.value === "NONE");
+            if (notApplicable) refundControl.value = "NONE";
+          }
+        }
+        if (reactivationControl) reactivationControl.required = false;
+        if (remarksControl) remarksControl.required = isSuspension;
+      };
+      const updateSummary = () => {
+        const effectiveDate = form.elements.namedItem("effective_date");
+        const policySummary = wizard.querySelector("[data-wizard-summary-policy]");
+        const typeSummary = wizard.querySelector("[data-wizard-summary-type]");
+        const dateSummary = wizard.querySelector("[data-wizard-summary-date]");
+        if (policySummary) policySummary.textContent = selectedLabel("policy");
+        if (typeSummary) typeSummary.textContent = selectedLabel("transaction_type");
+        if (dateSummary) dateSummary.textContent = effectiveDate?.value || "—";
+      };
+      const showStep = (index) => {
+        activeStep = Math.max(0, Math.min(steps.length - 1, index));
+        steps.forEach((step, stepIndex) => {
+          step.hidden = stepIndex !== activeStep;
+          step.setAttribute("aria-hidden", String(stepIndex !== activeStep));
+        });
+        indicators.forEach((indicator, stepIndex) => {
+          const state = stepIndex < activeStep ? "complete" : stepIndex === activeStep ? "active" : "upcoming";
+          indicator.dataset.state = state;
+          if (state === "active") indicator.setAttribute("aria-current", "step");
+          else indicator.removeAttribute("aria-current");
+        });
+        if (currentLabel) currentLabel.textContent = String(activeStep + 1);
+        if (previous) previous.hidden = activeStep === 0;
+        if (next) next.hidden = activeStep === steps.length - 1;
+        if (submit) submit.hidden = activeStep !== steps.length - 1;
+        updateSummary();
+      };
+      const firstInvalidField = (step) => Array.from(step.querySelectorAll("input, select, textarea")).find((field) => field.willValidate && !field.checkValidity());
+      const validateStep = (index) => {
+        const invalid = firstInvalidField(steps[index]);
+        if (!invalid) return true;
+        invalid.reportValidity();
+        return false;
+      };
+      if (next) next.addEventListener("click", () => {
+        syncConditionalFields();
+        if (validateStep(activeStep)) showStep(activeStep + 1);
+      });
+      if (previous) previous.addEventListener("click", () => showStep(activeStep - 1));
+      form.addEventListener("change", () => { syncConditionalFields(); updateSummary(); });
+      form.addEventListener("input", updateSummary);
+      form.addEventListener("submit", (event) => {
+        syncConditionalFields();
+        for (let index = 0; index < steps.length; index += 1) {
+          const invalid = firstInvalidField(steps[index]);
+          if (invalid) {
+            event.preventDefault();
+            showStep(index);
+            invalid.reportValidity();
+            return;
+          }
+        }
+      }, true);
+      syncConditionalFields();
+      showStep(activeStep);
+    });
+  };
+
+  const setupSidebarOverflow = () => {
+    const sidebar = document.getElementById("portal-sidebar");
+    const nav = sidebar?.querySelector("nav");
+    if (!nav || nav.dataset.scrollWatchReady === "true") return;
+    nav.dataset.scrollWatchReady = "true";
+    const sync = () => { nav.dataset.scrollable = nav.scrollHeight > nav.clientHeight + 1 ? "true" : "false"; };
+    const observer = new MutationObserver(() => requestAnimationFrame(sync));
+    observer.observe(nav, {attributes:true,childList:true,subtree:true,attributeFilter:["class","hidden"]});
+    if ("ResizeObserver" in window) {
+      const resizeObserver = new ResizeObserver(sync);
+      resizeObserver.observe(nav);
+      resizeObserver.observe(sidebar);
+    }
+    window.addEventListener("resize", sync, {passive:true});
+    requestAnimationFrame(sync);
+  };
+
+  document.body?.addEventListener("htmx:beforeRequest", (event) => setFormBusy(findForm(event), true));
+  ["htmx:afterRequest", "htmx:sendError", "htmx:responseError", "htmx:timeout", "htmx:abort"].forEach((name) => {
+    document.body?.addEventListener(name, (event) => setFormBusy(findForm(event), false));
+  });
+  document.addEventListener("DOMContentLoaded", () => { setupTransactionWizard(); setupSidebarOverflow(); });
+  setupTransactionWizard();
+  setupSidebarOverflow();
+  document.body?.addEventListener("htmx:afterSwap", (event) => setupTransactionWizard(event.detail.target));
+})();

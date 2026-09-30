@@ -20,23 +20,23 @@
 
     <div class="flex flex-wrap items-center gap-2">
       {% if tx.status == "draft" %}
-      <form method="post" action="{% url 'tpa:transaction_submit' tx.reference %}">{% csrf_token %}
+      <form method="post" action="{% url 'tpa:transaction_submit' tx.reference %}" hx-post="{% url 'tpa:transaction_submit' tx.reference %}" data-tpa-hx-form>{% csrf_token %}
         <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-send"></i>{% translate "Submit & Validate" %}</button>
       </form>
       {% elif tx.status == "pending_validation" or tx.status == "needs_information" or tx.status == "validation_failed" %}
-      <form method="post" action="{% url 'tpa:transaction_validate' tx.reference %}">{% csrf_token %}
+      <form method="post" action="{% url 'tpa:transaction_validate' tx.reference %}" hx-post="{% url 'tpa:transaction_validate' tx.reference %}" data-tpa-hx-form>{% csrf_token %}
         <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-shield-check"></i>{% translate "Run Validation" %}</button>
       </form>
       {% endif %}
 
       {% if tx.status == "pending_approval" and can_approve and not ticket_approval_pending %}
-      <form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}">{% csrf_token %}
+      <form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}" hx-post="{% url 'tpa:transaction_approve' tx.reference %}" data-tpa-hx-form>{% csrf_token %}
         <button class="btn btn-success btn-sm" type="submit"><i class="bi bi-check-lg"></i>{% translate "Approve & Dispatch" %}</button>
       </form>
       {% endif %}
 
       {% if can_start_tpa %}
-      <form method="post" action="{% url 'tpa:transaction_tpa_start' tx.reference %}">{% csrf_token %}
+      <form method="post" action="{% url 'tpa:transaction_tpa_start' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_start' tx.reference %}" data-tpa-hx-form>{% csrf_token %}
         <button class="btn btn-info btn-sm" type="submit"><i class="bi bi-play-fill"></i>{% translate "Start TPA Processing" %}</button>
       </form>
       {% endif %}
@@ -86,7 +86,7 @@
           <details class="collapse collapse-arrow mt-3 border border-base-300">
             <summary class="collapse-title text-sm font-bold">{% translate "Add Benefit Plan" %}</summary>
             <div class="collapse-content">
-              <form class="grid gap-3 md:grid-cols-2" method="post" action="{% url 'tpa:policy_plan_add' tx.reference %}">
+              <form class="grid gap-3 md:grid-cols-2" method="post" action="{% url 'tpa:policy_plan_add' tx.reference %}" hx-post="{% url 'tpa:policy_plan_add' tx.reference %}" data-tpa-hx-form>
                 {% csrf_token %}{% for field in plan_form %}<fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}</fieldset>{% endfor %}
                 <div class="md:col-span-2"><button class="btn btn-primary btn-sm">{% translate "Add Plan" %}</button></div>
               </form>
@@ -121,7 +121,7 @@
                 <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}">{% translate "Sample CSV" %}</a>
               </div>
             </div>
-            <form class="rounded-2xl border-2 border-dashed border-primary/20 bg-base-200/40 transition hover:bg-base-200 p-3" data-rounded-2xl border-2 border-dashed border-primary/20 bg-base-200/40 transition hover:bg-base-200 method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_upload_sources' tx.reference %}">
+            <form class="rounded-2xl border-2 border-dashed border-primary/20 bg-base-200/40 transition hover:bg-base-200 p-3" data-rounded-2xl border-2 border-dashed border-primary/20 bg-base-200/40 transition hover:bg-base-200 method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_upload_sources' tx.reference %}" hx-post="{% url 'tpa:transaction_upload_sources' tx.reference %}" data-tpa-hx-form>
               {% csrf_token %}
               <div class="grid gap-2 text-center">
                 <i class="bi bi-cloud-arrow-up text-2xl text-primary"></i>
@@ -148,9 +148,9 @@
                   <td class="max-w-lg text-xs">{% if doc.processing_error %}<span class="text-warning">{{ doc.processing_error }}</span>{% elif doc.result_count is not None %}{{ doc.result_count }} {% translate "row(s)" %}{% else %}{% translate "Processed" %}{% endif %}</td>
                   <td>
                     <div class="flex gap-1">
-                      {% if can_edit_intake %}<form method="post" action="{% url 'tpa:transaction_reprocess_source' tx.reference doc.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-xs" title="{% translate 'Reprocess Evidence' %}"><i class="bi bi-arrow-repeat"></i></button></form>{% endif %}
+                      {% if can_edit_intake %}<form method="post" action="{% url 'tpa:transaction_reprocess_source' tx.reference doc.pk %}" hx-post="{% url 'tpa:transaction_reprocess_source' tx.reference doc.pk %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-ghost btn-xs" title="{% translate 'Reprocess Evidence' %}"><i class="bi bi-arrow-repeat"></i></button></form>{% endif %}
                       {% if can_edit_intake and not doc.ticket_attachment_id and doc.processing_state == "REVIEW" or can_edit_intake and not doc.ticket_attachment_id and doc.processing_state == "FAILED" %}
-                      <form method="post" action="{% url 'tpa:transaction_delete_source' tx.reference doc.pk %}" onsubmit="return confirm('{% translate 'Delete this failed evidence source?' %}')">{% csrf_token %}<button class="btn btn-ghost btn-xs text-error" title="{% translate 'Delete failed source' %}"><i class="bi bi-trash"></i></button></form>
+                      <form method="post" action="{% url 'tpa:transaction_delete_source' tx.reference doc.pk %}" onsubmit="return confirm('{% translate 'Delete this failed evidence source?' %}')" hx-post="{% url 'tpa:transaction_delete_source' tx.reference doc.pk %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-ghost btn-xs text-error" title="{% translate 'Delete failed source' %}"><i class="bi bi-trash"></i></button></form>
                       {% endif %}
                       {% if can_view_ai_source and doc.extracted_payload %}
                       <button class="btn btn-ghost btn-xs" type="button" onclick="document.getElementById('source-json-{{ doc.pk }}').showModal()"><i class="bi bi-braces"></i></button>
@@ -171,7 +171,7 @@
               <div><strong>{% translate "Select Existing Members" %}</strong><div class="text-xs opacity-50">{% translate "Select members individually or paste card/member numbers in bulk." %}</div></div>
               <button class="btn btn-outline btn-xs" type="button" onclick="document.getElementById('bulk-cards').showModal()"><i class="bi bi-clipboard"></i>{% translate "Paste Card Numbers" %}</button>
             </div>
-            <form method="post" action="{% url 'tpa:transaction_select_members' tx.reference %}">
+            <form method="post" action="{% url 'tpa:transaction_select_members' tx.reference %}" hx-post="{% url 'tpa:transaction_select_members' tx.reference %}" data-tpa-hx-form>
               {% csrf_token %}
               <div class="overflow-x-auto max-h-80">
                 <table class="table table-xs">
@@ -197,7 +197,7 @@
             <dialog id="bulk-cards" class="modal">
               <div class="modal-box">
                 <h3 class="font-bold">{% translate "Paste Card Numbers" %}</h3>
-                <form class="mt-3 space-y-3" method="post" action="{% url 'tpa:transaction_select_members' tx.reference %}">
+                <form class="mt-3 space-y-3" method="post" action="{% url 'tpa:transaction_select_members' tx.reference %}" hx-post="{% url 'tpa:transaction_select_members' tx.reference %}" data-tpa-hx-form>
                   {% csrf_token %}
                   {{ bulk_card_form.card_numbers }}
                   <div class="modal-action"><button class="btn btn-primary">{% translate "Match & Add" %}</button><button class="btn" type="button" onclick="document.getElementById('bulk-cards').close()">{% translate "Cancel" %}</button></div>
@@ -300,13 +300,13 @@
             <div><strong>{% translate "Manual approval required" %}</strong><div class="text-xs opacity-50">{% if ticket_approval_pending %}{% translate "The linked GLIS approval workflow is pending." %}{% else %}{% translate "An authorized approver can approve, reject or open a discussion." %}{% endif %}</div></div>
             {% if can_approve and not ticket_approval_pending %}
             <div class="flex gap-2">
-              <form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}">{% csrf_token %}<button class="btn btn-success btn-sm">{% translate "Approve & Dispatch" %}</button></form>
+              <form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}" hx-post="{% url 'tpa:transaction_approve' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-success btn-sm">{% translate "Approve & Dispatch" %}</button></form>
               <button class="btn btn-error btn-outline btn-sm" type="button" onclick="document.getElementById('reject-transaction').showModal()">{% translate "Reject" %}</button>
             </div>
             <dialog id="reject-transaction" class="modal">
               <div class="modal-box">
                 <h3 class="font-bold">{% translate "Reject Endorsement" %}</h3>
-                <form class="mt-3 space-y-3" method="post" action="{% url 'tpa:transaction_reject' tx.reference %}">
+                <form class="mt-3 space-y-3" method="post" action="{% url 'tpa:transaction_reject' tx.reference %}" hx-post="{% url 'tpa:transaction_reject' tx.reference %}" data-tpa-hx-form>
                   {% csrf_token %}
                   <textarea class="textarea textarea-bordered w-full" rows="4" name="reason" required placeholder="{% translate 'Rejection reason' %}"></textarea>
                   <div class="modal-action"><button class="btn btn-error">{% translate "Reject" %}</button><button class="btn" type="button" onclick="document.getElementById('reject-transaction').close()">{% translate "Cancel" %}</button></div>
@@ -335,7 +335,7 @@
               </div>
               {% if q.status == "OPEN" %}
                 {% if q.purpose == "APPROVAL" and can_approve or q.purpose != "APPROVAL" and can_tpa_process %}
-                <form method="post" action="{% url 'tpa:transaction_resolve_query' tx.reference q.pk %}">{% csrf_token %}<button class="btn btn-success btn-xs">{% translate "Resolve" %}</button></form>
+                <form method="post" action="{% url 'tpa:transaction_resolve_query' tx.reference q.pk %}" hx-post="{% url 'tpa:transaction_resolve_query' tx.reference q.pk %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-success btn-xs">{% translate "Resolve" %}</button></form>
                 {% endif %}
               {% endif %}
             </div>
@@ -348,13 +348,13 @@
                 <div class="chat-footer mt-1 flex flex-wrap gap-1">{% for file in msg.ticket_comment.attachments.all %}<a class="badge badge-outline text-xs" href="{% url 'tpa:transaction_query_attachment' tx.reference file.pk %}"><i class="bi bi-paperclip"></i>{{ file.original_name }}</a>{% endfor %}</div>
                 {% endif %}
                 {% if msg.audience == "INSURER_TPA_INTERNAL" and not msg.shared_with_client_at and can_approve or msg.audience == "INSURER_TPA_INTERNAL" and not msg.shared_with_client_at and can_tpa_process %}
-                <div class="chat-footer mt-1"><form method="post" action="{% url 'tpa:transaction_share_query_message' tx.reference msg.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-xs">{% translate "Share selected message with client" %}</button></form></div>
+                <div class="chat-footer mt-1"><form method="post" action="{% url 'tpa:transaction_share_query_message' tx.reference msg.pk %}" hx-post="{% url 'tpa:transaction_share_query_message' tx.reference msg.pk %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-ghost btn-xs">{% translate "Share selected message with client" %}</button></form></div>
                 {% endif %}
               </div>
               {% empty %}<div class="text-xs opacity-45">{% translate "No visible messages." %}</div>{% endfor %}
             </div>
             {% if q.status == "OPEN" %}
-            <form class="mt-3 grid gap-2 md:grid-cols-[1fr_12rem_auto]" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_query_message' tx.reference q.pk %}">
+            <form class="mt-3 grid gap-2 md:grid-cols-[1fr_12rem_auto]" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_query_message' tx.reference q.pk %}" hx-post="{% url 'tpa:transaction_query_message' tx.reference q.pk %}" data-tpa-hx-form>
               {% csrf_token %}{{ query_message_form.message }}{{ query_message_form.audience }}<div class="space-y-1">{{ query_message_form.attachments }}<button class="btn btn-primary btn-sm w-full" type="submit">{% translate "Send Reply" %}</button></div>
             </form>
             {% endif %}
@@ -365,7 +365,7 @@
           <details class="collapse collapse-arrow border border-base-300">
             <summary class="collapse-title text-sm font-bold">{% translate "Open New Discussion / Query" %}</summary>
             <div class="collapse-content">
-              <form class="grid gap-2 md:grid-cols-2" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_raise_query' tx.reference %}">
+              <form class="grid gap-2 md:grid-cols-2" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_raise_query' tx.reference %}" hx-post="{% url 'tpa:transaction_raise_query' tx.reference %}" data-tpa-hx-form>
                 {% csrf_token %}
                 <fieldset class="fieldset"><legend class="fieldset-legend">{% translate "Subject" %}</legend>{{ query_raise_form.subject }}</fieldset>
                 <fieldset class="fieldset"><legend class="fieldset-legend">{% translate "Purpose" %}</legend>{{ query_raise_form.purpose }}</fieldset>
@@ -417,7 +417,7 @@
               <tr>
                 <td><strong>{{ a.display_first_name }} {{ a.display_last_name }}</strong><div class="text-xs opacity-45">{{ a.display_employee_id }}</div></td>
                 {% if can_tpa_process and tx.status == "tpa_in_progress" %}
-                <td><form id="tpa-row-{{ a.pk }}" method="post" action="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}">{% csrf_token %}</form><input form="tpa-row-{{ a.pk }}" class="input input-bordered input-xs w-36" name="card_number" value="{{ a.card_number }}"></td>
+                <td><form id="tpa-row-{{ a.pk }}" method="post" action="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}" hx-post="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}" data-tpa-hx-form>{% csrf_token %}</form><input form="tpa-row-{{ a.pk }}" class="input input-bordered input-xs w-36" name="card_number" value="{{ a.card_number }}"></td>
                 <td><input form="tpa-row-{{ a.pk }}" class="input input-bordered input-xs" type="date" name="effective_date" value="{% if a.tpa_effective_date %}{{ a.tpa_effective_date|date:'Y-m-d' }}{% else %}{{ tx.effective_date|date:'Y-m-d' }}{% endif %}" required></td>
                 <td class="font-semibold">{{ tx.currency }} {{ a.calculated_premium }}</td>
                 <td><input form="tpa-row-{{ a.pk }}" class="input input-bordered input-xs w-32" name="amount" type="number" step="0.001" value="{% if a.tpa_premium_amount != None %}{{ a.tpa_premium_amount }}{% else %}{{ a.calculated_premium }}{% endif %}" required></td>
@@ -433,7 +433,7 @@
           </div>
           {% endif %}
           {% if can_tpa_process and tx.status == "tpa_in_progress" %}
-          <div class="flex justify-end"><form method="post" action="{% url 'tpa:transaction_tpa_complete' tx.reference %}">{% csrf_token %}<button class="btn btn-success"><i class="bi bi-check2-circle"></i>{% translate "Complete TPA Processing" %}</button></form></div>
+          <div class="flex justify-end"><form method="post" action="{% url 'tpa:transaction_tpa_complete' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_complete' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-success"><i class="bi bi-check2-circle"></i>{% translate "Complete TPA Processing" %}</button></form></div>
           {% endif %}
         </div>
       </section>
@@ -442,7 +442,7 @@
       <section class="card border border-base-300 bg-base-100 shadow-sm">
         <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Step 05" %}</div><h2 class="text-lg font-black ">{% translate "CARD DISPATCH" %}</h2></div>{% if card_dispatch %}<span class="badge badge-info badge-soft">{{ card_dispatch.get_status_display }}</span>{% endif %}</div>
         <div class="card-body">
-          <form class="grid gap-3 md:grid-cols-2 xl:grid-cols-3" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_card_dispatch' tx.reference %}">
+          <form class="grid gap-3 md:grid-cols-2 xl:grid-cols-3" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_card_dispatch' tx.reference %}" hx-post="{% url 'tpa:transaction_card_dispatch' tx.reference %}" data-tpa-hx-form>
             {% csrf_token %}
             {% for field in card_dispatch_form %}<fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}</fieldset>{% endfor %}
             <fieldset class="fieldset">

@@ -672,8 +672,10 @@ def transaction_create(request):
             "Transaction created. Add member rows or upload a spreadsheet, then submit for validation.",
         )
         return redirect("tpa:transaction_detail", reference=tx.reference)
-    return render(request, "tpa/transaction_form.html", {"form": form})
 
+    if request.method == "POST" and request.headers.get("HX-Request", "").lower() == "true":
+        return render(request, "tpa/partials/transaction_wizard_form.html", {"form": form})
+    return render(request, "tpa/transaction_form.html", {"form": form})
 
 @login_required
 def transaction_detail(request, reference):

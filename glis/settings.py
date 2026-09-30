@@ -125,6 +125,7 @@ MIDDLEWARE = [
     "cms.middleware.language.LanguageCookieMiddleware",
 
     "django_htmx.middleware.HtmxMiddleware",
+    "apps.tpa.middleware.HtmxRedirectMiddleware",
     "csp.middleware.CSPMiddleware",
 ]
 

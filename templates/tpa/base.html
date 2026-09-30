@@ -1,6 +1,10 @@
 {% extends "base_portal.html" %}
 {% load static i18n %}
 
+{% block extra_head %}{{ block.super }}
+  <link href="{% static 'css/tpa-wizard.css' %}" rel="stylesheet" type="text/css">
+{% endblock %}
+
 {% block content %}
 <div class="w-full">
   {% block tpa_content %}{% endblock %}

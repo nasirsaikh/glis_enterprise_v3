@@ -106,6 +106,7 @@ MIDDLEWARE = [
 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
+    "apps.core.middleware.RequestLocaleMiddleware",
 
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -257,7 +258,8 @@ CMS_LANGUAGES = {
         {"code": "en", "name": "English", "fallbacks": ["ar"], "public": True},
         {"code": "ar", "name": "العربية", "fallbacks": ["en"], "public": True},
     ],
-    "default": {"fallbacks": ["en"], "redirect_on_fallback": True, "public": True},
+    # Keep the requested URL/locale when only a fallback CMS translation is published.
+    "default": {"fallbacks": ["en"], "redirect_on_fallback": False, "public": True},
 }
 
 

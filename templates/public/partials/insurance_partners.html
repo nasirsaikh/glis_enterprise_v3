@@ -6,9 +6,9 @@
     <h2 class="text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "Trusted insurance partnerships" %}</h2>
     <p class="mt-4 text-lg leading-8 text-base-content/60">{% translate "We collaborate with insurers to deliver connected healthcare administration and reliable member support." %}</p>
   </div>
-  <div class="carousel mt-10 w-full gap-4 rounded-box" aria-label="{% translate 'Insurance partners' %}">
+  <div class="gl-insurance-partners flex flex-wrap justify-center gap-4 mt-10" aria-label="{% translate 'Insurance partners' %}">
     {% for partner in insurance_partners %}
-    <div class="carousel-item w-64">
+    <div class="w-64 max-w-full">
       <div class="card w-full border border-base-300 bg-base-100 shadow-lg transition duration-200 hover:-translate-y-1 hover:shadow-xl">
         <div class="card-body grid min-h-40 place-items-center p-6">
           {% if partner.website_url %}<a href="{{ partner.website_url }}" target="_blank" rel="noopener" class="grid h-full w-full place-items-center rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">{% endif %}

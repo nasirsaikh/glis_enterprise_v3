@@ -50,7 +50,7 @@
 
   <header class="gl-public-header">
     <div class="gl-public-nav-inner">
-      <a href="/">
+      <a href="{% url 'pages-root' %}">
         <img src="/api/v1/site-logo/" height="40" width="80" alt="{{ glis_site.short_name|default:'GLIS' }}">
       </a>
 
@@ -116,6 +116,7 @@
           <li>
             <button type="button" data-theme-toggle><i class="bi bi-moon-stars" data-theme-icon></i>{% translate "Light / dark mode" %}</button>
           </li>
+          <li><form action="{% url 'switch_language' %}" method="post">{% csrf_token %}<input name="next" type="hidden" value="{{ request.get_full_path }}"><input name="language" type="hidden" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}"><button class="w-full text-start" type="submit"><i class="bi bi-translate" aria-hidden="true"></i>{% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}</button></form></li>
           {% if user.is_authenticated %}
           <li><form action="{% url 'account_logout' %}" method="post">{% csrf_token %}<button class="w-full text-start text-error" type="submit"><i class="bi bi-box-arrow-right"></i>{% translate "Sign out" %}</button></form></li>
           {% endif %}
@@ -142,7 +143,7 @@
   <footer id="contact" class="gl-public-footer">
     <div class="gl-footer-inner gl-public-footer-main">
       <div>
-        <a class="gl-footer-brand" href="/"><img src="/api/v1/site-logo/" alt="{{ glis_site.short_name|default:'GLIS' }}"></a>
+        <a class="gl-footer-brand" href="{% url 'pages-root' %}"><img src="/api/v1/site-logo/" alt="{{ glis_site.short_name|default:'GLIS' }}"></a>
         <p class="gl-footer-summary">{% translate "A secure service layer connecting customers, healthcare providers, insurers and support teams across every request." %}</p>
       </div>
 

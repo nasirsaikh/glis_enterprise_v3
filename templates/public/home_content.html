@@ -6,7 +6,7 @@
     <div class="gl-home-starfield" aria-hidden="true"></div>
     <div class="gl-home-container gl-home-hero-grid">
       <div class="gl-home-copy" data-reveal>
-        <span class="gl-home-kicker"><i class="bi bi-heart-pulse-fill"></i>{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_eyebrow_ar|default:hero.hero_eyebrow_en }}{% else %}{{ hero.hero_eyebrow_en }}{% endif %}</span>
+        {% if hero.hero_eyebrow_en or hero.hero_eyebrow_ar %}<span class="gl-home-kicker"><i class="bi bi-heart-pulse-fill" aria-hidden="true"></i>{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_eyebrow_ar|default:hero.hero_eyebrow_en }}{% else %}{{ hero.hero_eyebrow_en|default:hero.hero_eyebrow_ar }}{% endif %}</span>{% endif %}
         <h1>{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_title_ar|default:hero.hero_title_en }}{% else %}{{ hero.hero_title_en }}{% endif %}</h1>
         <p>{% if LANGUAGE_CODE == "ar" %}{{ hero.hero_subtitle_ar|default:hero.hero_subtitle_en }}{% else %}{{ hero.hero_subtitle_en }}{% endif %}</p>
         <div class="gl-home-actions">
@@ -147,19 +147,19 @@
   </section>
   {% endif %}
 
-  <section class="bg-neutral py-20 text-neutral-content">
+  <section id="service-intelligence" class="bg-base-200 py-16 text-base-content">
     <div class="mx-auto max-w-7xl px-6">
       <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between" data-reveal>
         <div><span class="badge badge-success badge-soft mb-4">{% translate "Live service intelligence" %}</span><h2 class="max-w-3xl text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "Operational clarity you can feel at a glance." %}</h2></div>
-        <p class="max-w-xl text-neutral-content/60">{% translate "Useful signals stay visible without overwhelming the experience." %}</p>
+        <p class="max-w-xl text-base-content/60">{% translate "Useful signals stay visible without overwhelming the experience." %}</p>
       </div>
 
-      <div class="glis-stat-strip stats stats-horizontal mt-10 w-full overflow-x-auto bg-neutral-content/5 shadow-2xl">
+      <div class="glis-stat-strip stats stats-horizontal mt-10 w-full overflow-x-auto border border-base-300 bg-base-100 shadow-lg">
         {% for stat in statistics %}
-        <div class="stat border border-neutral-content/10" data-reveal>
+        <div class="stat border-base-300" data-reveal>
           <div class="stat-figure text-success"><i class="bi bi-graph-up-arrow text-2xl"></i></div>
-          <div class="stat-value text-neutral-content" data-counter="{{ stat.value }}" data-suffix="{{ stat.suffix }}">{{ stat.value }}{{ stat.suffix }}</div>
-          <div class="stat-desc text-neutral-content/55">{% if LANGUAGE_CODE == "ar" %}{{ stat.label_ar|default:stat.label_en }}{% else %}{{ stat.label_en }}{% endif %}</div>
+          <div class="stat-value text-base-content" data-counter="{{ stat.value }}" data-suffix="{{ stat.suffix }}">{{ stat.value }}{{ stat.suffix }}</div>
+          <div class="stat-desc text-base-content/55">{% if LANGUAGE_CODE == "ar" %}{{ stat.label_ar|default:stat.label_en }}{% else %}{{ stat.label_en }}{% endif %}</div>
         </div>
         {% empty %}
         <div class="stat"><div class="stat-value">24/7</div><div class="stat-desc">{% translate "Request visibility" %}</div></div>
@@ -253,14 +253,14 @@
   </section>
 
   {% if testimonials %}
-  <section class="bg-neutral py-24 text-neutral-content">
+  <section class="bg-base-200 py-20 text-base-content">
     <div class="mx-auto max-w-7xl px-6">
       <div data-reveal><span class="badge badge-success badge-soft mb-4"><i class="bi bi-chat-quote me-2"></i>{% translate "Testimonials" %}</span><h2 class="text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "Trusted experiences, shared by people." %}</h2></div>
       <div class="carousel mt-10 w-full gap-5 rounded-box">
         {% for testimonial in testimonials %}
         <article class="carousel-item w-[88%] sm:w-[60%] lg:w-[38%]">
-          <div class="card w-full border border-neutral-content/10 bg-neutral-content/5 text-neutral-content shadow-xl">
-            <div class="card-body p-7"><div class="text-6xl font-black text-success/35">“</div><p class="text-lg leading-8 text-neutral-content/75">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.quote_ar|default:testimonial.quote_en }}{% else %}{{ testimonial.quote_en }}{% endif %}</p><div class="mt-5 flex items-center gap-3">{% if testimonial.photo %}<div class="avatar"><div class="w-12 rounded-2xl"><img src="{{ testimonial.photo.url }}" alt="{{ testimonial.name }}"></div></div>{% else %}<div class="avatar avatar-placeholder"><div class="w-12 rounded-2xl bg-success text-success-content"><span>{{ testimonial.name|first }}</span></div></div>{% endif %}<div><strong class="block">{{ testimonial.name }}</strong><small class="text-neutral-content/50">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.role_ar|default:testimonial.role_en }}{% else %}{{ testimonial.role_en }}{% endif %}</small></div></div></div>
+          <div class="card w-full border border-base-300 bg-base-100 text-base-content shadow-xl">
+            <div class="card-body p-7"><div class="text-6xl font-black text-success/35">“</div><p class="text-lg leading-8 text-base-content/75">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.quote_ar|default:testimonial.quote_en }}{% else %}{{ testimonial.quote_en }}{% endif %}</p><div class="mt-5 flex items-center gap-3">{% if testimonial.photo %}<div class="avatar"><div class="w-12 rounded-2xl"><img src="{{ testimonial.photo.url }}" alt="{{ testimonial.name }}"></div></div>{% else %}<div class="avatar avatar-placeholder"><div class="w-12 rounded-2xl bg-success text-success-content"><span>{{ testimonial.name|first }}</span></div></div>{% endif %}<div><strong class="block">{{ testimonial.name }}</strong><small class="text-base-content/50">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.role_ar|default:testimonial.role_en }}{% else %}{{ testimonial.role_en }}{% endif %}</small></div></div></div>
           </div>
         </article>
         {% endfor %}

@@ -6,23 +6,23 @@
     <h2 class="text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "Meet our management team" %}</h2>
     <p class="mt-4 text-lg leading-8 text-base-content/60">{% translate "Experienced leadership focused on healthcare quality, operational excellence and member service." %}</p>
   </div>
-  <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="gl-management-team mt-10 flex flex-wrap justify-center gap-6">
     {% for member in management_members %}
-    <article class="card overflow-hidden border border-base-300 bg-base-100 shadow-xl transition duration-200 hover:-translate-y-1 hover:shadow-2xl" data-reveal>
+    <article class="card w-full max-w-72 overflow-hidden border border-base-300 bg-base-100 shadow-xl transition duration-200 hover:-translate-y-1 hover:shadow-2xl" data-reveal>
       {% if member.image %}
       <figure><img src="{{ member.image.url }}" alt="{{ member.name_en }}" class="h-72 w-full object-cover"></figure>
       {% else %}
       <figure class="grid h-60 place-items-center bg-base-200"><i class="bi bi-person-circle text-7xl text-primary/30"></i></figure>
       {% endif %}
-      <div class="card-body p-5">
-        <h3 class="card-title text-xl">{% if LANGUAGE_CODE == "ar" %}{{ member.name_ar|default:member.name_en }}{% else %}{{ member.name_en }}{% endif %}</h3>
+      <div class="card-body items-center p-5 text-center">
+        <h3 class="card-title justify-center text-xl">{% if LANGUAGE_CODE == "ar" %}{{ member.name_ar|default:member.name_en }}{% else %}{{ member.name_en }}{% endif %}</h3>
         <p class="text-sm font-semibold text-primary">{% if LANGUAGE_CODE == "ar" %}{{ member.designation_ar|default:member.designation_en }}{% else %}{{ member.designation_en }}{% endif %}</p>
         {% if member.department_en %}<p class="text-sm text-base-content/55">{% if LANGUAGE_CODE == "ar" %}{{ member.department_ar|default:member.department_en }}{% else %}{{ member.department_en }}{% endif %}</p>{% endif %}
-        {% if member.linkedin_url %}<div class="card-actions mt-auto"><a class="btn btn-ghost btn-sm px-0 text-primary" href="{{ member.linkedin_url }}" target="_blank" rel="noopener"><i class="bi bi-linkedin"></i>LinkedIn</a></div>{% endif %}
+        {% if member.linkedin_url %}<div class="card-actions mt-auto justify-center"><a class="btn btn-ghost btn-sm px-0 text-primary" href="{{ member.linkedin_url }}" target="_blank" rel="noopener"><i class="bi bi-linkedin" aria-hidden="true"></i>LinkedIn</a></div>{% endif %}
       </div>
     </article>
     {% empty %}
-    <div class="alert alert-info sm:col-span-2 lg:col-span-4"><i class="bi bi-info-circle"></i><span>{% translate "No management members configured." %}</span></div>
+    <div class="alert alert-info w-full"><i class="bi bi-info-circle"></i><span>{% translate "No management members configured." %}</span></div>
     {% endfor %}
   </div>
 </div>

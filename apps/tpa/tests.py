@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.ai.models import AIExtractionProfile, AIProviderConfig
+from apps.core.models import SiteSettings
 from apps.tickets.models import TicketComment
 
 from .models import (
@@ -25,7 +26,7 @@ from .models import (
     TPAOrganization,
     TransactionQuery,
 )
-from .forms import MemberRowForm, TransactionForm
+from .forms import MemberRowForm, PolicyEnrollmentForm, TransactionForm
 from .services.access import can_access_tpa, can_create_tpa_transaction
 from .services.ai_intake import process_inbound_email
 from .services.document_intake import (
@@ -128,6 +129,26 @@ class TPACoreTests(TestCase):
         )
         self.assertTrue(can_access_tpa(self.user))
         self.assertTrue(can_create_tpa_transaction(self.user))
+
+    def test_policy_enrollment_uses_user_organizations_and_site_default_tpa(self):
+        other_sponsor = TPAOrganization.objects.create(
+            code="SP2",
+            name_en="Other Sponsor",
+            organization_type=TPAOrganization.Type.CORPORATE,
+        )
+        self.user.profile.organizations.add(self.sponsor)
+        settings_obj = SiteSettings.load()
+        settings_obj.default_tpa_organization = self.tpa
+        settings_obj.save(update_fields=["default_tpa_organization", "updated_at"])
+
+        form = PolicyEnrollmentForm(user=self.user)
+
+        self.assertIn(self.sponsor, form.fields["sponsor"].queryset)
+        self.assertNotIn(other_sponsor, form.fields["sponsor"].queryset)
+        self.assertTrue(form.fields["sponsor"].disabled)
+        self.assertEqual(form.fields["sponsor"].initial, self.sponsor)
+        self.assertTrue(form.fields["tpa_organization"].disabled)
+        self.assertEqual(form.fields["tpa_organization"].initial, self.tpa)
 
     def test_endorsement_form_excludes_initial_enrollment(self):
         PolicyAccess.objects.create(

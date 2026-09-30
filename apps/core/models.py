@@ -73,6 +73,16 @@ class SiteSettings(SingletonModel, TimeStampedModel):
     organization_details = models.TextField(blank=True)
     social_links = models.JSONField(default=dict, blank=True)
 
+    default_tpa_organization = models.ForeignKey(
+        "tpa.TPAOrganization",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="+",
+        limit_choices_to={"organization_type": "TPA", "is_active": True},
+        help_text="Default TPA used for new policy enrollments. Configure this once at site level.",
+    )
+
     # HeroSection merged into SiteSettings
     hero_eyebrow_en = models.CharField(max_length=120, default="Insurance service orchestration", blank=True,null=True)
     hero_eyebrow_ar = models.CharField(max_length=120, default="تنسيق خدمات التأمين", blank=True,null=True)

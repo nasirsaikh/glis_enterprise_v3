@@ -1,23 +1,65 @@
 {% load i18n %}
-  <section class="card border border-base-300 bg-base-100 shadow-sm">
-    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Full audit trail" %}</div><h2 class="text-lg font-black ">{% translate "ACTIVITY TIMELINE" %}</h2></div><span class="badge badge-outline">{{ events|length }}</span></div>
-    <div class="card-body">
-      <ul class="timeline timeline-vertical w-full">
-        {% for e in events %}
-        <li>
-          {% if not forloop.first %}<hr>{% endif %}
-          <div class="timeline-middle"><i aria-hidden="true" class="bi bi-check-circle"></i></div>
-          <div class="timeline-end timeline-box w-full max-w-none">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <strong>{{ e.summary }}</strong>
-              <time class="text-xs opacity-50">{{ e.created_at|date:"d-M-Y H:i:s" }}</time>
+<section class="card border border-base-300 bg-base-100 shadow-sm">
+    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
+        <div>
+            <div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">
+                {% translate "Full audit trail" %}
             </div>
-            <div class="mt-1 text-xs opacity-55">{{ e.actor.get_full_name|default:e.actor.username|default:"System" }} · {{ e.event_type }}</div>
-            {% if e.details %}<details class="mt-2"><summary class="cursor-pointer text-xs">{% translate "Details / diff" %}</summary><pre class="mt-1 max-h-60 overflow-auto text-xs">{{ e.details }}</pre></details>{% endif %}
-          </div>
-          {% if not forloop.last %}<hr>{% endif %}
-        </li>
-        {% empty %}<li class="text-sm opacity-45">{% translate "No activity yet." %}</li>{% endfor %}
-      </ul>
+            <h2 class="text-lg font-black">
+                {% translate "ACTIVITY TIMELINE" %}
+            </h2>
+        </div>
+        <span class="badge badge-outline">
+            {{ events|length }}
+        </span>
     </div>
-  </section>
+    <div class="card-body">
+        <ul class="timeline timeline-vertical timeline-compact w-full">
+            {% for e in events %}
+                <li class="w-full">
+                    {% if not forloop.first %}
+                        <hr>
+                    {% endif %}
+                    <div class="timeline-middle"><i aria-hidden="true" class="bi bi-check-circle"></i></div>
+                    <div class="timeline-end timeline-box mb-4 ml-2 w-full max-w-none bg-base-200">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <strong class="text-sm font-bold">
+                                {{ e.summary }}
+                            </strong>
+                            <time class="whitespace-nowrap text-xs opacity-50">
+                                {{ e.created_at|date:"d-M-Y H:i:s" }}
+                            </time>
+                        </div>
+                        <div class="mt-1 text-xs opacity-60">
+                            <i class="bi bi-person me-1"></i>
+                            {{ e.actor.get_full_name|default:e.actor.username|default:"System" }}
+                            <span class="mx-1">·</span>
+                            <span class="badge badge-ghost badge-sm">
+                                {{ e.event_type }}
+                            </span>
+                        </div>
+                        {% if e.details %}
+                            <details class="mt-3 rounded-lg border border-base-300 bg-base-100">
+                                <summary class="cursor-pointer px-3 py-2 text-xs font-semibold">
+                                    <i class="bi bi-code-square me-1"></i>
+                                    {% translate "Details / diff" %}
+                                </summary>
+                                <pre class="max-h-60 overflow-auto border-t border-base-300 p-3 text-xs">{{ e.details }}</pre>
+                            </details>
+                        {% endif %}
+                    </div>
+                    {% if not forloop.last %}
+                        <hr>
+                    {% endif %}
+                </li>
+            {% empty %}
+                <li class="w-full py-6 text-sm opacity-45">
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-clock-history"></i>
+                        {% translate "No activity yet." %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>

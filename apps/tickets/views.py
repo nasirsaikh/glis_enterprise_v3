@@ -52,6 +52,10 @@ def _apply_ticket_filters(qs, data):
     for key in ("status", "priority", "project", "category"):
         if data.get(key):
             qs = qs.filter(**{key: data[key]})
+    if data.get("organization"):
+        qs = qs.filter(
+            requester__profile__organizations=data["organization"]
+        ).distinct()
     if data.get("sla") == "overdue":
         qs = qs.filter(resolution_due_at__lt=timezone.now()).exclude(status__in=[Ticket.Status.RESOLVED, Ticket.Status.CLOSED])
     elif data.get("sla") == "at_risk":
@@ -146,7 +150,7 @@ def ticket_list(request):
     if request.GET.get("scope") == "group":
         qs = qs.filter(groups__members=request.user).distinct()
 
-    form = TicketFilterForm(request.GET)
+    form = TicketFilterForm(request.GET, user=request.user)
     if form.is_valid():
         data = form.cleaned_data
         if not data.get("status"):
@@ -194,7 +198,7 @@ def ticket_detail(request, reference):
         "can_take_over": TicketAccessPolicy.can_take_over(request.user, ticket),
         "can_assign": TicketAccessPolicy.can_assign(request.user, ticket),
         "can_share": TicketAccessPolicy.can_share(request.user, ticket),
-        "assignment_form": TicketAssignmentForm(ticket=ticket),
+        "assignment_form": TicketAssignmentForm(ticket=ticket, user=request.user),
         "share_form": TicketShareForm(user=request.user),
         "actionable_approvals": actionable_approvals,
         "approval_form": TicketApprovalDecisionForm(),
@@ -698,7 +702,7 @@ def export_tickets(request):
         qs = qs.filter(requester=request.user)
     if request.GET.get("scope") == "group":
         qs = qs.filter(groups__members=request.user).distinct()
-    form = TicketFilterForm(request.GET)
+    form = TicketFilterForm(request.GET, user=request.user)
     if form.is_valid():
         qs = _apply_ticket_filters(qs, form.cleaned_data)
     response = HttpResponse(content_type="text/csv; charset=utf-8")
@@ -765,7 +769,7 @@ def assign_ticket(request, reference):
     ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user), reference=reference)
     if not TicketAccessPolicy.can_assign(request.user, ticket):
         return HttpResponse("Assignment permission is required.", status=403)
-    form = TicketAssignmentForm(request.POST, ticket=ticket)
+    form = TicketAssignmentForm(request.POST, ticket=ticket, user=request.user)
     if not form.is_valid():
         messages.error(request, "Select valid groups or staff members.")
         return redirect("portal:ticket_detail", reference=reference)

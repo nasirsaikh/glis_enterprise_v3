@@ -328,3 +328,33 @@ class PortalShellPreferenceTests(TestCase):
             self.user.profile.sidebar_mode,
             UserProfile.SidebarMode.HIDDEN,
         )
+
+    def test_global_sidebar_has_no_forced_overflow_class(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("portal:dashboard"))
+        self.assertContains(response, 'class="portal-navigation p-2.5"')
+        self.assertNotContains(response, 'h-[calc(100dvh-4rem)] overflow-y-auto')
+        self.assertContains(response, "js/portal.js")
+
+    def test_ticket_creation_htmx_returns_single_wizard(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("portal:create_ticket", args=[1]), HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="ticket-wizard-workspace"')
+        self.assertNotContains(response, "<!doctype html>")
+        self.assertContains(response, "data-processing-form")
+        self.assertContains(response, "hx-post=")
+        self.assertContains(response, 'data-current-step="1"')
+        self.assertContains(response, 'hx-swap="innerHTML settle:0ms"', count=2)
+        self.assertContains(response, 'hx-sync="this:replace"', count=2)
+
+    def test_ticket_future_step_is_gated(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("portal:create_ticket", args=[4]))
+        self.assertRedirects(response, reverse("portal:create_ticket", args=[1]))
+
+    def test_ticket_history_restore_has_full_shell(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("portal:create_ticket", args=[1]),
+                                   HTTP_HX_REQUEST="true", HTTP_HX_HISTORY_RESTORE_REQUEST="true")
+        self.assertContains(response, "<!doctype html>")

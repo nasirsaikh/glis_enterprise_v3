@@ -1,0 +1,19 @@
+{% load i18n %}
+<nav class="card border border-base-300 bg-base-100" aria-label="{% translate 'Workflow steps' %}">
+  <div class="card-body workflow-step-scroll">
+    <ol class="steps steps-horizontal workflow-steps">
+      {% for step in workflow_steps %}
+      <li class="step {% if step.has_error %}step-error{% elif step.has_query %}step-warning{% elif step.active %}step-primary{% elif step.completed %}step-success{% endif %}" {% if step.has_error %}data-content="!"{% elif step.has_query %}data-content="?"{% elif step.completed %}data-content="✓"{% endif %}>
+        {% if step.accessible %}
+        <a class="btn btn-ghost btn-sm workflow-step-link" href="{{ step.url }}" hx-get="{{ step.url }}" hx-push-url="true" data-workflow-navigation {% if step.active %}aria-current="step"{% endif %}>
+          <i class="bi {{ step.icon }}" aria-hidden="true"></i><span>{{ step.label }}</span>
+          {% if step.has_error %}<span class="sr-only">{% translate "Needs attention" %}</span>{% elif step.has_query %}<span class="sr-only">{% translate "Open query" %}</span>{% elif step.completed %}<span class="sr-only">{% translate "Completed" %}</span>{% endif %}
+        </a>
+        {% else %}
+        <span class="btn btn-ghost btn-sm workflow-step-link opacity-50" aria-disabled="true"><i class="bi bi-lock" aria-hidden="true"></i>{{ step.label }}<span class="sr-only">{% translate "Locked" %}</span></span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</nav>

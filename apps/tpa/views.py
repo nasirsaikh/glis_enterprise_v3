@@ -1,4 +1,5 @@
 import hashlib
+import json
 import uuid
 from collections import Counter
 from datetime import date
@@ -10,6 +11,9 @@ from django.db import models, transaction
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.cache import patch_vary_headers
+from django.urls import reverse
+from django.utils.translation import gettext as _
 
 from apps.ai.models import AIProviderConfig
 from apps.tickets.models import TicketAttachment
@@ -28,6 +32,7 @@ from .forms import (
     SourceBundleUploadForm,
     TPAProcessingRowForm,
     TransactionForm,
+    TransactionRejectionForm,
 )
 from .models import (
     InboundEmail,
@@ -74,6 +79,7 @@ from .services.member_selection import (
 from .services.sample_data import build_sample_csv, build_sample_xlsx, sample_member_rows
 from .services.ticketing import create_ticket_for_transaction
 from .services.validation import validate_action
+from .services.wizard import CLOSED_STATUSES, get_transaction_wizard
 from .services.workflow import (
     approve_transaction,
     complete_tpa_transaction,
@@ -107,6 +113,25 @@ def _require_tpa_access(user):
 def _require_intake_edit(user, tx):
     if not can_edit_tpa_intake(user, tx):
         raise PermissionDenied("You have read-only access to this TPA transaction.")
+
+
+def _is_htmx(request):
+    return (
+        request.headers.get("HX-Request", "").lower() == "true"
+        and request.headers.get("HX-History-Restore-Request", "").lower() != "true"
+    )
+
+
+def _transaction_response(request, tx, *, step=None, forms=None):
+    """Refresh the whole workspace, including status and navigation, in one swap."""
+    tx.refresh_from_db()
+    selected = step if step is not None else request.POST.get("wizard_step")
+    if _is_htmx(request) or forms:
+        return transaction_detail(
+            request, tx.reference, selected_step=selected, form_overrides=forms
+        )
+    wizard = get_transaction_wizard(tx, request.user, selected)
+    return redirect(wizard["step_url"])
 
 
 def _serialize_form_data(cleaned_data):
@@ -581,13 +606,35 @@ def policy_enrollment_create(request):
             request,
             "Policy setup created. Add plans and the initial member census, then submit for validation.",
         )
+        if _is_htmx(request):
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = (
+                reverse("tpa:transaction_detail", args=[tx.reference]) + "?step=policy_setup"
+            )
+            return response
         return redirect("tpa:transaction_detail", reference=tx.reference)
 
-    return render(
-        request,
-        "tpa/policy_enrollment_form.html",
-        {"form": form},
-    )
+    groups = [
+        (_("Policy & Routing"), ["sponsor", "insurance_company", "tpa_organization",
+                                 "policy_number", "policy_name"]),
+        (_("Period & Rules"), ["start_date", "expiry_date", "currency",
+                                "stp_enabled", "allowed_backdating_days"]),
+        (_("Benefit Plan & Create"), ["plan_code", "plan_name", "annual_premium",
+                                       "default_sum_insured"]),
+    ]
+    creation_steps = [{"label": label, "fields": [form[name] for name in fields]}
+                      for label, fields in groups]
+    initial_step = next((index for index, step in enumerate(creation_steps, 1)
+                         if any(field.errors for field in step["fields"])), 1)
+    context = {
+        "form": form, "creation_steps": creation_steps,
+        "creation_initial_step": initial_step,
+        "creation_form_id": "policy-enrollment-wizard",
+        "creation_url": reverse("tpa:policy_enrollment_create"),
+        "creation_cancel_url": reverse("tpa:policy_enrollment_list"),
+    }
+    return render(request, "components/creation_wizard_form.html" if _is_htmx(request)
+                  else "tpa/policy_enrollment_form.html", context)
 
 
 @login_required
@@ -613,15 +660,10 @@ def policy_plan_add(request, reference):
         plan.save()
         messages.success(request, f"Benefit plan {plan.code} added.")
     else:
-        messages.error(
-            request,
-            "; ".join(
-                error
-                for errors in form.errors.values()
-                for error in errors
-            ),
+        return _transaction_response(
+            request, tx, step="policy_setup", forms={"plan_form": form}
         )
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step="policy_setup")
 
 
 @login_required
@@ -678,7 +720,7 @@ def transaction_create(request):
     return render(request, "tpa/transaction_form.html", {"form": form})
 
 @login_required
-def transaction_detail(request, reference):
+def transaction_detail(request, reference, *, selected_step=None, form_overrides=None):
     _require_tpa_access(request.user)
     tx = get_object_or_404(
         visible_transactions(request.user).prefetch_related(
@@ -687,11 +729,25 @@ def transaction_detail(request, reference):
         reference=reference,
     )
 
-    if tx.status == tx.Status.PENDING_APPROVAL and tx.ticket_id:
+    if request.method == "GET" and tx.status == tx.Status.PENDING_APPROVAL and tx.ticket_id:
         tx = sync_from_ticket_approval(tx, actor=request.user)
 
+    wizard = get_transaction_wizard(
+        tx, request.user,
+        selected_step if selected_step is not None else request.GET.get("step"),
+    )
+    if wizard["step_redirected"] and not _is_htmx(request):
+        return redirect(wizard["step_url"])
+    form_overrides = form_overrides or {}
     actions = list(tx.member_actions.all().order_by("row_number", "pk"))
     for action in actions:
+        action.final_card_number = action.card_number or (
+            action.member.tpa_member_id if action.member_id else "—"
+        )
+        action.final_member_status = (
+            action.member.get_status_display() if action.member_id
+            else action.processing_status or "—"
+        )
         display_data = {
             **(action.submitted_data or {}),
             **(action.extracted_data or {}),
@@ -763,6 +819,7 @@ def transaction_detail(request, reference):
 
             action.edit_form = MemberRowForm(
                 transaction=tx,
+                current_action=action,
                 initial={
                     **display_data,
                     "principal_reference": principal_reference,
@@ -777,6 +834,25 @@ def transaction_detail(request, reference):
             action.edit_form = MemberLookupRowForm(initial=display_data)
         else:
             action.edit_form = None
+        action.processing_form = TPAProcessingRowForm(
+            initial={
+                "card_number": action.card_number,
+                "effective_date": action.tpa_effective_date or tx.effective_date,
+                "amount": (action.tpa_premium_amount if action.tpa_premium_amount is not None
+                           else action.calculated_premium),
+                "override_reason": action.tpa_override_reason,
+                "comments": action.processing_message,
+            },
+        )
+        if form_overrides.get("edited_action_id") == action.pk:
+            action.edit_form = form_overrides["edit_form"]
+        if action.edit_form:
+            action.edit_form.auto_id = f"id_edit_{action.pk}_%s"
+        if form_overrides.get("processing_action_id") == action.pk:
+            action.processing_form = form_overrides["processing_form"]
+        action.processing_form.auto_id = f"id_tpa_{action.pk}_%s"
+        for field in action.processing_form.fields.values():
+            field.widget.attrs["form"] = f"tpa-row-{action.pk}"
 
     valid_count = sum(a.validation_status == MemberAction.Result.VALID for a in actions)
     warning_count = sum(a.validation_status == MemberAction.Result.WARNING for a in actions)
@@ -816,6 +892,7 @@ def transaction_detail(request, reference):
         if result_count is None:
             result_count = payload.get("rows_created")
         document.result_count = result_count
+        document.payload_json = json.dumps(payload, ensure_ascii=False, indent=2)
 
     visible_query_threads = list(
         visible_transaction_queries(request.user, tx).order_by("-created_at")
@@ -826,6 +903,29 @@ def transaction_detail(request, reference):
             for message in query.messages.all()
             if can_view_query_message(request.user, message)
         ]
+        query.can_reply = (
+            tx.status not in CLOSED_STATUSES
+            and query.status == TransactionQuery.Status.OPEN
+            and can_view_transaction_query(request.user, query)
+            and (
+                can_approve_tpa_transaction(request.user, tx)
+                or can_process_tpa_transaction(request.user, tx)
+                or request.user.pk == tx.requester_id
+                or query.selected_participants.filter(pk=request.user.pk).exists()
+            )
+        )
+        query.reply_form = (
+            form_overrides["query_message_form"]
+            if form_overrides.get("reply_query_id") == query.pk
+            else QueryMessageForm(prefix=f"query-{query.pk}")
+        )
+        # Distinct input IDs are needed for rich-text editors in each thread.
+        if not (can_approve_tpa_transaction(request.user, tx)
+                or can_process_tpa_transaction(request.user, tx)):
+            query.reply_form.fields["audience"].choices = [
+                choice for choice in TransactionQuery.Audience.choices
+                if choice[0] != TransactionQuery.Audience.INSURER_TPA_INTERNAL
+            ]
     shared_internal_messages = list(
         visible_shared_internal_messages(request.user, tx)
     )
@@ -847,12 +947,23 @@ def transaction_detail(request, reference):
     target_tat_hours = None
     if tx.ticket_id and tx.ticket.sla_policy_id:
         target_tat_hours = round(tx.ticket.sla_policy.resolution_minutes / 60, 1)
+    sla_breached = None
+    if tx.ticket_id and tx.ticket.resolution_due_at:
+        sla_breached = (tx.processed_at or timezone.now()) > tx.ticket.resolution_due_at
 
     context = {
+        **wizard,
         "tx": tx,
         "actions": actions,
         "events": tx.events.select_related("actor").all(),
+        "recent_events": tx.events.select_related("actor").order_by("-created_at", "-pk")[:5],
         "target_tat_hours": target_tat_hours,
+        "elapsed_tat_hours": round(
+            ((tx.processed_at or timezone.now()) - tx.created_at).total_seconds() / 3600, 1
+        ),
+        "sla_breached": sla_breached,
+        "approver_name": (tx.approved_by.get_full_name() or tx.approved_by.username
+                          if tx.approved_by_id else "—"),
         "member_form": member_form,
         "bulk_card_form": BulkCardSelectionForm(),
         "selectable_members": selectable_members,
@@ -864,6 +975,15 @@ def transaction_detail(request, reference):
         and tx.transaction_type != tx.Type.POLICY_CANCEL,
         "can_approve": can_approve_tpa_transaction(request.user, tx),
         "can_process": can_process_tpa_transaction(request.user, tx),
+        "can_submit_intake": can_edit_tpa_intake(request.user, tx)
+        and tx.status in INTAKE_EDITABLE_STATUSES,
+        "can_validate": tx.status in INTAKE_EDITABLE_STATUSES
+        and tx.status != tx.Status.DRAFT
+        and (
+            can_edit_tpa_intake(request.user, tx)
+            or can_approve_tpa_transaction(request.user, tx)
+            or can_process_tpa_transaction(request.user, tx)
+        ),
         "can_view_ai_source": (
             request.user.is_superuser
             or request.user.has_perm("tpa.view_ai_source_data")
@@ -897,15 +1017,52 @@ def transaction_detail(request, reference):
         ),
         "query_history": visible_query_threads,
         "shared_internal_messages": shared_internal_messages,
-        "query_raise_form": QueryRaiseForm(transaction=tx),
+        "query_raise_form": QueryRaiseForm(
+            transaction=tx,
+            initial={"purpose": TransactionQuery.Purpose.APPROVAL
+                     if wizard["active_step"]["key"] == "approval"
+                     else TransactionQuery.Purpose.TPA},
+        ),
         "query_message_form": QueryMessageForm(),
+        "rejection_form": TransactionRejectionForm(),
         "can_start_tpa": (
             tx.status == tx.Status.SENT_TO_TPA
             and can_process_tpa_transaction(request.user, tx)
         ),
         "can_tpa_process": can_process_tpa_transaction(request.user, tx),
+        "source_emails": tx.source_emails.all(),
+        "approval_events": tx.events.filter(
+            event_type__in=["approval_rejected", "approval_synced", "approved",
+                            "validation_completed", "sent_to_tpa"]
+        ).select_related("actor"),
     }
-    return render(request, "tpa/transaction_detail.html", context)
+    purpose = (TransactionQuery.Purpose.APPROVAL
+               if wizard["active_step"]["key"] == "approval"
+               else TransactionQuery.Purpose.TPA)
+    context["query_history"] = [q for q in visible_query_threads if q.purpose == purpose]
+    context["shared_internal_messages"] = [
+        message for message in shared_internal_messages if message.query.purpose == purpose
+    ]
+    context["can_raise_query"] = tx.status not in CLOSED_STATUSES and (
+        (purpose == TransactionQuery.Purpose.APPROVAL
+         and tx.status == tx.Status.PENDING_APPROVAL and context["can_approve"])
+        or (purpose == TransactionQuery.Purpose.TPA
+            and tx.status in {tx.Status.TPA_IN_PROGRESS, tx.Status.TPA_QUERY}
+            and context["can_tpa_process"])
+    )
+    context.update(form_overrides)
+    response = render(
+        request,
+        "tpa/transaction/_workspace.html" if _is_htmx(request)
+        else "tpa/transaction_detail.html",
+        context,
+    )
+    patch_vary_headers(response, ["HX-Request", "HX-History-Restore-Request"])
+    if _is_htmx(request):
+        response["HX-Retarget"] = "#transaction-workspace"
+        response["HX-Reswap"] = "outerHTML"
+        response["HX-Push-Url" if request.method == "GET" else "HX-Replace-Url"] = wizard["step_url"]
+    return response
 
 
 @login_required
@@ -920,15 +1077,9 @@ def transaction_upload_sources(request, reference):
 
     form = SourceBundleUploadForm(request.POST, request.FILES)
     if not form.is_valid():
-        messages.error(
-            request,
-            "; ".join(
-                error
-                for errors in form.errors.values()
-                for error in errors
-            ),
+        return _transaction_response(
+            request, tx, step="intake", forms={"source_upload_form": form}
         )
-        return redirect("tpa:transaction_detail", reference=reference)
 
     try:
         documents = create_source_documents(
@@ -947,7 +1098,7 @@ def transaction_upload_sources(request, reference):
         )
     except (ValidationError, RuntimeError, ValueError) as exc:
         messages.error(request, str(exc))
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='intake')
 
 
 @login_required
@@ -1011,22 +1162,10 @@ def transaction_add_member(request, reference):
         else MemberLookupRowForm(request.POST)
     )
     if not form.is_valid():
-        if request.headers.get("HX-Request") and is_add:
-            return render(
-                request,
-                "tpa/partials/manual_member_form.html",
-                {"tx": tx, "member_form": form},
-            )
-        messages.error(
-            request,
-            "Member row was not added: "
-            + "; ".join(
-                error
-                for errors in form.errors.values()
-                for error in errors
-            ),
+        return _transaction_response(
+            request, tx, step="intake",
+            forms={"member_form": form, "reopen_modal": "manual-member"},
         )
-        return redirect("tpa:transaction_detail", reference=reference)
 
     row_number = (
         tx.member_actions.order_by("-row_number")
@@ -1055,11 +1194,7 @@ def transaction_add_member(request, reference):
         run_validation(tx, actor=request.user)
 
     messages.success(request, f"Member row {row_number} added.")
-    if request.headers.get("HX-Request"):
-        response = HttpResponse(status=204)
-        response["HX-Refresh"] = "true"
-        return response
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step="intake")
 
 
 @login_required
@@ -1123,7 +1258,7 @@ def transaction_select_members(request, reference):
         request,
         f"{tx.member_actions.count()} member row(s) are now in the endorsement.",
     )
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='intake')
 
 
 @login_required
@@ -1161,7 +1296,7 @@ def transaction_reprocess_source(request, reference, document_id):
         request,
         f"Evidence reprocessed; {len(actions)} row(s) created or updated.",
     )
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='intake')
 
 
 @login_required
@@ -1205,7 +1340,7 @@ def transaction_delete_source(request, reference, document_id):
         details=details,
     )
     messages.success(request, f"Failed evidence removed: {original_name}.")
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='intake')
 
 
 @login_required
@@ -1221,8 +1356,9 @@ def transaction_upload_members(request, reference):
 
     form = MemberUploadForm(request.POST, request.FILES)
     if not form.is_valid():
-        messages.error(request, "Select a CSV or XLSX member file.")
-        return redirect("tpa:transaction_detail", reference=reference)
+        return _transaction_response(
+            request, tx, step="intake", forms={"upload_form": form}
+        )
 
     try:
         created = import_member_spreadsheet(
@@ -1239,7 +1375,7 @@ def transaction_upload_members(request, reference):
     except ValidationError as exc:
         messages.error(request, "; ".join(exc.messages))
 
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='intake')
 
 
 @login_required
@@ -1264,16 +1400,11 @@ def transaction_edit_member(request, reference, action_id):
         else MemberLookupRowForm(request.POST)
     )
     if not form.is_valid():
-        messages.error(
-            request,
-            "Member correction was not saved: "
-            + "; ".join(
-                error
-                for errors in form.errors.values()
-                for error in errors
-            ),
+        return _transaction_response(
+            request, tx, step="intake",
+            forms={"edit_form": form, "edited_action_id": action.pk,
+                   "reopen_modal": f"edit-member-{action.pk}"},
         )
-        return redirect("tpa:transaction_detail", reference=reference)
 
     before = {
         **(action.submitted_data or {}),
@@ -1304,7 +1435,7 @@ def transaction_edit_member(request, reference, action_id):
         request,
         f"Member row {action.row_number or action.pk} corrected and revalidated.",
     )
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='intake')
 
 
 @login_required
@@ -1323,7 +1454,7 @@ def transaction_remove_member(request, reference, action_id):
     if tx.status != tx.Status.DRAFT:
         run_validation(tx, actor=request.user)
     messages.success(request, "Member row removed.")
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='intake')
 
 
 @login_required
@@ -1335,13 +1466,13 @@ def transaction_submit(request, reference):
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
     _require_intake_edit(request.user, tx)
     if tx.status != tx.Status.DRAFT:
-        return redirect("tpa:transaction_detail", reference=reference)
+        return _transaction_response(request, tx, step='validation')
 
     if tx.transaction_type == tx.Type.POLICY_CANCEL and not tx.member_actions.exists():
         populate_policy_cancellation(tx)
     if tx.transaction_type != tx.Type.POLICY_CANCEL and not tx.member_actions.exists():
         messages.error(request, "At least one member is required before continuing.")
-        return redirect("tpa:transaction_detail", reference=reference)
+        return _transaction_response(request, tx, step='validation')
 
     tx.submitted_at = timezone.now()
     tx.status = tx.Status.PENDING_VALIDATION
@@ -1355,7 +1486,7 @@ def transaction_submit(request, reference):
         summary="Transaction submitted",
     )
     messages.success(request, "Transaction submitted and validation completed.")
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='validation')
 
 
 @login_required
@@ -1374,7 +1505,7 @@ def transaction_validate(request, reference):
         )
     if tx.status == tx.Status.DRAFT:
         messages.error(request, "Submit the transaction before running workflow validation.")
-        return redirect("tpa:transaction_detail", reference=reference)
+        return _transaction_response(request, tx, step='validation')
     if tx.status in {
         tx.Status.PROCESSED,
         tx.Status.COMPLETED,
@@ -1383,10 +1514,12 @@ def transaction_validate(request, reference):
         tx.Status.FAILED,
     }:
         raise PermissionDenied("This transaction is closed.")
+    if tx.status not in INTAKE_EDITABLE_STATUSES:
+        raise PermissionDenied("Workflow validation is only available during intake and validation.")
 
     run_validation(tx, actor=request.user)
     messages.success(request, "Validation rerun completed.")
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='validation')
 
 
 @login_required
@@ -1400,7 +1533,7 @@ def transaction_approve(request, reference):
         messages.success(request, "TPA transaction approved.")
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='')
 
 
 @login_required
@@ -1409,12 +1542,22 @@ def transaction_reject(request, reference):
     if request.method != "POST":
         raise PermissionDenied
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    form = TransactionRejectionForm(request.POST)
+    if not form.is_valid():
+        return _transaction_response(
+            request, tx, step="approval",
+            forms={"rejection_form": form, "reopen_modal": "reject-transaction"},
+        )
     try:
-        reject_transaction(tx, request.user, request.POST.get("reason"))
+        reject_transaction(tx, request.user, form.cleaned_data["reason"])
         messages.success(request, "TPA transaction rejected.")
     except (PermissionError, ValueError) as exc:
-        messages.error(request, str(exc))
-    return redirect("tpa:transaction_detail", reference=reference)
+        form.add_error(None, str(exc))
+        return _transaction_response(
+            request, tx, step="approval",
+            forms={"rejection_form": form, "reopen_modal": "reject-transaction"},
+        )
+    return _transaction_response(request, tx, step='approval')
 
 
 @login_required
@@ -1428,7 +1571,7 @@ def transaction_tpa_start(request, reference):
         messages.success(request, "TPA processing started.")
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='tpa_processing')
 
 
 @login_required
@@ -1452,17 +1595,13 @@ def transaction_tpa_action(request, reference, action_id):
             )
             messages.success(request, "TPA member processing data updated.")
         except (PermissionError, ValueError) as exc:
-            messages.error(request, str(exc))
-    else:
-        messages.error(
-            request,
-            "; ".join(
-                error
-                for errors in form.errors.values()
-                for error in errors
-            ),
+            form.add_error(None, str(exc))
+    if form.errors:
+        return _transaction_response(
+            request, tx, step="tpa_processing",
+            forms={"processing_form": form, "processing_action_id": action.pk},
         )
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='tpa_processing')
 
 
 @login_required
@@ -1509,10 +1648,12 @@ def transaction_raise_query(request, reference):
                 "Discussion opened inside this transaction.",
             )
         except (PermissionError, ValueError) as exc:
-            messages.error(request, str(exc))
-    else:
-        messages.error(request, "Enter a query subject and message.")
-    return redirect("tpa:transaction_detail", reference=reference)
+            form.add_error(None, str(exc))
+    if form.errors:
+        return _transaction_response(
+            request, tx, forms={"query_raise_form": form, "query_form_open": True}
+        )
+    return _transaction_response(request, tx)
 
 
 @login_required
@@ -1530,7 +1671,8 @@ def transaction_query_message(request, reference, query_id):
         pk=query_id,
         status=TransactionQuery.Status.OPEN,
     )
-    form = QueryMessageForm(request.POST, request.FILES)
+    prefix = f"query-{query.pk}" if f"query-{query.pk}-message" in request.POST else None
+    form = QueryMessageForm(request.POST, request.FILES, prefix=prefix)
     if form.is_valid():
         try:
             query_message = post_query_message(
@@ -1555,10 +1697,12 @@ def transaction_query_message(request, reference, query_id):
                 )
             messages.success(request, "Query message sent.")
         except (PermissionError, ValueError) as exc:
-            messages.error(request, str(exc))
-    else:
-        messages.error(request, "Enter a query message.")
-    return redirect("tpa:transaction_detail", reference=reference)
+            form.add_error(None, str(exc))
+    if form.errors:
+        return _transaction_response(
+            request, tx, forms={"query_message_form": form, "reply_query_id": query.pk}
+        )
+    return _transaction_response(request, tx)
 
 
 @login_required
@@ -1573,7 +1717,7 @@ def transaction_resolve_query(request, reference, query_id):
         messages.success(request, "Query resolved and TPA processing resumed.")
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx)
 
 
 @login_required
@@ -1596,7 +1740,7 @@ def transaction_share_query_message(request, reference, message_id):
         messages.success(request, "Selected internal message shared with the client.")
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx)
 
 
 @login_required
@@ -1632,6 +1776,8 @@ def transaction_card_dispatch(request, reference):
     tx = get_object_or_404(visible_transactions(request.user), reference=reference)
     if not can_process_tpa_transaction(request.user, tx):
         raise PermissionDenied("Card dispatch updates require TPA processing authority.")
+    if tx.status != tx.Status.CARD_DISPATCH:
+        raise PermissionDenied("Card dispatch is not active for this transaction.")
     try:
         dispatch = tx.card_dispatch
     except CardDispatch.DoesNotExist:
@@ -1639,15 +1785,9 @@ def transaction_card_dispatch(request, reference):
 
     form = CardDispatchForm(request.POST, instance=dispatch)
     if not form.is_valid():
-        messages.error(
-            request,
-            "; ".join(
-                error
-                for errors in form.errors.values()
-                for error in errors
-            ),
+        return _transaction_response(
+            request, tx, step="card_dispatch", forms={"card_dispatch_form": form}
         )
-        return redirect("tpa:transaction_detail", reference=reference)
 
     proof_attachment = None
     proof = request.FILES.get("proof")
@@ -1682,8 +1822,11 @@ def transaction_card_dispatch(request, reference):
             else "Card delivery/collection completed and endorsement finalized.",
         )
     except (PermissionError, ValueError) as exc:
-        messages.error(request, str(exc))
-    return redirect("tpa:transaction_detail", reference=reference)
+        form.add_error(None, str(exc))
+        return _transaction_response(
+            request, tx, step="card_dispatch", forms={"card_dispatch_form": form}
+        )
+    return _transaction_response(request, tx, step='')
 
 
 @login_required
@@ -1729,7 +1872,7 @@ def transaction_tpa_complete(request, reference):
             )
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='')
 
 
 @login_required
@@ -1751,4 +1894,4 @@ def transaction_process(request, reference):
             )
     except (PermissionError, ValueError) as exc:
         messages.error(request, str(exc))
-    return redirect("tpa:transaction_detail", reference=reference)
+    return _transaction_response(request, tx, step='')

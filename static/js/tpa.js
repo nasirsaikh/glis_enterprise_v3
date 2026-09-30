@@ -211,25 +211,23 @@
     renderChart("tpa-source-chart", sourceOptions);
   };
 
-  const setupPrincipal = () => {
-    const relationship = document.querySelector('[name="relationship"]');
-    const principalField = document.getElementById("principal-reference-field");
-    const principalSelect = document.querySelector('[name="principal_reference"]');
-    if (!relationship || !principalField) return;
-
-    const sync = () => {
-      const needed = Boolean(
-        relationship.value && relationship.value !== "PRINCIPAL"
-      );
-      principalField.hidden = !needed;
-      if (!needed && principalSelect) principalSelect.value = "";
-    };
-
-    if (relationship.dataset.tpaPrincipalReady !== "true") {
-      relationship.dataset.tpaPrincipalReady = "true";
-      relationship.addEventListener("change", sync);
-    }
-    sync();
+  const setupPrincipal = (scope = document) => {
+    scope.querySelectorAll('[name="relationship"]').forEach(relationship => {
+      const principalSelect = relationship.form?.querySelector('[name="principal_reference"]');
+      const principalField = principalSelect?.closest("fieldset");
+      if (!principalField) return;
+      const sync = () => {
+        const needed = relationship.value && relationship.value !== "PRINCIPAL";
+        principalField.hidden = !needed;
+        principalSelect.required = Boolean(needed);
+        if (!needed) principalSelect.value = "";
+      };
+      if (relationship.dataset.tpaPrincipalReady !== "true") {
+        relationship.dataset.tpaPrincipalReady = "true";
+        relationship.addEventListener("change", sync);
+      }
+      sync();
+    });
   };
 
   const setupDropzones = (scope = document) => {
@@ -280,8 +278,17 @@
       });
   };
 
+  document.body?.addEventListener("htmx:beforeSwap", event => {
+    if (!event.detail.shouldSwap) return;
+    const target = event.detail.target;
+    charts.forEach((chart, id) => {
+      const element = document.getElementById(id);
+      if (element && (target === element || target?.contains(element))) destroyChart(id);
+    });
+  });
+
   const init = (scope = document) => {
-    setupPrincipal();
+    setupPrincipal(scope);
     setupDropzones(scope);
     window.requestAnimationFrame(() => {
       renderTPACharts();
@@ -297,49 +304,12 @@
     }, 50)
   );
   document.body?.addEventListener("htmx:afterSwap", (event) =>
-    init(event.detail.target)
+    init(document.getElementById(event.detail.target?.id) || event.target)
   );
 })();
 
 
 (() => {
-  const findForm = (event) => {
-    const element = event.detail?.elt;
-    if (!element) return null;
-    if (element.matches?.("form")) return element;
-    return element.form || element.closest?.("form") || null;
-  };
-
-  const setFormBusy = (form, busy) => {
-    if (!form) return;
-    form.classList.toggle("tpa-form-processing", busy);
-    if (busy) form.setAttribute("aria-busy", "true");
-    else form.removeAttribute("aria-busy");
-    Array.from(form.elements || []).forEach((control) => {
-      if (!control.matches?.('button[type="submit"], button:not([type]), input[type="submit"]')) return;
-      if (busy) {
-        control.dataset.tpaWasDisabled = String(control.disabled);
-        control.disabled = true;
-        let spinner = control.querySelector("[data-tpa-form-spinner]");
-        if (!spinner && !control.querySelector(".htmx-indicator")) {
-          spinner = document.createElement("span");
-          spinner.className = "tpa-form-spinner";
-          spinner.dataset.tpaFormSpinner = "";
-          spinner.setAttribute("aria-hidden", "true");
-          control.appendChild(spinner);
-        }
-        if (spinner) spinner.hidden = false;
-      } else {
-        if (control.dataset.tpaWasDisabled !== undefined) {
-          control.disabled = control.dataset.tpaWasDisabled === "true";
-          delete control.dataset.tpaWasDisabled;
-        }
-        const spinner = control.querySelector("[data-tpa-form-spinner]");
-        if (spinner) spinner.hidden = true;
-      }
-    });
-  };
-
   const setupTransactionWizard = (scope = document) => {
     const roots = [];
     if (scope.matches?.("[data-transaction-wizard]")) roots.push(scope);
@@ -402,6 +372,8 @@
         indicators.forEach((indicator, stepIndex) => {
           const state = stepIndex < activeStep ? "complete" : stepIndex === activeStep ? "active" : "upcoming";
           indicator.dataset.state = state;
+          indicator.classList.toggle("step-primary", state === "active");
+          indicator.classList.toggle("step-success", state === "complete");
           if (state === "active") indicator.setAttribute("aria-current", "step");
           else indicator.removeAttribute("aria-current");
         });
@@ -442,29 +414,7 @@
     });
   };
 
-  const setupSidebarOverflow = () => {
-    const sidebar = document.getElementById("portal-sidebar");
-    const nav = sidebar?.querySelector("nav");
-    if (!nav || nav.dataset.scrollWatchReady === "true") return;
-    nav.dataset.scrollWatchReady = "true";
-    const sync = () => { nav.dataset.scrollable = nav.scrollHeight > nav.clientHeight + 1 ? "true" : "false"; };
-    const observer = new MutationObserver(() => requestAnimationFrame(sync));
-    observer.observe(nav, {attributes:true,childList:true,subtree:true,attributeFilter:["class","hidden"]});
-    if ("ResizeObserver" in window) {
-      const resizeObserver = new ResizeObserver(sync);
-      resizeObserver.observe(nav);
-      resizeObserver.observe(sidebar);
-    }
-    window.addEventListener("resize", sync, {passive:true});
-    requestAnimationFrame(sync);
-  };
-
-  document.body?.addEventListener("htmx:beforeRequest", (event) => setFormBusy(findForm(event), true));
-  ["htmx:afterRequest", "htmx:sendError", "htmx:responseError", "htmx:timeout", "htmx:abort"].forEach((name) => {
-    document.body?.addEventListener(name, (event) => setFormBusy(findForm(event), false));
-  });
-  document.addEventListener("DOMContentLoaded", () => { setupTransactionWizard(); setupSidebarOverflow(); });
+  document.addEventListener("DOMContentLoaded", () => setupTransactionWizard());
   setupTransactionWizard();
-  setupSidebarOverflow();
-  document.body?.addEventListener("htmx:afterSwap", (event) => setupTransactionWizard(event.detail.target));
+  document.body?.addEventListener("htmx:afterSwap", (event) => setupTransactionWizard(document.getElementById(event.detail.target?.id) || event.target));
 })();

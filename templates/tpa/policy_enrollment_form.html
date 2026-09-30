@@ -17,29 +17,6 @@
     <span>{% translate "Use this workflow for Individual or Corporate onboarding. Normal endorsements become available only after initial enrollment completes." %}</span>
   </div>
 
-  <form method="post" class="card border border-base-300 bg-base-100 shadow-sm">
-    {% csrf_token %}
-    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
-      <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Policy control" %}</div><h2 class="text-lg font-black ">{% translate "POLICY, ROUTING & FIRST PLAN" %}</h2></div>
-      <span class="badge badge-primary badge-soft">{% translate "DRAFT" %}</span>
-    </div>
-    <div class="card-body">
-      {% if form.non_field_errors %}<div role="alert" class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
-      <div class="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
-        {% for field in form %}
-        <fieldset class="fieldset {% if field.name == 'stp_enabled' %}flex flex-row items-center gap-2 self-end{% endif %}">
-          {% if field.name != "stp_enabled" %}<legend class="fieldset-legend">{{ field.label }}</legend>{% endif %}
-          {% if field.name == "stp_enabled" %}{{ field }}<span class="label">{{ field.label }}</span>{% else %}{{ field }}{% endif %}
-          {% if field.help_text %}<p class="label text-[10px] opacity-50">{{ field.help_text }}</p>{% endif %}
-          {% for error in field.errors %}<p class="label text-error">{{ error }}</p>{% endfor %}
-        </fieldset>
-        {% endfor %}
-      </div>
-      <div class="flex justify-end gap-2 border-t border-base-300 pt-3">
-        <a class="btn btn-ghost btn-sm" href="{% url 'tpa:policy_enrollment_list' %}">{% translate "Cancel" %}</a>
-        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-arrow-right"></i>{% translate "Create Setup & Add Members" %}</button>
-      </div>
-    </div>
-  </form>
+  {% include "components/creation_wizard_form.html" %}
 </div>
 {% endblock %}

@@ -343,14 +343,14 @@
   const setupSidebar = () => {
     const button = document.getElementById("sidebar-toggle");
     const sidebar = document.getElementById("portal-sidebar");
-    if (!button || !sidebar) return;
+    if (!sidebar) return;
 
     const nav = sidebar.querySelector("nav");
     if (nav && nav.dataset.scrollWatchReady !== "true") {
       nav.dataset.scrollWatchReady = "true";
       const syncNavOverflow = () => {
-        const needsScroll = nav.scrollHeight > nav.clientHeight + 1;
-        nav.dataset.scrollable = needsScroll ? "true" : "false";
+        const state = nav.scrollHeight > nav.clientHeight ? "true" : "false";
+        if (nav.dataset.scrollable !== state) nav.dataset.scrollable = state;
       };
       const mutationObserver = new MutationObserver(() => window.requestAnimationFrame(syncNavOverflow));
       mutationObserver.observe(nav, {
@@ -365,8 +365,10 @@
         resizeObserver.observe(sidebar);
       }
       window.addEventListener("resize", syncNavOverflow, {passive: true});
+      document.getElementById("portal-drawer")?.addEventListener("change", () => window.requestAnimationFrame(syncNavOverflow));
       window.requestAnimationFrame(syncNavOverflow);
     }
+    if (!button) return;
 
     const normalize = (value) => value === "full" ? "full" : "mini";
     let desktopMode = normalize(
@@ -787,6 +789,150 @@
     window.setInterval(poll, 30000);
   };
 
+  // All HTMX POST forms share one busy state, including associated row buttons.
+  const busyForms = new WeakMap();
+  const eventForm = (event) => {
+    const element = event.detail?.elt || event.target;
+    return element?.matches?.("form") ? element : element?.form || element?.closest?.("form");
+  };
+  const processingForm = (form) => form && (
+    form.hasAttribute("hx-post") || form.hasAttribute("data-processing-form")
+    || form.hasAttribute("data-tpa-hx-form")
+  );
+  const setFormBusy = (form, busy) => {
+    if (!processingForm(form)) return;
+    if (busy) {
+      if (busyForms.has(form)) return;
+      const controls = Array.from(form.elements).filter(control =>
+        control.matches?.('button[type="submit"], button:not([type]), input[type="submit"]')
+      ).map(control => {
+        const state = {control, disabled: control.disabled};
+        control.disabled = true;
+        if (control.tagName === "BUTTON") {
+          let spinner = control.querySelector(".loading");
+          if (!spinner) {
+            spinner = document.createElement("span");
+            spinner.className = "loading loading-spinner loading-sm";
+            spinner.dataset.processingSpinner = "";
+            spinner.setAttribute("aria-hidden", "true");
+            spinner.hidden = true;
+            control.appendChild(spinner);
+          }
+          state.spinner = spinner;
+          state.hidden = spinner.hidden;
+          spinner.hidden = false;
+        }
+        return state;
+      });
+      let status = form.querySelector("[data-processing-status]");
+      if (!status) {
+        status = document.createElement("span");
+        status.dataset.processingStatus = "";
+        status.className = "processing-status";
+        status.setAttribute("role", "status");
+        form.appendChild(status);
+      }
+      status.textContent = form.dataset.processingLabel || "Processing…";
+      status.hidden = false;
+      busyForms.set(form, {controls, status, ariaBusy: form.getAttribute("aria-busy")});
+      form.classList.add("processing-form");
+      form.setAttribute("aria-busy", "true");
+    } else {
+      const state = busyForms.get(form);
+      if (!state) return;
+      state.controls.forEach(item => {
+        item.control.disabled = item.disabled;
+        if (item.spinner) item.spinner.hidden = item.hidden ?? true;
+      });
+      state.status.hidden = true;
+      form.classList.remove("processing-form");
+      if (state.ariaBusy === null) form.removeAttribute("aria-busy");
+      else form.setAttribute("aria-busy", state.ariaBusy);
+      busyForms.delete(form);
+    }
+  };
+  const centerWorkflowStep = (workspace) => {
+    const scroller = workspace.querySelector(".workflow-step-scroll");
+    const current = workspace.querySelector('[aria-current="step"]');
+    if (scroller && current) {
+      scroller.scrollLeft += current.getBoundingClientRect().left
+        - scroller.getBoundingClientRect().left - (scroller.clientWidth - current.offsetWidth) / 2;
+    }
+  };
+  const setupWorkflowWorkspace = (scope = document) => {
+    const workspace = scope.matches?.("[data-workflow-workspace]") ? scope
+      : scope.querySelector?.("[data-workflow-workspace]");
+    if (!workspace) return;
+    const key = workspace.querySelector("[data-current-step]")?.dataset.currentStep;
+    workspace.querySelectorAll("form[hx-post]").forEach(form => {
+      if (form.elements.namedItem("wizard_step")) return;
+      const input = document.createElement("input");
+      input.type = "hidden"; input.name = "wizard_step"; input.value = key;
+      form.appendChild(input);
+    });
+    const modal = document.getElementById(workspace.dataset.reopenModal);
+    if (modal && !modal.open) modal.showModal();
+    centerWorkflowStep(workspace);
+  };
+  const focusWorkflow = (workspace) => {
+    if (!workspace?.matches?.("[data-workflow-workspace]")) return;
+    const modal = workspace.querySelector("dialog[open]");
+    const destination = (modal || workspace).querySelector("[data-form-errors], [data-workflow-feedback].alert-error")
+      || workspace.querySelector("[data-current-step]");
+    destination?.focus({preventScroll: true});
+    centerWorkflowStep(workspace);
+  };
+
+  document.body.addEventListener("click", event => {
+    const button = event.target.closest("[data-open-dialog]");
+    if (button) document.getElementById(button.dataset.openDialog)?.showModal();
+  });
+  document.body.addEventListener("htmx:beforeRequest", event => {
+    if (event.detail.requestConfig?.verb?.toLowerCase() === "post") {
+      const form = eventForm(event);
+      if (busyForms.has(form)) { event.preventDefault(); return; }
+      form?.querySelector("[data-processing-error]")?.remove();
+      setFormBusy(form, true);
+    }
+    const workspace = event.detail?.elt?.closest?.("[data-workflow-workspace]");
+    workspace?.setAttribute("aria-busy", "true");
+  });
+  document.body.addEventListener("htmx:beforeSwap", event => {
+    const xhr = event.detail.xhr;
+    if (xhr.status >= 400 && xhr.getResponseHeader("HX-Retarget") === "#transaction-request-error") {
+      event.detail.shouldSwap = true;
+      event.detail.isError = false;
+    }
+  });
+  ["htmx:afterRequest", "htmx:sendError", "htmx:responseError", "htmx:timeout", "htmx:abort"].forEach(name => {
+    document.body.addEventListener(name, event => {
+      if (event.detail?.requestConfig?.verb?.toLowerCase() === "post" || name === "htmx:abort") {
+        setFormBusy(eventForm(event), false);
+      }
+      document.querySelector("[data-workflow-workspace]")?.removeAttribute("aria-busy");
+      if (name === "htmx:afterRequest" || name === "htmx:abort") return;
+      if (event.detail?.xhr?.getResponseHeader("HX-Retarget")) return;
+      const form = eventForm(event);
+      const modal = form?.closest("dialog[open]");
+      let target = document.querySelector("[data-workflow-request-error]");
+      if (modal) {
+        target = document.createElement("div");
+        target.dataset.processingError = "";
+        target.className = "col-span-full";
+        target.setAttribute("role", "alert");
+        target.tabIndex = -1;
+        form.prepend(target);
+      }
+      if (target) {
+        target.replaceChildren();
+        const alert = document.createElement("div");
+        alert.className = "alert alert-error";
+        alert.textContent = "The request could not be completed. Check your connection and try again.";
+        target.appendChild(alert); target.focus({preventScroll: true});
+      }
+    });
+  });
+
   const init = (scope = document) => {
     reveal(scope);
     setupAura(scope);
@@ -800,15 +946,23 @@
     setupPublicDropdowns(scope);
     setupMultiSelectFilters(scope);
     setupParallaxScenes(scope);
+    setupWorkflowWorkspace(scope);
   };
   document.addEventListener("DOMContentLoaded", () => {
     init(); setupSidebar(); setupMobileNav(); setupVanna(); setupNotifications(); setTimeout(renderCharts, 120);
+    const workspace = document.querySelector("[data-workflow-workspace]");
+    if (workspace) history.replaceState(history.state, "", workspace.dataset.stepUrl);
     const media = matchMedia("(prefers-color-scheme: dark)");
     const syncSystemTheme = () => { if (preferredTheme() === "system") applyTheme("system"); };
     if (media.addEventListener) media.addEventListener("change", syncSystemTheme);
   });
   document.addEventListener("glis:theme", () => setTimeout(renderCharts, 30));
-  document.body.addEventListener("htmx:afterSwap", (event) => init(event.detail.target));
+  document.body.addEventListener("htmx:afterSwap", (event) => {
+    const target = document.getElementById(event.detail.target?.id) || event.target;
+    init(target);
+    focusWorkflow(target);
+  });
+  document.body.addEventListener("htmx:historyRestore", () => init());
   document.body.addEventListener("htmx:afterRequest", (event) => {
     const form = event.detail.elt;
     if (event.detail.successful && form instanceof HTMLFormElement && form.dataset.resetOnSuccess === "true") form.reset();

@@ -28,6 +28,8 @@ class TicketCreateStep1Form(forms.Form):
                 "class": "select select-bordered w-full",
                 "hx-get": "/portal/lookups/products/",
                 "hx-target": "#id_product",
+                "hx-swap": "innerHTML settle:0ms",
+                "hx-sync": "this:replace",
                 "hx-trigger": "change",
             }
         ),
@@ -40,6 +42,8 @@ class TicketCreateStep1Form(forms.Form):
                 "class": "select select-bordered w-full",
                 "hx-get": "/portal/lookups/categories/",
                 "hx-target": "#id_category",
+                "hx-swap": "innerHTML settle:0ms",
+                "hx-sync": "this:replace",
                 "hx-trigger": "change",
             }
         ),

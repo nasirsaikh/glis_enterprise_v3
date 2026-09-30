@@ -236,7 +236,7 @@ def user_guide(request):
 def inbound_email_list(request):
     _require_tpa_access(request.user)
     emails = visible_inbound_emails(request.user).order_by("-received_at", "-pk")
-    is_mail_admin = request.user.is_superuser or request.user.has_perm("tpa.configure_tpa")
+    is_mail_admin = request.user.is_superuser
     query = request.GET.get("q", "").strip()
     if query:
         emails = emails.filter(
@@ -246,6 +246,15 @@ def inbound_email_list(request):
         )
     pagination = table_page(request, emails)
     health = mailbox_health()
+    if not request.user.is_superuser:
+        # Shared mailbox synchronization totals must not reveal other tenants.
+        scoped_emails = visible_inbound_emails(request.user)
+        health.update({
+            "messages_processed": scoped_emails.filter(processing_state=InboundEmail.State.PROCESSED).count(),
+            "messages_review": scoped_emails.filter(processing_state=InboundEmail.State.REVIEW).count(),
+            "messages_failed": scoped_emails.filter(processing_state=InboundEmail.State.FAILED).count(),
+            "last_error": "",
+        })
     health["awaiting_review"] = visible_inbound_emails(request.user).filter(
         processing_state__in=[
             InboundEmail.State.REVIEW,
@@ -439,11 +448,8 @@ def inbound_email_sync_now(request):
     _require_tpa_access(request.user)
     if request.method != "POST":
         raise PermissionDenied
-    if not (
-        request.user.is_superuser
-        or request.user.has_perm("tpa.configure_tpa")
-    ):
-        raise PermissionDenied("Mailbox synchronization requires TPA configuration authority.")
+    if not request.user.is_superuser:
+        raise PermissionDenied("Shared mailbox synchronization requires system administrator authority.")
     try:
         result = poll_inbound_mailbox(actor=request.user)
         messages.success(

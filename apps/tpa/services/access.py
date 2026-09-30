@@ -269,7 +269,7 @@ def visible_inbound_emails(user):
         return qs
     policies = visible_policies(user)
     return qs.filter(
-        Q(created_by=user)
+        Q(created_by=user, provider="manual")
         | Q(transaction_id__in=visible_transactions(user).values("pk"))
         | Q(ai_extracted_payload__policy_number__in=policies.values("policy_number"))
         | Q(processing_hints__policy_id__in=policies.values("pk"))

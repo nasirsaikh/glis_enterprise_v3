@@ -135,3 +135,10 @@ class TPAPortalScopeTests(TestCase):
         response = self.client.get(reverse("tpa:transaction_list"), {"q": first.reference})
         self.assertEqual(response.context["page_obj"].paginator.count, 1)
         self.assertContains(response, first.reference)
+
+    def test_global_mail_sync_does_not_grant_other_organization_email_access(self):
+        self.other_email.provider = "office365_graph"
+        self.other_email.created_by = self.actor
+        self.other_email.save()
+        self.assertNotIn(self.other_email, visible_inbound_emails(self.actor))
+        self.assertEqual(self.client.post(reverse("tpa:inbound_email_sync_now")).status_code, 403)

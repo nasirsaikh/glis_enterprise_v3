@@ -110,3 +110,17 @@ class DocumentRecoveryTests(TestCase):
         self.assertEqual(self.document.processing_state, SourceDocument.State.REVIEW)
         self.assertIn("date_of_birth", self.document.processing_error)
         self.assertIn("No readable text", self.document.processing_error)
+
+
+class DoclingCompatibilityTests(SimpleTestCase):
+    @override_settings(TPA_DOCLING_USE_GPU=False, TPA_DOCLING_FALLBACK_ENABLED=True)
+    def test_pdf_recovery_options_match_installed_docling_api(self):
+        from .services.document_fallback import docling_text
+        with patch("docling.document_converter.DocumentConverter") as converter:
+            converter.return_value.convert.return_value.document.export_to_markdown.return_value = "Recovered local text"
+            self.assertEqual(docling_text("member.pdf", b"%PDF-dummy"), "Recovered local text")
+            options = next(iter(converter.call_args.kwargs["format_options"].values())).pipeline_options
+            self.assertTrue(options.do_ocr)
+            self.assertFalse(options.enable_remote_services)
+            self.assertFalse(options.ocr_options.use_gpu)
+            self.assertEqual(converter.return_value.convert.call_args.kwargs["max_num_pages"], 50)

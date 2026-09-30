@@ -14,6 +14,7 @@
       <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{{ email.sender_name|default:email.sender }} &lt;{{ email.sender }}&gt; → {{ email.mailbox|default:email.recipient }} · {{ email.received_at|date:"d-M-Y H:i" }}</p>
     </div>
     <div class="flex flex-wrap gap-2">
+      {% if can_configure_tpa_ai %}<a class="btn btn-outline btn-sm" href="{% url 'tpa:inbound_email_training' %}?email={{ email.pk }}"><i class="bi bi-magic"></i>{% translate "Coach AI on this email" %}</a>{% endif %}
       <a class="btn btn-ghost btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
       {% if email.transaction %}
       <a class="btn btn-outline btn-sm" href="{% url 'tpa:transaction_detail' email.transaction.reference %}"><i class="bi bi-arrow-left-right"></i>{{ email.transaction.reference }}</a>

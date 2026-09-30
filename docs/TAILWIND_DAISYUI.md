@@ -143,3 +143,8 @@ bg-base-100
 ```
 
 Do not introduce `tw:` or `d-` component prefixes into portal templates or portal Django form widgets.
+# Shared public and portal CSS
+
+Both layouts now load the committed `static/css/output.css`, with standard Tailwind utilities and daisyUI component names. The build scans all templates, Python form widgets and JavaScript-generated classes. Public Bootstrap CMS plugins are kept in a lower CSS layer through `bootstrap-compat.css` (or its RTL counterpart), so they do not override application components. `ui.css` corrects shared forms, tables, dialogs and compact timelines. Theme preferences are applied by `theme.js` before CSS paints, then persisted by the existing profile endpoint.
+
+The compiled CSS is committed, so pulling these changes does not require Node/npm. Use the existing `scripts/build_portal_css.ps1` only when adding new utility classes.

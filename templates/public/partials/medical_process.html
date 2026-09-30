@@ -3,55 +3,55 @@
 
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
-<div class="tw:mx-auto tw:grid tw:max-w-7xl tw:items-center">
+<div class="mx-auto grid max-w-7xl items-center">
   <div data-reveal>
-    <span class="tw:d-badge tw:d-badge-secondary tw:d-badge-soft tw:mb-4"><i class="bi bi-diagram-3 tw:me-2"></i>{% translate "How It Works" %}</span>
-    <h2 class="tw:text-4xl tw:font-black tw:tracking-[-.04em] tw:sm:text-5xl">{% translate "A clear medical service journey" %}</h2>
-    <p class="tw:mt-5 tw:text-lg tw:leading-8 tw:text-base-content/60">{% translate "From eligibility verification and pre-authorization to treatment and claim settlement, each step is structured and transparent." %}</p>
-    <!-- <div class="tw:d-aura tw:d-aura-holo tw:d-aura-sm tw:mt-6">
-      <div class="tw:d-alert tw:d-alert-success tw:items-start">
-        <i class="bi bi-shield-check tw:text-xl"></i>
-        <div><h3 class="tw:font-black">{% translate "Member-first process" %}</h3><p class="tw:text-sm">{% translate "Designed to reduce administrative friction for members, providers and insurers." %}</p></div>
+    <span class="badge badge-secondary badge-soft mb-4"><i class="bi bi-diagram-3 me-2"></i>{% translate "How It Works" %}</span>
+    <h2 class="text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "A clear medical service journey" %}</h2>
+    <p class="mt-5 text-lg leading-8 text-base-content/60">{% translate "From eligibility verification and pre-authorization to treatment and claim settlement, each step is structured and transparent." %}</p>
+    <!-- <div class="aura aura-holo aura-sm mt-6">
+      <div class="alert alert-success items-start">
+        <i class="bi bi-shield-check text-xl"></i>
+        <div><h3 class="font-black">{% translate "Member-first process" %}</h3><p class="text-sm">{% translate "Designed to reduce administrative friction for members, providers and insurers." %}</p></div>
       </div>
     </div> -->
   </div>
 
-  <div class="tw:d-card tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-xl tw:rounded-3xl" data-reveal>
-    <div class="tw:d-card-body tw:p-6 tw:sm:p-8">
-      <h3 class="tw:text-sm tw:font-bold tw:uppercase tw:tracking-wider tw:text-base-content/40 tw:mb-4">{% translate "Medical Journey Steps" %}</h3>
+  <div class="card border border-base-300 bg-base-100 shadow-xl rounded-3xl" data-reveal>
+    <div class="card-body p-6 sm:p-8">
+      <h3 class="text-sm font-bold uppercase tracking-wider text-base-content/40 mb-4">{% translate "Medical Journey Steps" %}</h3>
       
-      <div class="tw:divide-y tw:divide-base-200">
+      <div class="divide-y divide-base-200">
         {% for item in medical_process_steps %}
-        <div class="tw:flex tw:items-center tw:justify-between tw:py-4 first:tw:pt-0 last:tw:pb-0 tw:group">
-          <div class="tw:flex tw:items-center tw:gap-6 tw:min-w-0">
+        <div class="flex items-center justify-between py-4 first:pt-0 last:pb-0 group">
+          <div class="flex items-center gap-6 min-w-0">
             <!-- Large Number Style -->
-            <span class="tw:text-3xl tw:font-light tw:text-base-content/30 tw:w-10 tw:shrink-0 tw:tabular-nums tw:group-hover:text-primary tw:transition-colors">
+            <span class="text-3xl font-light text-base-content/30 w-10 shrink-0 tabular-nums group-hover:text-primary transition-colors">
               {% if item.step_number < 10 %}0{{ item.step_number }}{% else %}{{ item.step_number }}{% endif %}
             </span>
             
             <!-- Details -->
-            <div class="tw:min-w-0">
-              <div class="tw:flex tw:items-center tw:gap-3 tw:flex-wrap">
-                <h4 class="tw:font-bold tw:text-base tw:text-base-content">
+            <div class="min-w-0">
+              <div class="flex items-center gap-3 flex-wrap">
+                <h4 class="font-bold text-base text-base-content">
                   {% if LANGUAGE_CODE == "ar" %}{{ item.title_ar|default:item.title_en }}{% else %}{{ item.title_en }}{% endif %}
                 </h4>
-                <span class="tw:d-badge tw:d-badge-primary tw:d-badge-soft tw:d-badge-xs">{{ item.get_process_type_display }}</span>
+                <span class="badge badge-primary badge-soft badge-xs">{{ item.get_process_type_display }}</span>
               </div>
-              <p class="tw:text-xs tw:leading-5 tw:text-base-content/60 tw:mt-0.5 tw:line-clamp-1">
+              <p class="text-xs leading-5 text-base-content/60 mt-0.5 line-clamp-1">
                 {% if LANGUAGE_CODE == "ar" %}{{ item.description_ar|default:item.description_en }}{% else %}{{ item.description_en }}{% endif %}
               </p>
             </div>
           </div>
 
           <!-- Right Action / Arrow Icon -->
-          <div class="tw:pl-4 tw:shrink-0">
-            <span class="tw:grid tw:h-9 tw:w-9 tw:place-items-center tw:rounded-full tw:bg-base-200/60 tw:text-base-content/60 tw:group-hover:bg-primary tw:group-hover:text-primary-content tw:transition-all">
-              <i class="bi bi-arrow-{% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %} tw:text-sm"></i>
+          <div class="pl-4 shrink-0">
+            <span class="grid h-9 w-9 place-items-center rounded-full bg-base-200/60 text-base-content/60 group-hover:bg-primary group-hover:text-primary-content transition-all">
+              <i class="bi bi-arrow-{% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %} text-sm"></i>
             </span>
           </div>
         </div>
         {% empty %}
-        <div class="tw:text-center tw:py-8 tw:text-base-content/50">{% translate "No medical process steps configured." %}</div>
+        <div class="text-center py-8 text-base-content/50">{% translate "No medical process steps configured." %}</div>
         {% endfor %}
       </div>
     </div>

@@ -749,9 +749,11 @@ def transaction_create(request):
     if not can_create_endorsement(request.user):
         raise PermissionDenied("You do not have permission to create TPA endorsements.")
 
-    form = TransactionForm(request.POST or None, user=request.user)
+    form = TransactionForm(request.POST or None, user=request.user,
+                           initial={"policy": request.GET.get("policy")} if request.GET.get("policy", "").isdigit() else None)
     if request.method == "POST" and form.is_valid():
         tx = form.save(commit=False)
+        _require_intake_edit(request.user, tx)
         tx.sponsor = tx.policy.sponsor
         tx.insurer = tx.policy.insurance_company
         tx.requester = request.user
@@ -1045,6 +1047,9 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
         "can_process": can_process_tpa_transaction(request.user, tx),
         "can_submit_intake": can_edit_tpa_intake(request.user, tx)
         and tx.status in INTAKE_EDITABLE_STATUSES,
+        "can_edit_details": can_edit_tpa_intake(request.user, tx) and tx.status in INTAKE_EDITABLE_STATUSES,
+        "can_delete_draft": can_edit_tpa_intake(request.user, tx) and tx.status == tx.Status.DRAFT
+        and tx.transaction_type != tx.Type.NEW_POLICY_ENROLLMENT,
         "can_validate": tx.status in INTAKE_EDITABLE_STATUSES
         and tx.status != tx.Status.DRAFT
         and (

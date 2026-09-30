@@ -29,9 +29,7 @@
         {% for row in policy_rows %}
           <tr>
             <td>
-              {% if row.transaction %}
-              <a class="link link-primary font-semibold font-bold" href="{% url 'tpa:transaction_detail' row.transaction.reference %}">{{ row.policy.policy_number }}</a>
-              {% else %}<strong class="font-semibold">{{ row.policy.policy_number }}</strong>{% endif %}
+              <a class="link link-primary font-bold" href="{% url 'tpa:policy_enrollment_detail' row.policy.pk %}" aria-label="{% translate 'View policy dashboard' %}: {{ row.policy.policy_number }}">{{ row.policy.policy_number }}</a>
               <div class="text-[10px] opacity-45">{{ row.policy.policy_name }}</div>
             </td>
             <td>{{ row.policy.sponsor.name_en }}<div class="text-[10px] opacity-45">{{ row.policy.sponsor.get_organization_type_display }}</div></td>
@@ -46,6 +44,7 @@
               {% else %}
               <span class="badge badge-ghost">{% translate "Not Started" %}</span>
               {% endif %}
+              {% if row.transaction %}<a class="link link-primary mt-1 block text-xs" href="{% url 'tpa:transaction_detail' row.transaction.reference %}">{% translate "Enrollment workflow" %}</a>{% endif %}
             </td>
             <td><span class="badge {% if row.policy.status == 'active' %}badge-success badge-soft{% else %}badge-outline{% endif %}">{{ row.policy.get_status_display }}</span></td>
           </tr>

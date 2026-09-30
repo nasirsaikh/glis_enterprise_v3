@@ -5,6 +5,31 @@ from apps.tickets.models import Category, Product, Project, RelatedTicket, SLAPo
 from services.ticket_workflow import initialize_approval_workflow
 from ..models import TransactionEvent
 
+
+@transaction.atomic
+def close_transaction_ticket(tx, actor=None, *, reason=None):
+    """Close a completed workflow's ticket once, including its SLA timestamps."""
+    if not tx.ticket_id:
+        return
+    ticket = Ticket.objects.select_for_update().get(pk=tx.ticket_id)
+    if ticket.status == Ticket.Status.CLOSED:
+        return
+    now = timezone.now()
+    ticket.status = Ticket.Status.CLOSED
+    ticket.resolved_at = ticket.resolved_at or tx.processed_at or now
+    ticket.closed_at = now
+    ticket.save(update_fields=["status", "resolved_at", "closed_at", "updated_at"])
+    TicketEvent.objects.create(
+        ticket=ticket, actor=actor, event_type="tpa_auto_closed",
+        summary=reason or f"Automatically closed after {tx.reference} completed.",
+        details={"transaction_reference": tx.reference, "policy_number": tx.policy.policy_number},
+    )
+    TransactionEvent.objects.create(
+        transaction=tx, actor=actor, event_type="ticket_closed",
+        summary=f"GLIS ticket {ticket.reference} automatically closed.",
+    )
+    tx.ticket = ticket
+
 CATEGORY_CODES={
     "NEW_POLICY_ENROLLMENT":"new-policy-enrollment",
     "MEMBER_ADD":"member-addition",

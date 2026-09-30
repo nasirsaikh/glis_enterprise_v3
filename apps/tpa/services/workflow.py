@@ -1171,7 +1171,11 @@ def process_transaction(tx, actor):
                 ]
             )
 
+    tx._completion_actor = actor
     tx.save(update_fields=["status", "processed_at", "metadata", "updated_at"])
+    if not errors and tx.status in {tx.Status.COMPLETED, tx.Status.PROCESSED}:
+        from .ticketing import close_transaction_ticket
+        close_transaction_ticket(tx, actor)
     _event(
         tx,
         actor,

@@ -3,16 +3,16 @@
 <li>
   {% if child.children %}
   <details{% if child.selected or child.ancestor %} open{% endif %}>
-    <summary class="tw:font-semibold{% if child.selected or child.ancestor %} tw:text-primary{% endif %}">{{ child.get_menu_title }}</summary>
+    <summary class="font-semibold{% if child.selected or child.ancestor %} text-primary{% endif %}">{{ child.get_menu_title }}</summary>
     <ul>
-      <li><a class="tw:font-bold" href="{{ child.get_absolute_url }}">{{ child.get_menu_title }}</a></li>
+      <li><a class="font-bold" href="{{ child.get_absolute_url }}">{{ child.get_menu_title }}</a></li>
       {% for subchild in child.children %}
       <li><a{% if subchild.selected %} class="menu-active"{% endif %} href="{{ subchild.get_absolute_url }}">{{ subchild.get_menu_title }}</a></li>
       {% endfor %}
     </ul>
   </details>
   {% else %}
-  <a class="tw:font-semibold{% if child.selected %} menu-active tw:text-primary{% endif %}" href="{{ child.get_absolute_url }}">{{ child.get_menu_title }}</a>
+  <a class="font-semibold{% if child.selected %} menu-active text-primary{% endif %}" href="{{ child.get_absolute_url }}">{{ child.get_menu_title }}</a>
   {% endif %}
 </li>
 {% endfor %}

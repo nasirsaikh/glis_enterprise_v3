@@ -1,23 +1,9 @@
 @import "tailwindcss";
 
-@source "../../templates/base_portal.html";
-@source "../../templates/components/**/*.html";
-@source "../../templates/account/profile.html";
-@source "../../templates/cms/portal_page.html";
-@source "../../templates/documents/**/*.html";
-@source "../../templates/notifications/**/*.html";
-@source "../../templates/orchestrator/**/*.html";
-@source "../../templates/portal/**/*.html";
-@source "../../templates/tasks/**/*.html";
-@source "../../templates/tickets/**/*.html";
-@source "../../templates/tpa/**/*.html";
-
-@source "../../apps/accounts/forms.py";
-@source "../../apps/accounts/views.py";
-@source "../../apps/tasks/forms.py";
-@source "../../apps/tickets/forms.py";
-@source "../../apps/tpa/forms.py";
-@source "../../services/dynamic_forms.py";
+@source "../../templates/**/*.html";
+@source "../../apps/**/*.py";
+@source "../../services/**/*.py";
+@source "../js/*.js";
 
 @source not "./tailwindcss";
 @source not "./tailwindcss.exe";

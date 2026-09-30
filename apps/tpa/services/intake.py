@@ -11,6 +11,9 @@ from ..models import MemberAction, SourceDocument
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
 ALIASES = {
+    "member_id": ("member id", "member number", "member no"),
+    "tpa_member_id": ("tpa member id", "tpa member number"),
+    "card_number": ("card number", "card no"),
     "employee_id": ("employee id", "employee no", "employee number", "staff id"),
     "first_name": ("first name", "given name"),
     "middle_name": ("middle name",),
@@ -55,7 +58,7 @@ def normalize_member_row(raw):
     for target, aliases in ALIASES.items():
         for alias in (target, *aliases):
             normalized_alias = _key(alias)
-            if normalized_alias in by_key:
+            if normalized_alias in by_key and by_key[normalized_alias] not in (None, ""):
                 result[target] = _value(by_key[normalized_alias])
                 break
 
@@ -77,6 +80,14 @@ def normalize_member_row(raw):
     gender = result.get("gender", "")
     if gender:
         result["gender"] = {"M": "Male", "F": "Female"}.get(gender.upper(), gender.title())
+    dob = result.get("date_of_birth")
+    if dob:
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
+            try:
+                result["date_of_birth"] = datetime.strptime(dob, fmt).date().isoformat()
+                break
+            except ValueError:
+                continue
     return result
 
 

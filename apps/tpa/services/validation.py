@@ -86,7 +86,7 @@ def _find_enrollment(tx, data, statuses):
     employee_id = str(data.get("employee_id") or "").strip()
     national_id = str(data.get("national_id") or "").strip()
     passport_number = str(data.get("passport_number") or "").strip()
-    member_id = str(data.get("tpa_member_id") or "").strip()
+    member_id = str(data.get("tpa_member_id") or data.get("member_id") or "").strip()
     card_number = str(data.get("card_number") or "").strip()
 
     lookups = (
@@ -292,6 +292,7 @@ def validate_action(action):
             data.get(field)
             for field in (
                 "tpa_member_id",
+                "member_id",
                 "card_number",
                 "employee_id",
                 "national_id",
@@ -358,6 +359,7 @@ def validate_action(action):
             data.get(field)
             for field in (
                 "tpa_member_id",
+                "member_id",
                 "card_number",
                 "employee_id",
                 "national_id",
@@ -405,6 +407,7 @@ def validate_action(action):
             data.get(field)
             for field in (
                 "tpa_member_id",
+                "member_id",
                 "card_number",
                 "employee_id",
                 "national_id",

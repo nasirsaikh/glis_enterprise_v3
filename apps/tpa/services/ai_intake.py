@@ -24,6 +24,7 @@ from .document_intake import process_source_bundle
 from .extraction import normalize_ai_payload, select_profile, select_provider
 from .intake import import_member_spreadsheet
 from .member_merge import merge_member_rows
+from .prompts import profile_guidance
 from .ticketing import create_ticket_for_transaction
 from .workflow import run_validation
 
@@ -101,7 +102,9 @@ def _profile_prompt(profile):
     base = (
         "You classify and extract group medical/member endorsement email evidence. "
         "Return JSON only. Never make sender-authorization, eligibility, premium, refund, approval or STP decisions. "
-        "Use null when a value is unknown. The required top-level JSON is: "
+        "Extract every member row, including tables and labeled fields. Preserve leading zeros in identifiers. "
+        "Read all available values before marking them missing. Never guess DOB, relationship or benefit plan. "
+        "Use null when a value is unknown and list genuinely missing information. The required top-level JSON is: "
         '{"is_endorsement_request":true,"classification":"MEMBER_ADD","confidence":0.0,'
         '"policy_number":null,"transaction_type":"MEMBER_ADD","transaction_reference":null,'
         '"effective_date":null,"refund_basis":null,"temporary_until":null,"remarks":"",'
@@ -109,7 +112,7 @@ def _profile_prompt(profile):
         "classification/transaction_type may be MEMBER_ADD, MEMBER_UPDATE, MEMBER_DELETE, MEMBER_TERMINATE, "
         "MEMBER_SUSPEND, MEMBER_REACTIVATE, POLICY_CANCEL, QUERY_REPLY, NOT_ENDORSEMENT or NEEDS_REVIEW. "
         "For deletion/cancellation, refund_basis may be FULL or PRO_RATA when explicitly stated. "
-        "Each member may contain employee_id, member_id, first_name, middle_name, "
+        "Each member may contain employee_id, member_id, tpa_member_id, card_number, first_name, middle_name, "
         "last_name, full_name, date_of_birth (YYYY-MM-DD), gender, relationship "
         "(PRINCIPAL/SPOUSE/CHILD/OTHER), principal_employee_id, principal_member_id, "
         "national_id, passport_number, plan_code, effective_date and confidence."
@@ -117,21 +120,7 @@ def _profile_prompt(profile):
     if not profile:
         return base
 
-    examples = []
-    for example in profile.examples.filter(is_active=True)[:5]:
-        examples.append(
-            f"Example input:\n{example.input_text}\nExpected JSON:\n{example.expected_output}"
-        )
-    return "\n\n".join(
-        part
-        for part in [
-            base,
-            profile.system_prompt,
-            profile.instructions,
-            "\n\n".join(examples),
-        ]
-        if part
-    )
+    return base + "\n\n" + profile_guidance(profile)
 
 
 def _email_prompt(email, hints):
@@ -145,6 +134,7 @@ def _email_prompt(email, hints):
         f"Subject: {email.subject}\n"
         f"From: {email.sender}\n"
         f"To: {email.recipient}\n\n"
+        "Attachment names: " + ", ".join(email.attachments.values_list("original_name", flat=True)) + "\n\n"
         "Email body:\n"
         f"{email.body_text or ''}"
     )
@@ -221,7 +211,7 @@ def _log_interaction(*, actor, provider, profile, email, normalized, duration_ms
     )
 
 
-def extract_email_payload(email, actor=None):
+def extract_email_payload(email, actor=None, *, profile_override=None):
     hints = email.processing_hints or {}
     provider = None
     hinted_provider_id = hints.get("ai_provider_id")
@@ -252,9 +242,11 @@ def extract_email_payload(email, actor=None):
             "No active AI provider allows sensitive data and has the email_extraction capability."
         )
 
-    profile = select_profile(
+    hinted_policy = _resolve_policy({}, hints, email)
+    product = hinted_policy.product_type if hinted_policy else "MEDICAL"
+    profile = profile_override or select_profile(
         AIExtractionProfile.Task.EMAIL_EXTRACTION,
-        product="MEDICAL",
+        product=product,
         transaction_type=str(hints.get("transaction_type") or ""),
     )
     prompt = _email_prompt(email, hints)
@@ -264,7 +256,16 @@ def extract_email_payload(email, actor=None):
             system_prompt=_profile_prompt(profile),
             user_prompt=prompt,
         )
-        normalized = normalize_ai_payload(raw)
+        normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases if profile else None)
+        if not profile_override:
+            known_type = TRANSACTION_ALIASES.get(str(normalized.get("transaction_type") or "").upper())
+            specialized = select_profile(AIExtractionProfile.Task.EMAIL_EXTRACTION, product=product, transaction_type=known_type or "")
+            if specialized and specialized.applicable_transaction_type and (not profile or specialized.pk != profile.pk):
+                profile = specialized
+                raw, extra_duration = generate_json(provider, system_prompt=_profile_prompt(profile),
+                    user_prompt=_email_prompt(email, {**hints, "transaction_type": known_type}))
+                duration_ms += extra_duration
+                normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases)
         _log_interaction(
             actor=actor,
             provider=provider,
@@ -356,7 +357,7 @@ def _process_image_attachment(tx, email, attachment, actor, hints):
             }
         ],
     )
-    normalized = normalize_ai_payload(raw)
+    normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases if profile else None)
     _add_ai_members(tx, normalized)
     _log_interaction(
         actor=actor,

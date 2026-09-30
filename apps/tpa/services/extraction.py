@@ -6,6 +6,8 @@ from apps.ai.models import AIExtractionProfile, AIProviderConfig
 CANONICAL_MEMBER_FIELDS = (
     "employee_id",
     "member_id",
+    "tpa_member_id",
+    "card_number",
     "first_name",
     "middle_name",
     "last_name",
@@ -21,19 +23,43 @@ CANONICAL_MEMBER_FIELDS = (
     "effective_date",
     "confidence",
 )
+EMAIL_FIELDS = ("policy_number", "transaction_type", "effective_date", "transaction_reference", "refund_basis", "temporary_until")
 
 
-def canonical_member(data):
-    return {key: (data or {}).get(key) for key in CANONICAL_MEMBER_FIELDS}
+def apply_field_aliases(data, aliases):
+    from .intake import _key
+    mapped = dict(data)
+    keyed = {_key(key): value for key, value in data.items()}
+    for target, values in (aliases or {}).items():
+        if mapped.get(target) not in (None, ""):
+            continue
+        if not isinstance(values, (list, str)):
+            continue
+        for alias in ([values] if isinstance(values, str) else values):
+            value = keyed.get(_key(alias))
+            if value not in (None, ""):
+                mapped[target] = value
+                break
+    return mapped
 
 
-def normalize_ai_payload(payload):
+def canonical_member(data, field_aliases=None):
+    from .intake import normalize_member_row
+    if not isinstance(data, dict):
+        raise ValueError("Each AI member row must be a JSON object.")
+    mapped = apply_field_aliases(data, field_aliases)
+    normalized = normalize_member_row(mapped)
+    return {key: normalized.get(key, mapped.get(key)) for key in CANONICAL_MEMBER_FIELDS}
+
+
+def normalize_ai_payload(payload, *, field_aliases=None):
     if isinstance(payload, str):
         payload = json.loads(payload)
     if isinstance(payload, list):
         payload = {"members": payload}
     if not isinstance(payload, dict) or not isinstance(payload.get("members"), list):
         raise ValueError("AI response did not contain the required members array.")
+    payload = apply_field_aliases(payload, field_aliases)
 
     return {
         "is_endorsement_request": payload.get("is_endorsement_request"),
@@ -50,7 +76,7 @@ def normalize_ai_payload(payload):
         "missing_information": list(payload.get("missing_information") or []),
         "warnings": list(payload.get("warnings") or []),
         "source_references": list(payload.get("source_references") or []),
-        "members": [canonical_member(row) for row in payload["members"]],
+        "members": [canonical_member(row, field_aliases) for row in payload["members"]],
     }
 
 
@@ -107,7 +133,8 @@ def select_profile(task, *, product="", transaction_type=""):
         applicable_product=product,
         applicable_transaction_type="",
     ).first()
-    return product_profile or qs.filter(
+    transaction_profile = qs.filter(applicable_product="", applicable_transaction_type=transaction_type).first()
+    return transaction_profile or product_profile or qs.filter(
         applicable_product="",
         applicable_transaction_type="",
     ).first()

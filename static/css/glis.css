@@ -1,19 +1,19 @@
 /* GLIS portal shell — intentionally scoped so Bootstrap-era screens stay intact. */
-.public-shell a:not(.link):not(.tw\:link) {
+.public-shell a:not(.link) {
   text-decoration: none;
 }
-.public-shell .tw\:d-btn-primary,
-.public-shell .tw\:d-btn-primary:hover {
+.public-shell .btn-primary,
+.public-shell .btn-primary:hover {
   color: var(--color-primary-content);
 }
-.public-shell .tw\:d-btn-outline,
-.public-shell .tw\:d-btn-ghost,
-.public-shell .tw\:d-card a,
+.public-shell .btn-outline,
+.public-shell .btn-ghost,
+.public-shell .card a,
 .public-shell nav a {
   color: inherit;
 }
 .public-shell nav a:hover,
-.public-shell .tw\:d-btn-ghost:hover {
+.public-shell .btn-ghost:hover {
   color: var(--color-primary);
 }
 .public-shell [hidden], .portal-shell [hidden] {
@@ -144,17 +144,17 @@ html[dir="rtl"] .portal-shell {
   transform: translateX(2px);
 }
 html[dir="rtl"] .portal-tw-sidebar .portal-tw-navlink:hover { transform: translateX(-2px); }
-.portal-tw-sidebar .portal-tw-navlink [class*="tw:grid"] {
+.portal-tw-sidebar .portal-tw-navlink [class*="grid"] {
   background: rgba(224, 247, 232, .075);
   box-shadow: inset 0 1px rgba(255,255,255,.04);
 }
-.portal-tw-sidebar .portal-tw-navlink[class*="tw:bg-primary"] {
+.portal-tw-sidebar .portal-tw-navlink[class*="bg-primary"] {
   background: linear-gradient(135deg, #248359, #176544) !important;
   color: #f1fff6 !important;
   border-color: rgba(214, 255, 230, .12);
   box-shadow: 0 8px 20px rgba(3, 21, 13, .20), inset 0 1px rgba(255,255,255,.12);
 }
-.portal-tw-sidebar .portal-tw-navlink[class*="tw:bg-primary"] [class*="tw:grid"] {
+.portal-tw-sidebar .portal-tw-navlink[class*="bg-primary"] [class*="grid"] {
   background: rgba(247,255,249,.14);
 }
 .portal-tw-sidebar .glis-portal-nav-scroll {
@@ -208,19 +208,19 @@ html[dir="rtl"] .portal-tw-sidebar .portal-tw-navlink:hover { transform: transla
   min-width: max-content;
   justify-content: flex-end;
 }
-.portal-navbar [class~="tw:d-btn"] {
+.portal-navbar [class~="btn"] {
   flex-shrink: 0;
 }
 .portal-navbar details { position: relative; }
 .portal-navbar summary { list-style: none; cursor: pointer; }
 .portal-navbar summary::-webkit-details-marker { display: none; }
-.portal-navbar [class~="tw:d-dropdown-content"] {
+.portal-navbar [class~="dropdown-content"] {
   position: absolute;
   inset-block-start: calc(100% + .4rem);
   inset-inline-end: 0;
   inset-inline-start: auto;
 }
-.portal-navbar details[open] > [class~="tw:d-dropdown-content"] {
+.portal-navbar details[open] > [class~="dropdown-content"] {
   animation: portal-pop-in 150ms ease-out both;
 }
 .portal-navbar .notification-count {
@@ -232,11 +232,11 @@ html[dir="rtl"] .portal-tw-sidebar .portal-tw-navlink:hover { transform: transla
   border: 2px solid var(--color-base-100, #f3f7f4);
   font-size: .62rem;
 }
-.portal-navbar [class~="tw:d-input"] {
+.portal-navbar [class~="input"] {
   border-color: rgba(40, 82, 60, .15);
   transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
-.portal-navbar [class~="tw:d-input"]:focus {
+.portal-navbar [class~="input"]:focus {
   border-color: rgba(31, 126, 82, .5);
   box-shadow: 0 0 0 4px rgba(32, 134, 86, .10);
 }
@@ -340,7 +340,7 @@ html[data-bs-theme="dark"] .portal-shell .skip-link { background: #257a54; }
   html[data-bs-theme="dark"] .portal-shell { background: linear-gradient(155deg, #17251e, #1b2b23 70%, #17251e); }
   .portal-navbar { padding-inline: .45rem !important; }
   .portal-navbar-end { gap: 0 !important; }
-  .portal-navbar-end > [class~="tw:d-btn"] { width: 2.5rem; min-height: 2.5rem; }
+  .portal-navbar-end > [class~="btn"] { width: 2.5rem; min-height: 2.5rem; }
   .portal-main { padding-inline: .85rem !important; }
 }
 
@@ -375,7 +375,7 @@ html[data-bs-theme="dark"] .portal-shell .skip-link { background: #257a54; }
 .glis-public-navbar {
   min-height: 4.7rem;
 }
-.glis-public-navbar .tw\:d-menu form button {
+.glis-public-navbar .menu form button {
   display: flex;
   width: 100%;
   align-items: center;
@@ -386,7 +386,7 @@ html[data-bs-theme="dark"] .portal-shell .skip-link { background: #257a54; }
   text-align: start;
   border-radius: .75rem;
 }
-.glis-public-navbar .tw\:d-menu form button:hover {
+.glis-public-navbar .menu form button:hover {
   background: color-mix(in oklab, var(--color-error) 9%, transparent);
 }
 
@@ -512,12 +512,12 @@ html[data-bs-theme="dark"] .portal-shell .skip-link { background: #257a54; }
   border-radius: 1.5rem;
   box-shadow: 0 26px 70px color-mix(in oklab, var(--color-neutral) 13%, transparent);
 }
-.glis-stat-strip .tw\:d-stat,
-.glis-kpi-strip .tw\:d-stat {
+.glis-stat-strip .stat,
+.glis-kpi-strip .stat {
   transition: background-color .2s ease, transform .2s ease;
 }
-.glis-stat-strip .tw\:d-stat:hover,
-.glis-kpi-strip .tw\:d-stat:hover {
+.glis-stat-strip .stat:hover,
+.glis-kpi-strip .stat:hover {
   background: color-mix(in oklab, var(--color-primary) 8%, transparent);
   transform: translateY(-3px);
 }

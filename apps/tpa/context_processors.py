@@ -21,6 +21,9 @@ def tpa_access_context(request):
         can_enroll = False
         can_endorse = False
     return {
+        "can_configure_tpa_ai": request.user.is_authenticated and (
+            request.user.is_superuser or request.user.has_perm("tpa.configure_tpa") or request.user.has_perm("ai.configure_ai")
+        ),
         "can_access_tpa": allowed,
         "can_create_tpa_transaction": can_create,
         "can_create_policy_enrollment": can_enroll,

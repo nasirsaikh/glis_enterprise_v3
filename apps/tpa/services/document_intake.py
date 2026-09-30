@@ -15,6 +15,7 @@ from ..models import ExtractionAttempt, MemberAction, SourceDocument, Transactio
 from .extraction import normalize_ai_payload, select_profile, select_provider
 from .intake import normalize_member_row
 from .member_merge import merge_member_rows
+from .prompts import profile_guidance
 
 
 SUPPORTED_EXTENSIONS = {
@@ -128,7 +129,7 @@ def _system_prompt(profile):
     base = (
         "You map insurance endorsement evidence into canonical member JSON. "
         "Return JSON only with top-level key 'members'. Each member can contain "
-        "employee_id, member_id, first_name, middle_name, last_name, full_name, "
+        "employee_id, member_id, tpa_member_id, card_number, first_name, middle_name, last_name, full_name, "
         "date_of_birth, gender, relationship, principal_employee_id, principal_member_id, "
         "national_id, passport_number, plan_code, effective_date and confidence. "
         "Use PRINCIPAL/SPOUSE/CHILD/OTHER for relationship. Use YYYY-MM-DD dates. "
@@ -136,21 +137,7 @@ def _system_prompt(profile):
     )
     if not profile:
         return base
-    examples = []
-    for example in profile.examples.filter(is_active=True)[:5]:
-        examples.append(
-            f"Example input:\n{example.input_text}\nExpected output:\n{example.expected_output}"
-        )
-    return "\n\n".join(
-        value
-        for value in [
-            base,
-            profile.system_prompt,
-            profile.instructions,
-            "\n\n".join(examples),
-        ]
-        if value
-    )
+    return base + "\n\n" + profile_guidance(profile)
 
 
 def _map_evidence_text(tx, evidence_text, actor=None):
@@ -201,7 +188,7 @@ def _map_evidence_text(tx, evidence_text, actor=None):
     )
 
     try:
-        normalized = normalize_ai_payload(payload)
+        normalized = normalize_ai_payload(payload, field_aliases=profile.field_aliases if profile else None)
     except (TypeError, ValueError) as first_error:
         retry_prompt = (
             user_prompt
@@ -222,7 +209,7 @@ def _map_evidence_text(tx, evidence_text, actor=None):
         )
         duration_ms += retry_duration
         try:
-            normalized = normalize_ai_payload(retry_payload)
+            normalized = normalize_ai_payload(retry_payload, field_aliases=profile.field_aliases if profile else None)
         except (TypeError, ValueError) as retry_error:
             received_keys = (
                 ", ".join(sorted(str(key) for key in retry_payload.keys()))

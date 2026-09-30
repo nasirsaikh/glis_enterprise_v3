@@ -470,21 +470,21 @@ html[data-theme="light"] .gl-tpa-icon { color:var(--gl-green); }
 .gl-tpa-copy { color:var(--gl-muted); line-height:1.65; font-size:.95rem; }
 
 /* Keep daisyUI-loaded sections consistent with the public theme */
-.public-shell .tw\:bg-base-100 { background-color:var(--gl-card)!important; }
-.public-shell .tw\:bg-base-200\/55,
-.public-shell .tw\:bg-base-200\/60,
-.public-shell .tw\:bg-base-200\/50,
-.public-shell .tw\:bg-base-200\/45,
-.public-shell .tw\:bg-base-200\/40 { background-color:var(--gl-bg-2)!important; }
-.public-shell .tw\:border-base-300 { border-color:var(--gl-border)!important; }
-.public-shell .tw\:text-base-content,
-.public-shell .tw\:text-base-content\/80 { color:var(--gl-text)!important; }
-.public-shell .tw\:text-base-content\/60,
-.public-shell .tw\:text-base-content\/55,
-.public-shell .tw\:text-base-content\/50,
-.public-shell .tw\:text-base-content\/45 { color:var(--gl-muted)!important; }
-.public-shell .tw\:text-primary { color:var(--gl-green-bright)!important; }
-html[data-theme="light"] .public-shell .tw\:text-primary { color:var(--gl-green)!important; }
+.public-shell .bg-base-100 { background-color:var(--gl-card)!important; }
+.public-shell .bg-base-200\/55,
+.public-shell .bg-base-200\/60,
+.public-shell .bg-base-200\/50,
+.public-shell .bg-base-200\/45,
+.public-shell .bg-base-200\/40 { background-color:var(--gl-bg-2)!important; }
+.public-shell .border-base-300 { border-color:var(--gl-border)!important; }
+.public-shell .text-base-content,
+.public-shell .text-base-content\/80 { color:var(--gl-text)!important; }
+.public-shell .text-base-content\/60,
+.public-shell .text-base-content\/55,
+.public-shell .text-base-content\/50,
+.public-shell .text-base-content\/45 { color:var(--gl-muted)!important; }
+.public-shell .text-primary { color:var(--gl-green-bright)!important; }
+html[data-theme="light"] .public-shell .text-primary { color:var(--gl-green)!important; }
 
 
 /* Public authentication pages */
@@ -617,7 +617,7 @@ html[data-theme="light"] .public-shell .tw\:text-primary { color:var(--gl-green)
   background:#081419;
   border-color:rgba(177,231,216,.12);
 }
-.public-shell:has(.gl-home-hero--cinematic) .gl-public-mobile-nav .tw\:d-menu,
+.public-shell:has(.gl-home-hero--cinematic) .gl-public-mobile-nav .menu,
 .public-shell:has(.gl-home-hero--cinematic) .gl-public-mobile-nav a,
 .public-shell:has(.gl-home-hero--cinematic) .gl-public-mobile-nav button { color:#edf9f5!important; }
 

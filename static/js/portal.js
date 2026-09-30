@@ -4,7 +4,7 @@
   const THEME_CHOICES = new Set(["system", "light", "dark"]);
   const normalizeTheme = (choice) => THEME_CHOICES.has(choice) ? choice : "system";
   const userTheme = () => normalizeTheme(document.body?.dataset.userTheme || "system");
-  const preferredTheme = () => normalizeTheme(localStorage.getItem("glis-theme") || userTheme());
+  const preferredTheme = () => normalizeTheme(window.glisThemeStorage.get() || userTheme());
   const resolvedTheme = (choice) => normalizeTheme(choice) === "system"
     ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
     : normalizeTheme(choice);
@@ -40,7 +40,7 @@
       get themeIcon() { return resolvedTheme(this.theme) === "dark" ? "bi-sun" : "bi-moon-stars"; },
       toggleTheme() {
         this.theme = resolvedTheme(this.theme) === "dark" ? "light" : "dark";
-        localStorage.setItem("glis-theme", this.theme);
+        window.glisThemeStorage.set(this.theme);
         applyTheme(this.theme);
         saveThemeChoice(this.theme);
       }
@@ -53,7 +53,7 @@
       select.value = preferredTheme();
       select.addEventListener("change", async () => {
         const choice = select.value || "system";
-        localStorage.setItem("glis-theme", choice);
+        window.glisThemeStorage.set(choice);
         applyTheme(choice);
         await saveThemeChoice(choice);
       });
@@ -133,7 +133,7 @@
       button.dataset.themeToggleReady = "true";
       button.addEventListener("click", async () => {
         const choice = resolvedTheme(preferredTheme()) === "dark" ? "light" : "dark";
-        localStorage.setItem("glis-theme", choice);
+        window.glisThemeStorage.set(choice);
         applyTheme(choice);
         await saveThemeChoice(choice);
       });
@@ -303,7 +303,46 @@
     chart.render();
   };
   const labels = (rows, key = "label") => rows.map((row) => String(row[key] || "Unassigned").replaceAll("_", " "));
+  const renderPolicyCharts = () => {
+    const source = document.getElementById("policy-dashboard-data");
+    if (!source || !window.ApexCharts) return;
+    const data = JSON.parse(source.textContent);
+    const colors = chartColors();
+    const activeColors = [cssColor("--color-success", "#16a34a"), cssColor("--color-warning", "#d97706")];
+    const countAxis = (values, categories) => {
+      const largest = Math.max(0, ...values.map(Number));
+      const step = Math.max(1, Math.ceil(largest / 5));
+      const maximum = Math.max(1, Math.ceil(largest / step)) * step;
+      return {categories, min: 0, max: maximum, tickAmount: maximum / step, decimalsInFloat: 0};
+    };
+    [["policy-active-chart", data.active_chart, activeColors],
+     ["policy-status-chart", data.status_chart, colors],
+     ["policy-relationship-chart", data.relationship_chart, colors]].forEach(([id, rows, palette]) => {
+      const nonempty = (rows || []).filter(row => Number(row.total) > 0);
+      apex(id, {...baseChartOptions("donut", 280), series: nonempty.map(row => Number(row.total)),
+        labels: labels(nonempty), colors: (rows || []).map((row, i) => [row, palette[i % palette.length]]).filter(([row]) => Number(row.total) > 0).map(([, color]) => color),
+        stroke: {width: 2, colors: [cssColor("--color-base-100", "#fff")]},
+        legend: {position: "bottom", fontSize: "12px"},
+        plotOptions: {pie: {donut: {size: "68%", labels: {show: true, total: {show: true, label: "Members"}}}}}
+      });
+    });
+    const plans = data.plan_rows || [];
+    apex("policy-plan-chart", {...baseChartOptions("bar", 280),
+      chart: {...baseChartOptions("bar", 280).chart, stacked: true},
+      series: plans.length ? [{name: "Active", data: plans.map(row => row.active)}, {name: "Inactive", data: plans.map(row => row.inactive)}] : [],
+      colors: activeColors, plotOptions: {bar: {horizontal: true, borderRadius: 4, barHeight: "55%"}},
+      xaxis: countAxis(plans.map(row => row.total), plans.map(row => row.benefit_plan__code)),
+      legend: {position: "bottom"}
+    });
+    const types = data.endorsement_chart || [];
+    apex("policy-endorsement-chart", {...baseChartOptions("bar", 260),
+      series: types.length ? [{name: "Endorsements", data: types.map(row => row.total)}] : [],
+      colors: [colors[0]], plotOptions: {bar: {horizontal: true, borderRadius: 4, barHeight: "55%"}},
+      xaxis: countAxis(types.map(row => row.total), labels(types))
+    });
+  };
   const renderCharts = () => {
+    renderPolicyCharts();
     const source = document.getElementById("dashboard-data");
     if (!source || !window.ApexCharts) return;
     const data = JSON.parse(source.textContent);
@@ -985,6 +1024,14 @@
     if (media.addEventListener) media.addEventListener("change", syncSystemTheme);
   });
   document.addEventListener("glis:theme", () => setTimeout(renderCharts, 30));
+  document.addEventListener("click", event => {
+    document.querySelectorAll("details.dropdown[open]").forEach(item => {
+      if (!item.contains(event.target)) item.open = false;
+    });
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") document.querySelectorAll("details.dropdown[open]").forEach(item => { item.open = false; });
+  });
   document.body.addEventListener("htmx:afterSwap", (event) => {
     const target = document.getElementById(event.detail.target?.id) || event.target;
     init(target);

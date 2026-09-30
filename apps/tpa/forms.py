@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.utils import timezone
 
-from apps.ai.models import AIProviderConfig
+from apps.ai.models import AIExtractionProfile, AIProviderConfig, AITrainingExample
 from apps.core.models import SiteSettings
 
 from .models import (
@@ -115,6 +115,91 @@ class TransactionForm(forms.ModelForm):
                 "Expected reactivation date cannot be before the suspension effective date.",
             )
         return data
+
+
+class TransactionDetailsForm(TransactionForm):
+    """An existing workflow keeps its policy and member-row semantics."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["policy"].queryset = Policy.objects.filter(pk=self.instance.policy_id)
+        self.fields["policy"].disabled = True
+        self.fields["policy"].help_text = "The policy is fixed for this request."
+        if (self.instance.transaction_type == MemberTransaction.Type.NEW_POLICY_ENROLLMENT
+                or self.instance.member_actions.exists()):
+            self.fields["transaction_type"].choices = [
+                (self.instance.transaction_type, self.instance.get_transaction_type_display())
+            ]
+            self.fields["transaction_type"].disabled = True
+            self.fields["transaction_type"].help_text = "Remove draft member rows before changing the endorsement type."
+        self.fields["remarks"].widget = forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 4})
+
+
+PROMPT_TASKS = [AIExtractionProfile.Task.EMAIL_EXTRACTION, AIExtractionProfile.Task.MEMBER_FIELD_MAPPING]
+
+
+class ExtractionPromptForm(forms.ModelForm):
+    class Meta:
+        model = AIExtractionProfile
+        fields = ["name", "task", "applicable_product", "applicable_transaction_type", "system_prompt",
+                  "instructions", "field_aliases", "priority", "is_active"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["task"].choices = [choice for choice in AIExtractionProfile.Task.choices if choice[0] in PROMPT_TASKS]
+        self.fields["applicable_transaction_type"] = forms.ChoiceField(
+            choices=[("", "All endorsement types"), *MemberTransaction.Type.choices], required=False,
+            initial=self.instance.applicable_transaction_type,
+        )
+        self.fields["applicable_product"].help_text = "Leave blank for all products, or use the policy product code (for example MEDICAL)."
+        self.fields["field_aliases"].help_text = 'Canonical field to source labels, for example {"national_id": ["Civil No", "CPR"]}.'
+        self.fields["priority"].help_text = "Lower numbers run first among equally specific profiles. Edit an existing active profile to change its extraction instructions."
+        for field in self.fields.values():
+            field.widget.attrs["class"] = ("toggle toggle-primary" if isinstance(field.widget, forms.CheckboxInput)
+                else "textarea textarea-bordered w-full" if isinstance(field.widget, forms.Textarea)
+                else "select select-bordered w-full" if isinstance(field.widget, forms.Select)
+                else "input input-bordered w-full")
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs["rows"] = 5
+
+    def clean_field_aliases(self):
+        from .services.extraction import CANONICAL_MEMBER_FIELDS, EMAIL_FIELDS
+        aliases = self.cleaned_data.get("field_aliases") or {}
+        if not isinstance(aliases, dict):
+            raise forms.ValidationError("Field aliases must be a JSON object.")
+        for key, values in aliases.items():
+            if key not in (*CANONICAL_MEMBER_FIELDS, *EMAIL_FIELDS):
+                raise forms.ValidationError(f"Unknown canonical member field: {key}.")
+            if not isinstance(values, (list, str)) or (isinstance(values, list) and not all(isinstance(v, str) for v in values)):
+                raise forms.ValidationError("Each field must have a source label or list of source labels.")
+        return aliases
+
+
+class PromptExampleForm(forms.ModelForm):
+    class Meta:
+        model = AITrainingExample
+        fields = ["name", "input_text", "expected_output", "sort_order", "is_active"]
+        widgets = {"input_text": forms.Textarea(attrs={"rows": 5}), "expected_output": forms.Textarea(attrs={"rows": 7})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = ("toggle toggle-primary" if isinstance(field.widget, forms.CheckboxInput)
+                else "textarea textarea-bordered w-full" if isinstance(field.widget, forms.Textarea)
+                else "input input-bordered w-full")
+
+    def clean_expected_output(self):
+        from .services.extraction import normalize_ai_payload
+        value = self.cleaned_data["expected_output"]
+        try:
+            normalize_ai_payload(value)
+        except (ValueError, TypeError):
+            raise forms.ValidationError('Expected output must be an object with a "members" array of objects.')
+        return value
+
+
+class PromptPreviewForm(forms.Form):
+    sample_text = forms.CharField(max_length=30000, label="Sample email body or OCR text",
+                                 widget=forms.Textarea(attrs={"rows": 7, "class": "textarea textarea-bordered w-full"}))
 
 
 class PolicyEnrollmentForm(forms.Form):

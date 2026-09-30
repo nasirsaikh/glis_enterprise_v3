@@ -1,11 +1,11 @@
 /* GLIS portal refresh: shared shell polish and dashboard-specific visual hierarchy. */
 body.glis-portal-app {
-  --portal-page: #f3f6f3;
-  --portal-surface: #ffffff;
-  --portal-surface-soft: #f8faf8;
-  --portal-ink: #1d3429;
-  --portal-muted: #718078;
-  --portal-border: #e5ece7;
+  --portal-page: var(--color-base-200);
+  --portal-surface: var(--color-base-100);
+  --portal-surface-soft: color-mix(in srgb, var(--color-base-100) 60%, var(--color-base-200));
+  --portal-ink: var(--color-base-content);
+  --portal-muted: color-mix(in srgb, var(--color-base-content) 60%, transparent);
+  --portal-border: var(--color-base-300);
   --portal-green: #18704c;
   --portal-green-deep: #0e4935;
   --portal-shadow: 0 16px 42px rgba(32, 65, 47, .055), 0 2px 8px rgba(32, 65, 47, .035);
@@ -18,13 +18,13 @@ body.glis-portal-app {
   min-height: 4.5rem;
   padding-inline: clamp(.75rem, 2vw, 1.5rem);
   border-color: var(--portal-border);
-  background: rgba(255, 255, 255, .88);
+  background: color-mix(in srgb, var(--color-base-100) 94%, transparent);
   box-shadow: 0 5px 24px rgba(32, 65, 47, .035);
 }
 .glis-portal-app header.navbar .input {
   min-height: 2.8rem;
-  border-color: #e7eee9;
-  background: #f7f9f7;
+  border-color: var(--color-base-300);
+  background: var(--color-base-200);
   box-shadow: none;
 }
 .glis-portal-app header.navbar .input:focus-within {
@@ -51,13 +51,13 @@ body.glis-portal-app {
 .glis-portal-app #portal-sidebar .menu a {
   min-height: 2.9rem;
   border-radius: .9rem;
-  color: #65766c;
+  color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
   font-size: .86rem;
   font-weight: 650;
   transition: color .16s ease, background .16s ease, transform .16s ease;
 }
-.glis-portal-app #portal-sidebar .menu a:hover { background: #f0f6f1; color: var(--portal-green); transform: translateX(2px); }
-.glis-portal-app #portal-sidebar .menu a.menu-active { background: #eaf5ed; color: var(--portal-green); box-shadow: inset 3px 0 0 #2a9965; }
+.glis-portal-app #portal-sidebar .menu a:hover { background: color-mix(in srgb, var(--color-primary) 8%, var(--color-base-100)); color: var(--portal-green); transform: translateX(2px); }
+.glis-portal-app #portal-sidebar .menu a.menu-active { background: color-mix(in srgb, var(--color-primary) 12%, var(--color-base-100)); color: var(--portal-green); box-shadow: inset 3px 0 0 #2a9965; }
 .glis-portal-app #portal-sidebar .menu a i { width: 1.5rem; text-align: center; }
 .glis-portal-app #portal-sidebar nav > .card { border-color: var(--portal-border); border-radius: 1rem; background: #f7faf7; box-shadow: none; }
 .glis-portal-app .portal-dashboard { display: grid; gap: 1.45rem; width: 100%; color: var(--portal-ink); }

@@ -8,9 +8,15 @@
         <span class="badge {% if tx.status == 'completed' or tx.status == 'processed' %}badge-success{% elif active_step.has_error %}badge-error{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' %}badge-warning{% else %}badge-info{% endif %} badge-soft">{{ tx.get_status_display }}</span>
         <span class="badge badge-outline">{{ tx.get_source_display }}</span>
         <button class="btn btn-ghost btn-sm" type="button" data-open-dialog="transaction-audit" aria-label="{% translate 'View transaction audit' %}"><i class="bi bi-clock-history" aria-hidden="true"></i>{% translate "Audit" %}</button>
+        <a class="btn btn-ghost btn-sm" href="{% url 'tpa:policy_enrollment_detail' tx.policy_id %}"><i class="bi bi-bar-chart" aria-hidden="true"></i>{% translate "Policy dashboard" %}</a>
+        {% if can_edit_details %}<a class="btn btn-outline btn-sm" href="{% url 'tpa:transaction_edit_details' tx.reference %}"><i class="bi bi-pencil" aria-hidden="true"></i>{% translate "Edit details" %}</a>{% endif %}
+        {% if can_delete_draft %}<button class="btn btn-error btn-outline btn-sm" type="button" data-open-dialog="delete-draft-endorsement"><i class="bi bi-trash" aria-hidden="true"></i>{% translate "Delete draft" %}</button>{% endif %}
       </div>
     </div>
     <p class="text-sm opacity-70">{{ tx.policy.policy_number }} · {{ tx.sponsor.name_en }} · {{ tx.insurer.name_en }}{% if tx.policy.tpa_organization %} · {{ tx.policy.tpa_organization.name_en }}{% endif %}</p>
     <div class="flex flex-wrap gap-3 text-xs"><span>{% translate "Effective date" %}: <strong>{{ tx.effective_date|date:"d-M-Y" }}</strong></span>{% if tx.refund_basis != 'NONE' %}<span>{{ tx.get_refund_basis_display }}</span>{% endif %}{% if tx.ticket %}<a class="link link-primary" href="{% url 'portal:ticket_detail' tx.ticket.reference %}">{% translate "Linked ticket" %}: {{ tx.ticket.reference }}</a>{% endif %}</div>
   </div>
 </header>
+{% if can_delete_draft %}
+<dialog id="delete-draft-endorsement" class="modal" aria-labelledby="delete-draft-title"><div class="modal-box"><h2 id="delete-draft-title" class="text-lg font-bold">{% translate "Delete draft endorsement" %}</h2><p class="mt-3 text-sm">{{ tx.reference }} · {{ tx.policy.policy_number }}</p><p class="mt-2 text-sm opacity-65">{% translate "The draft request and its member rows will be removed. The audit record and any linked ticket are retained." %}</p><div class="modal-action"><form method="dialog"><button class="btn" type="submit">{% translate "Cancel" %}</button></form><form method="post" action="{% url 'tpa:transaction_delete_draft' tx.reference %}" hx-post="{% url 'tpa:transaction_delete_draft' tx.reference %}" data-processing-form>{% csrf_token %}<button class="btn btn-error" type="submit">{% translate "Delete draft" %}</button></form></div></div><form method="dialog" class="modal-backdrop"><button>{% translate "Close" %}</button></form></dialog>
+{% endif %}

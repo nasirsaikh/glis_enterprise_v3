@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import management_views, views
 
 app_name = "tpa"
 
@@ -10,10 +10,12 @@ urlpatterns = [
 
     path("policy-enrollment/", views.policy_enrollment_list, name="policy_enrollment_list"),
     path("policy-enrollment/new/", views.policy_enrollment_create, name="policy_enrollment_create"),
+    path("policy-enrollment/<int:policy_id>/", management_views.policy_enrollment_detail, name="policy_enrollment_detail"),
 
     path("inbound-emails/", views.inbound_email_list, name="inbound_email_list"),
     path("inbound-emails/new/", views.inbound_email_create, name="inbound_email_create"),
     path("inbound-emails/sync/", views.inbound_email_sync_now, name="inbound_email_sync_now"),
+    path("inbound-emails/training/", management_views.inbound_email_training, name="inbound_email_training"),
     path(
         "inbound-emails/<int:email_id>/",
         views.inbound_email_detail,
@@ -32,6 +34,8 @@ urlpatterns = [
 
     path("transactions/", views.transaction_list, name="transaction_list"),
     path("transactions/new/", views.transaction_create, name="transaction_create"),
+    path("transactions/<str:reference>/edit/", management_views.transaction_edit_details, name="transaction_edit_details"),
+    path("transactions/<str:reference>/delete/", management_views.transaction_delete_draft, name="transaction_delete_draft"),
     path(
         "transactions/<str:reference>/",
         views.transaction_detail,

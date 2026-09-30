@@ -4,7 +4,7 @@
   const THEME_CHOICES = new Set(["system", "light", "dark"]);
   const normalizeTheme = (choice) => THEME_CHOICES.has(choice) ? choice : "system";
   const userTheme = () => normalizeTheme(document.body?.dataset.userTheme || "system");
-  const preferredTheme = () => normalizeTheme(localStorage.getItem("glis-theme") || userTheme());
+  const preferredTheme = () => normalizeTheme(window.glisThemeStorage.get() || userTheme());
   const resolvedTheme = (choice) => normalizeTheme(choice) === "system"
     ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
     : normalizeTheme(choice);
@@ -40,7 +40,7 @@
       get themeIcon() { return resolvedTheme(this.theme) === "dark" ? "bi-sun" : "bi-moon-stars"; },
       toggleTheme() {
         this.theme = resolvedTheme(this.theme) === "dark" ? "light" : "dark";
-        localStorage.setItem("glis-theme", this.theme);
+        window.glisThemeStorage.set(this.theme);
         applyTheme(this.theme);
         saveThemeChoice(this.theme);
       }
@@ -53,7 +53,7 @@
       select.value = preferredTheme();
       select.addEventListener("change", async () => {
         const choice = select.value || "system";
-        localStorage.setItem("glis-theme", choice);
+        window.glisThemeStorage.set(choice);
         applyTheme(choice);
         await saveThemeChoice(choice);
       });
@@ -69,7 +69,7 @@
         const query = input.value.trim().toLowerCase();
         target.querySelectorAll("[data-multiselect-option]").forEach((option) => {
           const haystack = (option.dataset.searchText || option.textContent || "").toLowerCase();
-          option.classList.toggle("tw:hidden", Boolean(query) && !haystack.includes(query));
+          option.classList.toggle("hidden", Boolean(query) && !haystack.includes(query));
         });
       };
       input.addEventListener("input", filter);
@@ -105,7 +105,7 @@
       button.dataset.themeToggleReady = "true";
       button.addEventListener("click", async () => {
         const choice = resolvedTheme(preferredTheme()) === "dark" ? "light" : "dark";
-        localStorage.setItem("glis-theme", choice);
+        window.glisThemeStorage.set(choice);
         applyTheme(choice);
         await saveThemeChoice(choice);
       });
@@ -350,14 +350,14 @@
     const render = (mode) => {
       const expanded = mode === "expanded";
       sidebar.dataset.sidebarState = mode;
-      sidebar.classList.toggle("tw:w-20", !expanded);
-      sidebar.classList.toggle("tw:w-72", expanded);
+      sidebar.classList.toggle("w-20", !expanded);
+      sidebar.classList.toggle("w-72", expanded);
 
       sidebar.querySelectorAll("[data-sidebar-label]").forEach((element) => {
-        element.classList.toggle("tw:hidden", !expanded);
+        element.classList.toggle("hidden", !expanded);
       });
       sidebar.querySelectorAll("[data-sidebar-link]").forEach((link) => {
-        link.classList.toggle("tw:justify-center", !expanded);
+        link.classList.toggle("justify-center", !expanded);
       });
 
       button.setAttribute("aria-expanded", String(expanded));
@@ -399,8 +399,8 @@
       source.dataset.editorReady = "true";
       source.hidden = true;
       const wrapper = document.createElement("div");
-      wrapper.className = "card tw:overflow-hidden tw:border tw:border-base-300 tw:bg-base-100 tw:shadow-sm";
-      wrapper.innerHTML = '<div class="tw:flex tw:flex-wrap tw:items-center tw:gap-1 tw:border-b tw:border-base-300 tw:bg-base-200/55 tw:p-2"><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="bold" title="Bold" aria-label="Bold"><i class="bi bi-type-bold"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i class="bi bi-type-italic"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="underline" title="Underline" aria-label="Underline"><i class="bi bi-type-underline"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bullets"><i class="bi bi-list-ul"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list"><i class="bi bi-list-ol"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="createLink" title="Link" aria-label="Insert link"><i class="bi bi-link-45deg"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-image-button title="Upload image" aria-label="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span class="badge badge-ghost badge-sm tw:ms-2">Paste or upload images</span></div><div class="richtext-canvas textarea textarea-bordered tw:w-full tw:rounded-none tw:border-0 tw:bg-base-100 tw:p-4" style="min-height:10rem;overflow:auto" contenteditable="true" role="textbox" aria-multiline="true"></div>';
+      wrapper.className = "card overflow-hidden border border-base-300 bg-base-100 shadow-sm";
+      wrapper.innerHTML = '<div class="flex flex-wrap items-center gap-1 border-b border-base-300 bg-base-200/55 p-2"><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="bold" title="Bold" aria-label="Bold"><i class="bi bi-type-bold"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i class="bi bi-type-italic"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="underline" title="Underline" aria-label="Underline"><i class="bi bi-type-underline"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bullets"><i class="bi bi-list-ul"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list"><i class="bi bi-list-ol"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="createLink" title="Link" aria-label="Insert link"><i class="bi bi-link-45deg"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-image-button title="Upload image" aria-label="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span class="badge badge-ghost badge-sm ms-2">Paste or upload images</span></div><div class="richtext-canvas textarea textarea-bordered w-full rounded-none border-0 bg-base-100 p-4" style="min-height:10rem;overflow:auto" contenteditable="true" role="textbox" aria-multiline="true"></div>';
       source.insertAdjacentElement("afterend", wrapper);
       const editor = wrapper.querySelector(".richtext-canvas");
       editor.innerHTML = source.value || "";
@@ -466,9 +466,9 @@
       const image = document.createElement("div");
       image.className = "chat-image avatar avatar-placeholder";
       const circle = document.createElement("div");
-      circle.className = "tw:w-10 tw:rounded-full tw:bg-primary tw:text-primary-content";
+      circle.className = "w-10 rounded-full bg-primary text-primary-content";
       const initial = document.createElement("span");
-      initial.className = "tw:text-sm tw:font-black";
+      initial.className = "text-sm font-black";
       initial.textContent = currentUserInitial;
       circle.appendChild(initial);
       image.appendChild(circle);
@@ -491,10 +491,10 @@
       header.className = "chat-header";
       header.textContent = currentUserName;
       const bubble = document.createElement("div");
-      bubble.className = "chat-bubble chat-bubble-primary tw:max-w-3xl";
+      bubble.className = "chat-bubble chat-bubble-primary max-w-3xl";
       bubble.textContent = text;
       const footer = document.createElement("div");
-      footer.className = "chat-footer tw:opacity-50";
+      footer.className = "chat-footer opacity-50";
       footer.textContent = formatTime(createdAt);
       article.append(userAvatar(), header, bubble, footer);
       conversation.appendChild(article);
@@ -502,9 +502,9 @@
     };
     const buildTable = rows => {
       const wrapper = document.createElement("div");
-      wrapper.className = "tw:mt-3 tw:overflow-x-auto tw:rounded-box tw:bg-base-100 tw:text-base-content";
+      wrapper.className = "mt-3 overflow-x-auto rounded-box bg-base-100 text-base-content";
       const table = document.createElement("table");
-      table.className = "tw:d-table tw:d-table-zebra ";
+      table.className = "table table-zebra ";
       wrapper.appendChild(table);
       if (!rows.length) return wrapper;
       const keys = Object.keys(rows[0]);
@@ -546,31 +546,31 @@
       const article = document.createElement("article");
       article.className = "chat chat-start ai-message";
       const header = document.createElement("div");
-      header.className = "chat-header tw:flex tw:items-center tw:gap-2";
+      header.className = "chat-header flex items-center gap-2";
       const label = document.createElement("strong");
       label.innerHTML = '<i class="bi bi-stars"></i> Vanna';
       const meta = document.createElement("small");
-      meta.className = "tw:opacity-50";
+      meta.className = "opacity-50";
       meta.textContent = queryData.status === "completed" ? `${queryData.row_count || 0} rows · ${queryData.duration_ms || 0} ms` : (queryData.error_code || "Failed");
       header.append(label, meta);
 
       const bubble = document.createElement("div");
-      bubble.className = "chat-bubble tw:max-w-5xl";
+      bubble.className = "chat-bubble max-w-5xl";
       if (queryData.status !== "completed") bubble.classList.add("chat-bubble-error");
 
       const summary = document.createElement("p");
-      summary.className = "tw:leading-6";
+      summary.className = "leading-6";
       summary.textContent = queryData.summary || (queryData.status === "completed" ? "The query completed successfully." : "The query could not be completed.");
       bubble.appendChild(summary);
 
       if (queryData.sql) {
         const details = document.createElement("details");
-        details.className = "tw:mt-3 tw:rounded-box tw:bg-base-200 tw:p-3 tw:text-base-content";
+        details.className = "mt-3 rounded-box bg-base-200 p-3 text-base-content";
         const detailsLabel = document.createElement("summary");
-        detailsLabel.className = "tw:cursor-pointer tw:font-semibold";
+        detailsLabel.className = "cursor-pointer font-semibold";
         detailsLabel.textContent = "Generated SQL";
         const pre = document.createElement("pre"), code = document.createElement("code");
-        pre.className = "tw:mt-2 tw:overflow-x-auto tw:text-xs";
+        pre.className = "mt-2 overflow-x-auto text-xs";
         code.textContent = queryData.sql;
         pre.appendChild(code); details.append(detailsLabel, pre); bubble.appendChild(details);
       }
@@ -581,17 +581,17 @@
         chartId = `vanna-chart-${queryData.id || ++chartSequence}-${++chartSequence}`;
         const chart = document.createElement("div");
         chart.id = chartId;
-        chart.className = "tw:mt-3 tw:min-h-64 tw:rounded-box tw:bg-base-100";
+        chart.className = "mt-3 min-h-64 rounded-box bg-base-100";
         bubble.appendChild(chart);
       }
       if (rows.length) bubble.appendChild(buildTable(rows));
 
       const actions = document.createElement("div");
-      actions.className = "tw:mt-3 tw:flex tw:flex-wrap tw:gap-2";
+      actions.className = "mt-3 flex flex-wrap gap-2";
       (queryData.followups || []).forEach(text => {
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "tw:d-btn tw:d-btn-ghost tw:d-btn-xs";
+        button.className = "btn btn-ghost btn-xs";
         button.textContent = text;
         button.dataset.vannaPrompt = text;
         bindPrompt(button);
@@ -599,7 +599,7 @@
       });
       if (queryData.export_url) {
         const link = document.createElement("a");
-        link.className = "tw:d-btn tw:d-btn-outline tw:d-btn-sm";
+        link.className = "btn btn-outline btn-sm";
         link.href = queryData.export_url;
         link.innerHTML = '<i class="bi bi-download"></i> Export CSV';
         actions.appendChild(link);
@@ -607,7 +607,7 @@
       if (actions.childElementCount) bubble.appendChild(actions);
 
       const footer = document.createElement("div");
-      footer.className = "chat-footer tw:opacity-50";
+      footer.className = "chat-footer opacity-50";
       footer.textContent = formatTime(queryData.created_at);
       article.append(header, bubble, footer);
       conversation.appendChild(article);
@@ -617,24 +617,24 @@
     };
     const showWelcome = () => {
       conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
-      historyLoading.classList.add("tw:hidden"); welcome.classList.remove("tw:hidden");
+      historyLoading.classList.add("hidden"); welcome.classList.remove("hidden");
     };
     const renderHistory = queries => {
       conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
-      historyLoading.classList.add("tw:hidden"); welcome.classList.toggle("tw:hidden", Boolean(queries.length));
+      historyLoading.classList.add("hidden"); welcome.classList.toggle("hidden", Boolean(queries.length));
       queries.forEach(item => { addQuestion(item.question, item.created_at); addAnswer(item); });
       if (queries.length) setDiagnostics(queries[queries.length - 1]);
     };
     const setActiveSession = id => {
       sessionInput.value = id || "";
-      sessionList.querySelectorAll("[data-session-id]").forEach(item => item.classList.toggle("tw:d-btn-active", item.dataset.sessionId === id));
+      sessionList.querySelectorAll("[data-session-id]").forEach(item => item.classList.toggle("btn-active", item.dataset.sessionId === id));
       const url = new URL(window.location.href);
       if (id) url.searchParams.set("session", id); else url.searchParams.delete("session");
       history.replaceState({}, "", url);
     };
     const loadSession = async id => {
       if (!id) { setActiveSession(""); showWelcome(); return; }
-      historyLoading.classList.remove("tw:hidden"); welcome.classList.add("tw:hidden"); error.classList.add("tw:hidden");
+      historyLoading.classList.remove("hidden"); welcome.classList.add("hidden"); error.classList.add("hidden");
       try {
         const endpoint = workbench.dataset.sessionDetailTemplate.replace("00000000-0000-0000-0000-000000000000", id);
         const response = await fetch(endpoint, {headers: {"X-Requested-With": "XMLHttpRequest"}});
@@ -642,7 +642,7 @@
         if (!response.ok) throw new Error(payload.error || "Conversation could not be loaded.");
         setActiveSession(id); renderHistory(payload.queries || []);
       } catch (exception) {
-        historyLoading.classList.add("tw:hidden"); error.textContent = exception.message; error.classList.remove("tw:hidden");
+        historyLoading.classList.add("hidden"); error.textContent = exception.message; error.classList.remove("hidden");
       }
     };
     const upsertSession = session => {
@@ -650,8 +650,8 @@
       document.getElementById("vanna-session-empty")?.remove();
       let item = sessionList.querySelector(`[data-session-id="${session.id}"]`);
       if (!item) {
-        item = document.createElement("button"); item.type = "button"; item.className = "tw:d-btn tw:d-btn-ghost tw:h-auto tw:w-full tw:justify-start tw:gap-3 tw:py-3 tw:text-start"; item.dataset.sessionId = session.id;
-        item.innerHTML = '<i class="bi bi-chat-left-text tw:text-primary"></i><span class="tw:min-w-0 tw:flex-1"><strong class="tw:block tw:truncate"></strong><small class="tw:block tw:truncate tw:font-normal tw:opacity-50"></small></span>';
+        item = document.createElement("button"); item.type = "button"; item.className = "btn btn-ghost h-auto w-full justify-start gap-3 py-3 text-start"; item.dataset.sessionId = session.id;
+        item.innerHTML = '<i class="bi bi-chat-left-text text-primary"></i><span class="min-w-0 flex-1"><strong class="block truncate"></strong><small class="block truncate font-normal opacity-50"></small></span>';
         sessionList.prepend(item);
       }
       item.querySelector("strong").textContent = session.title;
@@ -672,9 +672,9 @@
       const formData = new FormData(form);
       formData.set("question", text);
 
-      welcome.classList.add("tw:hidden");
-      historyLoading.classList.add("tw:hidden");
-      error.classList.add("tw:hidden");
+      welcome.classList.add("hidden");
+      historyLoading.classList.add("hidden");
+      error.classList.add("hidden");
       send.disabled = true;
 
       addQuestion(text);
@@ -700,7 +700,7 @@
         }
       } catch (exception) {
         error.textContent = exception.message;
-        error.classList.remove("tw:hidden");
+        error.classList.remove("hidden");
       } finally {
         send.disabled = false;
         question.focus();
@@ -722,7 +722,7 @@
         const response = await fetch("/portal/notifications/feed/", {headers: {"X-Requested-With": "XMLHttpRequest"}});
         if (!response.ok) return;
         const data = await response.json(), previous = Number(count.textContent || 0);
-        count.textContent = data.unread; count.classList.toggle("tw:hidden", !data.unread);
+        count.textContent = data.unread; count.classList.toggle("hidden", !data.unread);
         if (browserEnabled && data.unread > previous && "Notification" in window && Notification.permission === "granted" && data.items.length) new Notification(data.items[0].title, {body: data.items[0].body});
       } catch (_) { /* Network interruptions should not affect portal use. */ }
     };

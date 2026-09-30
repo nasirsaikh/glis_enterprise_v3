@@ -1,25 +1,25 @@
 {% load menu_tags i18n %}
-<nav class="tw:w-full" aria-label="{% translate 'Main navigation' %}">
-  <ul class="tw:flex tw:items-center tw:gap-1 tw:p-0 tw:text-sm tw:font-semibold">
+<nav class="w-full" aria-label="{% translate 'Main navigation' %}">
+  <ul class="flex items-center gap-1 p-0 text-sm font-semibold">
     {% for child in children %}
       {% if child.children %}
       <li>
-        <details class="glis-nav-dropdown tw:d-dropdown">
-          <summary class="glis-nav-trigger tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:rounded-full tw:gap-2 {% if child.selected or child.ancestor %}tw:text-primary tw:bg-base-200/60{% endif %}">
+        <details class="glis-nav-dropdown dropdown">
+          <summary class="glis-nav-trigger btn btn-ghost btn-sm rounded-full gap-2 {% if child.selected or child.ancestor %}text-primary bg-base-200/60{% endif %}">
             <span>{{ child.get_menu_title }}</span>
-            <i class="glis-nav-chevron bi bi-chevron-down tw:text-[.65rem]"></i>
+            <i class="glis-nav-chevron bi bi-chevron-down text-[.65rem]"></i>
           </summary>
-          <div class="glis-nav-panel tw:d-dropdown-content tw:z-[90] tw:mt-2 tw:w-[min(32rem,95vw)] tw:rounded-2xl tw:bg-base-100 tw:p-4 tw:shadow-2xl tw:border tw:border-base-200">
-            <div class="tw:grid tw:grid-cols-2 tw:gap-2">
+          <div class="glis-nav-panel dropdown-content z-[90] mt-2 w-[min(32rem,95vw)] rounded-2xl bg-base-100 p-4 shadow-2xl border border-base-200">
+            <div class="grid grid-cols-2 gap-2">
               {% for subchild in child.children %}
-              <a href="{{ subchild.get_absolute_url }}" class="tw:flex tw:flex-col tw:gap-1 tw:p-3 tw:rounded-xl tw:border tw:border-base-200 tw:bg-base-100 tw:hover:border-primary tw:hover:bg-primary/5 tw:transition-all {% if subchild.selected %}tw:border-primary tw:bg-primary/10{% endif %}">
-                <div class="tw:flex tw:items-center tw:justify-between">
-                  <span class="tw:grid tw:h-8 tw:w-8 tw:place-items-center tw:rounded-lg tw:bg-primary/10 tw:text-primary">
-                    <i class="bi bi-grid-fill tw:text-xs"></i>
+              <a href="{{ subchild.get_absolute_url }}" class="flex flex-col gap-1 p-3 rounded-xl border border-base-200 bg-base-100 hover:border-primary hover:bg-primary/5 transition-all {% if subchild.selected %}border-primary bg-primary/10{% endif %}">
+                <div class="flex items-center justify-between">
+                  <span class="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <i class="bi bi-grid-fill text-xs"></i>
                   </span>
-                  <i class="bi bi-arrow-{% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %} tw:text-xs tw:text-base-content/40"></i>
+                  <i class="bi bi-arrow-{% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %} text-xs text-base-content/40"></i>
                 </div>
-                <span class="tw:text-xs tw:font-bold tw:text-base-content tw:mt-1">{{ subchild.get_menu_title }}</span>
+                <span class="text-xs font-bold text-base-content mt-1">{{ subchild.get_menu_title }}</span>
               </a>
               {% endfor %}
             </div>
@@ -28,7 +28,7 @@
       </li>
       {% else %}
       <li>
-        <a href="{{ child.get_absolute_url }}" class="tw:d-btn tw:d-btn-ghost tw:d-btn-sm tw:rounded-full {% if child.selected %}tw:text-primary tw:bg-base-200/60{% endif %}">
+        <a href="{{ child.get_absolute_url }}" class="btn btn-ghost btn-sm rounded-full {% if child.selected %}text-primary bg-base-200/60{% endif %}">
           {{ child.get_menu_title }}
         </a>
       </li>

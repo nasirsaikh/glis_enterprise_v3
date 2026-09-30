@@ -497,6 +497,10 @@ Portal → TPA Operations → Initial Policy Enrollment
 
 Initial setup creates the policy and a dedicated <code>NEW_POLICY_ENROLLMENT</code> transaction.
 
+Select a policy number in this section to open its policy dashboard. It shows active/inactive members, coverage today, enrollment status, benefit-plan and principal/dependent distributions, and every visible endorsement with status filtering and pagination. Counts use one latest enrollment per member. Premium totals respect the policy's premium-view permission. The **Enrollment workflow** link opens the original onboarding wizard.
+
+Before approval, authorized intake users can use **Edit details** on a request to correct its effective date, refund basis, reactivation date and remarks. Saving returns it to draft and clears old validation/pricing results. Policy is fixed, and the transaction type is fixed while member rows exist. **Delete draft** removes only an unprocessed draft endorsement; its audit and linked ticket are retained. Successful endorsement or initial policy completion automatically closes the linked GLIS ticket and records resolution/closure timestamps. Card dispatch continues to hold the request open until delivery or collection is complete.
+
 The policy can contain:
 
 - sponsor/individual;
@@ -641,6 +645,10 @@ Django Admin supports:
 - training examples.
 
 This allows OCR/mapping prompts to be trained/configured without embedding every instruction in view code.
+
+The mailbox monitor also provides **AI prompts & examples** to users with TPA or AI configuration permission. Create or select an email-extraction or attachment/OCR member-mapping profile; set product/type scope, instructions, aliases and examples of the expected JSON. Aliases can map labels such as Civil No/CPR to `national_id` and Policy No to `policy_number`. The first five active examples are included in their configured order. Type-specific email profiles are applied after classification when needed.
+
+Use **Preview extraction** with sample email/OCR text to test the current prompt before saving. This creates no endorsement and changes no inbox message. **Coach AI on this email** copies an existing email body into the preview. Save the profile, then reprocess a failed/review email from its detail page. These are prompt-based instructions and examples, not model-weight training; authority checks, mandatory-field validation and approvals remain enforced.
 
 ## 12.8 Intake correction
 

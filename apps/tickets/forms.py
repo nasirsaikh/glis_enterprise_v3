@@ -1,7 +1,9 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from apps.ai.models import default_questions
+from apps.tpa.models import TPAOrganization
 from .models import Category, Product, Project, SupportGroup, Ticket, TicketComment
 from .services.access import accessible_categories,accessible_products,accessible_projects
 
@@ -186,15 +188,80 @@ class TicketEditForm(forms.ModelForm):
 
 
 class TicketAssignmentForm(forms.Form):
-    users = forms.ModelMultipleChoiceField(required=False, queryset=get_user_model().objects.none(), widget=forms.CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}))
-    groups = forms.ModelMultipleChoiceField(required=False, queryset=SupportGroup.objects.none(), widget=forms.CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}))
-    replace_existing = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={"class": "checkbox checkbox-primary"}))
+    users = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=get_user_model().objects.none(),
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}),
+    )
+    groups = forms.ModelMultipleChoiceField(
+        required=False,
+        queryset=SupportGroup.objects.none(),
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}),
+    )
+    replace_existing = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={"class": "checkbox checkbox-primary"}),
+    )
 
-    def __init__(self, *args, ticket=None, **kwargs):
+    def __init__(self, *args, ticket=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         User = get_user_model()
-        self.fields["users"].queryset = User.objects.filter(is_active=True).order_by("first_name", "last_name", "email")
-        self.fields["groups"].queryset = SupportGroup.objects.filter(is_active=True).order_by("name")
+        users = User.objects.filter(is_active=True).select_related("profile").prefetch_related(
+            "profile__organizations"
+        )
+        groups = SupportGroup.objects.filter(is_active=True).prefetch_related(
+            "organizations",
+            "members__profile__organizations",
+            "managers__profile__organizations",
+        )
+
+        profile = getattr(user, "profile", None) if user else None
+        organization_ids = list(
+            profile.organizations.filter(is_active=True).values_list("pk", flat=True)
+        ) if profile else []
+        is_global_assigner = bool(
+            user
+            and user.is_authenticated
+            and (user.is_superuser or user.has_perm("tickets.assign"))
+        )
+
+        if is_global_assigner:
+            self.available_organizations = TPAOrganization.objects.filter(
+                is_active=True
+            ).order_by("organization_type", "name_en")
+        elif user and user.is_authenticated:
+            own_group_ids = list(
+                SupportGroup.objects.filter(
+                    Q(members=user) | Q(managers=user),
+                    is_active=True,
+                ).values_list("pk", flat=True)
+            )
+            user_scope = (
+                Q(profile__organizations__pk__in=organization_ids)
+                | Q(support_groups__pk__in=own_group_ids)
+                | Q(managed_support_groups__pk__in=own_group_ids)
+            )
+            group_scope = (
+                Q(pk__in=own_group_ids)
+                | Q(organizations__pk__in=organization_ids)
+            )
+            if ticket is not None:
+                user_scope |= Q(pk__in=ticket.assignees.values_list("pk", flat=True))
+                group_scope |= Q(pk__in=ticket.groups.values_list("pk", flat=True))
+            users = users.filter(user_scope).distinct()
+            groups = groups.filter(group_scope).distinct()
+            self.available_organizations = TPAOrganization.objects.filter(
+                pk__in=organization_ids,
+                is_active=True,
+            ).order_by("organization_type", "name_en")
+        else:
+            users = users.none()
+            groups = groups.none()
+            self.available_organizations = TPAOrganization.objects.none()
+
+        self.fields["users"].queryset = users.order_by("first_name", "last_name", "email")
+        self.fields["groups"].queryset = groups.order_by("name")
         if ticket and not self.is_bound:
             self.initial["users"] = ticket.assignees.all()
             self.initial["groups"] = ticket.groups.all()
@@ -220,4 +287,31 @@ class TicketFilterForm(forms.Form):
     priority = forms.ChoiceField(required=False, choices=[("", _("All priorities")), *Ticket.Priority.choices], widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
     project = forms.ModelChoiceField(required=False, queryset=Project.objects.filter(is_active=True), empty_label=_("All projects"), widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
     category = forms.ModelChoiceField(required=False, queryset=Category.objects.filter(is_active=True), empty_label=_("All categories"), widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
+    organization = forms.ModelChoiceField(
+        required=False,
+        queryset=TPAOrganization.objects.none(),
+        empty_label=_("All organizations"),
+        widget=forms.Select(attrs={"class": "select select-bordered w-full"}),
+    )
     sla = forms.ChoiceField(required=False, choices=[("", _("All SLA states")), ("overdue", _("Overdue")), ("at_risk", _("At risk"))], widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        organizations = TPAOrganization.objects.filter(is_active=True)
+        if user and user.is_authenticated and not (
+            user.is_superuser
+            or user.has_perm("tickets.view_all")
+            or user.has_perm("tickets.assign")
+        ):
+            profile = getattr(user, "profile", None)
+            organizations = (
+                profile.organizations.filter(is_active=True)
+                if profile
+                else TPAOrganization.objects.none()
+            )
+        elif not user or not user.is_authenticated:
+            organizations = TPAOrganization.objects.none()
+        self.fields["organization"].queryset = organizations.order_by(
+            "organization_type", "name_en"
+        )
+

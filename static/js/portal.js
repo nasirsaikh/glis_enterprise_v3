@@ -61,18 +61,46 @@
   };
 
   const setupMultiSelectFilters = (scope = document) => {
+    const applyFilters = (targetId) => {
+      const target = document.getElementById(targetId || "");
+      if (!target) return;
+      const searchControls = Array.from(document.querySelectorAll("[data-multiselect-search]"))
+        .filter((control) => control.dataset.multiselectSearch === targetId);
+      const valueFilters = Array.from(document.querySelectorAll("[data-multiselect-filter]"))
+        .filter((control) => control.dataset.multiselectFilter === targetId);
+
+      target.querySelectorAll("[data-multiselect-option]").forEach((option) => {
+        const haystack = (option.dataset.searchText || option.textContent || "").toLowerCase();
+        const optionValues = new Set(
+          (option.dataset.filterValues || "")
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean)
+        );
+        const matchesSearch = searchControls.every((control) => {
+          const query = control.value.trim().toLowerCase();
+          return !query || haystack.includes(query);
+        });
+        const matchesValues = valueFilters.every((control) => {
+          const selected = control.value.trim();
+          return !selected || optionValues.has(selected);
+        });
+        option.classList.toggle("hidden", !(matchesSearch && matchesValues));
+      });
+    };
+
     scope.querySelectorAll("[data-multiselect-search]:not([data-multiselect-ready])").forEach((input) => {
       input.dataset.multiselectReady = "true";
-      const target = document.getElementById(input.dataset.multiselectSearch || "");
-      if (!target) return;
-      const filter = () => {
-        const query = input.value.trim().toLowerCase();
-        target.querySelectorAll("[data-multiselect-option]").forEach((option) => {
-          const haystack = (option.dataset.searchText || option.textContent || "").toLowerCase();
-          option.classList.toggle("hidden", Boolean(query) && !haystack.includes(query));
-        });
-      };
-      input.addEventListener("input", filter);
+      const targetId = input.dataset.multiselectSearch || "";
+      input.addEventListener("input", () => applyFilters(targetId));
+      applyFilters(targetId);
+    });
+
+    scope.querySelectorAll("[data-multiselect-filter]:not([data-multiselect-ready])").forEach((select) => {
+      select.dataset.multiselectReady = "true";
+      const targetId = select.dataset.multiselectFilter || "";
+      select.addEventListener("change", () => applyFilters(targetId));
+      applyFilters(targetId);
     });
   };
 

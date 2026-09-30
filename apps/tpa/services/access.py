@@ -1,5 +1,5 @@
 from django.db.models import Q
-from services.tenancy import scope_policies
+from services.tenancy import organization_ids, scope_policies
 
 from ..models import (
     MemberTransaction,
@@ -135,23 +135,17 @@ def visible_policies(user):
 
 
 def visible_transactions(user):
-    qs = MemberTransaction.objects.select_related(
-        "policy", "sponsor", "insurer", "ticket"
-    )
-    if not user.is_authenticated:
+    qs = MemberTransaction.objects.select_related("policy", "sponsor", "insurer", "ticket")
+    if not user or not user.is_authenticated:
         return qs.none()
-    qs = qs.filter(policy_id__in=visible_policies(user).values("pk"))
-    if user.is_superuser or user.has_perm("tpa.configure_tpa"):
+    if user.is_superuser:
         return qs
-    return qs.filter(
-        Q(requester=user)
-        | Q(
-            policy__access_entries__user=user,
-            policy__access_entries__active=True,
-            policy__access_entries__can_view=True,
-        )
-    ).distinct()
-
+    own = Q(requester=user)
+    if organization_ids(user):
+        own &= Q(policy_id__in=scope_policies(Policy.objects.all(), user).values("pk"))
+    # Legacy requesters can retain their own intake record without acquiring
+    # access to every policy or other requests in the same organization.
+    return qs.filter(own | Q(policy_id__in=visible_policies(user).values("pk"))).distinct()
 
 
 def _is_internal_tpa_user(user, tx):

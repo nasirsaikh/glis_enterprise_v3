@@ -86,3 +86,14 @@ def scope_policies(queryset, user):
     if organizations:
         grants &= Q(access_entries__organization_id__in=organizations)
     return queryset.filter(scope | grants).distinct()
+
+
+def visible_notifications(user):
+    from apps.tickets.models import Notification
+    from services.access import TicketAccessPolicy
+
+    qs = Notification.objects.filter(user=user)
+    return qs.filter(
+        Q(ticket__isnull=True)
+        | Q(ticket_id__in=TicketAccessPolicy.visible_queryset(user).values("pk"))
+    ).distinct()

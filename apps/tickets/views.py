@@ -23,7 +23,7 @@ from apps.ai.models import AIInteraction, AISettings
 from apps.ai.providers import get_provider
 from apps.core.models import AuditLog
 from services.access import TicketAccessPolicy
-from services.tenancy import visible_support_groups, visible_users
+from services.tenancy import visible_notifications, visible_support_groups, visible_users
 from services.dynamic_forms import DynamicTicketForm
 from services.ticket_workflow import current_approval_sequence, decide_approval, initialize_approval_workflow, notify_users
 from .forms import (
@@ -924,22 +924,22 @@ def upload_attachments(request, reference):
 
 @login_required
 def notifications(request):
-    page = Paginator(Notification.objects.filter(user=request.user), 20).get_page(request.GET.get("page"))
+    page = Paginator(visible_notifications(request.user), 20).get_page(request.GET.get("page"))
     return render(request, "notifications/list.html", {"page_obj": page})
 
 
 @login_required
 @require_GET
 def notification_feed(request):
-    items = Notification.objects.filter(user=request.user)[:10]
-    return JsonResponse({"unread": Notification.objects.filter(user=request.user, read_at__isnull=True).count(), "items": [{"id": item.pk, "title": item.title, "body": item.body, "link": item.link, "kind": item.kind, "created_at": item.created_at.isoformat(), "read": bool(item.read_at)} for item in items]})
+    items = visible_notifications(request.user)[:10]
+    return JsonResponse({"unread": visible_notifications(request.user).filter(read_at__isnull=True).count(), "items": [{"id": item.pk, "title": item.title, "body": item.body, "link": item.link, "kind": item.kind, "created_at": item.created_at.isoformat(), "read": bool(item.read_at)} for item in items]})
 
 
 @login_required
 @require_POST
 def mark_notifications_read(request):
     ids = request.POST.getlist("ids")
-    queryset = Notification.objects.filter(user=request.user, read_at__isnull=True)
+    queryset = visible_notifications(request.user).filter(read_at__isnull=True)
     if ids:
         queryset = queryset.filter(pk__in=ids)
     queryset.update(read_at=timezone.now())

@@ -8,7 +8,7 @@ from .mayan import MayanError, mayan
 
 
 def _can_use_global_document_center(user):
-    return user.is_superuser or user.is_staff or user.has_perm("tickets.view_all")
+    return bool(user and user.is_authenticated and user.is_superuser)
 
 
 @login_required
@@ -23,12 +23,12 @@ def document_center(request):
     payload, error = {"results": [], "count": 0}, ""
     if mayan.enabled:
         try:
-            payload = mayan.search_documents(query=query, page=page, page_size=25)
+            payload = mayan.search_documents(query=query, page=page, page_size=20)
         except MayanError as exc:
             error = str(exc)
     else:
         error = "Mayan EDMS is not enabled on this GLIS environment."
-    context = {"query": query, "documents": payload.get("results", payload if isinstance(payload, list) else []), "total": payload.get("count", 0) if isinstance(payload, dict) else len(payload), "mayan_enabled": mayan.enabled, "mayan_error": error, "can_open_mayan": request.user.is_superuser or request.user.is_staff, "mayan_admin_url": mayan.admin_url}
+    context = {"query": query, "documents": payload.get("results", payload if isinstance(payload, list) else []), "total": payload.get("count", 0) if isinstance(payload, dict) else len(payload), "mayan_enabled": mayan.enabled, "mayan_error": error, "can_open_mayan": request.user.is_superuser, "mayan_admin_url": mayan.admin_url}
     template = "documents/partials/results.html" if request.headers.get("HX-Request") else "documents/center.html"
     return render(request, template, context)
 
@@ -50,14 +50,14 @@ def mayan_document_download(request, document_id):
 
 @login_required
 def mayan_document_open(request, document_id):
-    if not (request.user.is_staff or request.user.is_superuser):
-        return HttpResponse("Opening the full Mayan UI is restricted to staff users.", status=403)
+    if not (request.user.is_superuser):
+        return HttpResponse("Opening the full Mayan UI is restricted to system administrators.", status=403)
     return redirect(mayan.document_url(document_id))
 
 
 @login_required
 def mayan_admin(request):
-    if not (request.user.is_staff or request.user.is_superuser):
+    if not (request.user.is_superuser):
         return HttpResponse("Mayan EDMS administration is restricted to staff users.", status=403)
     return redirect(mayan.admin_url)
 

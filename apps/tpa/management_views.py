@@ -71,6 +71,18 @@ def inbound_email_training(request):
     return redirect("admin:ai_aiextractionprofile_changelist")
 
 
+def _editable_transaction(request, reference, *, lock=False):
+    qs = visible_transactions(request.user)
+    if lock:
+        # Lock the transaction row itself, without nullable joined ticket rows.
+        qs = MemberTransaction.objects.select_for_update().filter(pk__in=qs.values("pk"))
+    tx = get_object_or_404(qs, reference=reference)
+    if not can_edit_tpa_intake(request.user, tx) or tx.status not in EDITABLE_STATUSES:
+        raise PermissionDenied("Request details can be changed by an authorized intake user before approval.")
+    return tx
+
+
+
 @login_required
 @transaction.atomic
 def transaction_edit_details(request, reference):

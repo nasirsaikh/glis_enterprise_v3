@@ -3,20 +3,7 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 def visible_tickets_for_user(queryset, user):
-    """
-    Central REST API ticket visibility rule.
-
-    Superusers:
-        All tickets.
-
-    Normal users:
-        - tickets submitted by user
-        - directly assigned tickets
-        - tickets where user is one of assignees
-        - tickets belonging to user's support groups
-        - tickets belonging to projects where user is member
-        - tickets belonging to projects associated with user's Django groups
-    """
+    """Apply the same organization and ticket permissions as the portal."""
 
     if not user or not user.is_authenticated:
         return queryset.none()

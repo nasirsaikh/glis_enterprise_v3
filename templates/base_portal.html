@@ -223,7 +223,6 @@
                 <i class="bi bi-inbox text-lg"></i><span data-sidebar-label class="hidden">{% translate "TPA Inbound Emails" %}</span>
               </a>
             </li>
-            "><i class="bi bi-magic"></i>{% translate "AI prompts & examples" %}</a></li>{% endif %}
             {% if can_create_tpa_transaction %}
             <li data-sidebar-label class="hidden ps-5">
               <a class="{% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name == 'inbound_email_create' %}menu-active{% endif %}" href="{% url 'tpa:inbound_email_create' %}">

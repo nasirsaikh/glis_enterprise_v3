@@ -22,6 +22,9 @@ on:
 permissions:
   contents: read
 
+env:
+  JOB_CENTER_ENABLED: "0"
+
 jobs:
   django-compatibility:
     runs-on: ubuntu-latest
@@ -63,7 +66,11 @@ jobs:
         run: python -Wd manage.py check
 
       - name: Verify migration state
-        run: python manage.py makemigrations --check --dry-run
+        run: python manage.py makemigrations accounts ai core job_center knowledge orchestrator tasks tickets tpa --check --dry-run
+
+      - name: Compile public and portal templates
+        run: |
+          python manage.py shell -c "from pathlib import Path; from django.template.loader import get_template; [get_template(str(path.relative_to('templates'))) for path in Path('templates').rglob('*.html')]"
 
       - name: Run test suite
         run: python manage.py test

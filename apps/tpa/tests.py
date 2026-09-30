@@ -687,6 +687,7 @@ class TPACoreTests(TestCase):
         self.assertEqual(tx.status, MemberTransaction.Status.TPA_IN_PROGRESS)
 
     def test_inbound_email_mock_ai_creates_transaction_and_member_row(self):
+        PolicyAccess.objects.create(organization=self.sponsor, policy=self.policy, user=self.user, can_view=True, can_create_endorsement=True)
         AIProviderConfig.objects.create(
             name="Test TPA Mock AI",
             provider=AIProviderConfig.Provider.MOCK,

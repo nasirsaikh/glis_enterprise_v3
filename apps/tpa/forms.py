@@ -693,7 +693,7 @@ class InboundEmailForm(forms.ModelForm):
                 attrs={"type": "datetime-local"}
             ),
             "body_text": forms.Textarea(
-                attrs={"rows": 12}
+                attrs={"rows": 4}
             ),
         }
 

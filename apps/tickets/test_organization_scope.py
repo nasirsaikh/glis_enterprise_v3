@@ -11,7 +11,7 @@ from apps.tpa.models import TPAOrganization
 from services.access import TicketAccessPolicy
 from services.tenancy import visible_support_groups, visible_users
 from .forms import TicketAssignmentForm, TicketIntakeForm, TicketShareForm
-from .models import Category, Product, Project, SupportGroup, Ticket
+from .models import Category, Notification, Product, Project, SupportGroup, Ticket
 
 
 class PortalOrganizationTests(TestCase):
@@ -100,3 +100,26 @@ class PortalOrganizationTests(TestCase):
         self.assertIn("WITH tickets_ticket AS", governed)
         self.assertIn(f"WHERE id IN ({self.own_ticket.pk})", governed)
         self.assertNotIn(str(self.outside_ticket.pk), governed.split("WHERE id IN (", 1)[1].split(")", 1)[0])
+
+    def test_notification_feed_does_not_leak_revoked_ticket_access(self):
+        Notification.objects.create(user=self.actor, ticket=self.own_ticket, title="Own organization notice")
+        Notification.objects.create(user=self.actor, ticket=self.outside_ticket, title="Outside private notice")
+        self.client.force_login(self.actor)
+        response = self.client.get(reverse("portal:notification_feed"))
+        self.assertEqual(response.json()["unread"], 1)
+        self.assertEqual(response.json()["items"][0]["title"], "Own organization notice")
+
+    def test_staff_cannot_open_shared_global_document_store(self):
+        from apps.core.document_views import _can_use_global_document_center
+        self.assertFalse(_can_use_global_document_center(self.actor))
+
+    def test_internal_knowledge_and_attachments_follow_organization(self):
+        from apps.knowledge.models import Article, KnowledgeCategory
+        category = KnowledgeCategory.objects.create(name_en="Tenant knowledge", slug="tenant-knowledge")
+        own = Article.objects.create(category=category, slug="tenant-own", title_en="Own internal article",
+                                     body_en="Details", state="published", is_public=False, author=self.peer)
+        outside = Article.objects.create(category=category, slug="tenant-outside", title_en="Other internal article",
+                                         body_en="Private", state="published", is_public=False, author=self.outsider)
+        self.client.force_login(self.actor)
+        self.assertEqual(self.client.get(reverse("knowledge:detail", args=[own.slug])).status_code, 200)
+        self.assertEqual(self.client.get(reverse("knowledge:detail", args=[outside.slug])).status_code, 404)

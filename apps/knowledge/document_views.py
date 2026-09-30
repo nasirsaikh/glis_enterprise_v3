@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 
 from apps.core.mayan import MayanError, mayan
+from .access import visible_articles
 from .models import Article
 
 
@@ -14,7 +15,7 @@ def _documents(article):
 
 @login_required
 def article_documents(request, slug):
-    article = get_object_or_404(Article, slug=slug)
+    article = get_object_or_404(visible_articles(request.user), slug=slug)
     documents, error = [], ""
     try:
         documents = _documents(article)
@@ -26,7 +27,7 @@ def article_documents(request, slug):
 @login_required
 @require_POST
 def article_document_upload(request, slug):
-    article = get_object_or_404(Article, slug=slug)
+    article = get_object_or_404(visible_articles(request.user), slug=slug)
     if not (request.user.is_staff or request.user.is_superuser or article.author_id == request.user.pk):
         return HttpResponse("Controlled document upload permission is required.", status=403)
     upload = request.FILES.get("file")
@@ -41,7 +42,7 @@ def article_document_upload(request, slug):
 
 @login_required
 def article_document_download(request, slug, document_id):
-    article = get_object_or_404(Article, slug=slug)
+    article = get_object_or_404(visible_articles(request.user), slug=slug)
     if not article.is_public and not (request.user.is_staff or request.user.is_superuser or article.author_id == request.user.pk):
         return HttpResponse("Controlled document access denied.", status=403)
     try:

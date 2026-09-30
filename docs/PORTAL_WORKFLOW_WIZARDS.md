@@ -148,6 +148,7 @@ node --check static/js/tpa.js
 git diff --check
 static/css/tailwindcss -i static/css/input.css -o static/css/output.css --minify
 python manage.py migrate --noinput --settings=glis_qa_settings
+python manage.py makemigrations --check --dry-run
 ```
 
 The full regression suite passed **93 tests**. Django checks and JavaScript syntax
@@ -165,6 +166,15 @@ failure recovery, creation layouts, and the ticket wizard.
 Deploy the committed static assets and run `python manage.py migrate` and
 `python manage.py collectstatic --noinput` through the normal deployment process.
 No live Ollama, external mail, courier, or production TPA integration was exercised.
+GitHub's [Django UI validation](https://github.com/nasirsaikh/glis_enterprise_v3/actions/runs/36668153528)
+and [TPA workflow tests](https://github.com/nasirsaikh/glis_enterprise_v3/actions/runs/36668153376)
+passed. The [Django 6.1 compatibility check](https://github.com/nasirsaikh/glis_enterprise_v3/actions/runs/36668153690)
+failed its migration-state step because it proposes migrations in unchanged
+third-party `django_summernote` and `djangocms_alias` packages, and consequently
+skipped its full-suite step. An isolated checkout of the original commit with
+the pinned versions reproduces both third-party migration changes. These dependency migration
+issues were not changed as part of the workflow UI refactor and remain a CI
+blocker. The local 93-test suite and the independent TPA workflow check passed.
 The existing test-fixture naive-datetime/static-directory warnings and scheduler
 shutdown lock warning remain outside this UI change; the test process exits
 successfully. The synchronous extraction services and business calculations retain

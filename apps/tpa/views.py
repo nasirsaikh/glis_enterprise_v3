@@ -702,7 +702,6 @@ def policy_enrollment_create(request):
 
 
 @login_required
-def policy_plan_add(request, reference):@login_required
 def policy_plan_add(request, reference):
     _require_tpa_access(request.user)
     if request.method != "POST":

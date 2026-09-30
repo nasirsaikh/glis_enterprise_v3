@@ -56,6 +56,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
     inlines = [ServiceInline, FeatureInline, StatisticInline, ProcessStepInline, TestimonialInline, FAQInline, PartnerInline, ManagementMemberInline, InsurancePartnerInline, ProviderTypeInline]
     fieldsets = (
         ("General", {"fields": (("site_name_en", "site_name_ar"), "short_name", ("tagline_en", "tagline_ar"), "organization_details")}),
+        ("TPA Defaults", {"fields": ("default_tpa_organization",)}),
         ("Contact", {"fields": (("contact_email", "support_email"), ("contact_phone", "secondary_phone"), "whatsapp_number", ("working_hours_en", "working_hours_ar"))}),
         ("Address & Map", {"fields": (("address_en", "address_ar"), ("city", "governorate"), ("country", "po_box", "postal_code"), ("latitude", "longitude", "map_zoom"))}),
         ("Registration", {"fields": (("commercial_registration_no", "vat_registration_no"), ("license_no", "established_year"), "website")}),

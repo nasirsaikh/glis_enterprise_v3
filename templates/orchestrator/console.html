@@ -6,43 +6,14 @@
 {% if selected_domain %}
 {% url 'orchestrator:session_detail' '00000000-0000-0000-0000-000000000000' as session_detail_template %}
 <div id="vanna-workbench"
-     class="grid min-h-0 overflow-hidden bg-base-100 lg:grid-cols-[18rem_1fr]" style="height:calc(100dvh - 5rem)"
+     class="flex min-h-0 flex-col overflow-hidden bg-base-100" style="height:calc(100dvh - 5rem)"
      data-session-detail-template="{{ session_detail_template }}"
      data-session-list-url="{% url 'orchestrator:session_list' %}"
      data-domain-id="{{ selected_domain.pk }}">
 
-  <aside class="flex min-h-0 flex-col border-b border-base-300 bg-base-200/65 lg:border-b-0 lg:border-e" aria-label="{% translate 'Analysis sessions' %}">
-    <div class="border-b border-base-300 p-4">
-      <div class="flex items-center justify-between gap-3">
-        <div><span class="badge badge-primary badge-soft mb-2"><i class="bi bi-stars me-1"></i>{% translate "AI analytics" %}</span><h1 class="text-xl font-black">{% translate "Ask Vanna" %}</h1></div>
-        <button class="btn btn-primary btn-circle btn-sm" id="vanna-new-session" type="button" title="{% translate 'Start a new conversation' %}"><i class="bi bi-plus-lg"></i></button>
-      </div>
-      <form class="mt-4" method="get">
-        <label class="fieldset"><span class="fieldset-legend">{% translate "Analytics domain" %}</span>
-          <select class="select select-bordered w-full" id="vanna-domain" name="domain" data-auto-submit>{% for domain in domains %}<option value="{{ domain.pk }}" {% if domain == selected_domain %}selected{% endif %}>{{ domain.name }}</option>{% endfor %}</select>
-        </label>
-      </form>
-    </div>
-
-    <div class="max-h-64 flex-1 overflow-y-auto p-2 lg:max-h-none" id="vanna-session-list">
-      {% for session in analysis_sessions %}
-      <button class="btn btn-ghost mb-1 h-auto w-full justify-start gap-3 py-3 text-start {% if active_session.pk == session.pk %}btn-active{% endif %}" type="button" data-session-id="{{ session.pk }}">
-        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><i class="bi bi-chat-left-text"></i></span>
-        <span class="min-w-0 flex-1"><strong class="block truncate text-sm">{{ session.title|truncatechars:58 }}</strong><small class="mt-1 block text-xs text-base-content/45">{{ session.question_count }} {% translate "questions" %} · {{ session.updated_at|timesince }} {% translate "ago" %}</small></span>
-      </button>
-      {% empty %}
-      <div class="flex flex-col items-center gap-2 py-10 text-center text-base-content/45" id="vanna-session-empty"><i class="bi bi-chat-square-dots text-2xl"></i><span>{% translate "Your conversations will appear here." %}</span></div>
-      {% endfor %}
-    </div>
-
-    {% if user.is_staff %}
-    <div class="border-t border-base-300 p-3"><a class="btn btn-outline btn-sm w-full" href="{% url 'admin:orchestrator_businessrule_changelist' %}"><i class="bi bi-sliders"></i>{% translate "Rules, prompts & training" %}</a></div>
-    {% endif %}
-  </aside>
-
-  <section class="flex min-h-0 min-w-0 flex-col">
+  <section class="flex min-h-0 min-w-0 flex-col">  <section class="flex min-h-0 min-w-0 flex-col">
     <header class="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 px-4 py-3 sm:px-6">
-      <div class="flex items-center gap-3"><span class="status status-success animate-pulse"></span><div><strong class="block">{{ selected_domain.name }}</strong><small class="text-base-content/45">{% translate "Governed analytics workspace" %}</small></div></div>
+      <div class="flex items-center gap-3"><span class="status status-success animate-pulse"></span><div><strong class="block">{% translate "Ask Vanna" %} · {{ selected_domain.name }}</strong><small class="text-base-content/45">{% translate "Chats, sessions and domain selection are available from the main sidebar." %}</small></div></div>
       <div class="flex flex-wrap gap-2"><span class="badge badge-outline gap-1"><i class="bi bi-database"></i>{{ selected_domain.collection_name|default:"Tool Memory" }}</span><span class="badge badge-success badge-soft gap-1"><i class="bi bi-shield-check"></i>{% translate "Governed" %}</span></div>
     </header>
 

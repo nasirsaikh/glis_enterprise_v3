@@ -17,9 +17,6 @@
         <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-arrow-repeat"></i>{% translate "Sync Inbox Now" %}</button>
       </form>
       {% endif %}
-      {% if can_create_tpa_transaction %}
-      <a class="btn btn-outline btn-sm" href="{% url 'tpa:inbound_email_create' %}"><i class="bi bi-life-preserver"></i>{% translate "Manual Intake / Reprocess" %}</a>
-      {% endif %}
     </div>
   </header>
 

@@ -177,6 +177,31 @@
           </ul>
           {% endfor %}
 
+          {% if request.resolver_match.namespace == 'orchestrator' and selected_domain %}
+          <div data-sidebar-label class="mt-3 hidden rounded-box border border-base-300 bg-base-200/55 p-2">
+            <div class="mb-2 flex items-center justify-between gap-2 px-1">
+              <span class="text-[10px] font-black uppercase tracking-wider text-base-content/50">{% translate "Analytics chats" %}</span>
+              <button class="btn btn-primary btn-circle btn-xs" id="vanna-new-session" type="button" title="{% translate 'Start a new conversation' %}"><i class="bi bi-plus-lg"></i></button>
+            </div>
+            <form method="get" class="mb-2">
+              <select class="select select-bordered select-xs w-full" id="vanna-domain" name="domain" data-auto-submit aria-label="{% translate 'Analytics domain' %}">
+                {% for domain in domains %}<option value="{{ domain.pk }}" {% if domain == selected_domain %}selected{% endif %}>{{ domain.name }}</option>{% endfor %}
+              </select>
+            </form>
+            <div class="max-h-64 overflow-y-auto" id="vanna-session-list">
+              {% for session in analysis_sessions %}
+              <button class="btn btn-ghost mb-1 h-auto w-full justify-start gap-2 px-2 py-2 text-start {% if active_session.pk == session.pk %}btn-active{% endif %}" type="button" data-session-id="{{ session.pk }}">
+                <i class="bi bi-chat-left-text shrink-0 text-primary"></i>
+                <span class="min-w-0 flex-1"><strong class="block truncate text-xs">{{ session.title|truncatechars:42 }}</strong><small class="block truncate text-[10px] font-normal opacity-45">{{ session.question_count }} {% translate "questions" %} · {{ session.updated_at|timesince }} {% translate "ago" %}</small></span>
+              </button>
+              {% empty %}
+              <div class="px-2 py-4 text-center text-xs opacity-45" id="vanna-session-empty">{% translate "Your conversations will appear here." %}</div>
+              {% endfor %}
+            </div>
+            {% if user.is_staff %}<a class="btn btn-ghost btn-xs mt-2 w-full justify-start" href="{% url 'admin:orchestrator_businessrule_changelist' %}"><i class="bi bi-sliders"></i>{% translate "Rules & training" %}</a>{% endif %}
+          </div>
+          {% endif %}
+
           {% if can_access_tpa %}
           <ul class="menu mt-3 w-full gap-1 p-0">
             <li data-sidebar-label class="menu-title hidden"><span>{% translate "TPA Operations" %}</span></li>
@@ -195,6 +220,13 @@
                 <i class="bi bi-inbox text-lg"></i><span data-sidebar-label class="hidden">{% translate "TPA Inbound Emails" %}</span>
               </a>
             </li>
+            {% if can_create_tpa_transaction %}
+            <li data-sidebar-label class="hidden ps-5">
+              <a class="{% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name == 'inbound_email_create' %}menu-active{% endif %}" href="{% url 'tpa:inbound_email_create' %}">
+                <i class="bi bi-envelope-plus"></i><span>{% translate "Add Email / Reprocess" %}</span>
+              </a>
+            </li>
+            {% endif %}
             <li>
               <a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name == 'user_guide' %}menu-active{% endif %}" href="{% url 'tpa:user_guide' %}" title="{% translate 'TPA User Guide' %}">
                 <i class="bi bi-book text-lg"></i><span data-sidebar-label class="hidden">{% translate "TPA User Guide" %}</span>

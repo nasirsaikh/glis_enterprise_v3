@@ -12,11 +12,6 @@
     </div>
     <div class="flex flex-wrap gap-2">
       <a class="btn btn-ghost btn-sm" href="{% url 'tpa:user_guide' %}"><i class="bi bi-book"></i>{% translate "Guide" %}</a>
-      <a class="btn btn-outline btn-sm" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-building-add"></i>{% translate "Initial Enrollment" %}</a>
-      <a class="btn btn-outline btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-inbox"></i>{% translate "Inbound Email" %}</a>
-      {% if can_create_tpa_transaction %}
-      <a class="btn btn-secondary btn-sm" href="{% url 'tpa:inbound_email_create' %}"><i class="bi bi-envelope-plus"></i>{% translate "Add Email" %}</a>
-      {% endif %}
       {% if can_create_endorsement %}
       <a class="btn btn-primary btn-sm" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>
       {% endif %}

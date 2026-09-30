@@ -248,6 +248,7 @@ class SupportGroupAdmin(JSONModelAdmin):
     filter_horizontal = (
         "members",
         "managers",
+        "organizations",
     )
 
     fieldsets = (
@@ -265,9 +266,10 @@ class SupportGroupAdmin(JSONModelAdmin):
         ),
 
         (
-            "People",
+            "People & organizations",
             {
                 "fields": (
+                    "organizations",
                     "members",
                     "managers",
                 )

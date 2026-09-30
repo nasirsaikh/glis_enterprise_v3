@@ -11,7 +11,7 @@
      data-session-list-url="{% url 'orchestrator:session_list' %}"
      data-domain-id="{{ selected_domain.pk }}">
 
-  <section class="flex min-h-0 min-w-0 flex-col">  <section class="flex min-h-0 min-w-0 flex-col">
+  <section class="flex min-h-0 min-w-0 flex-col">
     <header class="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 px-4 py-3 sm:px-6">
       <div class="flex items-center gap-3"><span class="status status-success animate-pulse"></span><div><strong class="block">{% translate "Ask Vanna" %} · {{ selected_domain.name }}</strong><small class="text-base-content/45">{% translate "Chats, sessions and domain selection are available from the main sidebar." %}</small></div></div>
       <div class="flex flex-wrap gap-2"><span class="badge badge-outline gap-1"><i class="bi bi-database"></i>{{ selected_domain.collection_name|default:"Tool Memory" }}</span><span class="badge badge-success badge-soft gap-1"><i class="bi bi-shield-check"></i>{% translate "Governed" %}</span></div>

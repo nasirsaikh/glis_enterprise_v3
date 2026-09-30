@@ -537,7 +537,7 @@ def policy_enrollment_create(request):
             "You do not have permission to perform initial policy enrollment."
         )
 
-    form = PolicyEnrollmentForm(request.POST or None)
+    form = PolicyEnrollmentForm(request.POST or None, user=request.user)
     uses_formset = request.method != "POST" or "plans-TOTAL_FORMS" in request.POST
     plan_formset = InitialBenefitPlanFormSet(
         request.POST if request.method == "POST" and uses_formset else None,

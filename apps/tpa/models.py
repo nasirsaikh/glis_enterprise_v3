@@ -147,6 +147,7 @@ class MemberTransaction(TimeStampedModel):
     class Type(models.TextChoices):
         NEW_POLICY_ENROLLMENT="NEW_POLICY_ENROLLMENT","New Policy Enrollment"
         MEMBER_ADD="MEMBER_ADD","Member Addition"
+        MEMBER_UPDATE="MEMBER_UPDATE","Member Demographic Change"
         MEMBER_TERMINATE="MEMBER_TERMINATE","Member Termination"
         MEMBER_SUSPEND="MEMBER_SUSPEND","Temporary Suspension"
         MEMBER_REACTIVATE="MEMBER_REACTIVATE","Member Reactivation"

@@ -177,6 +177,26 @@ def start_tpa_processing(tx, actor):
         raise PermissionError("You do not have TPA processing authority.")
     tx.status = tx.Status.TPA_IN_PROGRESS
     tx.save(update_fields=["status", "updated_at"])
+
+    if tx.transaction_type in {
+        tx.Type.MEMBER_UPDATE,
+        tx.Type.MEMBER_TERMINATE,
+        tx.Type.MEMBER_DELETE,
+        tx.Type.MEMBER_SUSPEND,
+        tx.Type.MEMBER_REACTIVATE,
+    }:
+        for action in tx.member_actions.all():
+            changed = []
+            if not action.tpa_effective_date:
+                action.tpa_effective_date = tx.effective_date
+                changed.append("tpa_effective_date")
+            if action.tpa_premium_amount is None:
+                action.tpa_premium_amount = action.calculated_premium
+                changed.append("tpa_premium_amount")
+            if changed:
+                changed.append("updated_at")
+                action.save(update_fields=changed)
+
     _event(tx, actor, "tpa_started", "TPA processing started.")
     return tx
 
@@ -900,6 +920,51 @@ def _process_add(tx, action):
     }
 
 
+def _process_demographic_update(tx, action):
+    data = _data(action)
+    enrollment = _find_enrollment(tx, data)
+    if not enrollment:
+        raise ValueError("Active member enrollment no longer exists.")
+    member = enrollment.member
+    action.before_data = {
+        "member_id": member.tpa_member_id,
+        "employee_id": member.employee_id,
+        "first_name": member.first_name,
+        "middle_name": member.middle_name,
+        "last_name": member.last_name,
+        "date_of_birth": member.date_of_birth.isoformat() if member.date_of_birth else "",
+        "gender": member.gender,
+        "national_id": member.national_id,
+        "passport_number": member.passport_number,
+    }
+    member.employee_id = str(data.get("employee_id") or "").strip()
+    member.first_name = str(data.get("first_name") or "").strip()
+    member.middle_name = str(data.get("middle_name") or "").strip()
+    member.last_name = str(data.get("last_name") or "").strip()
+    member.date_of_birth = _as_date(data.get("date_of_birth"))
+    member.gender = str(data.get("gender") or "").strip()
+    member.national_id = str(data.get("national_id") or "").strip()
+    member.passport_number = str(data.get("passport_number") or "").strip()
+    member.save(
+        update_fields=[
+            "employee_id", "first_name", "middle_name", "last_name",
+            "date_of_birth", "gender", "national_id", "passport_number", "updated_at",
+        ]
+    )
+    action.member = member
+    action.after_data = {
+        "member_id": member.tpa_member_id,
+        "employee_id": member.employee_id,
+        "first_name": member.first_name,
+        "middle_name": member.middle_name,
+        "last_name": member.last_name,
+        "date_of_birth": member.date_of_birth.isoformat() if member.date_of_birth else "",
+        "gender": member.gender,
+        "national_id": member.national_id,
+        "passport_number": member.passport_number,
+    }
+
+
 def _process_termination(tx, action, void=False):
     data = _data(action)
     enrollment = _find_enrollment(tx, data)
@@ -1045,6 +1110,8 @@ def process_transaction(tx, actor):
                     tx.Type.MEMBER_ADD,
                 }:
                     _process_add(tx, action)
+                elif tx.transaction_type == tx.Type.MEMBER_UPDATE:
+                    _process_demographic_update(tx, action)
                 elif tx.transaction_type == tx.Type.MEMBER_TERMINATE:
                     _process_termination(tx, action, void=False)
                 elif tx.transaction_type == tx.Type.MEMBER_DELETE:

@@ -287,6 +287,68 @@ def validate_action(action):
             action.calculated_premium = amount
             action.calculation_snapshot = snapshot
 
+    elif tx.transaction_type == tx.Type.MEMBER_UPDATE:
+        if not any(
+            data.get(field)
+            for field in (
+                "tpa_member_id",
+                "card_number",
+                "employee_id",
+                "national_id",
+                "passport_number",
+            )
+        ):
+            errors.append(
+                error(
+                    "MEMBER_IDENTIFIER_REQUIRED",
+                    "member",
+                    "Provide card/member ID, employee ID, national ID or passport number.",
+                )
+            )
+        enrollment = _find_active_enrollment(tx, data)
+        if not errors and not enrollment:
+            errors.append(
+                error(
+                    "ACTIVE_MEMBER_NOT_FOUND",
+                    "member",
+                    "No active member enrollment matches the supplied identifier.",
+                )
+            )
+        if enrollment:
+            action.member = enrollment.member
+            for field in ("first_name", "last_name", "date_of_birth", "gender"):
+                if not data.get(field):
+                    errors.append(
+                        error(
+                            "REQUIRED_FIELD",
+                            field,
+                            f"{field.replace('_', ' ').title()} is required.",
+                        )
+                    )
+            for field, lookup, label in (
+                ("employee_id", "member__employee_id", "Employee number"),
+                ("national_id", "member__national_id", "Civil/National ID"),
+                ("passport_number", "member__passport_number", "Passport number"),
+            ):
+                value = str(data.get(field) or "").strip()
+                if value and MemberPolicyEnrollment.objects.filter(
+                    policy=tx.policy,
+                    enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
+                    **{lookup: value},
+                ).exclude(member_id=enrollment.member_id).exists():
+                    errors.append(
+                        error(
+                            "DUPLICATE_MEMBER_IDENTIFIER",
+                            field,
+                            f"{label} is already used by another active member on this policy.",
+                        )
+                    )
+            action.calculated_premium = Decimal("0")
+            action.calculation_snapshot = {
+                "method": "NO_PREMIUM_CHANGE",
+                "reason": "MEMBER_DEMOGRAPHIC_CHANGE",
+            }
+
     elif tx.transaction_type in {
         tx.Type.MEMBER_TERMINATE,
         tx.Type.MEMBER_DELETE,
@@ -377,7 +439,14 @@ def validate_action(action):
                 )
 
     elif tx.transaction_type == tx.Type.POLICY_CANCEL:
-        enrollment = _find_active_enrollment(tx, data)
+        enrollment = _find_enrollment(
+            tx,
+            data,
+            [
+                MemberPolicyEnrollment.Status.ACTIVE,
+                MemberPolicyEnrollment.Status.SUSPENDED,
+            ],
+        )
         if enrollment:
             action.member = enrollment.member
             if tx.refund_basis == tx.RefundBasis.NONE:

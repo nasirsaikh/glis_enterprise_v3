@@ -8,6 +8,7 @@ from ..models import TransactionEvent
 CATEGORY_CODES={
     "NEW_POLICY_ENROLLMENT":"new-policy-enrollment",
     "MEMBER_ADD":"member-addition",
+    "MEMBER_UPDATE":"member-demographic-change",
     "MEMBER_TERMINATE":"member-termination",
     "MEMBER_SUSPEND":"member-suspension",
     "MEMBER_REACTIVATE":"member-reactivation",

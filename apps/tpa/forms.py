@@ -430,6 +430,33 @@ class MemberLookupRowForm(forms.Form):
         return data
 
 
+class MemberDemographicUpdateForm(MemberLookupRowForm):
+    first_name = forms.CharField(required=True)
+    middle_name = forms.CharField(required=False)
+    last_name = forms.CharField(required=True)
+    date_of_birth = forms.DateField(required=True, widget=forms.DateInput(attrs={"type": "date"}))
+    gender = forms.ChoiceField(
+        choices=(("", "Select gender"), ("Male", "Male"), ("Female", "Female")),
+        required=True,
+    )
+    employee_id = forms.CharField(required=False, label="Employee No.")
+    national_id = forms.CharField(required=False, label="Civil / National ID")
+    passport_number = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["tpa_member_id"].widget = forms.HiddenInput()
+        self.fields["card_number"].widget = forms.HiddenInput()
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.HiddenInput):
+                continue
+            field.widget.attrs["class"] = (
+                "select select-bordered select-sm w-full"
+                if isinstance(field.widget, forms.Select)
+                else "input input-bordered input-sm w-full"
+            )
+
+
 class MemberUploadForm(forms.Form):
     member_file = forms.FileField(
         label="Member file",

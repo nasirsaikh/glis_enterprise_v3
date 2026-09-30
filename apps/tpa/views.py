@@ -24,6 +24,7 @@ from .forms import (
     CardDispatchForm,
     InboundEmailForm,
     InitialBenefitPlanFormSet,
+    MemberDemographicUpdateForm,
     MemberLookupRowForm,
     MemberRowForm,
     MemberUploadForm,
@@ -889,6 +890,8 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
                     "principal_reference": principal_reference,
                 },
             )
+        elif tx.transaction_type == tx.Type.MEMBER_UPDATE:
+            action.edit_form = MemberDemographicUpdateForm(initial=display_data)
         elif tx.transaction_type in {
             tx.Type.MEMBER_TERMINATE,
             tx.Type.MEMBER_DELETE,
@@ -995,12 +998,14 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
     )
 
     selectable_members = []
-    if tx.transaction_type in {
+    uses_existing_members = tx.transaction_type in {
+        tx.Type.MEMBER_UPDATE,
         tx.Type.MEMBER_DELETE,
         tx.Type.MEMBER_TERMINATE,
         tx.Type.MEMBER_SUSPEND,
         tx.Type.MEMBER_REACTIVATE,
-    }:
+    }
+    if uses_existing_members:
         selectable_members = list(selectable_enrollments(tx))
 
     try:
@@ -1063,7 +1068,9 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
         "quality_chart": quality_chart,
         "error_chart": error_chart,
         "sample_rows": sample_member_rows(tx),
-        "source_upload_form": SourceBundleUploadForm(),
+        "source_upload_form": SourceBundleUploadForm() if is_add else None,
+        "requires_source_intake": is_add,
+        "uses_existing_members": uses_existing_members,
         "plan_form": (
             BenefitPlanSetupForm(policy=tx.policy)
             if tx.transaction_type == tx.Type.NEW_POLICY_ENROLLMENT
@@ -1138,6 +1145,8 @@ def transaction_upload_sources(request, reference):
     _require_intake_edit(request.user, tx)
     if tx.status not in INTAKE_EDITABLE_STATUSES:
         raise PermissionDenied("Source upload is closed for this transaction.")
+    if tx.transaction_type not in {tx.Type.NEW_POLICY_ENROLLMENT, tx.Type.MEMBER_ADD}:
+        raise PermissionDenied("Document/OCR member intake is available only for member addition workflows.")
 
     form = SourceBundleUploadForm(request.POST, request.FILES)
     if not form.is_valid():
@@ -1271,6 +1280,7 @@ def transaction_select_members(request, reference):
     if tx.status not in INTAKE_EDITABLE_STATUSES:
         raise PermissionDenied("Member selection is closed for this transaction.")
     if tx.transaction_type not in {
+        tx.Type.MEMBER_UPDATE,
         tx.Type.MEMBER_DELETE,
         tx.Type.MEMBER_TERMINATE,
         tx.Type.MEMBER_SUSPEND,
@@ -1315,6 +1325,17 @@ def transaction_select_members(request, reference):
                 request,
                 "Duplicate pasted card numbers ignored: " + ", ".join(result["duplicates"]),
             )
+
+    saved_ids = set(
+        int(value)
+        for value in (tx.metadata or {}).get("selected_enrollment_ids", [])
+        if str(value).isdigit()
+    )
+    saved_ids.update(item.pk for item in selected)
+    if card_numbers.strip():
+        saved_ids.update(item.pk for item in result["matched"])
+    tx.metadata = {**(tx.metadata or {}), "selected_enrollment_ids": sorted(saved_ids)}
+    tx.save(update_fields=["metadata", "updated_at"])
 
     for action in tx.member_actions.all():
         validate_action(action)
@@ -1458,11 +1479,12 @@ def transaction_edit_member(request, reference, action_id):
         tx.Type.NEW_POLICY_ENROLLMENT,
         tx.Type.MEMBER_ADD,
     }
-    form = (
-        MemberRowForm(request.POST, transaction=tx, current_action=action)
-        if is_add
-        else MemberLookupRowForm(request.POST)
-    )
+    if is_add:
+        form = MemberRowForm(request.POST, transaction=tx, current_action=action)
+    elif tx.transaction_type == tx.Type.MEMBER_UPDATE:
+        form = MemberDemographicUpdateForm(request.POST)
+    else:
+        form = MemberLookupRowForm(request.POST)
     if not form.is_valid():
         return _transaction_response(
             request, tx, step="intake",
@@ -1534,9 +1556,35 @@ def transaction_submit(request, reference):
 
     if tx.transaction_type == tx.Type.POLICY_CANCEL and not tx.member_actions.exists():
         populate_policy_cancellation(tx)
+
+    existing_member_types = {
+        tx.Type.MEMBER_UPDATE,
+        tx.Type.MEMBER_DELETE,
+        tx.Type.MEMBER_TERMINATE,
+        tx.Type.MEMBER_SUSPEND,
+        tx.Type.MEMBER_REACTIVATE,
+    }
+    if tx.transaction_type in existing_member_types and not tx.member_actions.exists():
+        saved_ids = [
+            int(value)
+            for value in (tx.metadata or {}).get("selected_enrollment_ids", [])
+            if str(value).isdigit()
+        ]
+        if saved_ids:
+            add_enrollments_to_transaction(
+                tx,
+                selectable_enrollments(tx).filter(pk__in=saved_ids),
+                source=f"saved_policy_selection:user:{request.user.pk}",
+            )
+
     if tx.transaction_type != tx.Type.POLICY_CANCEL and not tx.member_actions.exists():
-        messages.error(request, "At least one member is required before continuing.")
-        return _transaction_response(request, tx, step='validation')
+        messages.error(
+            request,
+            "Select at least one existing member before continuing."
+            if tx.transaction_type in existing_member_types
+            else "At least one member is required before continuing.",
+        )
+        return _transaction_response(request, tx, step='intake')
 
     tx.submitted_at = timezone.now()
     tx.status = tx.Status.PENDING_VALIDATION

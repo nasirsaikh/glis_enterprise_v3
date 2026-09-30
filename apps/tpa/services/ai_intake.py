@@ -36,6 +36,10 @@ TRANSACTION_ALIASES = {
     "MEMBER ADD": MemberTransaction.Type.MEMBER_ADD,
     "MEMBER ADDITION": MemberTransaction.Type.MEMBER_ADD,
     "ADD": MemberTransaction.Type.MEMBER_ADD,
+    "MEMBER_UPDATE": MemberTransaction.Type.MEMBER_UPDATE,
+    "MEMBER UPDATE": MemberTransaction.Type.MEMBER_UPDATE,
+    "DEMOGRAPHIC CHANGE": MemberTransaction.Type.MEMBER_UPDATE,
+    "DEMOGRAPHIC UPDATE": MemberTransaction.Type.MEMBER_UPDATE,
     "MEMBER_TERMINATE": MemberTransaction.Type.MEMBER_TERMINATE,
     "MEMBER TERMINATE": MemberTransaction.Type.MEMBER_TERMINATE,
     "TERMINATION": MemberTransaction.Type.MEMBER_TERMINATE,
@@ -102,7 +106,7 @@ def _profile_prompt(profile):
         '"policy_number":null,"transaction_type":"MEMBER_ADD","transaction_reference":null,'
         '"effective_date":null,"refund_basis":null,"temporary_until":null,"remarks":"",'
         '"summary":"","missing_information":[],"warnings":[],"source_references":[],"members":[]}. '
-        "classification/transaction_type may be MEMBER_ADD, MEMBER_DELETE, MEMBER_TERMINATE, "
+        "classification/transaction_type may be MEMBER_ADD, MEMBER_UPDATE, MEMBER_DELETE, MEMBER_TERMINATE, "
         "MEMBER_SUSPEND, MEMBER_REACTIVATE, POLICY_CANCEL, QUERY_REPLY, NOT_ENDORSEMENT or NEEDS_REVIEW. "
         "For deletion/cancellation, refund_basis may be FULL or PRO_RATA when explicitly stated. "
         "Each member may contain employee_id, member_id, first_name, middle_name, "

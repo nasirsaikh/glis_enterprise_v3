@@ -54,7 +54,10 @@ def populate_policy_cancellation(tx):
         "member", "benefit_plan"
     ).filter(
         policy=tx.policy,
-        enrollment_status=MemberPolicyEnrollment.Status.ACTIVE,
+        enrollment_status__in=[
+            MemberPolicyEnrollment.Status.ACTIVE,
+            MemberPolicyEnrollment.Status.SUSPENDED,
+        ],
     )
     return add_enrollments_to_transaction(
         tx,

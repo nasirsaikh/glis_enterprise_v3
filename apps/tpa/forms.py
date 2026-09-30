@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.ai.models import AIProviderConfig
+from apps.core.models import SiteSettings
 
 from .models import (
     BenefitPlan,
@@ -119,7 +120,8 @@ class TransactionForm(forms.ModelForm):
 class PolicyEnrollmentForm(forms.Form):
     sponsor = forms.ModelChoiceField(
         queryset=TPAOrganization.objects.none(),
-        label="Individual / Corporate Sponsor",
+        label="Organization",
+        help_text="Organizations are assigned globally to your user account.",
     )
     insurance_company = forms.ModelChoiceField(
         queryset=TPAOrganization.objects.none(),
@@ -128,7 +130,8 @@ class PolicyEnrollmentForm(forms.Form):
     tpa_organization = forms.ModelChoiceField(
         queryset=TPAOrganization.objects.none(),
         required=False,
-        label="TPA",
+        label="TPA (Site Default)",
+        help_text="Controlled by Core → Site Settings.",
     )
     policy_number = forms.CharField(max_length=80)
     policy_name = forms.CharField(max_length=180)
@@ -145,23 +148,72 @@ class PolicyEnrollmentForm(forms.Form):
     annual_premium = forms.DecimalField(max_digits=14, decimal_places=3, required=False, widget=forms.HiddenInput())
     default_sum_insured = forms.DecimalField(max_digits=16, decimal_places=3, required=False, widget=forms.HiddenInput())
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
         super().__init__(*args, **kwargs)
-        self.fields["sponsor"].queryset = TPAOrganization.objects.filter(
+
+        sponsor_qs = TPAOrganization.objects.filter(
             organization_type__in=[
                 TPAOrganization.Type.INDIVIDUAL,
                 TPAOrganization.Type.CORPORATE,
             ],
             is_active=True,
         ).order_by("organization_type", "name_en")
+
+        assigned_qs = TPAOrganization.objects.none()
+        profile = getattr(user, "profile", None) if user else None
+        if profile is not None:
+            assigned_qs = profile.organizations.filter(
+                organization_type__in=[
+                    TPAOrganization.Type.INDIVIDUAL,
+                    TPAOrganization.Type.CORPORATE,
+                ],
+                is_active=True,
+            ).order_by("organization_type", "name_en")
+
+        if user and user.is_authenticated:
+            if assigned_qs.exists():
+                sponsor_qs = assigned_qs
+            elif not (user.is_superuser or user.has_perm("tpa.configure_tpa")):
+                sponsor_qs = TPAOrganization.objects.none()
+        else:
+            sponsor_qs = TPAOrganization.objects.none()
+
+        self.fields["sponsor"].queryset = sponsor_qs
+        if sponsor_qs.count() == 1:
+            only_organization = sponsor_qs.first()
+            self.fields["sponsor"].initial = only_organization
+            self.fields["sponsor"].disabled = True
+            self.fields["sponsor"].help_text = (
+                "Your only assigned organization is selected automatically."
+            )
+        elif sponsor_qs.exists():
+            self.fields["sponsor"].help_text = (
+                "Select one of the organizations assigned to your user account."
+            )
+        else:
+            self.fields["sponsor"].help_text = (
+                "No eligible organization is assigned to your user account. "
+                "Ask an administrator to update your user organizations."
+            )
+
         self.fields["insurance_company"].queryset = TPAOrganization.objects.filter(
             organization_type=TPAOrganization.Type.INSURER,
             is_active=True,
         ).order_by("name_en")
-        self.fields["tpa_organization"].queryset = TPAOrganization.objects.filter(
+
+        tpa_qs = TPAOrganization.objects.filter(
             organization_type=TPAOrganization.Type.TPA,
             is_active=True,
         ).order_by("name_en")
+        self.fields["tpa_organization"].queryset = tpa_qs
+
+        self.site_settings = SiteSettings.load()
+        default_tpa = self.site_settings.default_tpa_organization
+        if default_tpa and default_tpa.is_active and default_tpa.organization_type == TPAOrganization.Type.TPA:
+            self.fields["tpa_organization"].initial = default_tpa
+        self.fields["tpa_organization"].disabled = True
+
         for field in self.fields.values():
             if isinstance(field.widget, forms.Select):
                 css = "select select-bordered select-sm w-full"
@@ -183,6 +235,29 @@ class PolicyEnrollmentForm(forms.Form):
         end = data.get("expiry_date")
         if start and end and end < start:
             self.add_error("expiry_date", "Expiry date cannot be before start date.")
+
+        default_tpa = getattr(self.site_settings, "default_tpa_organization", None)
+        if (
+            default_tpa is None
+            or not default_tpa.is_active
+            or default_tpa.organization_type != TPAOrganization.Type.TPA
+        ):
+            self.add_error(
+                None,
+                "A default active TPA must be configured in Core → Site Settings before creating a policy enrollment.",
+            )
+        else:
+            # Never trust a posted TPA value; policy enrollment routing is global.
+            data["tpa_organization"] = default_tpa
+
+        sponsor = data.get("sponsor")
+        profile = getattr(self.user, "profile", None) if self.user else None
+        if sponsor and profile is not None and profile.organizations.exists():
+            if not profile.organizations.filter(pk=sponsor.pk, is_active=True).exists():
+                self.add_error(
+                    "sponsor",
+                    "You can create enrollments only for organizations assigned to your user account.",
+                )
         return data
 
 

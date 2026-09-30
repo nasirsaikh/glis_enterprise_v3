@@ -757,6 +757,13 @@ class CardDispatchForm(forms.ModelForm):
             field.widget.attrs.setdefault("class", css)
 
 
+class TransactionRejectionForm(forms.Form):
+    reason = forms.CharField(
+        label="Rejection reason",
+        widget=forms.Textarea(attrs={"rows": 4, "class": "textarea textarea-bordered w-full"}),
+    )
+
+
 class TPAProcessingRowForm(forms.Form):
     card_number = forms.CharField(required=False, max_length=100)
     effective_date = forms.DateField(

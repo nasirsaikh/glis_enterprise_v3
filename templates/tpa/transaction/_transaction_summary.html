@@ -1,0 +1,16 @@
+{% load i18n %}
+<header class="card border border-base-300 bg-base-100 shadow-sm">
+  <div class="card-body p-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-xl font-bold">{{ tx.reference }}</h1>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="badge badge-primary badge-soft">{{ tx.get_transaction_type_display }}</span>
+        <span class="badge {% if tx.status == 'completed' or tx.status == 'processed' %}badge-success{% elif active_step.has_error %}badge-error{% elif tx.status == 'tpa_query' or tx.status == 'needs_information' %}badge-warning{% else %}badge-info{% endif %} badge-soft">{{ tx.get_status_display }}</span>
+        <span class="badge badge-outline">{{ tx.get_source_display }}</span>
+        <button class="btn btn-ghost btn-sm" type="button" data-open-dialog="transaction-audit" aria-label="{% translate 'View transaction audit' %}"><i class="bi bi-clock-history" aria-hidden="true"></i>{% translate "Audit" %}</button>
+      </div>
+    </div>
+    <p class="text-sm opacity-70">{{ tx.policy.policy_number }} · {{ tx.sponsor.name_en }} · {{ tx.insurer.name_en }}{% if tx.policy.tpa_organization %} · {{ tx.policy.tpa_organization.name_en }}{% endif %}</p>
+    <div class="flex flex-wrap gap-3 text-xs"><span>{% translate "Effective date" %}: <strong>{{ tx.effective_date|date:"d-M-Y" }}</strong></span>{% if tx.refund_basis != 'NONE' %}<span>{{ tx.get_refund_basis_display }}</span>{% endif %}{% if tx.ticket %}<a class="link link-primary" href="{% url 'portal:ticket_detail' tx.ticket.reference %}">{% translate "Linked ticket" %}: {{ tx.ticket.reference }}</a>{% endif %}</div>
+  </div>
+</header>

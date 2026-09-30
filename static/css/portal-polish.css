@@ -44,7 +44,7 @@ body.glis-portal-app {
   transition: width .22s ease, background .2s ease;
 }
 .glis-portal-app #portal-sidebar[data-sidebar-state="expanded"] { width: 17rem !important; }
-.glis-portal-app #portal-sidebar > div:first-child { min-height: 4.5rem; border-color: var(--portal-border); padding-inline: 1rem; }
+.glis-portal-app #portal-sidebar > div:first-child { min-height: 4.5rem; flex-shrink: 0; border-color: var(--portal-border); padding-inline: 1rem; }
 .glis-portal-app #portal-sidebar > div:first-child img { max-width: 8rem; max-height: 2.5rem; object-fit: contain; }
 .glis-portal-app #portal-sidebar nav { padding: .9rem .7rem 1.25rem; }
 .glis-portal-app #portal-sidebar nav .menu-title { padding: 1rem .8rem .45rem; color: #9aa79f; font-size: .65rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
@@ -304,11 +304,28 @@ html[dir="rtl"] .glis-portal-app #portal-sidebar .menu a.menu-active { box-shado
 
 /* Keep the shared navigation scrollable only when its contents exceed the viewport. */
 .glis-portal-app #portal-sidebar { display: flex; height: 100dvh; min-height: 100dvh; flex-direction: column; }
-.glis-portal-app #portal-sidebar nav { height: auto !important; min-height: 0; flex: 1 1 auto; overflow-x: hidden; overflow-y: hidden !important; scrollbar-width: thin; scrollbar-color: rgba(91, 116, 101, .32) transparent; }
+.glis-portal-app #portal-sidebar nav { height: auto !important; min-height: 0; flex: 1 1 auto; overflow-x: hidden; overflow-y: hidden !important; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--color-base-content) 35%, transparent) transparent; }
 .glis-portal-app #portal-sidebar nav[data-scrollable="true"] { overflow-y: auto !important; }
 .glis-portal-app #portal-sidebar nav::-webkit-scrollbar { width: 6px; }
 .glis-portal-app #portal-sidebar nav::-webkit-scrollbar-track { background: transparent; }
-.glis-portal-app #portal-sidebar nav::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: transparent; background-clip: padding-box; }
-.glis-portal-app #portal-sidebar nav[data-scrollable="true"]:hover::-webkit-scrollbar-thumb, .glis-portal-app #portal-sidebar nav[data-scrollable="true"]:focus-within::-webkit-scrollbar-thumb { background: rgba(91, 116, 101, .36); background-clip: padding-box; }
+.glis-portal-app #portal-sidebar nav::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: color-mix(in srgb, var(--color-base-content) 35%, transparent); background-clip: padding-box; }
 
 .glis-portal-app #portal-sidebar nav:not([data-scrollable]) { overflow-y: auto !important; }
+
+/* Shared workflow navigation and processing feedback use daisyUI theme tokens. */
+.workflow-workspace { width: 100%; min-width: 0; position: relative; }
+.workflow-step-scroll { min-width: 0; overflow-x: auto; padding: .75rem; position: relative; }
+.workflow-steps { width: 100%; min-width: max-content; }
+.workflow-step-link { height: auto; min-height: 2.75rem; white-space: normal; max-width: 10rem; position: relative; }
+.workflow-step-link[aria-current="step"] { color: var(--color-primary); font-weight: 800; }
+.workflow-loading { display: none; }
+.workflow-loading.htmx-request { display: flex; }
+.processing-form [type="submit"] { cursor: progress; }
+.processing-form .htmx-indicator { opacity: 1; }
+.processing-status { display: block; margin-top: .5rem; font-size: .8rem; }
+[data-processing-spinner][hidden], [data-processing-status][hidden] { display: none !important; }
+#transaction-step-container { animation: workflow-enter .16s ease-out; }
+#transaction-step-container .errorlist { color: var(--color-error); font-size: .8rem; }
+@keyframes workflow-enter { from { opacity: .5; transform: translateY(.2rem); } to { opacity: 1; transform: none; } }
+@media (max-width: 640px) { .workflow-step-link { font-size: .75rem; max-width: 8rem; } }
+@media (prefers-reduced-motion: reduce) { #transaction-step-container { animation: none; } }

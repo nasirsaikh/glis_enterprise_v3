@@ -185,10 +185,18 @@ class TPACoreTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "tpa-quality-chart")
-        self.assertContains(response, "tpa-error-chart")
+        self.assertNotContains(response, "tpa-quality-chart")
+        self.assertNotContains(response, "tpa-error-chart")
         self.assertContains(response, "OLLAMA OCR")
         self.assertNotContains(response, "Plotly.newPlot")
+        tx.status = tx.Status.PENDING_VALIDATION
+        tx.save(update_fields=["status"])
+        response = self.client.get(
+            reverse("tpa:transaction_detail", args=[tx.reference]) + "?step=validation"
+        )
+        self.assertContains(response, "tpa-quality-chart")
+        self.assertContains(response, "tpa-error-chart")
+        self.assertNotContains(response, "OLLAMA OCR")
 
     def test_transaction_workspace_renders_ocr_payload_without_rows_created(self):
         tx = self._transaction()
@@ -729,4 +737,3 @@ class TPACoreTests(TestCase):
         action = tx.member_actions.get()
         self.assertEqual(action.extracted_data["employee_id"], "E-AI-100")
         self.assertEqual(action.validation_status, MemberAction.Result.VALID)
-

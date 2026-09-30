@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @source "../../templates/base_portal.html";
+@source "../../templates/components/**/*.html";
 @source "../../templates/account/profile.html";
 @source "../../templates/cms/portal_page.html";
 @source "../../templates/documents/**/*.html";

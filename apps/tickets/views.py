@@ -16,6 +16,8 @@ from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.cache import patch_vary_headers
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 from apps.ai.models import AIInteraction, AISettings
 from apps.ai.providers import get_provider
@@ -449,22 +451,61 @@ def add_comment(request, reference):
         reference=ticket.reference,
     )
 
+def _ticket_wizard_frontier(wizard):
+    if "selection" not in wizard:
+        return 1
+    if "dynamic" not in wizard:
+        return 2
+    if "analysis" not in wizard:
+        return 3
+    return 4
+
+
+def _render_ticket_wizard(request, template, context):
+    wizard = request.session.get("ticket_wizard", {})
+    frontier = _ticket_wizard_frontier(wizard)
+    is_htmx = (request.headers.get("HX-Request", "").lower() == "true"
+               and request.headers.get("HX-History-Restore-Request", "").lower() != "true")
+    context["wizard_layout"] = "components/fragment.html" if is_htmx else "base_portal.html"
+    context["workflow_steps"] = [
+        {"key": str(index), "label": label, "icon": icon,
+         "url": reverse("portal:create_ticket", args=[index]),
+         "active": index == context["step"], "accessible": index <= frontier,
+         "completed": index < frontier,
+         "has_error": index == context["step"] and bool(context["form"].errors)}
+        for index, (label, icon) in enumerate([
+            (_("Service"), "bi-signpost-split"), (_("Details"), "bi-ui-checks"),
+            (_("Clarify"), "bi-stars"), (_("Review"), "bi-check2-square"),
+        ], 1)
+    ]
+    response = render(request, template, context)
+    patch_vary_headers(response, ["HX-Request", "HX-History-Restore-Request"])
+    if is_htmx:
+        response["HX-Push-Url"] = reverse("portal:create_ticket", args=[context["step"]])
+    return response
+
+
 @login_required
 def create_ticket(request, step=1):
     if step not in {1, 2, 3, 4}:
         raise Http404
     wizard = request.session.setdefault("ticket_wizard", {})
-    if step > 1 and not wizard.get("selection"):
-        return redirect("portal:create_ticket", step=1)
+    frontier = _ticket_wizard_frontier(wizard)
+    if step > frontier:
+        return redirect("portal:create_ticket", step=frontier)
 
     if step == 1:
         initial = wizard.get("selection", {})
         form = TicketCreateStep1Form(request.POST or None,initial=initial,user=request.user,)
         if request.method == "POST" and form.is_valid():
-            wizard["selection"] = {key: form.cleaned_data[key].pk for key in ("project", "product", "category")}
+            selection = {key: form.cleaned_data[key].pk for key in ("project", "product", "category")}
+            if wizard.get("selection") != selection:
+                for key in ("dynamic", "answers", "analysis"):
+                    wizard.pop(key, None)
+            wizard["selection"] = selection
             request.session.modified = True
             return redirect("portal:create_ticket",step=2,)
-        return render(
+        return _render_ticket_wizard(
             request,"tickets/wizard/step1.html",{"form": form,"step": 1,},)
 
     category = get_object_or_404(Category, pk=wizard["selection"]["category"])
@@ -473,10 +514,14 @@ def create_ticket(request, step=1):
     if step == 2:
         form = DynamicTicketForm(request.POST or None, schema=schema, user=request.user, initial=wizard.get("dynamic", {}))
         if request.method == "POST" and form.is_valid():
-            wizard["dynamic"] = _jsonable(form.cleaned_data)
+            values = _jsonable(form.cleaned_data)
+            if wizard.get("dynamic") != values:
+                for key in ("answers", "analysis"):
+                    wizard.pop(key, None)
+            wizard["dynamic"] = values
             request.session.modified = True
             return redirect("portal:create_ticket", step=3)
-        return render(request, "tickets/wizard/step2.html", {"form": form, "step": 2, "category": category})
+        return _render_ticket_wizard(request, "tickets/wizard/step2.html", {"form": form, "step": 2, "category": category})
 
     ai_settings = AISettings.load()
     if step == 3:
@@ -495,7 +540,7 @@ def create_ticket(request, step=1):
             AIInteraction.objects.create(user=request.user, purpose="ticket_intake", provider=ai_settings.provider, request_summary={"category": category.name_en}, response=analysis, confidence=analysis.get("confidence"), duration_ms=int((timezone.now() - started).total_seconds() * 1000), succeeded=succeeded, error_code=error)
             request.session.modified = True
             return redirect("portal:create_ticket", step=4)
-        return render(request, "tickets/wizard/step3.html", {"form": form, "questions": ai_settings.intake_questions, "step": 3})
+        return _render_ticket_wizard(request, "tickets/wizard/step3.html", {"form": form, "questions": ai_settings.intake_questions, "step": 3})
 
     analysis = wizard.get("analysis", {})
     initial = {"subject": f"{category.name_en} request", "description": wizard.get("dynamic", {}).get("description") or analysis.get("summary", ""), "priority": analysis.get("suggested_priority", category.default_priority)}
@@ -551,8 +596,12 @@ def create_ticket(request, step=1):
         AuditLog.record(request=request, action="ticket.create", instance=ticket, summary=f"Created {ticket.reference}")
         request.session.pop("ticket_wizard", None)
         messages.success(request, f"{ticket.reference} was submitted successfully.")
+        if request.headers.get("HX-Request", "").lower() == "true":
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = reverse("portal:ticket_detail", args=[ticket.reference])
+            return response
         return redirect("portal:ticket_detail", reference=ticket.reference)
-    return render(request, "tickets/wizard/step4.html", {"form": form, "step": 4, "wizard": wizard, "analysis": analysis, "category": category, "attachment_specs": attachment_specs})
+    return _render_ticket_wizard(request, "tickets/wizard/step4.html", {"form": form, "step": 4, "wizard": wizard, "analysis": analysis, "category": category, "attachment_specs": attachment_specs})
 
 
 # @login_required

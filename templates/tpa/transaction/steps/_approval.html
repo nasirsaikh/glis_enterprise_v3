@@ -1,0 +1,37 @@
+{% load i18n %}
+<section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><h2 class="text-lg font-black ">{% translate "APPROVAL" %}</h2></div></div>
+        <div class="card-body">
+          {% if tx.status == "rejected" %}
+          <div class="alert alert-error" role="alert"><div><strong>{% translate "Approval rejected" %}</strong><p>{{ tx.rejection_reason }}</p></div></div>
+          {% elif tx.stp_eligible and tx.status != "pending_approval" %}
+          <div class="alert alert-success py-2"><i aria-hidden="true" class="bi bi-lightning-charge"></i><div><strong>{% translate "Auto Approved by STP" %}</strong><div class="text-xs">{% translate "No manual approval action is required for this case." %}</div></div></div>
+          {% elif tx.status == "pending_approval" %}
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div><strong>{% translate "Manual approval required" %}</strong><div class="text-xs opacity-50">{% if ticket_approval_pending %}{% translate "The linked GLIS approval workflow is pending." %}{% else %}{% translate "An authorized approver can approve, reject or open a discussion." %}{% endif %}</div></div>
+            {% if can_approve and not ticket_approval_pending %}
+            <div class="flex gap-2">
+              <form method="post" action="{% url 'tpa:transaction_approve' tx.reference %}" hx-post="{% url 'tpa:transaction_approve' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-success btn-sm">{% translate "Approve & Dispatch" %}</button></form>
+              <button class="btn btn-error btn-outline btn-sm" type="button" onclick="document.getElementById('reject-transaction').showModal()">{% translate "Reject" %}</button>
+            </div>
+            <dialog id="reject-transaction" class="modal">
+              <div class="modal-box">
+                <h3 class="font-bold">{% translate "Reject Endorsement" %}</h3>
+                <form class="mt-3 space-y-3" method="post" action="{% url 'tpa:transaction_reject' tx.reference %}" hx-post="{% url 'tpa:transaction_reject' tx.reference %}" data-tpa-hx-form>
+                  {% csrf_token %}
+                  {% include "components/form_errors.html" with form=rejection_form %}
+                  <fieldset class="fieldset"><legend class="fieldset-legend">{{ rejection_form.reason.label }}</legend>{{ rejection_form.reason }}{{ rejection_form.reason.errors }}</fieldset>
+                  <div class="modal-action"><button class="btn btn-error">{% translate "Reject" %}</button><button class="btn" type="button" onclick="document.getElementById('reject-transaction').close()">{% translate "Cancel" %}</button></div>
+                </form>
+              </div>
+            </dialog>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="alert alert-success py-2"><i aria-hidden="true" class="bi bi-check-circle"></i><span>{% translate "Approval completed" %} · {{ tx.approved_at|date:"d-M-Y H:i"|default:"—" }}</span></div>
+          {% endif %}
+          <dl class="grid grid-cols-2 gap-3 text-sm"><div><dt class="opacity-60">{% translate "Approver" %}</dt><dd>{{ approver_name }}</dd></div><div><dt class="opacity-60">{% translate "Premium adjustment" %}</dt><dd>{{ tx.currency }} {{ tx.premium_adjustment }}</dd></div></dl>
+          {% if approval_events %}<ul class="list">{% for event in approval_events %}<li class="list-row"><span>{{ event.summary }}</span><time class="text-xs opacity-60">{{ event.created_at|date:"d-M-Y H:i" }}</time></li>{% endfor %}</ul>{% endif %}
+        </div>
+      </section>
+{% include "tpa/transaction/_conversations.html" %}

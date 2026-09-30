@@ -2,7 +2,7 @@
 <div class="flex gap-1">
   {% if a.edit_form %}
   <button class="btn btn-ghost btn-xs" type="button" onclick="document.getElementById('edit-member-{{ a.pk }}').showModal()" title="{% translate 'Correct row' %}">
-    <i class="bi bi-pencil-square"></i>
+    <i aria-hidden="true" class="bi bi-pencil-square"></i>
   </button>
   <dialog id="edit-member-{{ a.pk }}" class="modal">
     <div class="modal-box max-w-4xl">
@@ -13,10 +13,11 @@
         </div>
         <form method="dialog"><button class="btn btn-circle btn-ghost btn-sm">✕</button></form>
       </div>
-      <form class="mt-4 grid gap-3 md:grid-cols-2" method="post" action="{% url 'tpa:transaction_edit_member' tx.reference a.pk %}">
+      <form class="mt-4 grid gap-3 md:grid-cols-2" method="post" action="{% url 'tpa:transaction_edit_member' tx.reference a.pk %}" hx-post="{% url 'tpa:transaction_edit_member' tx.reference a.pk %}" data-tpa-hx-form>
         {% csrf_token %}
+        {% include "components/form_errors.html" with form=a.edit_form %}
         {% for field in a.edit_form %}
-        <fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}{% if field.help_text %}<p class="label text-[10px] opacity-50">{{ field.help_text }}</p>{% endif %}</fieldset>
+        <fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}{{ field.errors }}{% if field.help_text %}<p class="label text-[10px] opacity-50">{{ field.help_text }}</p>{% endif %}</fieldset>
         {% endfor %}
         <div class="md:col-span-2 flex justify-end gap-2">
           <button class="btn" type="button" onclick="document.getElementById('edit-member-{{ a.pk }}').close()">{% translate "Cancel" %}</button>
@@ -26,8 +27,8 @@
     </div>
   </dialog>
   {% endif %}
-  <form method="post" action="{% url 'tpa:transaction_remove_member' tx.reference a.pk %}">
+  <form method="post" action="{% url 'tpa:transaction_remove_member' tx.reference a.pk %}" hx-post="{% url 'tpa:transaction_remove_member' tx.reference a.pk %}" data-tpa-hx-form>
     {% csrf_token %}
-    <button class="btn btn-ghost btn-xs text-error" type="submit" title="{% translate 'Remove row' %}"><i class="bi bi-trash"></i></button>
+    <button class="btn btn-ghost btn-xs text-error" type="submit" title="{% translate 'Remove row' %}"><i aria-hidden="true" class="bi bi-trash"></i></button>
   </form>
 </div>

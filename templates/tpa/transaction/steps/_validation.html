@@ -1,0 +1,31 @@
+{% load i18n %}
+<section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><h2 class="text-lg font-black ">{% translate "VALIDATION" %}</h2></div><span class="badge badge-outline">{{ tx.validation_completed_at|date:"d-M-Y H:i"|default:"Not run" }}</span></div>
+        <div class="card-body space-y-3">
+          <div class="grid grid-cols-2 gap-2 md:grid-cols-4 xl:grid-cols-8">
+            <div class="stat rounded-box border border-base-300 p-3"><div class="stat-title">{% translate "Total" %}</div><div class="stat-value text-2xl">{{ actions|length }}</div></div>
+            <div class="stat rounded-box border border-base-300 p-3"><div class="stat-title">{% translate "Valid" %}</div><div class="stat-value text-success text-2xl">{{ valid_count }}</div></div>
+            <div class="stat rounded-box border border-base-300 p-3"><div class="stat-title">{% translate "Errors" %}</div><div class="stat-value {% if error_count %}text-error{% endif %} text-2xl">{{ error_count }}</div></div>
+            <div class="stat rounded-box border border-base-300 p-3"><div class="stat-title">{% translate "Warnings" %}</div><div class="stat-value {% if warning_count %}text-warning{% endif %} text-2xl">{{ warning_count }}</div></div>
+            <div class="stat rounded-box border border-base-300 p-3"><div class="stat-title">{% translate "Score" %}</div><div class="stat-value text-2xl">{{ tx.validation_score }}%</div></div>
+            <div class="stat rounded-box border border-base-300 p-3"><div class="stat-title">{% translate "Approval" %}</div><div class="text-xs font-bold">{% if tx.stp_eligible %}{% translate "Auto / STP" %}{% else %}{% translate "Required" %}{% endif %}</div></div>
+            <div class="stat rounded-box border border-base-300 p-3"><div class="stat-title">{% translate "STP" %}</div><div class="stat-value text-2xl">{{ tx.stp_eligible|yesno:"YES,NO" }}</div></div>
+            <div class="stat rounded-box border border-base-300 p-3"><div class="stat-title">{% translate "Impact" %}</div><div class="text-xs font-black">{{ tx.currency }} {{ tx.premium_adjustment }}</div></div>
+          </div>
+          {% if tx.stp_blockers %}<div class="alert alert-warning py-2"><i aria-hidden="true" class="bi bi-signpost-split"></i><div><strong>{% translate "STP blockers" %}</strong><div class="mt-1 flex flex-wrap gap-1">{% for blocker in tx.stp_blockers %}<span class="badge badge-outline badge-sm">{{ blocker }}</span>{% endfor %}</div></div></div>{% endif %}
+          {% if error_count or tx.status == 'needs_information' %}
+          <div class="alert alert-error" role="alert"><div><strong>{% translate "Correction is required before approval." %}</strong><p>{{ error_count }} {% translate "row(s) need attention." %}</p></div><a class="btn btn-outline btn-sm" href="{% url 'tpa:transaction_detail' tx.reference %}?step=intake" hx-get="{% url 'tpa:transaction_detail' tx.reference %}?step=intake" hx-push-url="true" data-workflow-navigation>{% translate "Return to Intake" %}</a></div>
+          <div class="overflow-x-auto"><table class="table table-sm"><thead><tr><th>{% translate "Row / Member" %}</th><th>{% translate "Validation rules" %}</th></tr></thead><tbody>{% for a in actions %}{% if a.validation_errors or a.warnings %}<tr><td>{{ a.row_number }} · {{ a.display_first_name }} {{ a.display_last_name }}</td><td>{% for err in a.validation_errors %}<p class="text-xs text-error"><strong>{{ err.field|default:err.code }}</strong>: {{ err.message }}</p>{% endfor %}{% for warning in a.warnings %}<p class="text-xs text-warning">{{ warning.message }}</p>{% endfor %}</td></tr>{% endif %}{% endfor %}</tbody></table></div>
+          {% endif %}
+          <div class="flex flex-wrap gap-2">
+            <a class="btn btn-ghost" href="{% url 'tpa:transaction_detail' tx.reference %}?step=intake" hx-get="{% url 'tpa:transaction_detail' tx.reference %}?step=intake" hx-push-url="true" data-workflow-navigation>{% translate "Intake & Correction" %}</a>
+            {% if can_validate %}<form method="post" action="{% url 'tpa:transaction_validate' tx.reference %}" hx-post="{% url 'tpa:transaction_validate' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-primary" type="submit">{% if tx.validation_completed_at %}{% translate "Re-run Validation" %}{% else %}{% translate "Run Validation" %}{% endif %}</button></form>{% endif %}
+          </div>
+          <div class="grid gap-3 lg:grid-cols-2">
+            <div id="tpa-quality-chart" class="min-h-[20rem]"></div>
+            <div id="tpa-error-chart" class="min-h-[20rem]"></div>
+          </div>
+        </div>
+      </section>
+{{ quality_chart|json_script:"tpa-quality-data" }}
+{{ error_chart|json_script:"tpa-error-data" }}

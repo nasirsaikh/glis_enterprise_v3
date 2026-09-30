@@ -1,0 +1,39 @@
+{% load i18n %}
+<section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6"><div><h2 class="text-lg font-black ">{% translate "TPA PROCESSING" %}</h2></div><span class="badge badge-info badge-soft">{{ tx.get_status_display }}</span></div>
+        <div class="card-body space-y-3">
+          {% if can_start_tpa %}<form method="post" action="{% url 'tpa:transaction_tpa_start' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_start' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-info" type="submit"><i class="bi bi-play-fill" aria-hidden="true"></i>{% translate "Start TPA Processing" %}</button></form>{% endif %}
+          {% if tx.status == 'failed' %}<div class="alert alert-error" role="alert"><span>{% translate "Processing failed. Review the member results and audit." %}</span></div>{% endif %}
+          {% if tx.status == "sent_to_tpa" %}<div class="alert alert-info py-2"><i aria-hidden="true" class="bi bi-send-check"></i><span>{% translate "Approved and dispatched to the TPA queue." %}</span></div>{% endif %}
+          {% if actions %}
+          <div class="overflow-x-auto">
+            <table class="table table-sm">
+              <thead><tr><th>{% translate "Member" %}</th><th>{% translate "Card / Member No." %}</th><th>{% translate "Effective Date" %}</th><th>{% translate "System Amount" %}</th><th>{% translate "TPA Final Amount" %}</th><th>{% translate "Override reason / comments" %}</th><th></th></tr></thead>
+              <tbody>
+              {% for a in actions %}
+              <tr>
+                <td><strong>{{ a.display_first_name }} {{ a.display_last_name }}</strong><div class="text-xs opacity-45">{{ a.display_employee_id }}</div></td>
+                {% if can_tpa_process and tx.status == "tpa_in_progress" %}
+                <td><form id="tpa-row-{{ a.pk }}" method="post" action="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}" hx-post="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}" data-tpa-hx-form>{% csrf_token %}</form><label class="sr-only" for="{{ a.processing_form.card_number.id_for_label }}">{{ a.processing_form.card_number.label }}</label>{{ a.processing_form.card_number }}{{ a.processing_form.card_number.errors }}</td>
+                <td><label class="sr-only" for="{{ a.processing_form.effective_date.id_for_label }}">{{ a.processing_form.effective_date.label }}</label>{{ a.processing_form.effective_date }}{{ a.processing_form.effective_date.errors }}</td>
+                <td class="font-semibold">{{ tx.currency }} {{ a.calculated_premium }}</td>
+                <td><label class="sr-only" for="{{ a.processing_form.amount.id_for_label }}">{{ a.processing_form.amount.label }}</label>{{ a.processing_form.amount }}{{ a.processing_form.amount.errors }}</td>
+                <td><label class="sr-only" for="{{ a.processing_form.override_reason.id_for_label }}">{{ a.processing_form.override_reason.label }}</label>{{ a.processing_form.override_reason }}{{ a.processing_form.override_reason.errors }}<label class="sr-only" for="{{ a.processing_form.comments.id_for_label }}">{{ a.processing_form.comments.label }}</label>{{ a.processing_form.comments }}{{ a.processing_form.comments.errors }}</td>
+                <td><button form="tpa-row-{{ a.pk }}" class="btn btn-info btn-sm" type="submit">{% translate "Save" %}</button></td>
+                {% else %}
+                <td>{{ a.card_number|default:"—" }}</td><td>{{ a.tpa_effective_date|date:"d-M-Y"|default:"—" }}</td><td>{{ tx.currency }} {{ a.calculated_premium }}</td><td>{% if a.tpa_premium_amount != None %}{{ tx.currency }} {{ a.tpa_premium_amount }}{% else %}—{% endif %}</td><td class="text-xs">{{ a.tpa_override_reason|default:a.processing_message|default:"—" }}</td><td></td>
+                {% endif %}
+              </tr>
+              {% if a.processing_form.errors %}<tr><td colspan="7">{% include "components/form_errors.html" with form=a.processing_form %}</td></tr>{% endif %}
+              {% empty %}<tr><td colspan="7" class="py-6 text-center opacity-45">{% translate "No member rows." %}</td></tr>{% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+          {% if can_tpa_process and tx.status == "tpa_in_progress" %}
+          <div class="flex justify-end"><form method="post" action="{% url 'tpa:transaction_tpa_complete' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_complete' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-success"><i aria-hidden="true" class="bi bi-check2-circle"></i>{% translate "Complete TPA Processing" %}</button></form></div>
+          {% endif %}
+        </div>
+      </section>
+
+{% include "tpa/transaction/_conversations.html" %}

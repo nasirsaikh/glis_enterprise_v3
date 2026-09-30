@@ -1,0 +1,180 @@
+{% load i18n %}
+<section class="card border border-base-300 bg-base-100 shadow-sm">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
+          <div><h2 class="text-lg font-black ">{% translate "INTAKE & CORRECTION" %}</h2></div>
+          <span class="badge badge-outline">{{ actions|length }} {% translate "rows" %}</span>
+        </div>
+        <div class="card-body space-y-4">
+
+          {% for email in source_emails %}<div class="alert alert-info py-2"><i class="bi bi-envelope" aria-hidden="true"></i><div><a class="link" href="{% url 'tpa:inbound_email_detail' email.pk %}">{{ email.subject }}</a><p class="text-xs">{{ email.sender }} · {{ email.received_at|date:"d-M-Y H:i" }}</p></div></div>{% endfor %}
+
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <strong class="text-sm">{% translate "SOURCE DOCUMENTS & OLLAMA OCR" %}</strong>
+              <div class="text-xs opacity-50">{% translate "EML, Excel, CSV, PDF, images and multi-file ID/passport bundles use the same intake pipeline." %}</div>
+            </div>
+            {% if not can_edit_intake %}<span class="badge badge-outline badge-sm">{% translate "Read only" %}</span>{% endif %}
+          </div>
+
+          {% if can_edit_intake %}
+          <div>
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div><strong class="text-sm">{% translate "Add / Reprocess Evidence" %}</strong></div>
+              <div class="flex gap-1">
+                <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'xlsx' %}">{% translate "Sample XLSX" %}</a>
+                <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_sample_file' tx.reference 'valid' 'csv' %}">{% translate "Sample CSV" %}</a>
+              </div>
+            </div>
+            <form class="rounded-2xl border-2 border-dashed border-primary/20 bg-base-200/40 transition hover:bg-base-200 p-3" data-tpa-dropzone method="post" enctype="multipart/form-data" hx-encoding="multipart/form-data" action="{% url 'tpa:transaction_upload_sources' tx.reference %}" hx-post="{% url 'tpa:transaction_upload_sources' tx.reference %}" data-tpa-hx-form data-processing-label="{% translate 'Processing documents and extracting member information…' %}">
+              {% csrf_token %}
+              {% include "components/form_errors.html" with form=source_upload_form %}
+              <div class="grid gap-2 text-center">
+                <i aria-hidden="true" class="bi bi-cloud-arrow-up text-2xl text-primary"></i>
+                <strong class="text-xs">{% translate "DROP SOURCE FILES OR BROWSE" %}</strong>
+                {{ source_upload_form.source_files }}
+                {{ source_upload_form.source_files.errors }}
+                <div data-tpa-file-count class="text-[10px] font-bold uppercase opacity-45">{% translate "No files selected" %}</div>
+                <div><button class="btn btn-primary btn-sm" type="submit"><i aria-hidden="true" class="bi bi-stars"></i>{% translate "Process Evidence" %}</button></div>
+              </div>
+            </form>
+          </div>
+          {% endif %}
+
+          {% if source_documents %}
+          <div class="overflow-x-auto">
+            <table class="table table-sm">
+              <thead><tr><th>{% translate "Source" %}</th><th>{% translate "Method" %}</th><th>{% translate "State" %}</th><th>{% translate "Confidence" %}</th><th>{% translate "Result / Error" %}</th><th></th></tr></thead>
+              <tbody>
+              {% for doc in source_documents %}
+                <tr>
+                  <td><a class="link link-primary" href="{% url 'tpa:transaction_source_document' tx.reference doc.pk %}">{{ doc.original_name }}</a></td>
+                  <td>{{ doc.extraction_method|default:"—" }}</td>
+                  <td><span class="badge {% if doc.processing_state == 'PROCESSED' %}badge-success{% elif doc.processing_state == 'REVIEW' or doc.processing_state == 'FAILED' %}badge-warning{% else %}badge-outline{% endif %} badge-soft">{{ doc.get_processing_state_display }}</span></td>
+                  <td>{% if doc.extraction_confidence is not None %}{{ doc.extraction_confidence }}%{% else %}—{% endif %}</td>
+                  <td class="max-w-lg text-xs">{% if doc.processing_error %}<span class="text-warning">{{ doc.processing_error }}</span>{% elif doc.result_count is not None %}{{ doc.result_count }} {% translate "row(s)" %}{% else %}{% translate "Processed" %}{% endif %}</td>
+                  <td>
+                    <div class="flex gap-1">
+                      {% if can_edit_intake %}<form method="post" action="{% url 'tpa:transaction_reprocess_source' tx.reference doc.pk %}" hx-post="{% url 'tpa:transaction_reprocess_source' tx.reference doc.pk %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-ghost btn-xs" title="{% translate 'Reprocess Evidence' %}"><i aria-hidden="true" class="bi bi-arrow-repeat"></i></button></form>{% endif %}
+                      {% if can_edit_intake and not doc.ticket_attachment_id and doc.processing_state == "REVIEW" or can_edit_intake and not doc.ticket_attachment_id and doc.processing_state == "FAILED" %}
+                      <form method="post" action="{% url 'tpa:transaction_delete_source' tx.reference doc.pk %}" onsubmit="return confirm('{% translate 'Delete this failed evidence source?' %}')" hx-post="{% url 'tpa:transaction_delete_source' tx.reference doc.pk %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-ghost btn-xs text-error" title="{% translate 'Delete failed source' %}"><i aria-hidden="true" class="bi bi-trash"></i></button></form>
+                      {% endif %}
+                      {% if can_view_ai_source and doc.extracted_payload %}
+                      <button class="btn btn-ghost btn-xs" type="button" onclick="document.getElementById('source-json-{{ doc.pk }}').showModal()"><i aria-hidden="true" class="bi bi-braces"></i></button>
+                      <dialog id="source-json-{{ doc.pk }}" class="modal"><div class="modal-box max-w-5xl"><h3 class="font-bold">{{ doc.original_name }}</h3><pre class="mt-3 max-h-[65vh] overflow-auto text-xs">{{ doc.payload_json }}</pre><div class="modal-action"><form method="dialog"><button class="btn">{% translate "Close" %}</button></form></div></div></dialog>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          {% if can_edit_intake and selectable_members %}
+          <div class="rounded-box border border-base-300 p-3">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div><strong>{% translate "Select Existing Members" %}</strong><div class="text-xs opacity-50">{% translate "Select members individually or paste card/member numbers in bulk." %}</div></div>
+              <button class="btn btn-outline btn-xs" type="button" onclick="document.getElementById('bulk-cards').showModal()"><i aria-hidden="true" class="bi bi-clipboard"></i>{% translate "Paste Card Numbers" %}</button>
+            </div>
+            <form method="post" action="{% url 'tpa:transaction_select_members' tx.reference %}" hx-post="{% url 'tpa:transaction_select_members' tx.reference %}" data-tpa-hx-form>
+              {% csrf_token %}
+              <div class="overflow-x-auto max-h-80">
+                <table class="table table-xs">
+                  <thead><tr><th></th><th>{% translate "Card / Member" %}</th><th>{% translate "Employee" %}</th><th>{% translate "Member" %}</th><th>{% translate "Relationship" %}</th><th>{% translate "Plan" %}</th><th>{% translate "Coverage" %}</th><th>{% translate "Status" %}</th></tr></thead>
+                  <tbody>
+                    {% for enrollment in selectable_members %}
+                    <tr>
+                      <td><input class="checkbox checkbox-sm" type="checkbox" name="enrollment_ids" value="{{ enrollment.pk }}"></td>
+                      <td class="font-semibold">{{ enrollment.card_number|default:enrollment.member.tpa_member_id }}</td>
+                      <td>{{ enrollment.member.employee_id|default:"—" }}</td>
+                      <td>{{ enrollment.member.full_name }}</td>
+                      <td>{{ enrollment.member.get_relationship_display }}</td>
+                      <td>{{ enrollment.benefit_plan.code }}</td>
+                      <td class="text-xs">{{ enrollment.coverage_start_date|date:"d-M-Y" }} → {{ enrollment.coverage_end_date|date:"d-M-Y"|default:"—" }}</td>
+                      <td><span class="badge badge-outline badge-sm">{{ enrollment.get_enrollment_status_display }}</span></td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              <div class="mt-2 flex justify-end"><button class="btn btn-primary btn-sm">{% translate "Add Selected Members" %}</button></div>
+            </form>
+            <dialog id="bulk-cards" class="modal">
+              <div class="modal-box">
+                <h3 class="font-bold">{% translate "Paste Card Numbers" %}</h3>
+                <form class="mt-3 space-y-3" method="post" action="{% url 'tpa:transaction_select_members' tx.reference %}" hx-post="{% url 'tpa:transaction_select_members' tx.reference %}" data-tpa-hx-form>
+                  {% csrf_token %}
+                  {{ bulk_card_form.card_numbers }}
+                  <div class="modal-action"><button class="btn btn-primary">{% translate "Match & Add" %}</button><button class="btn" type="button" onclick="document.getElementById('bulk-cards').close()">{% translate "Cancel" %}</button></div>
+                </form>
+              </div>
+            </dialog>
+          </div>
+          {% endif %}
+
+          {% if can_edit_intake and tx.transaction_type == "MEMBER_ADD" or can_edit_intake and initial_setup %}
+          <div class="flex justify-end">
+            <button class="btn btn-outline btn-sm" type="button" onclick="document.getElementById('manual-member').showModal()"><i aria-hidden="true" class="bi bi-person-plus"></i>{% translate "Add Member Manually" %}</button>
+          </div>
+          <dialog id="manual-member" class="modal">
+            <div class="modal-box max-w-4xl">
+              <div class="flex items-start justify-between gap-3"><div><h3 class="text-lg font-black">{% translate "Add Member Manually" %}</h3><p class="text-xs opacity-50">{% translate "Manual entry uses the same deterministic validation rules as extracted rows." %}</p></div><form method="dialog"><button class="btn btn-circle btn-ghost btn-sm">✕</button></form></div>
+              {% include "tpa/partials/manual_member_form.html" with tx=tx member_form=member_form %}
+            </div>
+          </dialog>
+          {% endif %}
+
+          <div class="tabs tabs-lift">
+            <input type="radio" name="member_matrix_tabs" class="tab" aria-label="{% translate 'Validated' %}" {% if not error_count %}checked{% endif %}>
+            <div class="tab-content border-base-300 bg-base-100 p-2">
+              <div class="overflow-x-auto">
+                <table class="table table-sm">
+                  <thead><tr><th>#</th><th>{% translate "Member" %}</th><th>{% translate "Employee" %}</th><th>{% translate "Plan" %}</th><th>{% translate "Validation" %}</th><th>{% translate "Confidence" %}</th><th>{% translate "Impact" %}</th>{% if can_edit_intake %}<th></th>{% endif %}</tr></thead>
+                  <tbody>
+                  {% for a in actions %}
+                    {% if a.validation_status != "ERROR" %}
+                    <tr>
+                      <td>{{ a.row_number|default:forloop.counter }}</td>
+                      <td><strong>{{ a.display_first_name }} {{ a.display_last_name }}</strong>{% if a.warnings %}<div class="mt-1 text-xs text-warning">{% for warning in a.warnings %}<div>• {{ warning.message }}</div>{% endfor %}</div>{% endif %}</td>
+                      <td>{{ a.display_employee_id }}</td><td>{{ a.display_plan_code }}</td>
+                      <td><span class="badge {% if a.validation_status == 'VALID' %}badge-success{% else %}badge-warning{% endif %} badge-soft">{{ a.validation_status }}</span></td>
+                      <td>{% if a.extraction_confidence is not None %}{{ a.extraction_confidence }}%{% else %}{% translate "Manual" %}{% endif %}</td>
+                      <td class="font-semibold">{{ tx.currency }} {{ a.calculated_premium }}</td>
+                      {% if can_edit_intake %}<td>{% include "tpa/partials/member_row_actions.html" with tx=tx a=a %}</td>{% endif %}
+                    </tr>
+                    {% endif %}
+                  {% empty %}<tr><td colspan="8" class="py-6 text-center opacity-45">{% translate "No member rows." %}</td></tr>{% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <input type="radio" name="member_matrix_tabs" class="tab" aria-label="{% translate 'Errors / Needs Correction' %}" {% if error_count %}checked{% endif %}>
+            <div class="tab-content border-base-300 bg-base-100 p-2">
+              <div class="overflow-x-auto">
+                <table class="table table-sm">
+                  <thead><tr><th>#</th><th>{% translate "Member" %}</th><th>{% translate "Exact validation issues" %}</th>{% if can_edit_intake %}<th></th>{% endif %}</tr></thead>
+                  <tbody>
+                  {% for a in actions %}
+                    {% if a.validation_status == "ERROR" %}
+                    <tr>
+                      <td>{{ a.row_number|default:forloop.counter }}</td>
+                      <td><strong>{{ a.display_first_name }} {{ a.display_last_name }}</strong><div class="text-xs opacity-50">{{ a.display_employee_id }}</div></td>
+                      <td><ul class="space-y-1 text-xs text-error">{% for err in a.validation_errors %}<li><strong>{{ err.field|default:"row" }}</strong>: {{ err.message }}</li>{% endfor %}</ul></td>
+                      {% if can_edit_intake %}<td>{% include "tpa/partials/member_row_actions.html" with tx=tx a=a %}</td>{% endif %}
+                    </tr>
+                    {% endif %}
+                  {% empty %}<tr><td colspan="4" class="py-6 text-center opacity-45">{% translate "No validation errors." %}</td></tr>{% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% if can_submit_intake %}
+        <div class="card-body border-t border-base-300 pt-3">
+          <form method="post" action="{% if tx.status == 'draft' %}{% url 'tpa:transaction_submit' tx.reference %}{% else %}{% url 'tpa:transaction_validate' tx.reference %}{% endif %}" hx-post="{% if tx.status == 'draft' %}{% url 'tpa:transaction_submit' tx.reference %}{% else %}{% url 'tpa:transaction_validate' tx.reference %}{% endif %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-primary" type="submit"><i class="bi bi-shield-check" aria-hidden="true"></i>{% if tx.status == 'draft' %}{% translate "Submit & Validate" %}{% else %}{% translate "Resubmit & Validate" %}{% endif %}</button></form>
+        </div>
+        {% endif %}
+      </section>

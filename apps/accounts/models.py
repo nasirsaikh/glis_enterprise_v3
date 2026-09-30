@@ -22,7 +22,15 @@ class UserProfile(TimeStampedModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
     role = models.CharField(max_length=30, choices=Role.choices, default=Role.GUEST, db_index=True)
     phone = models.CharField(max_length=30, blank=True)
+    # Legacy free-text value retained for backwards compatibility. New access
+    # control and workflow routing use the global organizations M2M below.
     organization = models.CharField(max_length=150, blank=True)
+    organizations = models.ManyToManyField(
+        "tpa.TPAOrganization",
+        related_name="user_profiles",
+        blank=True,
+        help_text="Organizations this user may act for across portal workflows.",
+    )
     job_title = models.CharField(max_length=120, blank=True)
     department = models.CharField(max_length=120, blank=True)
     bio = models.TextField(blank=True)

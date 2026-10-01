@@ -1,0 +1,12 @@
+{% load i18n %}
+<div id="request-fields" class="grid gap-3 sm:grid-cols-2">
+{% if form.errors %}<div class="alert alert-error sm:col-span-2">{{ form.errors }}</div>{% endif %}
+{% if form.selected_request_type == 'task' %}<p>{% translate 'Continue to create a task with the existing task workflow.' %}</p>{% else %}
+{% if form.selected_request_type == 'endorsement' or form.selected_request_type == 'claim' %}<label class="fieldset sm:col-span-2"><span class="fieldset-legend">{% translate 'Policy' %}</span>{{ form.policy }}</label>{% endif %}
+<label class="fieldset"><span class="fieldset-legend">{% translate 'Organization' %}</span>{{ form.organization }}</label>
+<label class="fieldset"><span class="fieldset-legend">{% translate 'Project / Process' %}</span>{{ form.project }}</label>
+<label class="fieldset"><span class="fieldset-legend">{% translate 'Product' %}</span>{{ form.product }}</label>
+<label class="fieldset"><span class="fieldset-legend">{% translate 'Category / Request' %}</span>{{ form.category }}</label>
+{% if form.selected_request_type == 'policy' %}<label class="fieldset"><span class="fieldset-legend">{% translate 'Policy Type' %}</span>{{ form.policy_type }}</label>{% endif %}
+{% if form.selected_request_type == 'endorsement' %}<label class="fieldset"><span class="fieldset-legend">{% translate 'Effective Date' %}</span>{{ form.effective_date }}</label>{% endif %}
+{% endif %}</div>

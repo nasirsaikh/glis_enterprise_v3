@@ -11,40 +11,38 @@ class TicketAccessPolicy:
         qs = Ticket.objects.select_related("requester", "assignee", "project", "product", "category", "sla_policy").prefetch_related("groups", "assignees")
         if not user.is_authenticated:
             return qs.none()
-        qs = scope_tickets(qs, user)
-        if user.is_superuser or user.has_perm("tickets.view_all"):
-            return qs
-        profile = getattr(user, "profile", None)
-        if profile and profile.role == UserProfile.Role.GUEST:
-            return qs.filter(
-                Q(requester=user)
-                | Q(task_item__tagged_users=user, task_item__is_deleted=False)
-            ).distinct()
-        group_ids = user.support_groups.filter(is_active=True, can_view_all_group_tickets=True).values_list("pk", flat=True)
-        project_ids = user.ticket_projects.values_list("pk", flat=True)
-        return qs.filter(
-            Q(requester=user) | Q(assignee=user) | Q(assignees=user) | Q(groups__in=group_ids) | Q(groups__managers=user, groups__is_active=True) |
-            Q(project_id__in=project_ids) | Q(approvals__approver=user) |
-            Q(task_item__tagged_users=user, task_item__is_deleted=False) |
-            Q(shares__recipient=user, shares__is_active=True, shares__expires_at__gt=timezone.now())
-        ).distinct()
+        return scope_tickets(qs, user)
+
+    @staticmethod
+    def can_view(user, ticket):
+        return bool(user and user.is_authenticated and TicketAccessPolicy.visible_queryset(user).filter(pk=ticket.pk).exists())
 
     @staticmethod
     def can_edit(user, ticket):
+        if not TicketAccessPolicy.can_view(user, ticket):
+            return False
         if user.is_superuser or user.has_perm("tickets.change_ticket"):
             return True
         if ticket.assignee_id == user.id or ticket.assignees.filter(pk=user.pk).exists():
+            return True
+        if ticket.groups.filter(members=user, is_active=True, can_edit_group_tickets=True).exists():
             return True
         return ticket.requester_id == user.id and ticket.status == Ticket.Status.NEW
 
     @staticmethod
     def can_take_over(user, ticket):
-        if not user.is_authenticated or TicketAccessPolicy.can_edit(user, ticket):
+        if not TicketAccessPolicy.can_view(user, ticket) or ticket.status in {Ticket.Status.CLOSED, Ticket.Status.RESOLVED}:
             return False
-        return ticket.groups.filter(members=user, can_edit_group_tickets=True).exists()
+        return not ticket.assignee_id and not ticket.assignees.exists() and ticket.groups.filter(members=user, is_active=True, can_edit_group_tickets=True).exists()
+
+    @staticmethod
+    def can_release(user, ticket):
+        return TicketAccessPolicy.can_view(user, ticket) and (ticket.assignee_id == user.pk or ticket.assignees.filter(pk=user.pk).exists())
 
     @staticmethod
     def can_assign(user, ticket):
+        if not TicketAccessPolicy.can_view(user, ticket):
+            return False
         return (
             user.is_superuser or user.has_perm("tickets.assign") or
             ticket.groups.filter(managers=user).exists() or
@@ -57,10 +55,14 @@ class TicketAccessPolicy:
 
     @staticmethod
     def can_view_sensitive(user, ticket):
+        if not TicketAccessPolicy.can_view(user, ticket):
+            return False
         return user.is_superuser or user.has_perm("tickets.view_sensitive") or ticket.groups.filter(members=user, can_view_sensitive=True).exists()
 
     @staticmethod
     def can_view_internal_notes(user, ticket):
+        if not TicketAccessPolicy.can_view(user, ticket):
+            return False
         return user.is_superuser or user.has_perm("tickets.view_internal_notes") or ticket.groups.filter(members=user, can_view_internal_notes=True).exists()
 
     @staticmethod

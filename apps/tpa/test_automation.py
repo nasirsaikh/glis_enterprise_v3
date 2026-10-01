@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 import base64
 import tempfile
 from datetime import date
@@ -25,7 +26,7 @@ from apps.tpa.models import (
     SourceDocument,
     TPAEmailAuthority,
     TPAMailboxSyncState,
-    TPAOrganization,
+
     TransactionQuery,
 )
 from apps.tpa.services.access import (
@@ -82,25 +83,25 @@ class TPAAutomationTests(TestCase):
             email="tpa-admin@example.com",
             password="x",
         )
-        self.sponsor = TPAOrganization.objects.create(
+        self.organization = Organization.objects.create(
             code="AUTO-SP",
-            name_en="Automation Sponsor",
-            organization_type=TPAOrganization.Type.CORPORATE,
+            name_en="Automation organization",
+            organization_type_id=Organization.Type.CORPORATE,
         )
-        self.insurer = TPAOrganization.objects.create(
+        self.insurer = Organization.objects.create(
             code="AUTO-IN",
             name_en="Automation Insurer",
-            organization_type=TPAOrganization.Type.INSURER,
+            organization_type_id=Organization.Type.INSURER,
         )
-        self.tpa = TPAOrganization.objects.create(
+        self.tpa = Organization.objects.create(
             code="AUTO-TPA",
             name_en="Automation TPA",
-            organization_type=TPAOrganization.Type.TPA,
+            organization_type_id=Organization.Type.TPA,
         )
         self.policy = Policy.objects.create(
-            sponsor=self.sponsor,
+            organization=self.organization,
             insurance_company=self.insurer,
-            tpa_organization=self.tpa,
+
             policy_number="AUTO-POL-1",
             start_date=date(2026, 1, 1),
             expiry_date=date(2026, 12, 31),
@@ -118,7 +119,7 @@ class TPAAutomationTests(TestCase):
             premium_configuration={"method": "PRORATA", "denominator": 365},
         )
         PolicyAccess.objects.create(
-            organization=self.sponsor,
+            organization=self.organization,
             policy=self.policy,
             user=self.requester,
             can_view=True,
@@ -128,20 +129,20 @@ class TPAAutomationTests(TestCase):
 
     def _transaction(self, tx_type=MemberTransaction.Type.MEMBER_ADD, status=MemberTransaction.Status.DRAFT, **kwargs):
         return MemberTransaction.objects.create(
-            sponsor=self.sponsor,
+            organization=self.organization,
             insurer=self.insurer,
             policy=self.policy,
             transaction_type=tx_type,
             effective_date=kwargs.pop("effective_date", date(2026, 7, 1)),
             requester=self.requester,
-            requester_organization=self.sponsor,
+            requester_organization=self.organization,
             status=status,
             **kwargs,
         )
 
     def _active_enrollment(self, suffix="1"):
         member = Member.objects.create(
-            sponsor=self.sponsor,
+            organization=self.organization,
             employee_id=f"EMP-{suffix}",
             first_name="Existing",
             last_name=f"Member {suffix}",
@@ -433,7 +434,7 @@ class TPAAutomationTests(TestCase):
         authority = TPAEmailAuthority.objects.create(
             email_address="hr@example.com",
             user=self.requester,
-            organization=self.sponsor,
+            organization=self.organization,
             policy=self.policy,
             permitted_transaction_types=[MemberTransaction.Type.MEMBER_ADD],
             active=True,
@@ -548,7 +549,7 @@ class TPAAutomationTests(TestCase):
             password="x",
         )
         PolicyAccess.objects.create(
-            organization=self.sponsor,
+            organization=self.organization,
             policy=self.policy,
             user=readonly,
             can_view=True,

@@ -37,6 +37,8 @@ from .workflow import run_validation
 
 
 TRANSACTION_ALIASES = {
+    "CLAIM": "CLAIM",
+    "CLAIM REQUEST": "CLAIM",
     "NEW_POLICY_ENROLLMENT": MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
     "NEW ENROLLMENT": MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
     "ENROLLMENT": MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
@@ -117,7 +119,7 @@ def _profile_prompt(profile):
         '"effective_date":null,"refund_basis":null,"temporary_until":null,"remarks":"",'
         '"summary":"","missing_information":[],"warnings":[],"source_references":[],"members":[]}. '
         "classification/transaction_type may be MEMBER_ADD, MEMBER_UPDATE, MEMBER_DELETE, MEMBER_TERMINATE, "
-        "MEMBER_SUSPEND, MEMBER_REACTIVATE, POLICY_CANCEL, QUERY_REPLY, NOT_ENDORSEMENT or NEEDS_REVIEW. "
+        "MEMBER_SUSPEND, MEMBER_REACTIVATE, POLICY_CANCEL, NEW_POLICY_ENROLLMENT, CLAIM, QUERY_REPLY, NOT_ENDORSEMENT or NEEDS_REVIEW. "
         "For deletion/cancellation, refund_basis may be FULL or PRO_RATA when explicitly stated. "
         "Each member may contain employee_id, member_id, tpa_member_id, card_number, first_name, middle_name, "
         "last_name, full_name, date_of_birth (YYYY-MM-DD), gender, relationship "
@@ -248,11 +250,6 @@ def _resolve_transaction_type(payload, hints):
     resolved = TRANSACTION_ALIASES.get(normalized) or TRANSACTION_ALIASES.get(
         normalized.replace("_", " ")
     )
-    if resolved == MemberTransaction.Type.NEW_POLICY_ENROLLMENT:
-        raise ValueError(
-            "Initial policy enrollment must be created from TPA → Initial Policy Enrollment. "
-            "Email intake is reserved for endorsements on an enrolled policy."
-        )
     return resolved
 
 
@@ -601,8 +598,8 @@ def process_inbound_email(email, actor, *, force=False):
     with transaction.atomic():
         InboundEmail.objects.select_for_update().get(pk=email.pk)
         email.refresh_from_db()
-        if not force and email.transaction_id and email.processing_state == InboundEmail.State.PROCESSED:
-            return email.transaction
+        if not force and (email.transaction_id or email.ticket_id) and email.processing_state == InboundEmail.State.PROCESSED:
+            return email.transaction if email.transaction_id else email.ticket
         if force:
             validate_email_reprocessing(email, actor)
         if email.processing_state == InboundEmail.State.PROCESSING:
@@ -644,7 +641,7 @@ def process_inbound_email(email, actor, *, force=False):
         email.ai_confidence = confidence
 
         is_endorsement = payload.get("is_endorsement_request")
-        if is_endorsement is False or classification in {
+        if (is_endorsement is False and classification not in {"CLAIM", "NEW_POLICY_ENROLLMENT"}) or classification in {
             "NOT_ENDORSEMENT",
             "UNRELATED",
             "IGNORED",
@@ -670,7 +667,7 @@ def process_inbound_email(email, actor, *, force=False):
             return None
 
         classification_is_complete = (
-            is_endorsement is True
+            (is_endorsement is True or classification in {"CLAIM", "NEW_POLICY_ENROLLMENT"})
             and classification not in {"", "NEEDS_REVIEW", "UNCERTAIN"}
             and bool(payload.get("policy_number"))
             and bool(payload.get("transaction_type") or payload.get("classification"))
@@ -684,7 +681,7 @@ def process_inbound_email(email, actor, *, force=False):
         )
 
         if (
-            is_endorsement is None
+            (is_endorsement is None and classification not in {"CLAIM", "NEW_POLICY_ENROLLMENT"})
             or classification in {"NEEDS_REVIEW", "UNCERTAIN"}
             or not confidence_is_acceptable
         ):
@@ -779,7 +776,8 @@ def process_inbound_email(email, actor, *, force=False):
             )
             return None
 
-        if policy.status != Policy.Status.ACTIVE:
+        allowed_statuses = {Policy.Status.DRAFT, Policy.Status.ACTIVE} if transaction_type == MemberTransaction.Type.NEW_POLICY_ENROLLMENT else {Policy.Status.ACTIVE}
+        if policy.status not in allowed_statuses or (transaction_type == MemberTransaction.Type.NEW_POLICY_ENROLLMENT and policy.initial_enrollment_completed_at):
             email.processing_state = InboundEmail.State.REVIEW
             email.processing_stage = "POLICY_MATCH"
             email.processing_error = (
@@ -823,6 +821,29 @@ def process_inbound_email(email, actor, *, force=False):
             _notify_review_staff(policy, email, reason)
             return None
 
+        if transaction_type == 'CLAIM':
+            from services.business_requests import create_business_request
+            from apps.tickets.models import TicketEvent
+            from .email_evidence import html_to_text
+            requester=authority.user if authority and authority.user_id else actor
+            if requester is None:raise ValueError('Map an authorized requester to this sender.')
+            with transaction.atomic():
+                locked=InboundEmail.objects.select_for_update().get(pk=email.pk)
+                if locked.ticket_id:return locked.ticket
+                ticket=create_business_request(workflow_type='CLAIM',policy=policy,requester=requester,
+                    subject=email.subject,description=email.body_text or html_to_text(email.body_html),payload=payload)
+                for attachment in email.attachments.all():
+                    linked=TicketAttachment(ticket=ticket,uploaded_by=requester,original_name=attachment.original_name,content_type=attachment.content_type,size=attachment.size,is_restricted=True)
+                    attachment.file.open('rb')
+                    try:linked.file.save(attachment.original_name,File(attachment.file),save=True)
+                    finally:attachment.file.close()
+                    attachment.processing_state=InboundEmailAttachment.State.PROCESSED
+                    attachment.save(update_fields=['processing_state','updated_at'])
+                email.ticket=ticket;email.processing_state=InboundEmail.State.PROCESSED;email.processing_stage='COMPLETE';email.processed_at=timezone.now();email.processing_error=''
+                email.save(update_fields=['ticket','processing_state','processing_stage','processed_at','processing_error','ai_extracted_payload','classification','classification_confidence','ai_confidence','updated_at'])
+                TicketEvent.objects.create(ticket=ticket,actor=requester,event_type='email_imported',summary='Authorized claim email imported',details={'email':email.pk,'authority':authority.pk if authority else None})
+                return ticket
+
         effective_date = _as_date(
             hints.get("effective_date") or payload.get("effective_date"),
             fallback=timezone.localdate(email.received_at),
@@ -849,7 +870,7 @@ def process_inbound_email(email, actor, *, force=False):
                     else actor
                 )
                 tx = MemberTransaction.objects.create(
-                    sponsor=policy.sponsor,
+                    organization=policy.organization,
                     insurer=policy.insurance_company,
                     policy=policy,
                     transaction_type=transaction_type,
@@ -872,7 +893,7 @@ def process_inbound_email(email, actor, *, force=False):
                     requester_organization=(
                         authority.organization
                         if authority is not None
-                        else policy.sponsor
+                        else policy.organization
                     ),
                     status=MemberTransaction.Status.DRAFT,
                     submitted_at=timezone.now(),

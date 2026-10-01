@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 import csv
 import io
 from datetime import date
@@ -12,7 +13,7 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from openpyxl import load_workbook
 
-from .models import MemberAction, MemberTransaction, Policy, TPAOrganization
+from .models import MemberAction, MemberTransaction, Policy
 from .services.bulk_processing import (
     apply_processing_preview, build_processing_export, preview_processing_upload,
 )
@@ -24,14 +25,14 @@ class TPABulkProcessingTests(TestCase):
         cls.actor = get_user_model().objects.create_superuser("bulk-admin", "bulk@example.test", "test")
         cls.other_actor = get_user_model().objects.create_superuser("bulk-other", "other@example.test", "test")
         cls.scoped = get_user_model().objects.create_user("bulk-scoped", is_staff=True)
-        cls.sponsor = TPAOrganization.objects.create(code="BK-SP", name_en="Own sponsor", organization_type="CORPORATE")
-        cls.other_sponsor = TPAOrganization.objects.create(code="BK-OTHER", name_en="Other sponsor", organization_type="CORPORATE")
-        cls.insurer = TPAOrganization.objects.create(code="BK-IN", name_en="Insurer", organization_type="INSURER")
-        cls.scoped.profile.organizations.add(cls.sponsor)
+        cls.organization = Organization.objects.create(code="BK-SP", name_en="Own organization", organization_type_id="CORPORATE")
+        cls.other_organization = Organization.objects.create(code="BK-OTHER", name_en="Other organization", organization_type_id="CORPORATE")
+        cls.insurer = Organization.objects.create(code="BK-IN", name_en="Insurer", organization_type_id="INSURER")
+        cls.scoped.profile.organizations.add(cls.organization)
         cls.scoped.user_permissions.add(Permission.objects.get(codename="configure_tpa"))
-        cls.policy = Policy.objects.create(sponsor=cls.sponsor, insurance_company=cls.insurer,
+        cls.policy = Policy.objects.create(organization=cls.organization, insurance_company=cls.insurer,
             policy_number="BULK-1", start_date=date(2026, 1, 1), expiry_date=date(2026, 12, 31))
-        cls.other_policy = Policy.objects.create(sponsor=cls.other_sponsor, insurance_company=cls.insurer,
+        cls.other_policy = Policy.objects.create(organization=cls.other_organization, insurance_company=cls.insurer,
             policy_number="BULK-2", start_date=date(2026, 1, 1), expiry_date=date(2026, 12, 31))
 
     def setUp(self):
@@ -40,8 +41,8 @@ class TPABulkProcessingTests(TestCase):
         self.client.force_login(self.actor)
 
     def make_transaction(self, policy):
-        return MemberTransaction.objects.create(policy=policy, sponsor=policy.sponsor,
-            insurer=self.insurer, requester=self.actor, requester_organization=policy.sponsor,
+        return MemberTransaction.objects.create(policy=policy, organization=policy.organization,
+            insurer=self.insurer, requester=self.actor, requester_organization=policy.organization,
             transaction_type="MEMBER_ADD", status="tpa_in_progress", effective_date=date(2026, 7, 1))
 
     def make_action(self, tx, number):

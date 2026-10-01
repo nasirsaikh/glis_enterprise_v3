@@ -68,7 +68,7 @@
         </div>
 
         <div class="navbar-end gap-1">
-          <a class="btn btn-primary btn-sm hidden rounded-full sm:inline-flex" href="{% url 'portal:create_ticket' 1 %}">
+          <a class="btn btn-primary btn-sm hidden rounded-full sm:inline-flex" href="{% url 'portal:create_request' %}">
             <i class="bi bi-plus-lg"></i><span class="hidden xl:inline">{% translate "New ticket" %}</span>
           </a>
 
@@ -211,7 +211,7 @@
             <li data-sidebar-label class="menu-title hidden"><span>{% translate "TPA Operations" %}</span></li>
             <li>
               <a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name != 'user_guide' and 'inbound_email' not in request.resolver_match.url_name and 'policy_enrollment' not in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:dashboard' %}" title="{% translate 'TPA Member Management' %}">
-                <i class="bi bi-people text-lg"></i><span data-sidebar-label class="hidden">{% translate "TPA Member Management" %}</span>
+                <i class="bi bi-people text-lg"></i><span data-sidebar-label class="hidden">{% translate "Endorsements" %}</span>
               </a>
             </li>
             <li>

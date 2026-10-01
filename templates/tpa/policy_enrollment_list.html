@@ -25,7 +25,7 @@
     {% include "components/table_search.html" %}
     <div class="overflow-x-auto">
       <table data-server-paginated="true" class="table table-sm">
-        <thead><tr><th>{% translate "Policy" %}</th><th>{% translate "Sponsor" %}</th><th>{% translate "Insurer" %}</th><th>{% translate "TPA" %}</th><th>{% translate "Plans" %}</th><th>{% translate "Initial Enrollment" %}</th><th>{% translate "Policy Status" %}</th></tr></thead>
+        <thead><tr><th>{% translate "Policy" %}</th><th>{% translate "organization" %}</th><th>{% translate "Insurer" %}</th><th>{% translate "TPA" %}</th><th>{% translate "Plans" %}</th><th>{% translate "Initial Enrollment" %}</th><th>{% translate "Policy Status" %}</th></tr></thead>
         <tbody>
         {% for row in policy_rows %}
           <tr>
@@ -33,9 +33,9 @@
               <a class="link link-primary font-bold" href="{% url 'tpa:policy_enrollment_detail' row.policy.pk %}" aria-label="{% translate 'View policy dashboard' %}: {{ row.policy.policy_number }}">{{ row.policy.policy_number }}</a>
               <div class="text-[10px] opacity-45">{{ row.policy.policy_name }}</div>
             </td>
-            <td>{{ row.policy.sponsor.name_en }}<div class="text-[10px] opacity-45">{{ row.policy.sponsor.get_organization_type_display }}</div></td>
+            <td>{{ row.policy.organization.name_en }}<div class="text-[10px] opacity-45">{{ row.policy.organization.get_organization_type_display }}</div></td>
             <td>{{ row.policy.insurance_company.name_en }}</td>
-            <td>{{ row.policy.tpa_organization.name_en|default:"GLIS TPA Operations" }}</td>
+            <td>{{ row.policy.workflow_organizations.first.name_en|default:"GLIS TPA Operations" }}</td>
             <td class="font-semibold">{{ row.policy.plans.count }}</td>
             <td>
               {% if row.policy.initial_enrollment_completed_at %}

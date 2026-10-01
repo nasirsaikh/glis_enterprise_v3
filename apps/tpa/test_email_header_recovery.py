@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 from datetime import date, datetime, timedelta, timezone as utc_timezone
 from unittest.mock import patch
 import io
@@ -8,7 +9,7 @@ from django.utils import timezone
 from PIL import Image
 
 from apps.ai.models import AIProviderConfig
-from .models import BenefitPlan, InboundEmail, Policy, TPAOrganization
+from .models import BenefitPlan, InboundEmail, Policy
 from .services.ai_intake import extract_email_payload, process_inbound_email, _recover_explicit_email_header
 from .services.email_evidence import html_to_text
 from .services.document_fallback import docling_text, _easyocr_text
@@ -19,9 +20,9 @@ class ExplicitEmailHeaderTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.actor=get_user_model().objects.create_superuser("header-admin","header@example.test","test")
-        sponsor=TPAOrganization.objects.create(code="HDR-SP",name_en="Sponsor",organization_type="CORPORATE")
-        insurer=TPAOrganization.objects.create(code="HDR-IN",name_en="Insurer",organization_type="INSURER")
-        cls.policy=Policy.objects.create(sponsor=sponsor,insurance_company=insurer,policy_number="P/900/2026/0001",
+        organization=Organization.objects.create(code="HDR-SP",name_en="organization",organization_type_id="CORPORATE")
+        insurer=Organization.objects.create(code="HDR-IN",name_en="Insurer",organization_type_id="INSURER")
+        cls.policy=Policy.objects.create(organization=organization,insurance_company=insurer,policy_number="P/900/2026/0001",
             status="active",start_date=date(2026,1,1),expiry_date=date(2026,12,31),initial_enrollment_completed_at=timezone.now(),allowed_backdating_days=3650)
         BenefitPlan.objects.create(policy=cls.policy,code="GOLD",name="Gold",annual_premium=100)
         cls.provider=AIProviderConfig.objects.create(name="Header text",provider="mock",model_name="text",
@@ -78,7 +79,7 @@ class ExplicitEmailHeaderTests(TestCase):
             self.assertNotIn("classification_source",_recover_explicit_email_header(self.email,{"members":[]},{}))
 
     def test_multiple_policies_and_conflicting_ai_type_stay_for_review(self):
-        Policy.objects.create(sponsor=self.policy.sponsor,insurance_company=self.policy.insurance_company,
+        Policy.objects.create(organization=self.policy.organization,insurance_company=self.policy.insurance_company,
             policy_number="P/900/2026/0002",status="active",start_date=date(2026,1,1),expiry_date=date(2026,12,31))
         self.email.subject += " and P/900/2026/0002"
         self.assertNotIn("classification_source",_recover_explicit_email_header(self.email,{"members":[]},{}))

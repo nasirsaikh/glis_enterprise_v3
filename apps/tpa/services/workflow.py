@@ -35,6 +35,15 @@ def _event(tx, actor, event_type, summary, details=None):
         details=details or {},
     )
     if tx.ticket_id:
+        ticket = tx.ticket
+        closed = tx.status in {tx.Status.COMPLETED, tx.Status.PROCESSED, tx.Status.CANCELLED, tx.Status.REJECTED}
+        ticket.status = Ticket.Status.CLOSED if closed else Ticket.Status.PENDING_CUSTOMER if tx.status in {tx.Status.NEEDS_INFORMATION,tx.Status.TPA_QUERY} else Ticket.Status.NEW if tx.status in {tx.Status.DRAFT,tx.Status.EXTRACTING} else Ticket.Status.IN_PROGRESS
+        if closed:
+            ticket.resolved_at = ticket.resolved_at or tx.processed_at or timezone.now()
+            ticket.closed_at = ticket.closed_at or timezone.now()
+        if actor and actor.pk != ticket.requester_id and not ticket.first_responded_at:
+            ticket.first_responded_at = timezone.now()
+        ticket.save(update_fields=['status','resolved_at','closed_at','first_responded_at','updated_at'])
         TicketEvent.objects.create(
             ticket=tx.ticket,
             actor=actor,
@@ -100,8 +109,15 @@ def _data(action):
     }
 
 
+def lock_approval_transaction(tx):
+    Ticket.objects.select_for_update().get(pk=tx.ticket_id)
+    MemberTransaction.objects.select_for_update().get(pk=tx.pk)
+    tx.refresh_from_db()
+
+
 @transaction.atomic
 def reject_transaction(tx, actor, reason):
+    lock_approval_transaction(tx)
     if tx.status != tx.Status.PENDING_APPROVAL:
         raise ValueError("Only a transaction pending approval can be rejected.")
     if not can_approve_tpa_transaction(actor, tx):
@@ -115,6 +131,8 @@ def reject_transaction(tx, actor, reason):
     ).exists():
         raise ValueError("Resolve the open approval query before rejecting the transaction.")
 
+    from services.ticket_workflow import record_business_approval
+    record_business_approval(tx.ticket, actor=actor, approved=False, note=reason)
     tx.status = tx.Status.REJECTED
     tx.rejection_reason = reason
     tx.approved_by = actor
@@ -149,10 +167,10 @@ def dispatch_to_tpa(tx, actor=None):
     tx.metadata = {
         **(tx.metadata or {}),
         "tpa_route": {
-            "organization_id": tx.policy.tpa_organization_id,
+            "organization_id": tx.ticket.organization_participants.filter(relationship_type='processing').values_list('organization_id', flat=True).first(),
             "organization": (
-                tx.policy.tpa_organization.name_en
-                if tx.policy.tpa_organization_id
+                str(tx.ticket.organization_participants.filter(relationship_type='processing').first().organization)
+                if tx.ticket.organization_participants.filter(relationship_type='processing').values_list('organization_id', flat=True).first()
                 else "GLIS TPA Operations"
             ),
             "dispatched_at": timezone.now().isoformat(),
@@ -164,7 +182,7 @@ def dispatch_to_tpa(tx, actor=None):
         actor,
         "sent_to_tpa",
         "Transaction dispatched to TPA processing.",
-        {"tpa_organization_id": tx.policy.tpa_organization_id},
+        {"tpa_organization_id": tx.ticket.organization_participants.filter(relationship_type='processing').values_list('organization_id', flat=True).first()},
     )
     return tx
 
@@ -730,6 +748,11 @@ def run_validation(tx, actor=None):
         tx.rejection_reason = "Linked GLIS ticket approval was rejected."
     elif tx.ticket_id and tx.ticket.approval_state == "pending":
         tx.status = tx.Status.PENDING_APPROVAL
+    elif tx.ticket_id and tx.ticket.approval_state == 'approved':
+        tx.status = tx.Status.APPROVED
+        tx.approved_at = timezone.now()
+        last = tx.ticket.approvals.filter(status='approved').order_by('-decided_at').first()
+        tx.approved_by = last.approver if last else actor
     elif eligible:
         tx.status = tx.Status.AUTO_APPROVED
         tx.approved_at = timezone.now()
@@ -753,13 +776,14 @@ def run_validation(tx, actor=None):
         f"Validation completed: {tx.validation_score}% · {tx.get_status_display()}",
         {"stp_eligible": eligible, "stp_blockers": blockers},
     )
-    if tx.status == tx.Status.AUTO_APPROVED:
+    if tx.status in {tx.Status.AUTO_APPROVED, tx.Status.APPROVED}:
         return dispatch_to_tpa(tx, actor=actor)
     return tx
 
 
 @transaction.atomic
 def approve_transaction(tx, actor):
+    lock_approval_transaction(tx)
     if tx.status != tx.Status.PENDING_APPROVAL:
         raise ValueError("Transaction is not awaiting approval.")
     if not can_approve_tpa_transaction(actor, tx):
@@ -776,6 +800,8 @@ def approve_transaction(tx, actor):
         if tx.ticket.approval_state == "rejected":
             raise ValueError("The linked GLIS ticket approval was rejected.")
 
+    from services.ticket_workflow import record_business_approval
+    record_business_approval(tx.ticket, actor=actor, approved=True)
     tx.status = tx.Status.APPROVED
     tx.approved_at = timezone.now()
     tx.approved_by = actor
@@ -786,7 +812,8 @@ def approve_transaction(tx, actor):
 
 @transaction.atomic
 def sync_from_ticket_approval(tx, actor=None):
-    if not tx.ticket_id:
+    lock_approval_transaction(tx)
+    if not tx.ticket_id or tx.status != tx.Status.PENDING_APPROVAL:
         return tx
     tx.ticket.refresh_from_db(fields=["approval_state"])
     if tx.ticket.approval_state == "rejected":
@@ -795,6 +822,8 @@ def sync_from_ticket_approval(tx, actor=None):
         tx.save(update_fields=["status", "rejection_reason", "updated_at"])
         _event(tx, actor, "approval_rejected", "Linked GLIS approval rejected")
     elif tx.ticket.approval_state == "approved" and tx.status == tx.Status.PENDING_APPROVAL:
+        if tx.queries.filter(status=TransactionQuery.Status.OPEN, purpose=TransactionQuery.Purpose.APPROVAL).exists():
+            return tx
         last_approval = (
             tx.ticket.approvals.filter(status="approved")
             .select_related("approver")
@@ -885,7 +914,7 @@ def _process_add(tx, action):
     plan = tx.policy.plans.get(code=data["plan_code"], is_active=True)
     principal = _resolve_principal_member(tx, action, data)
     member = Member.objects.create(
-        sponsor=tx.sponsor,
+        organization=tx.organization,
         employee_id=str(data.get("employee_id") or "").strip(),
         first_name=str(data["first_name"]).strip(),
         middle_name=str(data.get("middle_name") or "").strip(),

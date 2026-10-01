@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 from datetime import date
 from unittest.mock import patch
 
@@ -23,7 +24,7 @@ from .models import (
     PolicyAccess,
     SourceDocument,
     TPAEmailAuthority,
-    TPAOrganization,
+
     TransactionQuery,
 )
 from .forms import MemberRowForm, PolicyEnrollmentForm, TransactionForm
@@ -54,25 +55,25 @@ class TPACoreTests(TestCase):
             username="tpa",
             password="x",
         )
-        self.sponsor = TPAOrganization.objects.create(
+        self.organization = Organization.objects.create(
             code="SP1",
-            name_en="Sponsor",
-            organization_type="CORPORATE",
+            name_en="organization",
+            organization_type_id="CORPORATE",
         )
-        self.insurer = TPAOrganization.objects.create(
+        self.insurer = Organization.objects.create(
             code="IN1",
             name_en="Insurer",
-            organization_type=TPAOrganization.Type.INSURER,
+            organization_type_id=Organization.Type.INSURER,
         )
-        self.tpa = TPAOrganization.objects.create(
+        self.tpa = Organization.objects.create(
             code="TPA1",
             name_en="Test TPA",
-            organization_type=TPAOrganization.Type.TPA,
+            organization_type_id=Organization.Type.TPA,
         )
         self.policy = Policy.objects.create(
-            sponsor=self.sponsor,
+            organization=self.organization,
             insurance_company=self.insurer,
-            tpa_organization=self.tpa,
+
             policy_number="POL-1",
             start_date=date(2026, 1, 1),
             expiry_date=date(2026, 12, 31),
@@ -91,13 +92,13 @@ class TPACoreTests(TestCase):
 
     def _transaction(self, status=MemberTransaction.Status.DRAFT):
         return MemberTransaction.objects.create(
-            sponsor=self.sponsor,
+            organization=self.organization,
             insurer=self.insurer,
             policy=self.policy,
             transaction_type=MemberTransaction.Type.MEMBER_ADD,
             effective_date=date(2026, 7, 1),
             requester=self.user,
-            requester_organization=self.sponsor,
+            requester_organization=self.organization,
             status=status,
         )
 
@@ -120,7 +121,7 @@ class TPACoreTests(TestCase):
 
     def test_policy_access_controls_workspace_and_create_visibility(self):
         PolicyAccess.objects.create(
-            organization=self.sponsor,
+            organization=self.organization,
             policy=self.policy,
             user=self.user,
             can_view=True,
@@ -131,28 +132,27 @@ class TPACoreTests(TestCase):
         self.assertTrue(can_create_tpa_transaction(self.user))
 
     def test_policy_enrollment_uses_user_organizations_and_site_default_tpa(self):
-        other_sponsor = TPAOrganization.objects.create(
+        other_organization = Organization.objects.create(
             code="SP2",
-            name_en="Other Sponsor",
-            organization_type=TPAOrganization.Type.CORPORATE,
+            name_en="Other organization",
+            organization_type_id=Organization.Type.CORPORATE,
         )
-        self.user.profile.organizations.add(self.sponsor)
+        self.user.profile.organizations.add(self.organization)
         settings_obj = SiteSettings.load()
-        settings_obj.default_tpa_organization = self.tpa
-        settings_obj.save(update_fields=["default_tpa_organization", "updated_at"])
+        settings_obj.default_processing_organization = self.tpa
+        settings_obj.save(update_fields=["default_processing_organization", "updated_at"])
 
         form = PolicyEnrollmentForm(user=self.user)
 
-        self.assertIn(self.sponsor, form.fields["sponsor"].queryset)
-        self.assertNotIn(other_sponsor, form.fields["sponsor"].queryset)
-        self.assertTrue(form.fields["sponsor"].disabled)
-        self.assertEqual(form.fields["sponsor"].initial, self.sponsor)
-        self.assertTrue(form.fields["tpa_organization"].disabled)
-        self.assertEqual(form.fields["tpa_organization"].initial, self.tpa)
+        self.assertIn(self.organization, form.fields["organization"].queryset)
+        self.assertNotIn(other_organization, form.fields["organization"].queryset)
+        self.assertTrue(form.fields["organization"].disabled)
+        self.assertEqual(form.fields["organization"].initial, self.organization)
+        self.assertNotIn("tpa_organization", form.fields)
 
     def test_endorsement_form_excludes_initial_enrollment(self):
         PolicyAccess.objects.create(
-            organization=self.sponsor,
+            organization=self.organization,
             policy=self.policy,
             user=self.user,
             can_view=True,
@@ -423,9 +423,9 @@ class TPACoreTests(TestCase):
 
     def test_initial_policy_enrollment_activates_policy_only_after_tpa_completion(self):
         policy = Policy.objects.create(
-            sponsor=self.sponsor,
+            organization=self.organization,
             insurance_company=self.insurer,
-            tpa_organization=self.tpa,
+
             policy_number="POL-OPENING-1",
             policy_name="Opening Census Policy",
             start_date=date(2026, 1, 1),
@@ -442,13 +442,13 @@ class TPACoreTests(TestCase):
             premium_configuration={"method": "PRORATA", "denominator": 365},
         )
         tx = MemberTransaction.objects.create(
-            sponsor=self.sponsor,
+            organization=self.organization,
             insurer=self.insurer,
             policy=policy,
             transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
             effective_date=date(2026, 1, 1),
             requester=self.user,
-            requester_organization=self.sponsor,
+            requester_organization=self.organization,
             status=MemberTransaction.Status.PENDING_VALIDATION,
         )
         action = MemberAction.objects.create(
@@ -687,7 +687,7 @@ class TPACoreTests(TestCase):
         self.assertEqual(tx.status, MemberTransaction.Status.TPA_IN_PROGRESS)
 
     def test_inbound_email_mock_ai_creates_transaction_and_member_row(self):
-        PolicyAccess.objects.create(organization=self.sponsor, policy=self.policy, user=self.user, can_view=True, can_create_endorsement=True)
+        PolicyAccess.objects.create(organization=self.organization, policy=self.policy, user=self.user, can_view=True, can_create_endorsement=True)
         AIProviderConfig.objects.create(
             name="Test TPA Mock AI",
             provider=AIProviderConfig.Provider.MOCK,
@@ -708,7 +708,7 @@ class TPACoreTests(TestCase):
         )
         TPAEmailAuthority.objects.create(
             email_address="hr@example.com",
-            organization=self.sponsor,
+            organization=self.organization,
             policy=self.policy,
             permitted_transaction_types=[MemberTransaction.Type.MEMBER_ADD],
             active=True,

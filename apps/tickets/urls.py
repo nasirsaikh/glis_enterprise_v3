@@ -3,6 +3,13 @@ from . import views
 from . import document_views
 
 urlpatterns = [
+    path('requests/new/',views.create_request,name='create_request'),
+    path('tickets/<str:reference>/release/',views.release_ticket,name='release_ticket'),
+    path('tickets/<str:reference>/tag/',views.tag_ticket_user,name='tag_ticket_user'),
+    path('tickets/<str:reference>/approval/request/',views.request_ticket_approval,name='request_ticket_approval'),
+    path('tickets/<str:reference>/approval/<int:approval_id>/cancel/',views.cancel_ticket_approval,name='cancel_ticket_approval'),
+    path('tickets/<str:reference>/assignment-options/',views.assignment_options,name='assignment_options'),
+
     path("", views.dashboard, name="dashboard"),
     path("tickets/", views.ticket_list, name="ticket_list"),
     path("tickets/export.csv", views.export_tickets, name="export_tickets"),

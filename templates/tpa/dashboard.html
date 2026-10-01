@@ -34,7 +34,7 @@
   {% endif %}
 
   <section class="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-    <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Active Clients" %}</div><div class="stat-value">{{ active_sponsors }}</div><div class="stat-desc">{% translate "accessible portfolio" %}</div></div></div>
+    <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Active Clients" %}</div><div class="stat-value">{{ active_organizations }}</div><div class="stat-desc">{% translate "accessible portfolio" %}</div></div></div>
     <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Active Policies" %}</div><div class="stat-value">{{ active_policies }}</div><div class="stat-desc">{% translate "endorsement enabled" %}</div></div></div>
     <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Active Members" %}</div><div class="stat-value">{{ active_members }}</div><div class="stat-desc">{% translate "covered lives" %}</div></div></div>
     <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Open Pipeline" %}</div><div class="stat-value">{{ open_transactions }}</div><div class="stat-desc">{% translate "active transactions" %}</div></div></div>
@@ -76,7 +76,7 @@
         <thead>
           <tr>
             <th>{% translate "Reference" %}</th>
-            <th>{% translate "Policy / Sponsor" %}</th>
+            <th>{% translate "Policy / organization" %}</th>
             <th>{% translate "Request" %}</th>
             <th>{% translate "Source" %}</th>
             <th>{% translate "Validation" %}</th>
@@ -89,10 +89,10 @@
           {% for tx in transactions %}
           <tr>
             <td>
-              <a class="link link-primary font-semibold font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.reference }}</a>
+              <a class="link link-primary font-semibold font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.display_reference }}</a>
               {% if tx.ticket %}<div class="mt-0.5 text-[10px] opacity-45">{{ tx.ticket.reference }}</div>{% endif %}
             </td>
-            <td><strong>{{ tx.policy.policy_number }}</strong><div class="text-[10px] opacity-50">{{ tx.sponsor.name_en }}</div></td>
+            <td><strong>{{ tx.policy.policy_number }}</strong><div class="text-[10px] opacity-50">{{ tx.organization.name_en }}</div></td>
             <td>{{ tx.get_transaction_type_display }}</td>
             <td><span class="badge badge-ghost">{{ tx.get_source_display }}</span></td>
             <td class="font-semibold">{{ tx.validation_score }}%</td>

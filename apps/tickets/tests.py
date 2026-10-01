@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 import tempfile
 
 from django.contrib.auth import get_user_model
@@ -8,7 +9,6 @@ from django.urls import reverse
 from django.utils import timezone
 from unittest.mock import patch
 from apps.accounts.models import UserProfile
-from apps.tpa.models import TPAOrganization
 from apps.orchestrator.local_vanna import LocalVannaOllama, SqlGovernor
 from apps.orchestrator.models import AIDomain, AnalysisSession, DataSource, QueryAudit, VannaSettings
 from services.access import TicketAccessPolicy
@@ -29,7 +29,7 @@ class TicketAccessPolicyTests(TestCase):
         self.agent.profile.save()
         self.support = SupportGroup.objects.create(name="Claims", code="claims")
         self.support.members.add(self.agent)
-        self.project = Project.objects.create(code="CLM", name_en="Claims")
+        self.project, _ = Project.objects.get_or_create(code="CLM", defaults={"name_en":"Claims"})
         self.project.groups.add(self.support)
         self.product = Product.objects.create(project=self.project, code="MOTOR", name_en="Motor")
         self.category = Category.objects.create(product=self.product, code="STATUS", name_en="Claim status", default_group=self.support)
@@ -50,8 +50,8 @@ class TicketAccessPolicyTests(TestCase):
         response = self.client.get(reverse("portal:ticket_detail", args=[self.group_ticket.reference]))
         self.assertEqual(response.status_code, 404)
 
-    def test_group_member_must_take_over_before_editing(self):
-        self.assertFalse(TicketAccessPolicy.can_edit(self.agent, self.group_ticket))
+    def test_group_member_can_edit_when_configured_and_take_over(self):
+        self.assertTrue(TicketAccessPolicy.can_edit(self.agent, self.group_ticket))
         self.assertTrue(TicketAccessPolicy.can_take_over(self.agent, self.group_ticket))
         self.client.force_login(self.agent)
         response = self.client.post(reverse("portal:take_over_ticket", args=[self.group_ticket.reference]))
@@ -64,6 +64,7 @@ class TicketAccessPolicyTests(TestCase):
         self.agent.user_permissions.add(permission)
         second_group = SupportGroup.objects.create(name="Operations", code="operations")
         second_group.members.add(self.agent)
+        self.project.groups.add(second_group)
         self.support.members.add(self.other)
         self.client.force_login(self.agent)
         response = self.client.post(reverse("portal:assign_ticket", args=[self.group_ticket.reference]), {"users": [self.agent.pk, self.other.pk], "groups": [self.support.pk, second_group.pk], "replace_existing": "on"})
@@ -73,15 +74,15 @@ class TicketAccessPolicyTests(TestCase):
 
     def test_assignment_scope_uses_my_organizations_or_support_groups(self):
         User = get_user_model()
-        company_a = TPAOrganization.objects.create(
+        company_a = Organization.objects.create(
             code="COMP-A",
             name_en="Company A",
-            organization_type=TPAOrganization.Type.CORPORATE,
+            organization_type_id=Organization.Type.CORPORATE,
         )
-        company_b = TPAOrganization.objects.create(
+        company_b = Organization.objects.create(
             code="COMP-B",
             name_en="Company B",
-            organization_type=TPAOrganization.Type.CORPORATE,
+            organization_type_id=Organization.Type.CORPORATE,
         )
         self.agent.profile.organizations.add(company_a)
         self.other.profile.organizations.add(company_b)
@@ -105,6 +106,7 @@ class TicketAccessPolicyTests(TestCase):
             code="company-a-operations",
         )
         company_group.organizations.add(company_a)
+        self.project.groups.add(company_group)
         outside_group = SupportGroup.objects.create(
             name="Company B Operations",
             code="company-b-operations",
@@ -128,20 +130,20 @@ class TicketAccessPolicyTests(TestCase):
                 "replace_existing": "on",
             },
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 400)
         self.assertFalse(self.group_ticket.assignees.filter(pk=self.other.pk).exists())
         self.assertFalse(self.group_ticket.groups.filter(pk=outside_group.pk).exists())
 
     def test_ticket_organization_filter_is_scoped_to_user_companies(self):
-        company_a = TPAOrganization.objects.create(
+        company_a = Organization.objects.create(
             code="FILTER-A",
             name_en="Filter Company A",
-            organization_type=TPAOrganization.Type.CORPORATE,
+            organization_type_id=Organization.Type.CORPORATE,
         )
-        company_b = TPAOrganization.objects.create(
+        company_b = Organization.objects.create(
             code="FILTER-B",
             name_en="Filter Company B",
-            organization_type=TPAOrganization.Type.CORPORATE,
+            organization_type_id=Organization.Type.CORPORATE,
         )
         self.agent.profile.organizations.add(company_a)
         form = TicketFilterForm(user=self.agent)

@@ -29,8 +29,8 @@
         <tbody>
         {% for tx in transactions %}
           <tr>
-            <td><a class="link link-primary font-semibold font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.reference }}</a></td>
-            <td><strong>{{ tx.policy.policy_number }}</strong><div class="text-[10px] opacity-45">{{ tx.sponsor.name_en }}</div></td>
+            <td><a class="link link-primary font-semibold font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.display_reference }}</a></td>
+            <td><strong>{{ tx.policy.policy_number }}</strong><div class="text-[10px] opacity-45">{{ tx.organization.name_en }}</div></td>
             <td>{{ tx.get_transaction_type_display }}</td>
             <td><span class="badge badge-ghost">{{ tx.get_source_display }}</span></td>
             <td>

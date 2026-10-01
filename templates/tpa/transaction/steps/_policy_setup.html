@@ -9,8 +9,8 @@
             <dl class="grid grid-cols-2 gap-3 text-sm">
               <div><dt class="opacity-45">{% translate "Policy" %}</dt><dd class="font-bold">{{ tx.policy.policy_number }}</dd></div>
               <div><dt class="opacity-45">{% translate "Period" %}</dt><dd>{{ tx.policy.start_date|date:"d-M-Y" }} → {{ tx.policy.expiry_date|date:"d-M-Y" }}</dd></div>
-              <div><dt class="opacity-45">{% translate "Sponsor" %}</dt><dd>{{ tx.policy.sponsor.name_en }}</dd></div>
-              <div><dt class="opacity-45">{% translate "TPA" %}</dt><dd>{{ tx.policy.tpa_organization.name_en|default:"GLIS TPA Operations" }}</dd></div>
+              <div><dt class="opacity-45">{% translate "organization" %}</dt><dd>{{ tx.policy.organization.name_en }}</dd></div>
+              <div><dt class="opacity-45">{% translate "Processing Organization" %}</dt><dd>{{ tx.ticket.processing_organizations.first.organization.name_en|default:"—" }}</dd></div>
             </dl>
             <div class="overflow-x-auto">
               <table class="table table-sm">

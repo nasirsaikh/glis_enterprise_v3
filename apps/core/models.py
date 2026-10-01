@@ -73,14 +73,14 @@ class SiteSettings(SingletonModel, TimeStampedModel):
     organization_details = models.TextField(blank=True)
     social_links = models.JSONField(default=dict, blank=True)
 
-    default_tpa_organization = models.ForeignKey(
-        "tpa.TPAOrganization",
+    default_processing_organization = models.ForeignKey(
+        "accounts.Organization",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name="+",
-        limit_choices_to={"organization_type": "TPA", "is_active": True},
-        help_text="Default TPA used for new policy enrollments. Configure this once at site level.",
+        limit_choices_to={"is_active": True},
+        help_text="Optional default organization for workflow processing.",
     )
 
     # HeroSection merged into SiteSettings

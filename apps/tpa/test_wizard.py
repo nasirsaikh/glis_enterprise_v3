@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 from datetime import date
 import re
 from unittest.mock import patch
@@ -11,7 +12,7 @@ from django.utils import timezone
 
 from .models import (
     BenefitPlan, CardDispatch, MemberAction, MemberTransaction, Policy,
-    PolicyAccess, TPAOrganization, TransactionQuery,
+    PolicyAccess, Organization, TransactionQuery,
 )
 from .services.wizard import get_transaction_wizard
 
@@ -25,28 +26,28 @@ class TransactionWizardTests(TestCase):
         cls.reader = User.objects.create_user("wizard-reader", password="test")
         cls.outsider = User.objects.create_user("wizard-outsider", password="test")
         cls.outsider.user_permissions.add(Permission.objects.get(codename="view_tpa_dashboard"))
-        cls.sponsor = TPAOrganization.objects.create(code="WSP", name_en="Wizard Sponsor", organization_type="CORPORATE")
-        cls.insurer = TPAOrganization.objects.create(code="WIN", name_en="Wizard Insurer", organization_type="INSURER")
+        cls.organization = Organization.objects.create(code="WSP", name_en="Wizard organization", organization_type_id="CORPORATE")
+        cls.insurer = Organization.objects.create(code="WIN", name_en="Wizard Insurer", organization_type_id="INSURER")
         cls.policy = Policy.objects.create(
-            sponsor=cls.sponsor, insurance_company=cls.insurer, policy_number="WIZARD-1",
+            organization=cls.organization, insurance_company=cls.insurer, policy_number="WIZARD-1",
             start_date=date(2026, 1, 1), expiry_date=date(2026, 12, 31),
             status=Policy.Status.ACTIVE, allowed_backdating_days=3650, stp_enabled=False,
             initial_enrollment_completed_at=timezone.now(), initial_enrollment_completed_by=cls.admin,
         )
         BenefitPlan.objects.create(policy=cls.policy, code="GOLD", name="Gold", annual_premium="365.000")
-        PolicyAccess.objects.create(organization=cls.sponsor, policy=cls.policy, user=cls.requester,
+        PolicyAccess.objects.create(organization=cls.organization, policy=cls.policy, user=cls.requester,
                                    can_view=True, can_create_endorsement=True)
-        PolicyAccess.objects.create(organization=cls.sponsor, policy=cls.policy, user=cls.reader, can_view=True)
+        PolicyAccess.objects.create(organization=cls.organization, policy=cls.policy, user=cls.reader, can_view=True)
 
     def setUp(self):
         self.client.force_login(self.admin)
 
     def tx(self, status=MemberTransaction.Status.DRAFT, **kwargs):
         return MemberTransaction.objects.create(
-            sponsor=self.sponsor, insurer=self.insurer, policy=self.policy,
+            organization=self.organization, insurer=self.insurer, policy=self.policy,
             transaction_type=kwargs.pop("transaction_type", MemberTransaction.Type.MEMBER_ADD),
             effective_date=date(2026, 7, 1), requester=self.requester,
-            requester_organization=self.sponsor, status=status, **kwargs,
+            requester_organization=self.organization, status=status, **kwargs,
         )
 
     def member(self, tx):
@@ -111,7 +112,7 @@ class TransactionWizardTests(TestCase):
     def test_future_step_is_gated_in_full_and_htmx_requests(self):
         tx = self.tx()
         response = self.get(tx, "complete")
-        self.assertRedirects(response, reverse("tpa:transaction_detail", args=[tx.reference]) + "?step=intake")
+        self.assertRedirects(response, reverse("portal:ticket_detail", args=[tx.ticket.reference]) + "?step=intake")
         response = self.get(tx, "approval", HTTP_HX_REQUEST="true")
         self.assert_step(response, "intake")
         self.assertIn("?step=intake", response["HX-Push-Url"])

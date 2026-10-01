@@ -63,38 +63,22 @@ def can_create_tpa_transaction(user):
     return can_create_policy_enrollment(user) or can_create_endorsement(user)
 
 
-def can_edit_tpa_intake(user, tx):
-    """Return whether the user may mutate the intake/correction stage.
-
-    Visibility alone is deliberately insufficient. This guard is reused by
-    POST endpoints so a read-only PolicyAccess user cannot modify a transaction
-    by calling an HTMX/form URL directly.
-    """
-    if not user or not user.is_authenticated:
-        return False
-    if not visible_transactions(user).filter(pk=tx.pk).exists():
+def can_create_for_policy(user, policy, transaction_type):
+    if not user or not user.is_authenticated or not visible_policies(user).filter(pk=policy.pk).exists():
         return False
     if user.is_superuser or user.has_perm("tpa.configure_tpa"):
         return True
-
-    if tx.transaction_type == MemberTransaction.Type.NEW_POLICY_ENROLLMENT:
-        if user.has_perm("tpa.create_enrollment"):
-            return True
-        return PolicyAccess.objects.filter(
-            user=user,
-            policy=tx.policy,
-            active=True,
-            can_create_enrollment=True,
-        ).exists()
-
-    if user.has_perm("tpa.create_endorsement"):
+    enrollment = transaction_type == MemberTransaction.Type.NEW_POLICY_ENROLLMENT
+    if user.has_perm("tpa.create_enrollment" if enrollment else "tpa.create_endorsement"):
         return True
-    return PolicyAccess.objects.filter(
-        user=user,
-        policy=tx.policy,
-        active=True,
-        can_create_endorsement=True,
-    ).exists()
+    return policy.access_entries.filter(user=user, active=True,
+        **{"can_create_enrollment" if enrollment else "can_create_endorsement":True}).exists()
+
+
+def can_edit_tpa_intake(user, tx):
+    if not visible_transactions(user).filter(pk=tx.pk).exists():
+        return False
+    return can_create_for_policy(user,tx.policy,tx.transaction_type)
 
 
 def can_approve_tpa_transaction(user, tx):
@@ -122,10 +106,10 @@ def can_process_tpa_transaction(user, tx):
 
 
 def visible_policies(user):
-    qs = scope_policies(Policy.objects.select_related("sponsor", "insurance_company"), user)
+    qs = scope_policies(Policy.objects.select_related("organization", "insurance_company"), user)
     if not user.is_authenticated:
         return qs.none()
-    if user.is_superuser or user.has_perm("tpa.configure_tpa"):
+    if user.is_superuser or any(user.has_perm(code) for code in (*TPA_ENTRY_PERMISSIONS, "tpa.view_policy")):
         return qs
     return qs.filter(
         access_entries__user=user,
@@ -135,17 +119,13 @@ def visible_policies(user):
 
 
 def visible_transactions(user):
-    qs = MemberTransaction.objects.select_related("policy", "sponsor", "insurer", "ticket")
+    from services.access import TicketAccessPolicy
+    qs = MemberTransaction.objects.select_related('policy','organization','insurer','ticket')
     if not user or not user.is_authenticated:
         return qs.none()
     if user.is_superuser:
         return qs
-    own = Q(requester=user)
-    if organization_ids(user):
-        own &= Q(policy_id__in=scope_policies(Policy.objects.all(), user).values("pk"))
-    # Legacy requesters can retain their own intake record without acquiring
-    # access to every policy or other requests in the same organization.
-    return qs.filter(own | Q(policy_id__in=visible_policies(user).values("pk"))).distinct()
+    return qs.filter(Q(ticket_id__in=TicketAccessPolicy.visible_queryset(user).values('pk')) | Q(policy_id__in=visible_policies(user).values('pk'))).distinct()
 
 
 def _is_internal_tpa_user(user, tx):

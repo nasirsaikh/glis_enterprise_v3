@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 import tempfile
 from datetime import date
 from unittest.mock import MagicMock, patch
@@ -8,7 +9,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 from apps.ai.models import AIProviderConfig
 from apps.ai.runtime import generate_json
-from .models import MemberTransaction, Policy, SourceDocument, TPAOrganization
+from .models import MemberTransaction, Policy, SourceDocument
 from .services.document_intake import process_source_bundle
 from .services.extraction import normalize_ai_payload
 from .services.schemas import MemberBundle, merge_recovered_payload, missing_member_fields
@@ -72,12 +73,12 @@ class DocumentRecoveryTests(TestCase):
         settings.enable()
         self.addCleanup(settings.disable)
         self.actor = get_user_model().objects.create_superuser("recovery-admin", "recovery@example.com", "test")
-        sponsor = TPAOrganization.objects.create(code="REC-SP", name_en="Recovery sponsor", organization_type="CORPORATE")
-        insurer = TPAOrganization.objects.create(code="REC-IN", name_en="Recovery insurer", organization_type="INSURER")
-        policy = Policy.objects.create(sponsor=sponsor, insurance_company=insurer, policy_number="REC-1",
+        organization = Organization.objects.create(code="REC-SP", name_en="Recovery organization", organization_type_id="CORPORATE")
+        insurer = Organization.objects.create(code="REC-IN", name_en="Recovery insurer", organization_type_id="INSURER")
+        policy = Policy.objects.create(organization=organization, insurance_company=insurer, policy_number="REC-1",
                                       start_date=date(2026, 1, 1), expiry_date=date(2026, 12, 31))
-        self.tx = MemberTransaction.objects.create(sponsor=sponsor, insurer=insurer, policy=policy,
-            transaction_type=MemberTransaction.Type.MEMBER_ADD, effective_date=date(2026, 1, 1), requester=self.actor, requester_organization=sponsor)
+        self.tx = MemberTransaction.objects.create(organization=organization, insurer=insurer, policy=policy,
+            transaction_type=MemberTransaction.Type.MEMBER_ADD, effective_date=date(2026, 1, 1), requester=self.actor, requester_organization=organization)
         self.provider = AIProviderConfig.objects.create(name="Recovery mapper", provider="mock", allow_sensitive_data=True)
         self.document = SourceDocument.objects.create(transaction=self.tx, original_name="member.pdf",
             content_type="application/pdf", file=SimpleUploadedFile("member.pdf", b"%PDF-test", content_type="application/pdf"))

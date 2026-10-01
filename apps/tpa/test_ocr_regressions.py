@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 import json
 import tempfile
 from datetime import date
@@ -9,7 +10,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 from apps.ai.models import AIProviderConfig
 from apps.ai.runtime import _json_from_text, generate_json, generate_text
-from .models import MemberTransaction, Policy, SourceDocument, TPAOrganization
+from .models import MemberTransaction, Policy, SourceDocument
 from .services.document_intake import process_source_bundle
 from .services.email_evidence import member_rows_from_html, read_email_evidence
 from .services.extraction import normalize_ai_payload, select_provider
@@ -83,10 +84,10 @@ class OCRRecoveryTests(TestCase):
     def setUpTestData(cls):
         from django.contrib.auth import get_user_model
         cls.actor = get_user_model().objects.create_superuser("ocr-admin", "ocr@example.test", "test")
-        sponsor = TPAOrganization.objects.create(code="OCR-SP", name_en="Sponsor", organization_type="CORPORATE")
-        insurer = TPAOrganization.objects.create(code="OCR-IN", name_en="Insurer", organization_type="INSURER")
-        policy = Policy.objects.create(sponsor=sponsor, insurance_company=insurer, policy_number="OCR-1", start_date=date(2026,1,1), expiry_date=date(2026,12,31))
-        cls.tx = MemberTransaction.objects.create(policy=policy,sponsor=sponsor,insurer=insurer,requester=cls.actor,requester_organization=sponsor,transaction_type="MEMBER_ADD",effective_date=date(2026,7,1))
+        organization = Organization.objects.create(code="OCR-SP", name_en="organization", organization_type_id="CORPORATE")
+        insurer = Organization.objects.create(code="OCR-IN", name_en="Insurer", organization_type_id="INSURER")
+        policy = Policy.objects.create(organization=organization, insurance_company=insurer, policy_number="OCR-1", start_date=date(2026,1,1), expiry_date=date(2026,12,31))
+        cls.tx = MemberTransaction.objects.create(policy=policy,organization=organization,insurer=insurer,requester=cls.actor,requester_organization=organization,transaction_type="MEMBER_ADD",effective_date=date(2026,7,1))
         cls.provider = AIProviderConfig.objects.create(name="Text",provider="mock",model_name="text-model",task_capabilities=["email_extraction","member_field_mapping"],allow_sensitive_data=True)
 
     def test_text_provider_selection_excludes_ocr_even_when_misconfigured(self):

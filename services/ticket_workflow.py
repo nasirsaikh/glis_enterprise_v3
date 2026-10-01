@@ -3,7 +3,7 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
-from apps.tickets.models import Notification, TicketApproval, TicketEvent
+from apps.tickets.models import Notification, Ticket, TicketApproval, TicketEvent
 from apps.job_center.queue import enqueue
 
 
@@ -55,15 +55,32 @@ def initialize_approval_workflow(ticket):
 
 
 def current_approval_sequence(ticket):
-    pending = ticket.approvals.filter(status="pending").select_related("step").order_by("step__sequence")
+    pending = ticket.approvals.filter(status="pending", step__isnull=False).select_related("step").order_by("step__sequence")
     return pending.first().step.sequence if pending.exists() else None
 
 
 @transaction.atomic
 def decide_approval(approval, *, approved, note, actor):
-    ticket = approval.ticket
+    ticket = Ticket.objects.select_for_update().get(pk=approval.ticket_id)
+    approval = TicketApproval.objects.select_for_update().select_related('step').get(pk=approval.pk)
+    from services.access import TicketAccessPolicy
+    if not TicketAccessPolicy.can_view(actor, ticket):
+        raise PermissionError('You cannot access this ticket.')
     if approval.approver_id != actor.pk:
         raise PermissionError("This approval is assigned to another user.")
+    if approval.step_id is None:
+        if approval.status != 'pending':
+            raise ValueError('This approval has already been decided.')
+        approval.status = 'approved' if approved else 'rejected'
+        approval.note, approval.decided_at = note, timezone.now()
+        approval.save(update_fields=['status','note','decided_at','updated_at'])
+        statuses = set(ticket.approvals.values_list('status',flat=True))
+        ticket.approval_state = 'rejected' if 'rejected' in statuses else 'pending' if 'pending' in statuses else 'approved'
+        ticket.save(update_fields=['approval_state','updated_at'])
+        TicketEvent.objects.create(ticket=ticket,actor=actor,event_type='approval_decided',summary=f'Approval {approval.status}',details={'approval':approval.pk,'before':'pending','after':approval.status,'note':note})
+        notify_users([approval.requested_by,ticket.requester],ticket=ticket,kind='approval',title=f'Approval {approval.status}: {ticket.reference}',body=note,send_email_message=ticket.category.send_update_email)
+        sync_domain_approval(ticket,actor)
+        return approval
     current = current_approval_sequence(ticket)
     if current is None or approval.step.sequence != current or approval.status != "pending":
         raise ValueError("This approval step is not currently actionable.")
@@ -75,7 +92,8 @@ def decide_approval(approval, *, approved, note, actor):
         ticket.approval_state = "rejected"
         ticket.save(update_fields=["approval_state", "updated_at"])
         notify_users([ticket.requester], ticket=ticket, kind="approval", title=f"Approval rejected: {ticket.reference}", body=note)
-        return
+        sync_domain_approval(ticket,actor)
+        return approval
     step_items = ticket.approvals.filter(step=approval.step)
     approved_count = step_items.filter(status="approved").count()
     if approved_count >= approval.step.approvals_required:
@@ -85,6 +103,38 @@ def decide_approval(approval, *, approved, note, actor):
             next_users = [item.approver for item in ticket.approvals.filter(status="pending", step__sequence=next_item.step.sequence).select_related("approver")]
             notify_users(next_users, ticket=ticket, kind="approval", title=f"Approval required: {ticket.reference}", body=next_item.step.name)
         else:
-            ticket.approval_state = "approved"
+            ticket.approval_state = "pending" if ticket.approvals.filter(status="pending").exists() else "approved"
             ticket.save(update_fields=["approval_state", "updated_at"])
             notify_users([ticket.requester], ticket=ticket, kind="approval", title=f"Approval completed: {ticket.reference}", body=ticket.subject)
+
+    sync_domain_approval(ticket,actor)
+    return approval
+
+
+def sync_domain_approval(ticket, actor):
+    from apps.tpa.models import MemberTransaction
+    from apps.tpa.services.workflow import sync_from_ticket_approval
+    tx = MemberTransaction.objects.filter(ticket=ticket,status=MemberTransaction.Status.PENDING_APPROVAL).first()
+    if tx:
+        sync_from_ticket_approval(tx,actor=actor)
+
+
+@transaction.atomic
+def record_business_approval(ticket, *, actor, approved, note=''):
+    from apps.tpa.models import MemberTransaction
+    from apps.tpa.services.access import can_approve_tpa_transaction
+    ticket = Ticket.objects.select_for_update().get(pk=ticket.pk)
+    tx = MemberTransaction.objects.get(ticket=ticket)
+    if not can_approve_tpa_transaction(actor,tx):
+        raise PermissionError('Business approval permission is required.')
+    if approved and ticket.approvals.filter(status='pending').exists():
+        raise ValueError('Complete the pending ticket approval first.')
+    if not approved:
+        ticket.approvals.filter(status='pending').update(status='cancelled',decided_at=timezone.now())
+    approval = TicketApproval.objects.create(ticket=ticket,step=None,approver=actor,requested_by=ticket.requester,
+        status='approved' if approved else 'rejected',note=note,decided_at=timezone.now())
+    ticket.approval_state = approval.status
+    ticket.save(update_fields=['approval_state','updated_at'])
+    TicketEvent.objects.create(ticket=ticket,actor=actor,event_type='approval_decided',summary=f'Business approval {approval.status}',details={'approval':approval.pk,'after':approval.status,'note':note})
+    notify_users([ticket.requester],ticket=ticket,kind='approval',title=f'Approval {approval.status}: {ticket.reference}',body=note,send_email_message=ticket.category.send_update_email)
+    return approval

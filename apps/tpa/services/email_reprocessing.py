@@ -39,6 +39,8 @@ def validate_email_reprocessing(email, actor):
     if not visible_inbound_emails(actor).filter(pk=email.pk).exists():
         raise PermissionDenied("This email is outside your authorized organizations.")
     if not email.transaction_id:
+        if email.ticket_id:
+            raise ValueError("This email already belongs to a ticket. Continue in the ticket workspace.")
         if not can_create_tpa_transaction(actor):
             raise PermissionDenied("TPA transaction creation permission is required.")
         return

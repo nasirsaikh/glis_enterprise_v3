@@ -3,7 +3,7 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from apps.core.models import LocalizedModelMixin, TimeStampedModel
 
@@ -23,7 +23,7 @@ class SupportGroup(TimeStampedModel):
     members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="support_groups", blank=True)
     managers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="managed_support_groups", blank=True)
     organizations = models.ManyToManyField(
-        "tpa.TPAOrganization",
+        "accounts.Organization",
         related_name="support_groups",
         blank=True,
         help_text="Organizations whose users may use this support group for ticket routing and reassignment.",
@@ -44,6 +44,38 @@ class SupportGroup(TimeStampedModel):
 
 
 class Project(TimeStampedModel, LocalizedModelMixin):
+    class RequestType(models.TextChoices):
+        SERVICE = 'service', 'Service Tickets'
+        POLICY = 'policy', 'Policies'
+        ENDORSEMENT = 'endorsement', 'Endorsements'
+        CLAIM = 'claim', 'Claims'
+        TASK = 'task', 'Tasks'
+        OTHER = 'other', 'Other'
+
+    request_type = models.CharField(max_length=20, choices=RequestType.choices, default=RequestType.SERVICE, db_index=True)
+    workflow_type = models.CharField(max_length=40, blank=True, db_index=True)
+    ticket_prefix = models.CharField(max_length=20, blank=True, help_text='Defaults to project code.')
+    reference_format = models.CharField(max_length=120, default='{prefix}-{year}-{sequence:06d}')
+    icon = models.CharField(max_length=80, blank=True)
+    organizations = models.ManyToManyField('accounts.Organization', blank=True, related_name='projects')
+    organization_types = models.ManyToManyField('accounts.OrganizationType', blank=True, related_name='projects')
+
+    def clean(self):
+        import re
+        from string import Formatter
+        prefix = self.ticket_prefix or self.code
+        if not re.fullmatch(r'[A-Za-z0-9_-]{1,20}', prefix):
+            raise ValidationError({'ticket_prefix': 'Use a short alphanumeric prefix.'})
+        try:
+            keys = {field for _, field, _, _ in Formatter().parse(self.reference_format) if field}
+            if keys != {'prefix', 'year', 'sequence'}:
+                raise ValueError()
+            result = self.reference_format.format(prefix=prefix, year=2026, sequence=1)
+            if len(result) > 80 or result == self.reference_format.format(prefix=prefix, year=2026, sequence=2):
+                raise ValueError()
+        except (ValueError, KeyError, IndexError, AttributeError):
+            raise ValidationError({'reference_format': 'Use prefix, year and sequence, within 80 characters.'})
+
     code = models.CharField(max_length=20, unique=True)
     name_en = models.CharField(max_length=140)
     name_ar = models.CharField(max_length=140, blank=True)
@@ -61,6 +93,7 @@ class Project(TimeStampedModel, LocalizedModelMixin):
 
 
 class Product(TimeStampedModel, LocalizedModelMixin):
+    policy_types = models.JSONField(default=list, blank=True, help_text="Policy type codes or {code, name} objects.")
     project = models.ForeignKey(Project, related_name="products", on_delete=models.CASCADE)
     code = models.CharField(max_length=30)
     name_en = models.CharField(max_length=140)
@@ -251,7 +284,10 @@ class Ticket(TimeStampedModel):
         HIGH = "high", "High"
         CRITICAL = "critical", "Critical"
 
-    reference = models.CharField(max_length=30, unique=True, null=True, blank=True, editable=False)
+    reference = models.CharField(max_length=80, unique=True, null=True, blank=True, editable=False)
+    organization = models.ForeignKey("accounts.Organization", null=True, blank=True, on_delete=models.PROTECT, related_name="tickets")
+    policy = models.ForeignKey("tpa.Policy", null=True, blank=True, on_delete=models.PROTECT, related_name="tickets")
+    tagged_users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="TicketTaggedUser", through_fields=("ticket", "user"), related_name="tagged_tickets", blank=True)
     subject = models.CharField(max_length=240)
     description = models.TextField()
     requester = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="requested_tickets", on_delete=models.PROTECT)
@@ -287,6 +323,10 @@ class Ticket(TimeStampedModel):
 
     def __str__(self):
         return f"{self.reference or 'New'} · {self.subject}"
+
+    @property
+    def processing_organizations(self):
+        return self.organization_participants.filter(relationship_type="processing").select_related("organization")
 
     @property
     def sla_state(self):
@@ -406,11 +446,41 @@ class Ticket(TimeStampedModel):
         }
 
     def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
-        if is_new and not self.reference:
-            self.reference = f"GLIS-{self.created_at:%Y}-{self.pk:05d}"
-            super().save(update_fields=["reference"])
+        with transaction.atomic():
+            if self.pk is None and not self.reference:
+                from services.ticket_references import allocate_reference
+                self.reference = allocate_reference(self.project)
+            super().save(*args, **kwargs)
+
+
+class TicketSequence(models.Model):
+    prefix = models.CharField(max_length=20)
+    year = models.PositiveIntegerField()
+    value = models.PositiveBigIntegerField(default=0)
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['prefix', 'year'], name='unique_ticket_sequence')]
+
+
+class TicketOrganization(TimeStampedModel):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='organization_participants')
+    organization = models.ForeignKey('accounts.Organization', on_delete=models.PROTECT, related_name='ticket_participations')
+    relationship_type = models.CharField(max_length=40, default='participant')
+    can_view = models.BooleanField(default=True)
+    can_edit = models.BooleanField(default=False)
+    can_assign = models.BooleanField(default=False)
+    can_approve = models.BooleanField(default=False)
+    is_primary = models.BooleanField(default=False)
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['ticket', 'organization', 'relationship_type'], name='unique_ticket_organization_role')]
+
+
+class TicketTaggedUser(TimeStampedModel):
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='tagged_participants')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='ticket_tags')
+    tagged_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name='created_ticket_tags')
+    is_active = models.BooleanField(default=True)
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['ticket', 'user'], name='unique_ticket_tag_user')]
 
 
 class TicketDynamicData(TimeStampedModel):
@@ -478,15 +548,16 @@ class SavedTicketView(TimeStampedModel):
 
 class TicketApproval(TimeStampedModel):
     ticket = models.ForeignKey(Ticket, related_name="approvals", on_delete=models.CASCADE)
-    step = models.ForeignKey(ApprovalStep, related_name="ticket_approvals", on_delete=models.PROTECT)
+    step = models.ForeignKey(ApprovalStep, null=True, blank=True, related_name="ticket_approvals", on_delete=models.PROTECT)
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="requested_ticket_approvals")
     approver = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="ticket_approvals", on_delete=models.PROTECT)
-    status = models.CharField(max_length=20, default="pending", choices=[("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected"), ("skipped", "Skipped")])
+    status = models.CharField(max_length=20, default="pending", choices=[("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected"), ("skipped", "Skipped"), ("cancelled", "Cancelled")])
     decided_at = models.DateTimeField(null=True, blank=True)
     note = models.TextField(blank=True)
 
     class Meta:
         ordering = ("step__sequence", "created_at")
-        constraints = [models.UniqueConstraint(fields=["ticket", "step", "approver"], name="unique_ticket_step_approver")]
+        constraints = [models.UniqueConstraint(fields=["ticket", "step", "approver"], name="unique_ticket_step_approver"), models.UniqueConstraint(fields=["ticket", "approver"], condition=models.Q(step__isnull=True, status="pending"), name="unique_pending_ticket_user_approval")]
 
 
 class TicketEscalation(TimeStampedModel):

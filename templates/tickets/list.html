@@ -15,10 +15,7 @@
 
   </section>
 
-  <div role="tablist" class="tabs tabs-box w-fit bg-base-100 shadow-sm">
-    <a role="tab" class="tab gap-2 {% if ticket_tab == 'tickets' %}tab-active{% endif %}" href="{% url 'portal:ticket_list' %}?tab=tickets"><i class="bi bi-ticket-perforated"></i><span>{% translate "Service tickets" %}</span><span class="badge badge-sm badge-neutral">{{ service_ticket_count }}</span></a>
-    <a role="tab" class="tab gap-2 {% if ticket_tab == 'tasks' %}tab-active{% endif %}" href="{% url 'portal:ticket_list' %}?tab=tasks"><i class="bi bi-list-task"></i><span>{% translate "Tasks" %}</span><span class="badge badge-sm badge-neutral">{{ task_ticket_count }}</span></a>
-  </div>
+  <div role="tablist" class="tabs tabs-box flex-wrap">{% for tab in workflow_tabs %}<a role="tab" class="tab {% if ticket_tab == tab.key %}tab-active{% endif %}" href="{% url 'portal:ticket_list' %}?tab={{ tab.key }}">{{ tab.label }} <span class="badge badge-sm ms-2">{{ tab.count }}</span></a>{% endfor %}</div>
 
   <section class="card border border-base-300 bg-base-100 shadow-lg" data-reveal>
     <div class="card-body p-5 sm:p-6">

@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.test import TestCase
@@ -7,7 +8,6 @@ from apps.orchestrator.local_vanna import SqlGovernor
 from apps.orchestrator.models import AIDomain, DataSource
 from apps.accounts.models import UserProfile
 from apps.tasks.forms import TaskForm
-from apps.tpa.models import TPAOrganization
 from services.access import TicketAccessPolicy
 from services.tenancy import visible_support_groups, visible_users
 from .forms import TicketAssignmentForm, TicketIntakeForm, TicketShareForm
@@ -22,8 +22,8 @@ class PortalOrganizationTests(TestCase):
         cls.peer = User.objects.create_user("org-peer", email="peer@example.com")
         cls.outsider = User.objects.create_user("org-outside", email="outside@example.com")
         cls.team_peer = User.objects.create_user("org-team", email="team@example.com")
-        cls.org = TPAOrganization.objects.create(code="ORG-A", name_en="Organization A", organization_type="CORPORATE")
-        cls.other_org = TPAOrganization.objects.create(code="ORG-B", name_en="Organization B", organization_type="CORPORATE")
+        cls.org = Organization.objects.create(code="ORG-A", name_en="Organization A", organization_type_id="CORPORATE")
+        cls.other_org = Organization.objects.create(code="ORG-B", name_en="Organization B", organization_type_id="CORPORATE")
         cls.actor.profile.organizations.add(cls.org)
         cls.peer.profile.organizations.add(cls.org)
         cls.outsider.profile.organizations.add(cls.other_org)

@@ -1,52 +1,27 @@
 from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
+from apps.accounts.models import Organization
 from apps.core.models import TimeStampedModel
-
-class TPAOrganization(TimeStampedModel):
-    class Type(models.TextChoices):
-        INDIVIDUAL="INDIVIDUAL","Individual"
-        CORPORATE="CORPORATE","Corporate / Sponsor"
-        INSURER="INSURER","Insurance Company"
-        TPA="TPA","TPA"
-        BROKER="BROKER","Broker"
-        AGENT="AGENT","Agent"
-        OTHER="OTHER","Other"
-    code=models.CharField(max_length=40, unique=True)
-    name_en=models.CharField(max_length=180)
-    name_ar=models.CharField(max_length=180, blank=True)
-    organization_type=models.CharField(max_length=20, choices=Type.choices)
-    commercial_registration=models.CharField(max_length=80, blank=True)
-    contact_name=models.CharField(max_length=160, blank=True)
-    contact_email=models.EmailField(blank=True)
-    contact_phone=models.CharField(max_length=60, blank=True)
-    is_active=models.BooleanField(default=True)
-    def __str__(self): return f"{self.code} · {self.name_en}"
 
 class Policy(TimeStampedModel):
     class Status(models.TextChoices):
         DRAFT="draft","Draft"; ACTIVE="active","Active"; SUSPENDED="suspended","Suspended"; EXPIRED="expired","Expired"; CANCELLED="cancelled","Cancelled"
-    sponsor=models.ForeignKey(
-        TPAOrganization,
-        related_name="sponsored_policies",
+    organization=models.ForeignKey(
+        Organization,
+        related_name="policies",
         on_delete=models.PROTECT,
-        limit_choices_to={"organization_type__in": ["INDIVIDUAL", "CORPORATE"]},
     )
-    insurance_company=models.ForeignKey(TPAOrganization, related_name="insured_policies", on_delete=models.PROTECT, limit_choices_to={"organization_type":"INSURER"})
-    tpa_organization=models.ForeignKey(
-        TPAOrganization,
-        related_name="managed_policies",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        limit_choices_to={"organization_type":"TPA"},
-    )
+    insurance_company=models.ForeignKey(Organization, related_name="insured_policies", on_delete=models.PROTECT, limit_choices_to={"organization_type":"INSURER"})
     policy_number=models.CharField(max_length=80, unique=True, db_index=True)
     policy_name=models.CharField(max_length=180, blank=True)
     start_date=models.DateField()
     expiry_date=models.DateField()
     status=models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT, db_index=True)
+    product=models.ForeignKey("tickets.Product", null=True, blank=True, on_delete=models.PROTECT, related_name="policies")
+    policy_type=models.CharField(max_length=80, default="GROUP_MEDICAL")
+    workflow_organizations=models.ManyToManyField(Organization, blank=True, related_name="workflow_policies")
     product_type=models.CharField(max_length=80, default="MEDICAL")
     insurer_reference=models.CharField(max_length=100, blank=True)
     tpa_reference=models.CharField(max_length=100, blank=True)
@@ -81,8 +56,23 @@ class BenefitPlan(TimeStampedModel):
     default_sum_insured=models.DecimalField(max_digits=16, decimal_places=3, null=True, blank=True)
     premium_configuration=models.JSONField(default=dict, blank=True)
     is_active=models.BooleanField(default=True)
+    effective_from=models.DateField(null=True, blank=True)
+    effective_until=models.DateField(null=True, blank=True)
+    def clean(self):
+        errors = {}
+        if self.annual_premium is not None and self.annual_premium < 0:
+            errors['annual_premium'] = 'Premium cannot be negative.'
+        if self.default_sum_insured is not None and self.default_sum_insured < 0:
+            errors['default_sum_insured'] = 'Sum insured cannot be negative.'
+        if self.effective_from and self.effective_until and self.effective_until < self.effective_from:
+            errors['effective_until'] = 'End date cannot precede start date.'
+        if errors:
+            raise ValidationError(errors)
     class Meta:
-        constraints=[models.UniqueConstraint(fields=["policy","code"], name="tpa_unique_policy_plan")]
+        constraints=[models.UniqueConstraint(fields=["policy","code"], name="tpa_unique_policy_plan"),
+            models.CheckConstraint(condition=models.Q(annual_premium__gte=0), name='plan_nonnegative_premium'),
+            models.CheckConstraint(condition=models.Q(default_sum_insured__isnull=True) | models.Q(default_sum_insured__gte=0), name='plan_nonnegative_sum'),
+            models.CheckConstraint(condition=models.Q(effective_from__isnull=True) | models.Q(effective_until__isnull=True) | models.Q(effective_until__gte=models.F('effective_from')), name='plan_valid_dates')]
     def __str__(self): return f"{self.policy.policy_number} · {self.code}"
 
 class Member(TimeStampedModel):
@@ -95,7 +85,7 @@ class Member(TimeStampedModel):
     class Relationship(models.TextChoices):
         PRINCIPAL="PRINCIPAL","Principal"; SPOUSE="SPOUSE","Spouse"; CHILD="CHILD","Child"; OTHER="OTHER","Other"
     tpa_member_id=models.CharField(max_length=40, unique=True, null=True, blank=True, editable=False)
-    sponsor=models.ForeignKey(TPAOrganization, related_name="members", on_delete=models.PROTECT)
+    organization=models.ForeignKey(Organization, related_name="members", on_delete=models.PROTECT)
     employee_id=models.CharField(max_length=80, blank=True, db_index=True)
     first_name=models.CharField(max_length=100)
     middle_name=models.CharField(max_length=100, blank=True)
@@ -166,9 +156,9 @@ class MemberTransaction(TimeStampedModel):
         SENT_TO_TPA="sent_to_tpa","Sent to TPA"; TPA_IN_PROGRESS="tpa_in_progress","TPA In Progress"; TPA_QUERY="tpa_query","TPA Query"
         CARD_DISPATCH="card_dispatch","Card Dispatch"
         PROCESSING="processing","Processing"; PROCESSED="processed","Processed"; COMPLETED="completed","Completed"; REJECTED="rejected","Rejected"; FAILED="failed","Failed"; CANCELLED="cancelled","Cancelled"
-    reference=models.CharField(max_length=40, unique=True, null=True, blank=True, editable=False)
-    sponsor=models.ForeignKey(TPAOrganization, related_name="transactions", on_delete=models.PROTECT)
-    insurer=models.ForeignKey(TPAOrganization, related_name="insurer_transactions", on_delete=models.PROTECT)
+    reference=models.CharField(max_length=80, unique=True, null=True, blank=True, editable=False)
+    organization=models.ForeignKey(Organization, related_name="transactions", on_delete=models.PROTECT)
+    insurer=models.ForeignKey(Organization, related_name="insurer_transactions", on_delete=models.PROTECT)
     policy=models.ForeignKey(Policy, related_name="transactions", on_delete=models.PROTECT)
     transaction_type=models.CharField(max_length=30, choices=Type.choices, db_index=True)
     source=models.CharField(max_length=20, choices=Source.choices, default=Source.PORTAL)
@@ -176,8 +166,8 @@ class MemberTransaction(TimeStampedModel):
     effective_date=models.DateField()
     status=models.CharField(max_length=30, choices=Status.choices, default=Status.DRAFT, db_index=True)
     requester=models.ForeignKey(settings.AUTH_USER_MODEL, related_name="tpa_transactions", on_delete=models.PROTECT)
-    requester_organization=models.ForeignKey(TPAOrganization, related_name="requested_transactions", on_delete=models.PROTECT)
-    ticket=models.OneToOneField("tickets.Ticket", related_name="tpa_transaction", null=True, blank=True, on_delete=models.SET_NULL)
+    requester_organization=models.ForeignKey(Organization, related_name="requested_transactions", on_delete=models.PROTECT)
+    ticket=models.OneToOneField("tickets.Ticket", related_name="tpa_transaction", on_delete=models.PROTECT)
     premium_before=models.DecimalField(max_digits=16, decimal_places=3, default=Decimal("0"))
     premium_adjustment=models.DecimalField(max_digits=16, decimal_places=3, default=Decimal("0"))
     premium_after=models.DecimalField(max_digits=16, decimal_places=3, default=Decimal("0"))
@@ -214,12 +204,22 @@ class MemberTransaction(TimeStampedModel):
             ("view_sensitive_member_data","Can view sensitive TPA member data"),("view_ai_source_data","Can view TPA AI source data"),
             ("configure_tpa","Can configure TPA"),("export_tpa_data","Can export TPA data"),
         ]
+    @property
+    def display_reference(self):
+        return self.ticket.reference
+
     def save(self,*args,**kwargs):
-        new=self.pk is None
-        super().save(*args,**kwargs)
-        if new and not self.reference:
-            self.reference=f"TPA-END-{self.created_at:%Y}-{self.pk:06d}"
-            super().save(update_fields=["reference"])
+        new = self.pk is None
+        with transaction.atomic():
+            if new and not self.ticket_id:
+                from .services.ticketing import create_parent_ticket
+                self.ticket = create_parent_ticket(self)
+            if new and not self.reference:
+                self.reference = self.ticket.reference
+            super().save(*args,**kwargs)
+            if new:
+                from .services.ticketing import record_transaction_link
+                record_transaction_link(self)
     def __str__(self): return self.reference or "New transaction"
 
 class MemberAction(TimeStampedModel):
@@ -250,7 +250,7 @@ class MemberAction(TimeStampedModel):
     provenance=models.JSONField(default=list, blank=True)
 
 class PolicyAccess(TimeStampedModel):
-    organization=models.ForeignKey(TPAOrganization, related_name="policy_access", on_delete=models.CASCADE)
+    organization=models.ForeignKey(Organization, related_name="policy_access", on_delete=models.CASCADE)
     policy=models.ForeignKey(Policy, related_name="access_entries", on_delete=models.CASCADE)
     user=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="tpa_policy_access", on_delete=models.CASCADE)
     can_view=models.BooleanField(default=True)
@@ -349,6 +349,13 @@ class TransactionQueryMessage(TimeStampedModel):
 
 
 class InboundEmail(TimeStampedModel):
+    def save(self, *args, **kwargs):
+        if self.transaction_id and not self.ticket_id:
+            self.ticket_id = self.transaction.ticket_id
+            if kwargs.get('update_fields'):
+                kwargs['update_fields'] = list(set(kwargs['update_fields']) | {'ticket'})
+        return super().save(*args, **kwargs)
+
     class State(models.TextChoices):
         RECEIVED="RECEIVED","Received"
         PROCESSING="PROCESSING","Processing"
@@ -385,6 +392,7 @@ class InboundEmail(TimeStampedModel):
     classification_confidence=models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     processing_stage=models.CharField(max_length=50, blank=True)
     processing_state=models.CharField(max_length=20, choices=State.choices, default=State.RECEIVED, db_index=True)
+    ticket=models.ForeignKey("tickets.Ticket", null=True, blank=True, on_delete=models.PROTECT, related_name="source_emails")
     transaction=models.ForeignKey(MemberTransaction, null=True, blank=True, related_name="source_emails", on_delete=models.SET_NULL)
     processing_error=models.TextField(blank=True)
     processed_at=models.DateTimeField(null=True, blank=True)
@@ -432,7 +440,7 @@ class TPAMailboxSyncState(TimeStampedModel):
 class TPAEmailAuthority(TimeStampedModel):
     email_address=models.EmailField(db_index=True)
     user=models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="tpa_email_authorities", on_delete=models.SET_NULL)
-    organization=models.ForeignKey(TPAOrganization, related_name="email_authorities", on_delete=models.CASCADE)
+    organization=models.ForeignKey(Organization, related_name="email_authorities", on_delete=models.CASCADE)
     policy=models.ForeignKey(Policy, null=True, blank=True, related_name="email_authorities", on_delete=models.CASCADE)
     permitted_transaction_types=models.JSONField(default=list, blank=True)
     valid_from=models.DateField(null=True, blank=True)

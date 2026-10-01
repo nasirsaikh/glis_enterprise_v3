@@ -15,10 +15,11 @@ def resolve_email_authority(email_address, policy, transaction_type, *, as_of=No
 
     day = as_of or timezone.localdate()
     organization_ids = {
-        policy.sponsor_id,
+        policy.organization_id,
         policy.insurance_company_id,
-        policy.tpa_organization_id,
+
     }
+    organization_ids.update(policy.workflow_organizations.filter(is_active=True).values_list("pk", flat=True))
     organization_ids.discard(None)
 
     qs = (
@@ -57,7 +58,7 @@ def sender_is_authorized(email, policy, transaction_type, *, actor=None):
         transaction_type,
         as_of=email.received_at.date() if email.received_at else None,
     )
-    if authority:
+    if authority and authority.organization.is_active and authority.organization.organization_type.is_active and (not authority.user_id or authority.user.is_active):
         return True, authority, ""
 
     # Manual/test intake is an explicit recovery path. It can proceed when the
@@ -65,10 +66,15 @@ def sender_is_authorized(email, policy, transaction_type, *, actor=None):
     if email.provider in {"manual", "test"} and actor and actor.is_authenticated:
         if actor.is_superuser or actor.has_perm("tpa.configure_tpa"):
             return True, None, "Manual/recovery intake authorized by privileged operator."
+        from .access import visible_policies
+        if not visible_policies(actor).filter(pk=policy.pk).exists():
+            return False, None, "The policy is outside your organization scope."
+        if transaction_type == "CLAIM" and not actor.has_perm("tickets.add_ticket"):
+            return False, None, "Claim creation permission is required."
         if policy.access_entries.filter(
             user=actor,
             active=True,
-            can_create_endorsement=True,
+            **{"can_create_enrollment" if transaction_type == MemberTransaction.Type.NEW_POLICY_ENROLLMENT else "can_view" if transaction_type == "CLAIM" else "can_create_endorsement": True},
         ).exists():
             return True, None, "Manual/recovery intake authorized by policy access."
 

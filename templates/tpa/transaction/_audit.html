@@ -32,7 +32,7 @@
                         </div>
                         <div class="mt-1 text-xs opacity-60">
                             <i class="bi bi-person me-1"></i>
-                            {{ e.actor.get_full_name|default:e.actor.username|default:"System" }}
+                            {% if e.actor %}{{ e.actor.get_full_name|default:e.actor.username }}{% else %}{% translate "System" %}{% endif %}
                             <span class="mx-1">·</span>
                             <span class="badge badge-ghost badge-sm">
                                 {{ e.event_type }}

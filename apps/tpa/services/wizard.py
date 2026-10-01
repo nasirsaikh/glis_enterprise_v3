@@ -45,7 +45,7 @@ CLOSED_STATUSES = {
 
 
 def transaction_step_url(tx, key):
-    return f"{reverse('tpa:transaction_detail', args=[tx.reference])}?step={key}"
+    return f"{reverse('portal:ticket_detail', args=[tx.ticket.reference])}?step={key}"
 
 
 def get_transaction_steps(tx, user):

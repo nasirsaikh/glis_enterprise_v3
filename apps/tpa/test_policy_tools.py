@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 import json
 from datetime import date
 from decimal import Decimal
@@ -11,7 +12,7 @@ from django.utils import timezone
 from apps.ai.models import AIExtractionProfile, AIProviderConfig, AITrainingExample
 from apps.core.models import AuditLog
 from apps.tickets.models import Ticket, TicketEvent
-from .models import BenefitPlan, InboundEmail, Member, MemberAction, MemberPolicyEnrollment, MemberTransaction, Policy, PolicyAccess, TPAOrganization
+from .models import BenefitPlan, InboundEmail, Member, MemberAction, MemberPolicyEnrollment, MemberTransaction, Policy, PolicyAccess
 from .services.ai_intake import extract_email_payload, _profile_prompt
 from .forms import ExtractionPromptForm
 from .services.document_intake import _system_prompt
@@ -28,21 +29,21 @@ class PolicyToolsTests(TestCase):
         cls.admin = User.objects.create_superuser("policy-admin", "pa@example.com", "test")
         cls.reader = User.objects.create_user("policy-reader", password="test")
         cls.editor = User.objects.create_user("policy-editor", password="test")
-        cls.sponsor = TPAOrganization.objects.create(code="TOOLS-SP", name_en="Sponsor", organization_type="CORPORATE")
-        cls.insurer = TPAOrganization.objects.create(code="TOOLS-IN", name_en="Insurer", organization_type="INSURER")
-        cls.policy = Policy.objects.create(sponsor=cls.sponsor, insurance_company=cls.insurer, policy_number="TOOLS-1",
+        cls.organization = Organization.objects.create(code="TOOLS-SP", name_en="organization", organization_type_id="CORPORATE")
+        cls.insurer = Organization.objects.create(code="TOOLS-IN", name_en="Insurer", organization_type_id="INSURER")
+        cls.policy = Policy.objects.create(organization=cls.organization, insurance_company=cls.insurer, policy_number="TOOLS-1",
             start_date=date(2026, 1, 1), expiry_date=date(2026, 12, 31), status="active", allowed_backdating_days=3650,
             initial_enrollment_completed_at=timezone.now())
         cls.plan = BenefitPlan.objects.create(policy=cls.policy, code="GOLD", name="Gold")
         for user in [cls.reader, cls.editor]:
-            PolicyAccess.objects.create(user=user, organization=cls.sponsor, policy=cls.policy, can_view=True, can_create_endorsement=user == cls.editor)
+            PolicyAccess.objects.create(user=user, organization=cls.organization, policy=cls.policy, can_view=True, can_create_endorsement=user == cls.editor)
 
     def setUp(self):
         self.client.force_login(self.admin)
 
     def tx(self, status="draft", **kwargs):
-        return MemberTransaction.objects.create(sponsor=self.sponsor, insurer=self.insurer, policy=self.policy,
-            requester=self.editor, requester_organization=self.sponsor, effective_date=date(2026, 7, 1),
+        return MemberTransaction.objects.create(organization=self.organization, insurer=self.insurer, policy=self.policy,
+            requester=self.editor, requester_organization=self.organization, effective_date=date(2026, 7, 1),
             transaction_type=kwargs.pop("transaction_type", "MEMBER_ADD"), status=status, **kwargs)
 
     def row(self, tx):
@@ -52,7 +53,7 @@ class PolicyToolsTests(TestCase):
             validation_status="VALID", tpa_effective_date=date(2026, 7, 1), tpa_premium_amount=Decimal("10"), card_number="CARD-001")
 
     def member(self, status="active", employee="1"):
-        member = Member.objects.create(sponsor=self.sponsor, employee_id=employee, first_name="Roster", last_name="Member",
+        member = Member.objects.create(organization=self.organization, employee_id=employee, first_name="Roster", last_name="Member",
                                        date_of_birth=date(1990, 1, 1), gender="Male", relationship="PRINCIPAL")
         return MemberPolicyEnrollment.objects.create(member=member, policy=self.policy, benefit_plan=self.plan,
                     coverage_start_date=date(2026, 1, 1), enrollment_status=status, premium_amount="25.000")
@@ -88,7 +89,7 @@ class PolicyToolsTests(TestCase):
         self.assertContains(response, 'id="policy-dashboard-data"')
 
     def test_other_policy_dashboard_is_inaccessible(self):
-        other = Policy.objects.create(sponsor=self.sponsor, insurance_company=self.insurer, policy_number="TOOLS-PRIVATE",
+        other = Policy.objects.create(organization=self.organization, insurance_company=self.insurer, policy_number="TOOLS-PRIVATE",
                                      start_date=date(2026, 1, 1), expiry_date=date(2026, 12, 31))
         self.client.force_login(self.reader)
         self.assertEqual(self.client.get(reverse("tpa:policy_enrollment_detail", args=[other.pk])).status_code, 404)

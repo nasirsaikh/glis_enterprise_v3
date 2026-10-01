@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 import json
 import hashlib
 import tempfile
@@ -17,7 +18,7 @@ from apps.ai.models import AIProviderConfig
 from apps.job_center.models import QueuedJob
 from apps.job_center.jobs.tpa_jobs import reprocess_tpa_inbound_email
 from apps.job_center.services.queue_worker import claim_next_job, execute_queued_job
-from .models import InboundEmail, InboundEmailAttachment, MemberAction, MemberTransaction, Policy, SourceDocument, TPAOrganization
+from .models import InboundEmail, InboundEmailAttachment, MemberAction, MemberTransaction, Policy, SourceDocument
 from .services.ai_intake import extract_email_payload, process_inbound_email, _add_ai_members, _process_attachments
 from .services.email_reprocessing import REPROCESS_QUEUED, queue_email_reprocessing
 from .test_ocr_regressions import TABLE
@@ -31,17 +32,17 @@ class InboundEmailAdminTests(TestCase):
         cls.admin = User.objects.create_superuser("email-admin","admin@example.test","test")
         cls.staff = User.objects.create_user("email-staff",is_staff=True)
         cls.reader = User.objects.create_user("email-reader",is_staff=True)
-        cls.sponsor = TPAOrganization.objects.create(code="EMA-SP",name_en="Own sponsor",organization_type="CORPORATE")
-        cls.other_sponsor = TPAOrganization.objects.create(code="EMA-OTHER",name_en="Other sponsor",organization_type="CORPORATE")
-        cls.insurer = TPAOrganization.objects.create(code="EMA-IN",name_en="Insurer",organization_type="INSURER")
-        cls.policy = Policy.objects.create(sponsor=cls.sponsor,insurance_company=cls.insurer,policy_number="EMAIL-1",start_date=date(2026,1,1),expiry_date=date(2026,12,31),status="active",allowed_backdating_days=3650,initial_enrollment_completed_at=timezone.now())
-        cls.other_policy = Policy.objects.create(sponsor=cls.other_sponsor,insurance_company=cls.insurer,policy_number="EMAIL-OTHER",start_date=date(2026,1,1),expiry_date=date(2026,12,31))
+        cls.organization = Organization.objects.create(code="EMA-SP",name_en="Own organization",organization_type_id="CORPORATE")
+        cls.other_organization = Organization.objects.create(code="EMA-OTHER",name_en="Other organization",organization_type_id="CORPORATE")
+        cls.insurer = Organization.objects.create(code="EMA-IN",name_en="Insurer",organization_type_id="INSURER")
+        cls.policy = Policy.objects.create(organization=cls.organization,insurance_company=cls.insurer,policy_number="EMAIL-1",start_date=date(2026,1,1),expiry_date=date(2026,12,31),status="active",allowed_backdating_days=3650,initial_enrollment_completed_at=timezone.now())
+        cls.other_policy = Policy.objects.create(organization=cls.other_organization,insurance_company=cls.insurer,policy_number="EMAIL-OTHER",start_date=date(2026,1,1),expiry_date=date(2026,12,31))
         for actor in (cls.staff,cls.reader):
-            actor.profile.organizations.add(cls.sponsor)
+            actor.profile.organizations.add(cls.organization)
             actor.user_permissions.add(Permission.objects.get(codename="configure_tpa"),Permission.objects.get(codename="view_inboundemail"))
         cls.staff.user_permissions.add(Permission.objects.get(codename="change_inboundemail"))
-        cls.tx = MemberTransaction.objects.create(policy=cls.policy,sponsor=cls.sponsor,insurer=cls.insurer,requester=cls.admin,requester_organization=cls.sponsor,transaction_type="MEMBER_ADD",effective_date=date(2026,7,1))
-        cls.other_tx = MemberTransaction.objects.create(policy=cls.other_policy,sponsor=cls.other_sponsor,insurer=cls.insurer,requester=cls.admin,requester_organization=cls.other_sponsor,transaction_type="MEMBER_ADD",effective_date=date(2026,7,1))
+        cls.tx = MemberTransaction.objects.create(policy=cls.policy,organization=cls.organization,insurer=cls.insurer,requester=cls.admin,requester_organization=cls.organization,transaction_type="MEMBER_ADD",effective_date=date(2026,7,1))
+        cls.other_tx = MemberTransaction.objects.create(policy=cls.other_policy,organization=cls.other_organization,insurer=cls.insurer,requester=cls.admin,requester_organization=cls.other_organization,transaction_type="MEMBER_ADD",effective_date=date(2026,7,1))
         cls.email = InboundEmail.objects.create(provider="manual",provider_message_id="admin-retry",created_by=cls.admin,sender="hr@example.test",recipient="intake@example.test",subject="Own email",received_at=timezone.now(),transaction=cls.tx,processing_state=InboundEmail.State.REVIEW)
         cls.other_email = InboundEmail.objects.create(provider="office365_graph",provider_message_id="admin-other",sender="other@example.test",recipient="intake@example.test",subject="Foreign email",received_at=timezone.now(),transaction=cls.other_tx)
         cls.provider = AIProviderConfig.objects.create(name="Email text",provider="mock",model_name="text-model",allow_sensitive_data=True,task_capabilities=["email_extraction"])

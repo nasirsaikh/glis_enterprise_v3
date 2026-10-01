@@ -1,7 +1,7 @@
 {% load i18n %}
 <div id="transaction-workspace" class="workflow-workspace space-y-4" data-workflow-workspace data-step-url="{{ step_url }}" {% if reopen_modal %}data-reopen-modal="{{ reopen_modal }}"{% endif %}
      hx-target="#transaction-workspace" hx-swap="outerHTML" hx-sync="#transaction-workspace:drop" hx-indicator="#transaction-step-loading" hx-history="false">
-  {% include "tpa/transaction/_transaction_summary.html" %}
+  {% if not embedded_workflow %}{% include "tpa/transaction/_transaction_summary.html" %}{% endif %}
   {% include "components/workflow_wizard.html" %}
   <div id="transaction-request-error" data-workflow-request-error role="alert" tabindex="-1"></div>
   {% for message in messages %}<div class="alert {% if message.level >= 40 %}alert-error{% elif message.level >= 30 %}alert-warning{% else %}alert-success{% endif %}" role="{% if message.level >= 40 %}alert{% else %}status{% endif %}" tabindex="-1" data-workflow-feedback><span>{{ message }}</span></div>{% endfor %}

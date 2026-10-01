@@ -1,6 +1,6 @@
 {% extends "tpa/base.html" %}
 {% load i18n %}
-{% block title %}{{ tx.reference }} · {% translate "Transaction" %}{% endblock %}
+{% block title %}{{ tx.display_reference }} · {% translate "Transaction" %}{% endblock %}
 {% block tpa_content %}
   {% include "tpa/transaction/_workspace.html" %}
 {% endblock %}

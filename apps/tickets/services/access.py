@@ -1,4 +1,6 @@
 from ..models import Category, Product, Project
+from django.db.models import Q
+from services.tenancy import organization_ids
 
 
 def accessible_categories(user):
@@ -25,8 +27,10 @@ def accessible_categories(user):
 
     return (
         qs.filter(
-            allowed_groups__in=user.groups.all()
+            Q(allowed_groups__isnull=True) | Q(allowed_groups__in=user.groups.all())
         )
+        .filter(Q(product__project__organizations__isnull=True) | Q(product__project__organizations__pk__in=organization_ids(user)))
+        .filter(Q(product__project__organization_types__isnull=True) | Q(product__project__organization_types__organizations__pk__in=organization_ids(user)))
         .distinct()
     )
 

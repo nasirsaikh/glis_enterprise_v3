@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.sites import NotRegistered
@@ -6,14 +7,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 
-from apps.tpa.models import TPAOrganization
-
 from .models import AccountPolicy, UserProfile
 
 
 class OrganizationUserCreationForm(UserCreationForm):
     organizations = forms.ModelMultipleChoiceField(
-        queryset=TPAOrganization.objects.filter(is_active=True).order_by("name_en"),
+        queryset=Organization.objects.filter(is_active=True).order_by("name_en"),
         required=False,
         widget=FilteredSelectMultiple("organizations", is_stacked=False),
         help_text="Select every organization this user is allowed to act for.",
@@ -22,7 +21,7 @@ class OrganizationUserCreationForm(UserCreationForm):
 
 class OrganizationUserChangeForm(UserChangeForm):
     organizations = forms.ModelMultipleChoiceField(
-        queryset=TPAOrganization.objects.filter(is_active=True).order_by("name_en"),
+        queryset=Organization.objects.filter(is_active=True).order_by("name_en"),
         required=False,
         widget=FilteredSelectMultiple("organizations", is_stacked=False),
         help_text="Select every organization this user is allowed to act for.",
@@ -168,3 +167,24 @@ class AccountPolicyAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+from .models import OrganizationType
+
+@admin.register(OrganizationType)
+class OrganizationTypeAdmin(admin.ModelAdmin):
+    list_display = ('code','name','display_order','is_active')
+    search_fields = ('code','name')
+    list_filter = ('is_active',)
+
+@admin.register(Organization)
+class OrganizationAdmin(admin.ModelAdmin):
+    list_display = ('code','name_en','organization_type','parent_organization','is_active')
+    list_filter = ('organization_type','is_active')
+    search_fields = ('code','name_en','name_ar','commercial_registration')
+    autocomplete_fields = ('organization_type','parent_organization')
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:return qs
+        from services.tenancy import organization_ids
+        return qs.filter(pk__in=organization_ids(request.user))

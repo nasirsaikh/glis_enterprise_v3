@@ -80,7 +80,7 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_spectacular",
 
-    "django_summernote",
+    "apps.core.compat.SummernoteConfig",
 
     "apps.core",
     "apps.accounts",
@@ -170,7 +170,6 @@ else:
 
 
 
-# DATABASE_URL="postgresql://postgres.djqaqvcsjfgauraibflk:Takaful%40Oman%401@aws-0-us-east-1.pooler.supabase.com:6543/postgres"
 # db_engine = "postgresql"
 # if DATABASE_URL:
 #     DATABASES = {

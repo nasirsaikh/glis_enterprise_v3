@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 import hashlib
 import json
 import uuid
@@ -50,7 +51,7 @@ from .models import (
     Policy,
     PolicyAccess,
     SourceDocument,
-    TPAOrganization,
+
     TransactionEvent,
     TransactionQuery,
     TransactionQueryMessage,
@@ -189,13 +190,13 @@ def dashboard(request):
             }
             for row in source_rows
         ],
-        "active_sponsors": TPAOrganization.objects.filter(
+        "active_organizations": Organization.objects.filter(
             organization_type__in=[
-                TPAOrganization.Type.INDIVIDUAL,
-                TPAOrganization.Type.CORPORATE,
+                Organization.Type.INDIVIDUAL,
+                Organization.Type.CORPORATE,
             ],
             is_active=True,
-            sponsored_policies__in=policies,
+            policies__in=policies,
         ).distinct().count(),
         "active_policies": policies.filter(status=Policy.Status.ACTIVE).count(),
         "active_members": Member.objects.filter(
@@ -487,7 +488,7 @@ def policy_enrollment_list(request):
     if query:
         policies = policies.filter(
             models.Q(policy_number__icontains=query) | models.Q(policy_name__icontains=query)
-            | models.Q(sponsor__name_en__icontains=query) | models.Q(insurance_company__name_en__icontains=query)
+            | models.Q(organization__name_en__icontains=query) | models.Q(insurance_company__name_en__icontains=query)
         )
     pagination = table_page(request, policies.order_by("-created_at", "-pk"))
     rows = []
@@ -515,7 +516,7 @@ def policy_enrollment_create(request):
             "You do not have permission to perform initial policy enrollment."
         )
 
-    form = PolicyEnrollmentForm(request.POST or None, user=request.user)
+    form = PolicyEnrollmentForm(request.POST or None, user=request.user, initial=request.GET.dict() or request.session.get("policy_request_context", {}))
     uses_formset = request.method != "POST" or "plans-TOTAL_FORMS" in request.POST
     plan_formset = InitialBenefitPlanFormSet(
         request.POST if request.method == "POST" and uses_formset else None,
@@ -567,15 +568,16 @@ def policy_enrollment_create(request):
         else:
             with transaction.atomic():
                 policy = Policy.objects.create(
-                    sponsor=form.cleaned_data["sponsor"],
+                    organization=form.cleaned_data["organization"],
                     insurance_company=form.cleaned_data["insurance_company"],
-                    tpa_organization=form.cleaned_data.get("tpa_organization"),
+                    product=form.cleaned_data.get("product"),
+                    product_type=form.cleaned_data["product"].code if form.cleaned_data.get("product") else "MEDICAL",
+                    policy_type=form.cleaned_data.get("policy_type", "GROUP_MEDICAL"),
                     policy_number=form.cleaned_data["policy_number"],
                     policy_name=form.cleaned_data["policy_name"],
                     start_date=form.cleaned_data["start_date"],
                     expiry_date=form.cleaned_data["expiry_date"],
                     status=Policy.Status.DRAFT,
-                    product_type="MEDICAL",
                     currency=form.cleaned_data["currency"].upper(),
                     stp_enabled=form.cleaned_data["stp_enabled"],
                     premium_calculation_enabled=True,
@@ -594,7 +596,7 @@ def policy_enrollment_create(request):
                         is_active=bool(plan_data.get("is_active", True)),
                     )
                 PolicyAccess.objects.update_or_create(
-                    organization=policy.sponsor,
+                    organization=policy.organization,
                     policy=policy,
                     user=request.user,
                     defaults={
@@ -609,14 +611,14 @@ def policy_enrollment_create(request):
                     },
                 )
                 tx = MemberTransaction.objects.create(
-                    sponsor=policy.sponsor,
+                    organization=policy.organization,
                     insurer=policy.insurance_company,
                     policy=policy,
                     transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
                     source=MemberTransaction.Source.PORTAL,
                     effective_date=policy.start_date,
                     requester=request.user,
-                    requester_organization=policy.sponsor,
+                    requester_organization=policy.organization,
                     status=MemberTransaction.Status.DRAFT,
                     remarks="Initial policy enrollment and member census setup.",
                     metadata={"initial_policy_setup": True},
@@ -642,7 +644,7 @@ def policy_enrollment_create(request):
 
     creation_steps = [
         {"label": _("Policy & Routing"), "fields": [form[name] for name in [
-            "sponsor", "insurance_company", "tpa_organization", "policy_number", "policy_name"
+            "organization", "insurance_company", "product", "policy_type", "policy_number", "policy_name"
         ]]},
         {"label": _("Period & Rules"), "fields": [form[name] for name in [
             "start_date", "expiry_date", "currency", "stp_enabled", "allowed_backdating_days"
@@ -718,7 +720,7 @@ def transaction_list(request):
     if query:
         endorsements = endorsements.filter(
             models.Q(reference__icontains=query) | models.Q(policy__policy_number__icontains=query)
-            | models.Q(sponsor__name_en__icontains=query) | models.Q(status__icontains=query)
+            | models.Q(organization__name_en__icontains=query) | models.Q(status__icontains=query)
             | models.Q(transaction_type__icontains=query)
         )
     pagination = table_page(request, endorsements.order_by("-created_at", "-pk"))
@@ -738,7 +740,7 @@ def transaction_create(request):
     if request.method == "POST" and form.is_valid():
         tx = form.save(commit=False)
         _require_intake_edit(request.user, tx)
-        tx.sponsor = tx.policy.sponsor
+        tx.organization = tx.policy.organization
         tx.insurer = tx.policy.insurance_company
         tx.requester = request.user
         tx.physical_card_required = (
@@ -749,7 +751,7 @@ def transaction_create(request):
             user=request.user,
             active=True,
         ).select_related("organization").first()
-        tx.requester_organization = access.organization if access else tx.policy.sponsor
+        tx.requester_organization = access.organization if access else tx.policy.organization
         tx.save()
         if tx.transaction_type == MemberTransaction.Type.POLICY_CANCEL:
             populate_policy_cancellation(tx)
@@ -770,7 +772,7 @@ def transaction_create(request):
     return render(request, "tpa/transaction_form.html", {"form": form})
 
 @login_required
-def transaction_detail(request, reference, *, selected_step=None, form_overrides=None):
+def transaction_detail(request, reference, *, selected_step=None, form_overrides=None, embedded=False):
     _require_tpa_access(request.user)
     tx = get_object_or_404(
         visible_transactions(request.user).prefetch_related(
@@ -779,6 +781,10 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
         reference=reference,
     )
 
+    if not embedded and request.method == 'GET' and not _is_htmx(request):
+        from apps.tickets.views import ticket_detail
+        return ticket_detail(request,tx.ticket.reference)
+
     if request.method == "GET" and tx.status == tx.Status.PENDING_APPROVAL and tx.ticket_id:
         tx = sync_from_ticket_approval(tx, actor=request.user)
 
@@ -786,7 +792,7 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
         tx, request.user,
         selected_step if selected_step is not None else request.GET.get("step"),
     )
-    if wizard["step_redirected"] and not _is_htmx(request):
+    if wizard["step_redirected"] and not embedded and not _is_htmx(request):
         return redirect(wizard["step_url"])
     form_overrides = form_overrides or {}
     actions = list(tx.member_actions.select_related("member").order_by("row_number", "pk"))
@@ -1145,6 +1151,8 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
             and context["can_tpa_process"])
     )
     context.update(form_overrides)
+    if embedded:
+        return context
     response = render(
         request,
         "tpa/transaction/_workspace.html" if _is_htmx(request)

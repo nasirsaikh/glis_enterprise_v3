@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 from datetime import date
 
 from django.contrib.auth import get_user_model
@@ -7,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import BenefitPlanSetupForm, PolicyEnrollmentForm, QueryRaiseForm
-from .models import InboundEmail, MemberAction, MemberTransaction, Policy, TPAOrganization
+from .models import InboundEmail, MemberAction, MemberTransaction, Policy
 from .services.access import can_edit_tpa_intake, visible_inbound_emails, visible_policies, visible_transactions
 
 
@@ -18,23 +19,23 @@ class TPAPortalScopeTests(TestCase):
         cls.actor = User.objects.create_user("tenant-configurator", is_staff=True)
         cls.peer = User.objects.create_user("tenant-peer")
         cls.outsider = User.objects.create_user("tenant-outside")
-        cls.sponsor = TPAOrganization.objects.create(code="SCP-A", name_en="Scoped sponsor", organization_type="CORPORATE")
-        cls.other_sponsor = TPAOrganization.objects.create(code="SCP-B", name_en="Other sponsor", organization_type="CORPORATE")
-        cls.insurer = TPAOrganization.objects.create(code="SCP-IN", name_en="Scoped insurer", organization_type="INSURER")
-        cls.actor.profile.organizations.add(cls.sponsor)
-        cls.peer.profile.organizations.add(cls.sponsor)
-        cls.outsider.profile.organizations.add(cls.other_sponsor)
+        cls.organization = Organization.objects.create(code="SCP-A", name_en="Scoped organization", organization_type_id="CORPORATE")
+        cls.other_organization = Organization.objects.create(code="SCP-B", name_en="Other organization", organization_type_id="CORPORATE")
+        cls.insurer = Organization.objects.create(code="SCP-IN", name_en="Scoped insurer", organization_type_id="INSURER")
+        cls.actor.profile.organizations.add(cls.organization)
+        cls.peer.profile.organizations.add(cls.organization)
+        cls.outsider.profile.organizations.add(cls.other_organization)
         cls.actor.user_permissions.add(Permission.objects.get(codename="configure_tpa"))
-        cls.policy = Policy.objects.create(sponsor=cls.sponsor, insurance_company=cls.insurer,
+        cls.policy = Policy.objects.create(organization=cls.organization, insurance_company=cls.insurer,
             policy_number="SCOPE-A", start_date=date(2026, 1, 1), expiry_date=date(2026, 12, 31))
-        cls.other_policy = Policy.objects.create(sponsor=cls.other_sponsor, insurance_company=cls.insurer,
+        cls.other_policy = Policy.objects.create(organization=cls.other_organization, insurance_company=cls.insurer,
             policy_number="SCOPE-B", start_date=date(2026, 1, 1), expiry_date=date(2026, 12, 31))
-        cls.tx = MemberTransaction.objects.create(sponsor=cls.sponsor, insurer=cls.insurer, policy=cls.policy,
+        cls.tx = MemberTransaction.objects.create(organization=cls.organization, insurer=cls.insurer, policy=cls.policy,
             transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT, effective_date=date(2026, 1, 1),
-            requester=cls.peer, requester_organization=cls.sponsor)
-        cls.other_tx = MemberTransaction.objects.create(sponsor=cls.other_sponsor, insurer=cls.insurer,
+            requester=cls.peer, requester_organization=cls.organization)
+        cls.other_tx = MemberTransaction.objects.create(organization=cls.other_organization, insurer=cls.insurer,
             policy=cls.other_policy, transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
-            effective_date=date(2026, 1, 1), requester=cls.outsider, requester_organization=cls.other_sponsor)
+            effective_date=date(2026, 1, 1), requester=cls.outsider, requester_organization=cls.other_organization)
         cls.email = InboundEmail.objects.create(provider="test", provider_message_id="scope-a",
             sender="hr@example.com", recipient="intake@example.com", received_at=timezone.now(),
             subject="Own organization email", transaction=cls.tx)
@@ -69,10 +70,10 @@ class TPAPortalScopeTests(TestCase):
         self.assertNotContains(response, "Other organization email")
         self.assertEqual(self.client.get(reverse("tpa:inbound_email_detail", args=[self.other_email.pk])).status_code, 404)
 
-    def test_create_sponsor_and_query_participants_are_scoped(self):
+    def test_create_organization_and_query_participants_are_scoped(self):
         form = PolicyEnrollmentForm(user=self.actor)
-        self.assertIn(self.sponsor, form.fields["sponsor"].queryset)
-        self.assertNotIn(self.other_sponsor, form.fields["sponsor"].queryset)
+        self.assertIn(self.organization, form.fields["organization"].queryset)
+        self.assertNotIn(self.other_organization, form.fields["organization"].queryset)
         form = QueryRaiseForm(transaction=self.tx, user=self.actor)
         self.assertIn(self.peer, form.fields["selected_participants"].queryset)
         self.assertNotIn(self.outsider, form.fields["selected_participants"].queryset)
@@ -123,9 +124,9 @@ class TPAPortalScopeTests(TestCase):
 
     def test_pagination_and_search_cover_rows_beyond_first_page(self):
         for number in range(25):
-            MemberTransaction.objects.create(sponsor=self.sponsor, insurer=self.insurer, policy=self.policy,
+            MemberTransaction.objects.create(organization=self.organization, insurer=self.insurer, policy=self.policy,
                 transaction_type=MemberTransaction.Type.MEMBER_ADD, effective_date=date(2026, 1, 1),
-                requester=self.peer, requester_organization=self.sponsor, remarks=f"Batch {number}")
+                requester=self.peer, requester_organization=self.organization, remarks=f"Batch {number}")
         response = self.client.get(reverse("tpa:transaction_list"))
         self.assertEqual(len(response.context["page_obj"]), 20)
         self.assertTrue(response.context["page_obj"].has_next())

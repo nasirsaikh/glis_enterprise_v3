@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 from datetime import date
 from decimal import Decimal
 
@@ -18,7 +19,7 @@ from apps.tpa.models import (
     MemberPolicyEnrollment,
     Policy,
     PolicyAccess,
-    TPAOrganization,
+
 )
 from apps.tpa.services.ai_intake import process_inbound_email
 
@@ -48,12 +49,12 @@ class Command(BaseCommand):
         actor = self._resolve_actor(User, options.get("username"))
         group = self._configure_permissions(actor)
 
-        sponsor, _ = TPAOrganization.objects.update_or_create(
+        organization, _ = Organization.objects.update_or_create(
             code="DEMO-CORP",
             defaults={
                 "name_en": "Demo Corporate LLC",
                 "name_ar": "شركة تجريبية",
-                "organization_type": TPAOrganization.Type.CORPORATE,
+                "organization_type": Organization.Type.CORPORATE,
                 "commercial_registration": "DEMO-CR-1001",
                 "contact_name": "Demo HR",
                 "contact_email": "hr.demo@example.com",
@@ -61,24 +62,24 @@ class Command(BaseCommand):
                 "is_active": True,
             },
         )
-        insurer, _ = TPAOrganization.objects.update_or_create(
+        insurer, _ = Organization.objects.update_or_create(
             code="DEMO-INS",
             defaults={
                 "name_en": "Demo Insurance Company",
                 "name_ar": "شركة التأمين التجريبية",
-                "organization_type": TPAOrganization.Type.INSURER,
+                "organization_type": Organization.Type.INSURER,
                 "contact_name": "Demo Medical Team",
                 "contact_email": "medical.demo@example.com",
                 "contact_phone": "+968 9000 0002",
                 "is_active": True,
             },
         )
-        tpa, _ = TPAOrganization.objects.update_or_create(
+        tpa, _ = Organization.objects.update_or_create(
             code="DEMO-TPA",
             defaults={
                 "name_en": "NextCare Demo TPA",
                 "name_ar": "مدير مطالبات تجريبي",
-                "organization_type": TPAOrganization.Type.TPA,
+                "organization_type": Organization.Type.TPA,
                 "contact_name": "Demo TPA Operations",
                 "contact_email": "tpa.demo@example.com",
                 "contact_phone": "+968 9000 0003",
@@ -89,9 +90,8 @@ class Command(BaseCommand):
         policy, _ = Policy.objects.update_or_create(
             policy_number=f"DEMO-MED-{year}",
             defaults={
-                "sponsor": sponsor,
+                "organization": organization,
                 "insurance_company": insurer,
-                "tpa_organization": tpa,
                 "policy_name": f"Demo Corporate Medical {year}",
                 "start_date": date(year, 1, 1),
                 "expiry_date": date(year, 12, 31),
@@ -111,6 +111,7 @@ class Command(BaseCommand):
             },
         )
 
+        policy.workflow_organizations.add(tpa)
         gold, _ = BenefitPlan.objects.update_or_create(
             policy=policy,
             code="GOLD",
@@ -143,7 +144,7 @@ class Command(BaseCommand):
         )
 
         PolicyAccess.objects.update_or_create(
-            organization=sponsor,
+            organization=organization,
             policy=policy,
             user=actor,
             defaults={
@@ -159,7 +160,7 @@ class Command(BaseCommand):
         )
 
         principal = self._member(
-            sponsor=sponsor,
+            organization=organization,
             employee_id="DEMO-EMP-001",
             defaults={
                 "first_name": "Ahmed",
@@ -174,7 +175,7 @@ class Command(BaseCommand):
             },
         )
         spouse = self._member(
-            sponsor=sponsor,
+            organization=organization,
             employee_id="DEMO-EMP-002",
             defaults={
                 "first_name": "Aisha",
@@ -190,7 +191,7 @@ class Command(BaseCommand):
             },
         )
         child = self._member(
-            sponsor=sponsor,
+            organization=organization,
             employee_id="DEMO-EMP-003",
             defaults={
                 "first_name": "Mariam",
@@ -538,14 +539,14 @@ class Command(BaseCommand):
             actor.groups.add(group)
         return group
 
-    def _member(self, *, sponsor, employee_id, defaults):
+    def _member(self, *, organization, employee_id, defaults):
         member = Member.objects.filter(
-            sponsor=sponsor,
+            organization=organization,
             employee_id=employee_id,
         ).first()
         if member is None:
             member = Member.objects.create(
-                sponsor=sponsor,
+                organization=organization,
                 employee_id=employee_id,
                 **defaults,
             )

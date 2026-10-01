@@ -37,7 +37,7 @@ def can_manage_prompts(user):
 
 @login_required
 def policy_enrollment_detail(request, policy_id):
-    policy = get_object_or_404(visible_policies(request.user).select_related("tpa_organization"), pk=policy_id)
+    policy = get_object_or_404(visible_policies(request.user).select_related("organization"), pk=policy_id)
     data = policy_dashboard(policy, request.user)
     endorsements = data.pop("endorsements").annotate(member_count=Count("member_actions", distinct=True))
     status = request.GET.get("status", "")

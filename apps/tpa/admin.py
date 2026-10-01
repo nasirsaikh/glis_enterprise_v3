@@ -1,3 +1,4 @@
+from apps.accounts.models import Organization
 import hashlib
 import mimetypes
 
@@ -27,27 +28,80 @@ from .models import (
     SourceDocument,
     TPAEmailAuthority,
     TPAMailboxSyncState,
-    TPAOrganization,
+
     TransactionEvent,
     TransactionQuery,
     TransactionQueryMessage,
 )
 
 
-@admin.register(TPAOrganization)
-class OrganizationAdmin(admin.ModelAdmin):
-    list_display = ("code", "name_en", "organization_type", "is_active")
-    list_filter = ("organization_type", "is_active")
-    search_fields = ("code", "name_en", "name_ar", "commercial_registration")
+class ScopedBusinessAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        from .services.access import visible_policies, visible_transactions
+        from services.tenancy import organization_ids
+        qs=super().get_queryset(request)
+        if request.user.is_superuser:return qs
+        policies=visible_policies(request.user).values('pk')
+        transactions=visible_transactions(request.user).values('pk')
+        paths={
+            'benefitplan':'policy_id__in','memberpolicyenrollment':'policy_id__in',
+            'memberaction':'transaction_id__in','transactionevent':'transaction_id__in',
+            'sourcedocument':'transaction_id__in','carddispatch':'transaction_id__in',
+            'transactionquery':'transaction_id__in','transactionquerymessage':'query__transaction_id__in',
+            'inboundemailattachment':'inbound_email__id__in',
+        }
+        name=self.model._meta.model_name
+        if name=='membertransaction':return qs.filter(pk__in=transactions)
+        if name=='member':return qs.filter(organization_id__in=organization_ids(request.user))
+        if name in {'policyaccess','tpaemailauthority'}:return qs.filter(organization_id__in=organization_ids(request.user))
+        if name=='extractionattempt':
+            from django.db.models import Q
+            from .services.access import visible_inbound_emails
+            return qs.filter(Q(source_document__transaction_id__in=transactions)|Q(inbound_attachment__inbound_email_id__in=visible_inbound_emails(request.user).values('pk'))).distinct()
+        path=paths.get(name)
+        if not path:return qs.none()
+        if name=='inboundemailattachment':
+            from .services.access import visible_inbound_emails
+            ids=visible_inbound_emails(request.user).values('pk')
+        else:ids=policies if path.startswith('policy') else transactions
+        return qs.filter(**{path:ids})
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        from .services.access import visible_policies, visible_transactions, visible_inbound_emails
+        from services.tenancy import visible_organizations, visible_users
+        model=db_field.remote_field.model
+        scopes={Organization:visible_organizations(request.user),Policy:visible_policies(request.user),
+            MemberTransaction:visible_transactions(request.user),InboundEmail:visible_inbound_emails(request.user)}
+        if model in scopes:kwargs['queryset']=scopes[model]
+        elif model._meta.label_lower=='auth.user':kwargs['queryset']=visible_users(request.user)
+        return super().formfield_for_foreignkey(db_field,request,**kwargs)
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        from services.tenancy import visible_organizations, visible_users
+        model=db_field.remote_field.model
+        if model is Organization:kwargs['queryset']=visible_organizations(request.user)
+        elif model._meta.label_lower=='auth.user':kwargs['queryset']=visible_users(request.user)
+        return super().formfield_for_manytomany(db_field,request,**kwargs)
+
+
+class BenefitPlanInline(admin.TabularInline):
+    model = BenefitPlan
+    extra = 0
+    fields = ("code", "name", "annual_premium", "default_sum_insured", "effective_from", "effective_until", "is_active")
 
 
 @admin.register(Policy)
-class PolicyAdmin(admin.ModelAdmin):
+class PolicyAdmin(ScopedBusinessAdmin):
+    inlines = (BenefitPlanInline,)
+
+    def get_queryset(self, request):
+        from .services.access import visible_policies
+        return super().get_queryset(request).filter(pk__in=visible_policies(request.user).values("pk"))
+
     list_display = (
         "policy_number",
-        "sponsor",
+        "organization",
         "insurance_company",
-        "tpa_organization",
         "status",
         "start_date",
         "expiry_date",
@@ -59,19 +113,19 @@ class PolicyAdmin(admin.ModelAdmin):
 
 
 @admin.register(BenefitPlan)
-class PlanAdmin(admin.ModelAdmin):
+class PlanAdmin(ScopedBusinessAdmin):
     list_display = ("policy", "code", "name", "annual_premium", "is_active")
     list_filter = ("is_active",)
     search_fields = ("code", "name", "policy__policy_number")
 
 
 @admin.register(Member)
-class MemberAdmin(admin.ModelAdmin):
+class MemberAdmin(ScopedBusinessAdmin):
     list_display = (
         "tpa_member_id",
         "employee_id",
         "full_name",
-        "sponsor",
+        "organization",
         "relationship",
         "principal",
         "status",
@@ -88,7 +142,7 @@ class MemberAdmin(admin.ModelAdmin):
 
 
 @admin.register(MemberPolicyEnrollment)
-class EnrollmentAdmin(admin.ModelAdmin):
+class EnrollmentAdmin(ScopedBusinessAdmin):
     list_display = (
         "member",
         "policy",
@@ -103,7 +157,7 @@ class EnrollmentAdmin(admin.ModelAdmin):
 
 
 @admin.register(MemberTransaction)
-class TransactionAdmin(admin.ModelAdmin):
+class TransactionAdmin(ScopedBusinessAdmin):
     list_display = (
         "reference",
         "policy",
@@ -122,7 +176,7 @@ class TransactionAdmin(admin.ModelAdmin):
 
 
 @admin.register(MemberAction)
-class ActionAdmin(admin.ModelAdmin):
+class ActionAdmin(ScopedBusinessAdmin):
     list_display = (
         "transaction",
         "row_number",
@@ -138,7 +192,7 @@ class ActionAdmin(admin.ModelAdmin):
 
 
 @admin.register(PolicyAccess)
-class PolicyAccessAdmin(admin.ModelAdmin):
+class PolicyAccessAdmin(ScopedBusinessAdmin):
     list_display = (
         "organization",
         "policy",
@@ -154,7 +208,7 @@ class PolicyAccessAdmin(admin.ModelAdmin):
 
 
 @admin.register(TransactionEvent)
-class EventAdmin(admin.ModelAdmin):
+class EventAdmin(ScopedBusinessAdmin):
     list_display = ("created_at", "transaction", "event_type", "actor", "summary")
     list_filter = ("event_type",)
     readonly_fields = (
@@ -169,7 +223,7 @@ class EventAdmin(admin.ModelAdmin):
 
 
 @admin.register(SourceDocument)
-class SourceDocumentAdmin(admin.ModelAdmin):
+class SourceDocumentAdmin(ScopedBusinessAdmin):
     list_display = (
         "original_name",
         "transaction",
@@ -204,7 +258,7 @@ class InboundEmailAttachmentInline(admin.TabularInline):
 
 
 @admin.register(InboundEmail)
-class InboundEmailAdmin(admin.ModelAdmin):
+class InboundEmailAdmin(ScopedBusinessAdmin):
     change_form_template = "admin/tpa/inboundemail/change_form.html"
     actions = ("reprocess_selected_emails",)
     list_display = (
@@ -342,7 +396,7 @@ class InboundEmailAdmin(admin.ModelAdmin):
 
 
 @admin.register(InboundEmailAttachment)
-class InboundEmailAttachmentAdmin(admin.ModelAdmin):
+class InboundEmailAttachmentAdmin(ScopedBusinessAdmin):
     list_display = (
         "original_name",
         "inbound_email",
@@ -371,7 +425,7 @@ class TransactionQueryMessageInline(admin.TabularInline):
 
 
 @admin.register(TransactionQuery)
-class TransactionQueryAdmin(admin.ModelAdmin):
+class TransactionQueryAdmin(ScopedBusinessAdmin):
     list_display = (
         "transaction",
         "subject",
@@ -402,7 +456,7 @@ class TransactionQueryAdmin(admin.ModelAdmin):
 
 
 @admin.register(TransactionQueryMessage)
-class TransactionQueryMessageAdmin(admin.ModelAdmin):
+class TransactionQueryMessageAdmin(ScopedBusinessAdmin):
     list_display = (
         "query",
         "sender",
@@ -430,7 +484,7 @@ class TransactionQueryMessageAdmin(admin.ModelAdmin):
 
 
 @admin.register(TPAEmailAuthority)
-class TPAEmailAuthorityAdmin(admin.ModelAdmin):
+class TPAEmailAuthorityAdmin(ScopedBusinessAdmin):
     list_display = (
         "email_address",
         "organization",
@@ -472,7 +526,7 @@ class TPAMailboxSyncStateAdmin(admin.ModelAdmin):
 
 
 @admin.register(ExtractionAttempt)
-class ExtractionAttemptAdmin(admin.ModelAdmin):
+class ExtractionAttemptAdmin(ScopedBusinessAdmin):
     list_display = ("created_at", "stage", "status", "provider", "model_name")
     list_filter = ("status", "stage")
     readonly_fields = (
@@ -491,7 +545,7 @@ class ExtractionAttemptAdmin(admin.ModelAdmin):
 
 
 @admin.register(CardDispatch)
-class CardDispatchAdmin(admin.ModelAdmin):
+class CardDispatchAdmin(ScopedBusinessAdmin):
     list_display = (
         "transaction",
         "method",

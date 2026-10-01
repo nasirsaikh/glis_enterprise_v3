@@ -57,7 +57,7 @@ def canonical_member(data, field_aliases=None):
     return {key: normalized.get(key, mapped.get(key)) for key in CANONICAL_MEMBER_FIELDS}
 
 
-def _coerce_members_payload(payload):
+def _coerce_members_payload(payload, *, require_members=True):
     """Accept common LLM JSON shapes and convert them to the canonical members envelope."""
     if isinstance(payload, list):
         return {"members": payload}
@@ -95,6 +95,12 @@ def _coerce_members_payload(payload):
     if any(key in payload for key in member_keys):
         return {"members": [payload], "confidence": payload.get("confidence")}
 
+    if not require_members:
+        # Email classification may be complete even when member rows live only
+        # in attachments. Preserve the classification envelope and let the
+        # attachment pipeline populate members separately.
+        return {**payload, "members": []}
+
     keys = ", ".join(sorted(str(key) for key in payload.keys())) or "none"
     raise ValueError(
         "AI response did not contain recognizable member data. "
@@ -102,10 +108,10 @@ def _coerce_members_payload(payload):
     )
 
 
-def normalize_ai_payload(payload, *, field_aliases=None):
+def normalize_ai_payload(payload, *, field_aliases=None, require_members=True):
     if isinstance(payload, str):
         payload = json.loads(payload)
-    payload = _coerce_members_payload(payload)
+    payload = _coerce_members_payload(payload, require_members=require_members)
     payload = apply_field_aliases(payload, field_aliases)
 
     normalized = {

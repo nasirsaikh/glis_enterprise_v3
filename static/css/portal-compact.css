@@ -28,6 +28,7 @@
 .glis-portal-app .portal-metric__note { margin-top: .3rem; font-size: .65rem; }
 .compact-plan-row { display: grid; grid-template-columns: repeat(4,minmax(6rem,1fr)) auto auto; align-items: end; gap: .65rem; padding: .65rem; border: 1px solid var(--color-base-300); border-radius: .75rem; background: var(--color-base-200); }
 .compact-plan-row .plan-active { align-self: center; display: flex; align-items: center; gap: .35rem; font-size: .75rem; }
+.ticket-conversation { align-self: start; }
 .ticket-conversation .chat { min-width: 0; padding-block: .45rem; column-gap: .6rem; }
 .ticket-conversation .chat-image > div { display: grid; place-items: center; }
 .ticket-conversation .chat-bubble { max-width: min(90%,52rem); padding: .7rem .85rem; font-size: .85rem; line-height: 1.5; overflow-wrap: anywhere; }

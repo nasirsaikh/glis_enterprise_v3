@@ -46,6 +46,57 @@ async function fixture(body, style = portalCSS, viewport = {width: 1280, height:
   return page;
 }
 
+test("choice labels toggle independent controls and remain usable after HTMX replacement", async () => {
+  const options = '<div class="choice-options" id="id_users"><div><label for="id_users_0"><input class="checkbox checkbox-primary" type="checkbox" name="users" value="1" id="id_users_0">First staff member</label></div><div><label for="id_users_1"><input class="checkbox checkbox-primary" type="checkbox" name="users" value="2" id="id_users_1">Second staff member with a long email address</label></div></div>';
+  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><form><fieldset class="fieldset"><legend class="fieldset-legend">Users</legend>' + options + '</fieldset><label><input class="checkbox checkbox-primary" name="replace" type="checkbox" checked>Replace current assignment</label></form></main></body>');
+  try {
+    for (const theme of ["light", "dark"]) {
+      for (const direction of ["ltr", "rtl"]) {
+        for (const width of [1280, 390]) {
+          await page.setViewportSize({width, height: 844});
+          await page.evaluate(({theme, direction, options}) => {
+            document.documentElement.dataset.theme = theme;
+            document.documentElement.dir = direction;
+            document.querySelector(".choice-options").outerHTML = options;
+            document.dispatchEvent(new CustomEvent("htmx:load", {detail: {elt: document.querySelector(".choice-options")}}));
+          }, {theme, direction, options});
+          await page.getByText("First staff member", {exact: true}).click();
+          assert.equal(await page.locator("#id_users_0").isChecked(), true);
+          assert.equal(await page.locator("#id_users_1").isChecked(), false);
+          await page.locator("#id_users_1").focus();
+          await page.locator("#id_users_1").press("Space");
+          assert.equal(await page.locator("#id_users_1").isChecked(), true);
+          assert.deepEqual(await page.evaluate(() => new FormData(document.querySelector("form")).getAll("users")), ["1", "2"]);
+          await page.getByText("First staff member", {exact: true}).click();
+          assert.equal(await page.locator("#id_users_0").isChecked(), false);
+          assert.equal(await page.locator("#id_users_1").isChecked(), true);
+          const labels = await page.locator(".choice-options label").evaluateAll(items => items.map(item => ({top: item.getBoundingClientRect().top, bottom: item.getBoundingClientRect().bottom, color: getComputedStyle(item).color})));
+          assert.ok(labels[1].top >= labels[0].bottom, "Choice rows overlap");
+          assert.equal(labels[0].color, labels[1].color);
+          assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+        }
+      }
+    }
+    await page.locator('[name="replace"]').uncheck();
+    assert.equal(await page.locator('[name="replace"]').isChecked(), false);
+  } finally { await page.close(); }
+});
+
+test("comment card follows its content height beside a taller sidebar", async () => {
+  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]"><section class="card ticket-conversation"><div class="card-body"><h2>Conversation</h2><p>Short comment text.</p><form><textarea class="textarea">Reply</textarea><button class="btn" type="button">Post comment</button></form></div></section><aside class="card" style="min-height: 1300px">Request details and history</aside></div></main></body>');
+  try {
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({width, height: 900});
+      const card = await page.locator(".ticket-conversation").boundingBox();
+      const sidebar = await page.locator("aside").boundingBox();
+      const content = await page.locator(".ticket-conversation .card-body").boundingBox();
+      assert.ok(card.height < sidebar.height / 2);
+      assert.ok(card.y + card.height - (content.y + content.height) < 3);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    }
+  } finally { await page.close(); }
+});
+
 test("public inner-page CMS grid is centered, responsive and fits viewport", async () => {
   const page = await fixture('<body class="public-shell public-inner-page"><main id="main-content"><div class="container"><div class="row"><article class="col-md-8">Main content</article><aside class="col-md-4">Sidebar</aside></div></div></main></body>', publicCSS);
   try {

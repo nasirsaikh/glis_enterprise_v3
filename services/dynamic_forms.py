@@ -1,6 +1,7 @@
 import re
 from datetime import date
 from django import forms
+from apps.core.widgets import CheckboxSelectMultiple, RadioSelect
 from django.core.exceptions import ValidationError
 from django.utils.translation import get_language
 from .datasources import DataSourceRegistry
@@ -59,8 +60,8 @@ class DynamicTicketForm(forms.Form):
             if source.get("registry"):
                 choices = DataSourceRegistry.choices(source["registry"], user=self.user)
             if control == "multiselect":
-                return forms.MultipleChoiceField(choices=choices, widget=forms.CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}), **common)
-            widget = forms.RadioSelect(attrs={"class": "radio radio-primary"}) if control == "radio" else forms.Select(attrs={"class": "select select-bordered w-full"})
+                return forms.MultipleChoiceField(choices=choices, widget=CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}), **common)
+            widget = RadioSelect(attrs={"class": "radio radio-primary"}) if control == "radio" else forms.Select(attrs={"class": "select select-bordered w-full"})
             return forms.ChoiceField(choices=choices, widget=widget, **common)
         if control in {"checkbox", "switch"}:
             return forms.BooleanField(widget=forms.CheckboxInput(attrs={"class": "toggle toggle-primary" if control == "switch" else "checkbox checkbox-primary", "role": "switch" if control == "switch" else "checkbox"}), **common)

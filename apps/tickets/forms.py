@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from apps.ai.models import default_questions
+from apps.core.widgets import CheckboxSelectMultiple, RadioSelect
 from .models import Category, Product, Project, SupportGroup, Ticket, TicketComment
 from services.tenancy import organization_ids, visible_support_groups, visible_users, visible_organizations, assignable_groups, assignable_users, taggable_users, available_approvers
 from apps.tpa.models import Policy
@@ -205,12 +206,12 @@ class TicketAssignmentForm(forms.Form):
     users = forms.ModelMultipleChoiceField(
         required=False,
         queryset=get_user_model().objects.none(),
-        widget=forms.CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}),
+        widget=CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}),
     )
     groups = forms.ModelMultipleChoiceField(
         required=False,
         queryset=SupportGroup.objects.none(),
-        widget=forms.CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}),
+        widget=CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}),
     )
     replace_existing = forms.BooleanField(
         required=False,
@@ -248,7 +249,7 @@ class TicketShareForm(forms.Form):
 
 
 class TicketApprovalDecisionForm(forms.Form):
-    decision = forms.ChoiceField(choices=[("approve", _("Approve")), ("reject", _("Reject"))], widget=forms.RadioSelect(attrs={"class": "radio radio-primary"}))
+    decision = forms.ChoiceField(choices=[("approve", _("Approve")), ("reject", _("Reject"))], widget=RadioSelect(attrs={"class": "radio radio-primary"}))
     note = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 3}))
 
 

@@ -11,6 +11,10 @@ body { font-family: var(--font-sans); }
 .card-body { overflow-wrap: anywhere; }
 .fieldset { min-width: 0; }
 .fieldset-legend { white-space: normal; }
+.choice-options { display: grid; gap: .5rem; min-width: 0; }
+.choice-options label { display: flex; align-items: flex-start; gap: .6rem; min-width: 0; min-height: 1.75rem; color: var(--color-base-content); font-size: .875rem; line-height: 1.5; overflow-wrap: anywhere; cursor: pointer; }
+.choice-options input:is([type="checkbox"], [type="radio"]) { flex-shrink: 0; margin-block-start: .125rem; }
+.choice-options label:has(input:disabled) { cursor: not-allowed; }
 .input, .select, .textarea { max-width: 100%; }
 .input:disabled, .select:disabled, .textarea:disabled { color: var(--color-base-content); opacity: .65; }
 .errorlist { margin-block: .35rem; padding: 0; list-style: none; color: var(--color-error); font-size: .8rem; }

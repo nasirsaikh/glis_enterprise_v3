@@ -17,6 +17,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils import timezone
 from django.utils.html import strip_tags
+from .email_evidence import html_to_text
 
 from ..models import InboundEmail, InboundEmailAttachment, TPAMailboxSyncState
 from .ai_intake import process_inbound_email
@@ -80,11 +81,12 @@ def _body_text(message):
                 except Exception:
                     html = ""
                 if html:
-                    return strip_tags(html)
+                    return html_to_text(html)
         return ""
 
     try:
-        return message.get_content()
+        content = message.get_content()
+        return html_to_text(content) if message.get_content_type() == "text/html" else content
     except Exception:
         payload = message.get_payload(decode=True) or b""
         return payload.decode(
@@ -280,7 +282,7 @@ def _store_graph_message(message, config, token, actor):
     body_content = body.get("content") or ""
     body_type = str(body.get("contentType") or "").lower()
     body_html = _sanitize_html(body_content) if body_type == "html" else ""
-    body_text = strip_tags(body_html) if body_html else body_content
+    body_text = html_to_text(body_html) if body_html else body_content
 
     received_at = _graph_received(message.get("receivedDateTime"))
     received_after = config.get("received_after")

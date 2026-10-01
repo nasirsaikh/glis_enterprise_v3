@@ -44,3 +44,16 @@
 }
 
 .tpa-wizard-step fieldset[hidden] { display: none !important; }
+
+.tpa-processing-header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.75rem; padding:1rem; }
+.tpa-processing-tools { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; }
+.tpa-processing-search { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
+.tpa-processing-search > label { flex:1 1 16rem; min-width:0; }
+.tpa-processing-search > select { width:auto; max-width:100%; }
+.tpa-processing-table th, .tpa-processing-table td { padding:.55rem .6rem; vertical-align:middle; }
+.tpa-processing-table th, .tpa-processing-table .btn { white-space:nowrap; }
+.tpa-processing-table .input { min-width:8rem; width:9rem; height:2rem; }
+.tpa-processing-table input[type=date] { width:10rem; }
+.tpa-bulk-upload { display:flex; flex-wrap:wrap; align-items:end; gap:.75rem; }
+.tpa-bulk-upload > label { flex:1 1 18rem; min-width:0; }
+.tpa-bulk-upload [data-form-errors] { width:100%; }

@@ -201,10 +201,8 @@ def start_tpa_processing(tx, actor):
     return tx
 
 
-@transaction.atomic
-def update_tpa_action(
+def validated_tpa_values(
     action,
-    actor,
     *,
     card_number="",
     effective_date=None,
@@ -213,22 +211,38 @@ def update_tpa_action(
     comments="",
 ):
     tx = action.transaction
-    if tx.status != tx.Status.TPA_IN_PROGRESS:
-        raise ValueError("TPA member processing is available only while TPA processing is in progress.")
-    if not can_process_tpa_transaction(actor, tx):
-        raise PermissionError("You do not have TPA processing authority.")
-
     final_amount = amount if amount not in (None, "") else action.calculated_premium
     if final_amount != action.calculated_premium and not str(override_reason or "").strip():
         raise ValueError(
             "Provide an override reason when the TPA final amount differs from the system calculated amount."
         )
 
-    action.card_number = str(card_number or "").strip()
-    action.tpa_effective_date = _as_date(effective_date) if effective_date else tx.effective_date
-    action.tpa_premium_amount = final_amount
-    action.tpa_override_reason = str(override_reason or "").strip()
-    action.processing_message = str(comments or "").strip()
+    card = str(card_number or "").strip()
+    if tx.transaction_type not in {tx.Type.MEMBER_ADD, tx.Type.NEW_POLICY_ENROLLMENT}:
+        if card and card != action.card_number:
+            raise ValueError("Existing-member endorsements cannot issue or replace a card number.")
+        card = action.card_number
+    return {
+        "card_number": card,
+        "tpa_effective_date": _as_date(effective_date) if effective_date else tx.effective_date,
+        "tpa_premium_amount": final_amount,
+        "tpa_override_reason": str(override_reason or "").strip(),
+        "processing_message": str(comments or "").strip(),
+    }
+
+
+@transaction.atomic
+def update_tpa_action(action, actor, **values):
+    tx = MemberTransaction.objects.select_for_update().get(pk=action.transaction_id)
+    if tx.status != tx.Status.TPA_IN_PROGRESS:
+        raise ValueError("TPA member processing is available only while TPA processing is in progress.")
+    if not can_process_tpa_transaction(actor, tx):
+        raise PermissionError("You do not have TPA processing authority.")
+    tx.member_actions.select_for_update().get(pk=action.pk)
+    action.refresh_from_db()
+    action.transaction = tx
+    for field, value in validated_tpa_values(action, **values).items():
+        setattr(action, field, value)
     action.save(
         update_fields=[
             "card_number",

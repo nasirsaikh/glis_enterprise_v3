@@ -44,7 +44,7 @@ class Command(BaseCommand):
                 "timeout_seconds": 600,
                 "supports_vision": True,
                 "task_capabilities": ["document_extraction"],
-                "runtime_options": {"keep_alive": "15m", "num_ctx": 8192},
+                "runtime_options": {"keep_alive": 0, "num_ctx": 8192},
                 "allow_sensitive_data": True,
                 "is_active": True,
                 "priority": 10,

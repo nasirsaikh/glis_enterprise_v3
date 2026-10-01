@@ -1,7 +1,9 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 import os
 import json
+import re
+from html import unescape
 
 from django.core.files import File
 from django.db import transaction
@@ -24,7 +26,7 @@ from .authority import sender_is_authorized
 from .access import visible_policies
 from .document_intake import process_source_bundle
 from .email_reprocessing import validate_email_reprocessing
-from .email_evidence import member_rows_from_html
+from .email_evidence import html_to_text, member_rows_from_html
 from .extraction import canonical_member, normalize_ai_payload, select_profile, select_provider
 from .intake import import_member_spreadsheet
 from .member_merge import merge_member_rows
@@ -136,15 +138,71 @@ def _email_prompt(email, hints):
         f"Policy Number: {hint_policy}\n"
         f"Transaction Type: {hint_type}\n"
         f"Effective Date: {hint_date}\n"
+        f"Email received date (resolve today/tomorrow against this date): {timezone.localdate(email.received_at).isoformat()}\n"
         f"Subject: {email.subject}\n"
         f"From: {email.sender}\n"
         f"To: {email.recipient}\n\n"
         "Attachment names: " + ", ".join(email.attachments.values_list("original_name", flat=True)) + "\n\n"
         "Email body:\n"
-        f"{email.body_text or ''}"
+        f"{html_to_text(email.body_html) or unescape(email.body_text or '')}"
         + "\n\nMember table records (preserve empty cells and identifiers):\n"
         + json.dumps(member_rows_from_html(email.body_html), ensure_ascii=False)
     )
+
+
+def _recover_explicit_email_header(email, payload, hints):
+    """Recover clear request headers independently of member JSON mapping.
+
+    Contradictory/negative requests and multiple policy/type matches stay with
+    the classifier for review. This never supplies sender authority or approval.
+    """
+    text = f"{email.subject}\n{html_to_text(email.body_html) or unescape(email.body_text or '')}"
+    # The request precedes the member table and any quoted correspondence.
+    header = re.split(r"employee[_ ](?:id|no)|\bFrom:\s|\bSent:\s", text, maxsplit=1, flags=re.I)[0][:3000]
+    if re.search(r"\b(?:do not|don't|not to|should not|if|whether)\b", header, re.I):
+        return payload
+    patterns = {
+        "MEMBER_ADD": r"\b(?:addition|add (?:new )?members?)\b",
+        "MEMBER_DELETE": r"\b(?:deletion|delete members?|remove members?)\b",
+        "MEMBER_TERMINATE": r"\b(?:termination|terminate members?)\b",
+        "MEMBER_SUSPEND": r"\b(?:suspension|suspend members?|temporary deactivation)\b",
+        "MEMBER_REACTIVATE": r"\b(?:reactivation|reactivate members?)\b",
+        "MEMBER_UPDATE": r"\b(?:demographic (?:change|update)|update member details)\b",
+        "POLICY_CANCEL": r"\b(?:policy cancellation|cancel (?:the )?policy)\b",
+    }
+    matches = [key for key, pattern in patterns.items() if re.search(pattern, header, re.I)]
+    policy_matches = [p for p in Policy.objects.filter(status=Policy.Status.ACTIVE)
+                      if re.search(r"(?<![\w/-])" + re.escape(p.policy_number) + r"(?![\w/-])", header, re.I)]
+    if len(matches) != 1 or len(policy_matches) != 1 or payload.get("is_endorsement_request") is False:
+        return payload
+    request_type = matches[0]
+    ai_type = str(payload.get("transaction_type") or payload.get("classification") or "").upper()
+    if ai_type not in {"", "NEEDS_REVIEW", "UNCERTAIN", request_type}:
+        return payload
+    if hints.get("transaction_type") and hints["transaction_type"] != request_type:
+        return payload
+    explicit_policy = policy_matches[0]
+    if hints.get("policy_id") and str(hints["policy_id"]) != str(explicit_policy.pk):
+        return payload
+    complete_ai_header = (payload.get("is_endorsement_request") is True and ai_type == request_type
+                          and payload.get("policy_number") == explicit_policy.policy_number)
+    payload = {**payload, "is_endorsement_request": True,
+               "policy_number": explicit_policy.policy_number,
+               "transaction_type": request_type, "classification": request_type}
+    if not complete_ai_header:
+        payload["classification_source"] = "EXPLICIT_EMAIL_HEADER"
+    if not payload.get("effective_date"):
+        relative = re.search(r"\beffective(?:\s+(?:from|on))?\s+(today|tomorrow)\b", header, re.I)
+        if relative:
+            payload["effective_date"] = (timezone.localdate(email.received_at) + timedelta(
+                days=int(relative.group(1).lower() == "tomorrow")
+            )).isoformat()
+        else:
+            explicit_date = re.search(r"\beffective(?:\s+(?:from|on|date))?\s*[:=-]?\s*(\d{4}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2}[/-]\d{4})\b", header, re.I)
+            value = _as_date(explicit_date.group(1)) if explicit_date else None
+            if value:
+                payload["effective_date"] = value.isoformat()
+    return payload
 
 
 def _document_prompt(email, attachment, hints):
@@ -289,6 +347,7 @@ def extract_email_payload(email, actor=None, *, profile_override=None):
         table_rows = member_rows_from_html(email.body_html)
         if table_rows:
             normalized["members"] = [canonical_member(row, profile.field_aliases if profile else None) for row in table_rows]
+        normalized = _recover_explicit_email_header(email, normalized, hints)
         _log_interaction(
             actor=actor,
             provider=provider,
@@ -614,7 +673,9 @@ def process_inbound_email(email, actor, *, force=False):
             and bool(payload.get("transaction_type") or payload.get("classification"))
         )
         confidence_is_acceptable = (
-            confidence is None and classification_is_complete
+            classification_is_complete and (
+                confidence is None or payload.get("classification_source") == "EXPLICIT_EMAIL_HEADER"
+            )
         ) or (
             confidence is not None and confidence >= _classification_minimum()
         )
@@ -761,7 +822,7 @@ def process_inbound_email(email, actor, *, force=False):
 
         effective_date = _as_date(
             hints.get("effective_date") or payload.get("effective_date"),
-            fallback=email.received_at.date(),
+            fallback=timezone.localdate(email.received_at),
         )
         refund_basis = _normalize_refund_basis(
             hints.get("refund_basis") or payload.get("refund_basis")

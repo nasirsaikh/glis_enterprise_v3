@@ -8,6 +8,45 @@ from pathlib import Path
 from .schemas import MemberEvidence
 
 
+class _ReadableHTML(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+        self.hidden = 0
+        self.cell_depth = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"script", "style"}:
+            self.hidden += 1
+        elif not self.hidden:
+            if tag in {"td", "th"}:
+                self.cell_depth += 1
+            elif tag in {"br", "p", "div", "tr", "li", "blockquote"}:
+                self.parts.append(" " if self.cell_depth and tag != "tr" else "\n")
+
+    def handle_endtag(self, tag):
+        if tag in {"script", "style"}:
+            self.hidden = max(0, self.hidden - 1)
+        elif not self.hidden and tag in {"td", "th"}:
+            self.parts.append(" | ")
+            self.cell_depth = max(0, self.cell_depth - 1)
+        elif not self.hidden and tag in {"p", "div", "tr", "li", "blockquote"}:
+            self.parts.append(" " if self.cell_depth and tag != "tr" else "\n")
+
+    def handle_data(self, data):
+        if not self.hidden:
+            self.parts.append(data)
+
+
+def html_to_text(value):
+    """Retain paragraph and table boundaries; strip_tags concatenates cells."""
+    parser = _ReadableHTML()
+    parser.feed(value or "")
+    return "\n".join(line for line in (
+        " ".join(part.split()).strip(" |") for part in "".join(parser.parts).splitlines()
+    ) if line)
+
+
 class _Tables(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)

@@ -98,7 +98,7 @@ class OCRRecoveryTests(TestCase):
     @patch("apps.tpa.services.document_intake._ocr_image", side_effect=RuntimeError("Ollama HTTP 500: runner stopped"))
     def test_vision_500_and_empty_initial_mapping_recover_populated_form_fields(self, ocr, recovery, mapper):
         row = {"employee_id":"0012","first_name":"Sam","last_name":"Example","date_of_birth":"1990-02-01","gender":"Male","relationship":"PRINCIPAL","plan_code":"GOLD"}
-        mapper.side_effect = [({"members":[{"full_name":None}]},self.provider,None,1),({"members":[row]},self.provider,None,1)]
+        mapper.return_value = ({"members":[row]},self.provider,None,1)
         document = SourceDocument.objects.create(transaction=self.tx, original_name="id.png",file=SimpleUploadedFile("id.png",b"fixture"))
         actions = process_source_bundle(self.tx,[document],actor=self.actor)
         self.assertEqual(actions[0].corrected_data["date_of_birth"],"1990-02-01")
@@ -106,6 +106,7 @@ class OCRRecoveryTests(TestCase):
         self.assertEqual(document.processing_state,SourceDocument.State.PROCESSED)
         self.assertEqual(document.extraction_method,"LOCAL_OCR_RECOVERY")
         recovery.assert_called_once()
+        mapper.assert_called_once()
 
     def test_canonical_email_table_fills_member_without_ai_mapping(self):
         from email.message import EmailMessage

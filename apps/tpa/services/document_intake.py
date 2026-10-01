@@ -3,6 +3,7 @@ import hashlib
 import io
 import mimetypes
 from pathlib import Path
+from django.conf import settings
 
 from django.core.exceptions import ValidationError
 
@@ -250,6 +251,8 @@ def _map_evidence_text(tx, evidence_text, actor=None):
 
 
 def _ocr_image(tx, content, mime_type):
+    if getattr(settings, "TPA_OCR_ENGINE", "auto") == "local":
+        return docling_text("image.png", content), None, 0
     provider = select_provider(
         vision=True,
         sensitive=True,
@@ -285,6 +288,8 @@ def _pdf_text_or_ocr(tx, content):
     embedded = "\n".join(page.extract_text() or "" for page in reader.pages)
     if embedded.strip():
         return embedded, "PDF_TEXT", len(reader.pages)
+    if getattr(settings, "TPA_OCR_ENGINE", "auto") == "local":
+        return docling_text("evidence.pdf", content), "LOCAL_OCR", len(reader.pages)
 
     try:
         import fitz
@@ -455,6 +460,14 @@ def process_source_bundle(tx, documents, actor=None):
                             document.processed = False
                             document.processing_error = f"{name}: {exc}"
 
+            elif suffix in {".pdf", ".png", ".jpg", ".jpeg", ".webp"} and getattr(settings, "TPA_OCR_ENGINE", "auto") == "local":
+                text = docling_text(document.original_name, content)
+                evidence.append(f"--- SOURCE: {document.original_name} ---\n{text}")
+                document.extraction_method = "LOCAL_OCR"
+                document.extracted_payload = {"ocr_text": text}
+                document.processing_state = SourceDocument.State.PROCESSED
+                document.processed = True
+
             elif suffix == ".pdf":
                 text, method, pages = _pdf_text_or_ocr(tx, content)
                 evidence.append(
@@ -563,6 +576,8 @@ def process_source_bundle(tx, documents, actor=None):
             mapping_error = None
             mapped = {"members": []}
             try:
+                if not evidence:
+                    raise ValueError("Vision OCR produced no readable text; recovering locally before mapping.")
                 mapped, provider, profile, _ = _map_evidence_text(tx, "\n\n".join(evidence), actor=actor)
             except Exception as exc:
                 mapping_error = exc
@@ -572,11 +587,25 @@ def process_source_bundle(tx, documents, actor=None):
             if (mapping_error or missing) and recovery_sources:
                 recovered_text = []
                 for source_document, name, raw in recovery_sources:
+                    recovery_attempt = ExtractionAttempt.objects.create(
+                        source_document=source_document, stage="LOCAL_OCR_RECOVERY",
+                        status=ExtractionAttempt.Status.STARTED,
+                    )
                     try:
-                        recovered_text.append(f"--- LOCAL OCR RECOVERY: {name} ---\n{docling_text(name, raw)}")
+                        text = docling_text(name, raw)
+                        recovered_text.append(f"--- LOCAL OCR RECOVERY: {name} ---\n{text}")
                         recovered_documents.add(source_document.pk)
+                        source_document.extraction_method = "LOCAL_OCR_RECOVERY"
+                        payload = dict(source_document.extracted_payload or {})
+                        payload.setdefault("local_ocr_text", {})[name] = text
+                        source_document.extracted_payload = payload
+                        source_document.save(update_fields=["extraction_method", "extracted_payload", "updated_at"])
+                        recovery_attempt.status = ExtractionAttempt.Status.SUCCESS
                     except Exception as exc:
                         recovery_warnings.append(f"{name}: {exc}")
+                        recovery_attempt.status = ExtractionAttempt.Status.REVIEW
+                        recovery_attempt.error = str(exc)
+                    recovery_attempt.save(update_fields=["status", "error", "updated_at"])
                 if recovered_text:
                     try:
                         repaired, provider, profile, _ = _map_evidence_text(
@@ -621,7 +650,7 @@ def process_source_bundle(tx, documents, actor=None):
             for document in documents:
                 if (
                     document.processed
-                    and document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME", "OUTLOOK_MSG", "LOCAL_OCR_RECOVERY"}
+                    and document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME", "OUTLOOK_MSG", "LOCAL_OCR", "LOCAL_OCR_RECOVERY"}
                 ):
                     payload = dict(document.extracted_payload or {})
                     payload["bundle_members_created"] = len(actions)

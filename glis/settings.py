@@ -544,6 +544,7 @@ JOB_CENTER_HEARTBEAT_SECONDS = 30
 
 # Local document recovery after incomplete Ollama extraction.
 TPA_DOCLING_FALLBACK_ENABLED = os.getenv("TPA_DOCLING_FALLBACK_ENABLED", "1") == "1"
+TPA_OCR_ENGINE = os.getenv("TPA_OCR_ENGINE", "auto").strip().lower()
 TPA_DOCLING_USE_GPU = os.getenv("TPA_DOCLING_USE_GPU", "0") == "1"
 TPA_TESSERACT_CMD = os.getenv("TPA_TESSERACT_CMD", "")
 TPA_DOCLING_TIMEOUT = int(os.getenv("TPA_DOCLING_TIMEOUT", "180"))

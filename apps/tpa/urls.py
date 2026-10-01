@@ -154,6 +154,16 @@ urlpatterns = [
         name="transaction_query_attachment",
     ),
     path(
+        "transactions/<str:reference>/tpa-members/export/",
+        views.transaction_tpa_export,
+        name="transaction_tpa_export",
+    ),
+    path(
+        "transactions/<str:reference>/tpa-members/import/",
+        views.transaction_tpa_bulk,
+        name="transaction_tpa_bulk",
+    ),
+    path(
         "transactions/<str:reference>/card-dispatch/",
         views.transaction_card_dispatch,
         name="transaction_card_dispatch",

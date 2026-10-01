@@ -35,6 +35,7 @@ from .forms import (
     QueryRaiseForm,
     SourceBundleUploadForm,
     TPAProcessingRowForm,
+    TPABulkProcessingForm,
     TransactionForm,
     TransactionRejectionForm,
 )
@@ -73,6 +74,10 @@ from .services.access import (
 )
 from .services.ai_intake import process_inbound_email
 from .services.document_intake import create_source_documents, process_source_bundle
+from .services.bulk_processing import (
+    apply_processing_preview, build_processing_export, load_processing_preview,
+    member_identity, preview_processing_upload, processing_error_csv,
+)
 from .services.intake import import_member_spreadsheet
 from .services.mailbox import mailbox_health, poll_inbound_mailbox
 from .services.member_selection import (
@@ -769,7 +774,7 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
     _require_tpa_access(request.user)
     tx = get_object_or_404(
         visible_transactions(request.user).prefetch_related(
-            "member_actions", "events", "source_documents"
+            "events", "source_documents"
         ),
         reference=reference,
     )
@@ -784,7 +789,27 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
     if wizard["step_redirected"] and not _is_htmx(request):
         return redirect(wizard["step_url"])
     form_overrides = form_overrides or {}
-    actions = list(tx.member_actions.all().order_by("row_number", "pk"))
+    actions = list(tx.member_actions.select_related("member").order_by("row_number", "pk"))
+    processing_query = request.GET.get("q", "").strip()
+    processing_filter = request.GET.get("processing_status", "")
+    needs_card = tx.transaction_type in {tx.Type.MEMBER_ADD, tx.Type.NEW_POLICY_ENROLLMENT}
+    ready_count = 0
+    filtered_processing = []
+    for action in actions:
+        action.tpa_ready = bool(action.tpa_effective_date and action.tpa_premium_amount is not None
+                                and (action.card_number or not needs_card))
+        ready_count += int(action.tpa_ready)
+        employee, name = member_identity(action)
+        text = " ".join([employee, name, action.card_number, str(action.pk),
+                         str((action.corrected_data or action.extracted_data or action.submitted_data or {}).get("national_id", ""))])
+        if processing_query.casefold() not in text.casefold():
+            continue
+        if ((processing_filter == "missing" and action.tpa_ready)
+                or (processing_filter == "ready" and not action.tpa_ready)):
+            continue
+        filtered_processing.append(action)
+    processing_pagination = table_page(request, filtered_processing)
+    processing_ids = {action.pk for action in processing_pagination["page_obj"]}
     for action in actions:
         action.final_card_number = action.card_number or (
             action.member.tpa_member_id if action.member_id else "—"
@@ -803,7 +828,9 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
         action.display_employee_id = display_data.get("employee_id") or "—"
         action.display_plan_code = display_data.get("plan_code") or "—"
 
-        if tx.transaction_type in {
+        if wizard["active_step"]["key"] != "intake":
+            action.edit_form = None
+        elif tx.transaction_type in {
             tx.Type.NEW_POLICY_ENROLLMENT,
             tx.Type.MEMBER_ADD,
         }:
@@ -881,6 +908,9 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
             action.edit_form = MemberLookupRowForm(initial=display_data)
         else:
             action.edit_form = None
+        if action.pk not in processing_ids or wizard["active_step"]["key"] != "tpa_processing":
+            action.processing_form = None
+            continue
         action.processing_form = TPAProcessingRowForm(
             initial={
                 "card_number": action.card_number,
@@ -1004,6 +1034,14 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
         **wizard,
         "tx": tx,
         "actions": actions,
+        "processing_page_obj": processing_pagination["page_obj"],
+        "processing_pagination_query": processing_pagination["pagination_query"],
+        "processing_query": processing_query,
+        "processing_filter": processing_filter,
+        "processing_total": len(actions),
+        "processing_ready_count": ready_count,
+        "processing_missing_count": len(actions) - ready_count,
+        "bulk_tpa_form": TPABulkProcessingForm(),
         "events": tx.events.select_related("actor").all(),
         "recent_events": tx.events.select_related("actor").order_by("-created_at", "-pk")[:5],
         "target_tat_hours": target_tat_hours,
@@ -1696,9 +1734,66 @@ def transaction_tpa_action(request, reference, action_id):
     if form.errors:
         return _transaction_response(
             request, tx, step="tpa_processing",
-            forms={"processing_form": form, "processing_action_id": action.pk},
+            forms={"processing_form": form, "processing_action_id": action.pk,
+                   "reopen_modal": f"tpa-notes-{action.pk}"},
         )
     return _transaction_response(request, tx, step='tpa_processing')
+
+
+@login_required
+def transaction_tpa_export(request, reference):
+    _require_tpa_access(request.user)
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    if not can_process_tpa_transaction(request.user, tx):
+        raise PermissionDenied("Member worksheets require TPA processing authority.")
+    file_format = request.GET.get("format", "xlsx")
+    if file_format not in {"xlsx", "csv"}:
+        raise PermissionDenied("Unsupported export format.")
+    content, content_type = build_processing_export(tx, file_format)
+    response = HttpResponse(content, content_type=content_type)
+    response["Content-Disposition"] = f'attachment; filename="{tx.reference}-tpa-members.{file_format}"'
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
+@login_required
+def transaction_tpa_bulk(request, reference):
+    _require_tpa_access(request.user)
+    if request.method != "POST":
+        raise PermissionDenied
+    tx = get_object_or_404(visible_transactions(request.user), reference=reference)
+    if not can_process_tpa_transaction(request.user, tx):
+        raise PermissionDenied("Bulk updates require TPA processing authority.")
+    form = TPABulkProcessingForm(request.POST, request.FILES)
+    try:
+        mode = request.POST.get("mode", "preview")
+        if mode == "errors":
+            preview = load_processing_preview(tx, request.user, request.POST.get("preview_token", ""))
+            response = HttpResponse(processing_error_csv(preview["errors"]), content_type="text/csv; charset=utf-8")
+            response["Content-Disposition"] = f'attachment; filename="{tx.reference}-import-errors.csv"'
+            response["Cache-Control"] = "private, no-store"
+            return response
+        if mode == "apply":
+            count = apply_processing_preview(tx, request.user, request.POST.get("preview_token", ""))
+            messages.success(request, f"{count} TPA member rows updated. Review readiness before completing TPA processing.")
+            return _transaction_response(request, tx, step="tpa_processing")
+        if mode != "preview":
+            raise ValueError("Unsupported bulk action.")
+        if form.is_valid():
+            preview = preview_processing_upload(tx, request.user, form.cleaned_data["file"])
+            return _transaction_response(request, tx, step="tpa_processing", forms={
+                "bulk_tpa_preview": preview, "reopen_modal": "tpa-bulk-import",
+            })
+    except PermissionError as exc:
+        raise PermissionDenied(str(exc)) from exc
+    except (ValueError, UnicodeError, ValidationError) as exc:
+        form.add_error(None, str(exc))
+    except Exception as exc:
+        # Invalid ZIP/XML containers must give upload feedback, never an HTTP 500.
+        form.add_error(None, f"The workbook could not be read: {exc}")
+    return _transaction_response(request, tx, step="tpa_processing", forms={
+        "bulk_tpa_form": form, "reopen_modal": "tpa-bulk-import",
+    })
 
 
 @login_required

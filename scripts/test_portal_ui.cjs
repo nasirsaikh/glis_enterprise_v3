@@ -12,8 +12,30 @@ const portalCSS = css(["output.css", "portal-polish.css", "ui.css", "portal-comp
 const publicCSS = css(["bootstrap-compat.css", "glis.css", "output.css", "public-greenline.css", "ui.css", "public-layout.css"]);
 const tableJS = fs.readFileSync("static/js/portal-tables.js", "utf8");
 const portalJS = fs.readFileSync("static/js/portal.js", "utf8");
+const tpaJS = fs.readFileSync("static/js/tpa.js", "utf8");
 const rows = count => Array.from({length: count}, (_, number) => '<tr><td>Record ' + number + '</td><td><input value="Value ' + number + '"></td></tr>').join("");
 const visibleRows = page => page.locator("tbody tr:visible").count();
+
+test("TPA member notes stay in a modal and compact rows fit the viewport", async () => {
+  const page = await fixture('<body class="glis-portal-app"><div id="portal-main"><div data-workflow-workspace><div class="overflow-x-auto"><table class="table table-sm tpa-processing-table"><tbody><tr><td>Sam Example</td><td><form id="member-form"></form><input class="input" form="member-form" value="000123"></td><td><input class="input" type="date" value="2026-07-01" form="member-form"></td><td>OMR 100.000</td><td><input class="input" value="100.000" form="member-form"></td><td><button type="button" class="btn btn-sm" data-open-dialog="member-notes">Notes</button></td><td><button class="btn btn-sm" form="member-form">Save</button></td></tr></tbody></table></div><dialog id="member-notes" class="modal" data-tpa-notes-dialog><div class="modal-box"><label>Processing notes<textarea form="member-form" name="comments">Existing note</textarea></label><button type="button" data-cancel-tpa-notes>Cancel</button></div></dialog></div></div></body>', portalCSS + css(["tpa-wizard.css"]));
+  try {
+    await page.addScriptTag({content: portalJS});
+    await page.addScriptTag({content: tpaJS});
+    assert.equal(await page.locator("table textarea").count(), 0);
+    const height = (await page.locator("tr").boundingBox()).height;
+    assert.ok(height < 80);
+    await page.locator('[data-open-dialog="member-notes"]').click();
+    assert.equal(await page.locator("dialog").evaluate(dialog => dialog.open), true);
+    await page.locator("textarea").fill("Changed note");
+    await page.locator("textarea").evaluate(field => { if (field.form?.id !== "member-form") throw new Error("Notes detached from member form"); });
+    await page.locator("[data-cancel-tpa-notes]").click();
+    assert.equal(await page.locator("textarea").inputValue(), "Existing note");
+    for (const width of [1280, 390]) {
+      await page.setViewportSize({width, height: 844});
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    }
+  } finally { await page.close(); }
+});
 async function fixture(body, style = portalCSS, viewport = {width: 1280, height: 900}) {
   const page = await browser.newPage({viewport});
   await page.setContent('<!doctype html><html lang="en" data-theme="light"><head><style>' + style + '</style></head>' + body + '</html>');

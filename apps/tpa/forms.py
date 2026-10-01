@@ -964,6 +964,12 @@ class TransactionRejectionForm(forms.Form):
     )
 
 
+class TPABulkProcessingForm(forms.Form):
+    file = forms.FileField(label="Completed member file", widget=forms.ClearableFileInput(
+        attrs={"accept": ".xlsx,.csv", "class": "file-input file-input-bordered file-input-sm w-full"}
+    ))
+
+
 class TPAProcessingRowForm(forms.Form):
     card_number = forms.CharField(required=False, max_length=100)
     effective_date = forms.DateField(

@@ -1,6 +1,27 @@
 (function () {
   "use strict";
 
+  document.addEventListener("click", (event) => {
+    const opener = event.target.closest("[data-open-dialog]");
+    const dialog = opener && document.getElementById(opener.dataset.openDialog);
+    if (dialog?.matches("[data-tpa-notes-dialog]")) {
+      dialog.querySelectorAll("textarea").forEach(field => { field.dataset.notesOriginal = field.value; });
+    }
+    const cancel = event.target.closest("[data-cancel-tpa-notes]");
+    if (cancel) {
+      const notes = cancel.closest("dialog");
+      notes.querySelectorAll("textarea").forEach(field => { field.value = field.dataset.notesOriginal ?? field.defaultValue; });
+      notes.close();
+    }
+  });
+  document.addEventListener("close", (event) => {
+    if (event.target.matches?.("[data-tpa-notes-dialog]")) {
+      event.target.querySelectorAll("textarea").forEach(field => {
+        field.value = field.dataset.notesOriginal ?? field.defaultValue;
+      });
+    }
+  }, true);
+
   const root = document.documentElement;
   const charts = new Map();
 

@@ -4,6 +4,7 @@ import tempfile
 import shutil
 import subprocess
 from pathlib import Path
+from functools import lru_cache
 
 from django.conf import settings
 
@@ -88,6 +89,43 @@ def _tesseract_text(name, content):
         return "\n\n".join(text)
 
 
+@lru_cache(maxsize=2)
+def _easyocr_reader(use_gpu):
+    import easyocr
+    return easyocr.Reader(["en", "ar"], gpu=use_gpu, verbose=False)
+
+
+def _easyocr_text(name, content):
+    """OCR without Docling's layout/table models, including rotated ID pages."""
+    import numpy as np
+    from PIL import Image, ImageOps
+    reader = _easyocr_reader(bool(getattr(settings, "TPA_DOCLING_USE_GPU", False)))
+    images = []
+    if Path(name).suffix.lower() == ".pdf":
+        import fitz
+        with fitz.open(stream=content, filetype="pdf") as pdf:
+            if len(pdf) > getattr(settings, "TPA_DOCLING_MAX_PAGES", 50):
+                raise ValueError("The PDF exceeds the configured OCR page limit.")
+            for page in pdf:
+                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
+                images.append(np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, 3))
+    else:
+        with Image.open(io.BytesIO(content)) as image:
+            image = ImageOps.exif_transpose(image).convert("RGB")
+            # Small ID photos need larger characters for detection/recognition.
+            if image.width < 1400:
+                image = image.resize((1400, round(image.height * 1400 / image.width)))
+            images.append(np.array(image))
+    pages = []
+    for number, image in enumerate(images, 1):
+        lines = reader.readtext(image, detail=0, paragraph=False, rotation_info=[90, 180, 270])
+        if lines:
+            pages.append(f"--- PAGE {number} ---\n" + "\n".join(str(line) for line in lines))
+    if not pages:
+        raise RuntimeError("EasyOCR could not recover readable text.")
+    return "\n\n".join(pages)
+
+
 def docling_text(name, content):
     if not getattr(settings, "TPA_DOCLING_FALLBACK_ENABLED", True):
         raise RuntimeError("Local OCR recovery is disabled in backend settings.")
@@ -95,6 +133,12 @@ def docling_text(name, content):
         return _docling_text(name, content)
     except Exception as docling_error:
         try:
-            return _tesseract_text(name, content)
-        except Exception as tesseract_error:
-            raise RuntimeError(f"Local OCR recovery failed. Docling: {docling_error}; Tesseract: {tesseract_error}") from docling_error
+            return _easyocr_text(name, content)
+        except Exception as easyocr_error:
+            try:
+                return _tesseract_text(name, content)
+            except Exception as tesseract_error:
+                raise RuntimeError(
+                    f"Local OCR recovery failed. Docling: {docling_error}; "
+                    f"EasyOCR: {easyocr_error}; Tesseract: {tesseract_error}"
+                ) from docling_error

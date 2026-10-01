@@ -84,6 +84,9 @@ class ExplicitEmailHeaderTests(TestCase):
         self.assertNotIn("classification_source",_recover_explicit_email_header(self.email,{"members":[]},{}))
         self.email.subject="Addition";self.email.body_html=f"<p>Addition for {self.policy.policy_number}</p>"
         self.assertNotIn("classification_source",_recover_explicit_email_header(self.email,{"classification":"MEMBER_DELETE"},{}))
+        for payload, hints in (({"policy_number":"P/900/2026/0002"}, {}),
+                               ({}, {"policy_number":"P/900/2026/0002"})):
+            self.assertNotIn("classification_source",_recover_explicit_email_header(self.email,payload,hints))
 
 
 class LocalOCRFallbackTests(SimpleTestCase):

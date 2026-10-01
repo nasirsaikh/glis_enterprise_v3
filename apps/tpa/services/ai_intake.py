@@ -184,6 +184,9 @@ def _recover_explicit_email_header(email, payload, hints):
     explicit_policy = policy_matches[0]
     if hints.get("policy_id") and str(hints["policy_id"]) != str(explicit_policy.pk):
         return payload
+    if any(str(number).strip().casefold() != explicit_policy.policy_number.casefold()
+           for number in (payload.get("policy_number"), hints.get("policy_number")) if number):
+        return payload
     complete_ai_header = (payload.get("is_endorsement_request") is True and ai_type == request_type
                           and payload.get("policy_number") == explicit_policy.policy_number)
     payload = {**payload, "is_endorsement_request": True,

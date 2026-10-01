@@ -262,7 +262,7 @@ def extract_email_payload(email, actor=None, *, profile_override=None):
                     response_schema=EmailEvidence.model_json_schema(),
                 )
                 duration_ms += elapsed
-                normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases if profile else None)
+                normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases if profile else None, require_members=False)
                 break
             except (TypeError, ValueError):
                 if attempt == 1:
@@ -276,7 +276,7 @@ def extract_email_payload(email, actor=None, *, profile_override=None):
                     user_prompt=_email_prompt(email, {**hints, "transaction_type": known_type}),
                     response_schema=EmailEvidence.model_json_schema())
                 duration_ms += extra_duration
-                normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases)
+                normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases, require_members=False)
         _log_interaction(
             actor=actor,
             provider=provider,
@@ -594,11 +594,22 @@ def process_inbound_email(email, actor):
             )
             return None
 
+        classification_is_complete = (
+            is_endorsement is True
+            and classification not in {"", "NEEDS_REVIEW", "UNCERTAIN"}
+            and bool(payload.get("policy_number"))
+            and bool(payload.get("transaction_type") or payload.get("classification"))
+        )
+        confidence_is_acceptable = (
+            confidence is None and classification_is_complete
+        ) or (
+            confidence is not None and confidence >= _classification_minimum()
+        )
+
         if (
             is_endorsement is None
             or classification in {"NEEDS_REVIEW", "UNCERTAIN"}
-            or confidence is None
-            or confidence < _classification_minimum()
+            or not confidence_is_acceptable
         ):
             email.processing_state = InboundEmail.State.REVIEW
             email.processing_stage = "CLASSIFICATION"

@@ -1,23 +1,23 @@
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
-<div class="mx-auto max-w-7xl px-6">
-  <div class="mx-auto max-w-3xl text-center" data-reveal>
-    <span class="badge badge-primary badge-soft mb-4"><i class="bi bi-download me-2"></i>{% translate "Resources" %}</span>
-    <h2 class="text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "Forms & downloads" %}</h2>
-    <p class="mt-4 text-lg leading-8 text-base-content/60">{% translate "Access claim forms, reimbursement documents, provider network files and member guides." %}</p>
+<div class="mx-auto glis-max-7xl px-4">
+  <div class="mx-auto glis-max-3xl text-center" data-reveal>
+    <span class="badge text-bg-primary glis-badge-soft mb-3"><i class="bi bi-download me-2"></i>{% translate "Resources" %}</span>
+    <h2 class="fs-2 fw-bold">{% translate "Forms & downloads" %}</h2>
+    <p class="mt-3 fs-6 lh-lg text-body-secondary">{% translate "Access claim forms, reimbursement documents, provider network files and member guides." %}</p>
   </div>
-  <ul class="list mx-auto mt-10 max-w-5xl rounded-box bg-base-100 p-2 shadow-xl">
+  <ul class="list-group list-group-flush mx-auto mt-5 glis-max-5xl rounded-3 bg-body p-2 shadow-lg">
     {% for item in medical_downloads %}
-    <li class="list-row rounded-box border-b border-base-200 transition hover:bg-success/5" data-reveal>
-      <span class="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary"><i class="bi bi-file-earmark-arrow-down text-xl"></i></span>
-      <div class="list-col-grow">
-        <div class="flex flex-wrap items-center gap-2"><strong>{% if LANGUAGE_CODE == "ar" %}{{ item.title_ar|default:item.title_en }}{% else %}{{ item.title_en }}{% endif %}</strong><span class="badge badge-outline badge-sm">{{ item.get_document_type_display }}</span></div>
-        <p class="mt-1 text-sm text-base-content/55">{% if LANGUAGE_CODE == "ar" %}{{ item.description_ar|default:item.description_en }}{% else %}{{ item.description_en }}{% endif %}</p>
+    <li class="list-group-item d-flex align-items-start gap-3 rounded-3 border-bottom border-body" data-reveal>
+      <span class="d-grid glis-h-12 glis-w-12 glis-place-center rounded-3 bg-primary-subtle text-primary"><i class="bi bi-file-earmark-arrow-down fs-5"></i></span>
+      <div class="flex-grow-1">
+        <div class="d-flex flex-wrap align-items-center gap-2"><strong>{% if LANGUAGE_CODE == "ar" %}{{ item.title_ar|default:item.title_en }}{% else %}{{ item.title_en }}{% endif %}</strong><span class="badge border text-body-secondary bg-transparent glis-badge-small">{{ item.get_document_type_display }}</span></div>
+        <p class="mt-1 small text-body-secondary">{% if LANGUAGE_CODE == "ar" %}{{ item.description_ar|default:item.description_en }}{% else %}{{ item.description_en }}{% endif %}</p>
       </div>
-      <a href="{{ item.file.url }}" class="btn btn-primary btn-sm transition hover:shadow-md" download><i class="bi bi-download"></i><span class="hidden sm:inline">{% translate "Download" %}</span></a>
+      <a href="{{ item.file.url }}" class="btn btn-primary btn-sm" download><i class="bi bi-download"></i><span class="d-none d-sm-inline">{% translate "Download" %}</span></a>
     </li>
     {% empty %}
-    <li class="list-row"><span>{% translate "No downloads configured." %}</span></li>
+    <li class="list-group-item d-flex align-items-start gap-3"><span>{% translate "No downloads configured." %}</span></li>
     {% endfor %}
   </ul>
 </div>

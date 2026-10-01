@@ -1,24 +1,24 @@
 {% load i18n %}
-<article class="chat {% if comment.author_id == request.user.id %}chat-end{% else %}chat-start{% endif %} py-1">
-  <div class="chat-image avatar avatar-placeholder">
-    <div class="w-9 rounded-full {% if comment.author_id == request.user.id %}bg-primary text-primary-content{% else %}bg-secondary text-secondary-content{% endif %}">
-      <span class="text-xs font-bold">{{ comment.author.first_name|first|default:comment.author.email|first|upper }}</span>
+<article class="glis-message {% if comment.author_id == request.user.id %}glis-message-end{% else %}glis-message-start{% endif %} py-1">
+  <div class="glis-message-avatar glis-avatar">
+    <div class="glis-w-9 rounded-pill {% if comment.author_id == request.user.id %}bg-primary text-white{% else %}bg-secondary text-white{% endif %}">
+      <span class="glis-text-xs fw-bold">{{ comment.author.first_name|first|default:comment.author.email|first|upper }}</span>
     </div>
   </div>
-  <div class="chat-header">
+  <div class="glis-message-header">
     <strong>{{ comment.author.get_full_name|default:comment.author.email }}</strong>
-    <time class="ms-2 text-xs opacity-50">{{ comment.created_at|date:"d M Y, h:i A" }}</time>
-    {% if comment.is_internal %}<span class="badge badge-warning badge-soft badge-xs ms-2"><i class="bi bi-lock-fill"></i>{% translate "Internal" %}</span>{% endif %}
+    <time class="ms-2 glis-text-xs opacity-50">{{ comment.created_at|date:"d M Y, h:i A" }}</time>
+    {% if comment.is_internal %}<span class="badge text-bg-warning glis-badge-soft glis-badge-small ms-2"><i class="bi bi-lock-fill"></i>{% translate "Internal" %}</span>{% endif %}
   </div>
-  <div class="chat-bubble {% if comment.is_internal %}chat-bubble-warning{% elif comment.author_id == request.user.id %}chat-bubble-primary{% endif %} max-w-3xl">
+  <div class="glis-message-bubble {% if comment.is_internal %}glis-message-warning{% elif comment.author_id == request.user.id %}glis-message-primary{% endif %} glis-max-3xl">
     <div class="rich-content">{{ comment.body|safe }}</div>
     {% if comment.attachments.all %}
-    <ul class="list mt-3">
+    <ul class="list-group list-group-flush mt-2">
       {% for attachment in comment.attachments.all %}
-      <li><a class="list-row rounded-xl bg-base-100/90 text-base-content no-underline" href="{% url 'portal:download_attachment' attachment.pk %}"><span class="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary"><i class="bi bi-file-earmark"></i></span><span class="list-col-grow min-w-0"><strong class="block truncate text-sm">{{ attachment.original_name }}</strong><small class="text-xs opacity-60">{{ attachment.size|filesizeformat }} · {{ attachment.scan_status|title }}</small></span><i class="bi bi-download text-primary"></i></a></li>
+      <li><a class="list-group-item d-flex align-items-start gap-3 rounded-3 bg-body text-body text-decoration-none" href="{% url 'portal:download_attachment' attachment.pk %}"><span class="d-grid glis-h-9 glis-w-9 glis-place-center rounded-2 bg-primary-subtle text-primary"><i class="bi bi-file-earmark"></i></span><span class="flex-grow-1 glis-min-width-0"><strong class="d-block text-truncate small">{{ attachment.original_name }}</strong><small class="glis-text-xs opacity-50">{{ attachment.size|filesizeformat }} · {{ attachment.scan_status|title }}</small></span><i class="bi bi-download text-primary"></i></a></li>
       {% endfor %}
     </ul>
     {% endif %}
   </div>
-  <div class="chat-footer opacity-50">{{ comment.get_status_display }} · {% translate "Sent" %} {{ comment.created_at|date:"h:i A" }}</div>
+  <div class="glis-message-footer opacity-50">{{ comment.get_status_display }} · {% translate "Sent" %} {{ comment.created_at|date:"h:i A" }}</div>
 </article>

@@ -1,7 +1,7 @@
 # Portal workflow implementation report
 
 TPA transaction detail now renders one selected business stage. The compact header,
-native daisyUI stepper, and Previous/Next navigation remain visible around that
+Bootstrap stepper, and Previous/Next navigation remain visible around that
 stage. Source payloads, row corrections, before/after details, and full audit
 history remain in modals.
 
@@ -82,7 +82,7 @@ snapshot cache.
 
 `portal.js` owns the common busy handler for HTMX POST forms, `data-processing-form`,
 and existing `data-tpa-hx-form`. It disables associated submit buttons, shows native
-daisyUI loading indicators and a live status, sets `aria-busy`, and restores original
+Bootstrap spinners and a live status, sets `aria-busy`, and restores original
 control states on success, HTTP errors, aborts, timeouts, and network errors. A
 workspace `hx-sync` drop policy and the busy guard prevent duplicate submissions.
 Document uploads display an extraction-specific message. Network failures in a
@@ -99,12 +99,12 @@ removed.
 HTMX swaps initialize dropzones, form conditionals, editors, modal restoration,
 focus, and step centering. TPA ApexCharts instances are destroyed before their
 containers are replaced and recreated after swaps or theme changes. Theme tokens
-and native daisyUI states cover light/dark mode. The mobile stepper scrolls inside
+and Bootstrap states cover light/dark mode. The mobile stepper scrolls inside
 its own container; it does not widen the page.
 
 ## Other portal processes
 
-The existing three-stage endorsement creation helper now uses native daisyUI steps
+The existing three-stage endorsement creation helper now uses Bootstrap steps
 and shared loading. Initial policy creation uses the same helper for Policy &
 Routing, Period & Rules, and Benefit Plan & Create, with a no-JavaScript fallback.
 The existing four-stage ticket creation flow now uses the shared stepper, HTMX,
@@ -127,7 +127,7 @@ interfaces because they do not need an ordered creation wizard.
 | Shared components | `templates/components/workflow_wizard.html`, `workflow_nav.html`, `creation_wizard_form.html`, `form_errors.html`, `request_error.html`, `fragment.html` |
 | Creation forms | `templates/tpa/policy_enrollment_form.html`, `templates/tpa/partials/transaction_wizard_form.html`, `manual_member_form.html`, `member_row_actions.html` |
 | Tickets | `apps/tickets/views.py`, `apps/tickets/forms.py`, `templates/tickets/wizard/base.html`, and `step1.html` through `step4.html` |
-| Global UI / assets | `templates/base_portal.html`, `static/js/portal.js`, `static/js/tpa.js`, `static/css/portal-polish.css`, `tpa-wizard.css`, `input.css`, compiled `output.css` |
+| Global UI / assets | `templates/base_portal.html`, `static/js/portal.js`, `static/js/main.js`, `static/js/tpa.js`, `static/css/portal-polish.css`, `tpa-wizard.css`, Bootstrap 5.3.2 and compact `style.css` |
 | Regression tests | `apps/tpa/test_wizard.py`, `apps/tpa/tests.py`, `apps/tickets/tests.py` |
 | Report | `docs/PORTAL_WORKFLOW_WIZARDS.md` |
 
@@ -146,7 +146,7 @@ python manage.py test apps.tpa apps.tickets apps.tasks --noinput --verbosity 1
 node --check static/js/portal.js
 node --check static/js/tpa.js
 git diff --check
-static/css/tailwindcss -i static/css/input.css -o static/css/output.css --minify
+python scripts/check_bootstrap_assets.py
 python manage.py migrate --noinput --settings=glis_qa_settings
 python manage.py makemigrations --check --dry-run
 ```

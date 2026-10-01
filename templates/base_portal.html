@@ -12,16 +12,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <!-- <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet" type="text/css"> -->
+  {% include "components/bootstrap_styles.html" %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="{% static 'css/output.css' %}" rel="stylesheet" type="text/css">
   <link href="{% static 'css/portal-polish.css' %}" rel="stylesheet" type="text/css">
   <link href="{% static 'css/ui.css' %}" rel="stylesheet" type="text/css">
   <link href="{% static 'css/portal-compact.css' %}" rel="stylesheet" type="text/css">
+  <link href="{% static 'css/style.css' %}?v=1.97-glis-1" rel="stylesheet">
 {% block extra_head %}{% endblock %}
 </head>
 
-<body class="glis-portal-app min-h-screen bg-base-200 text-base-content antialiased"
+<body class="glis-portal-app min-vh-100 bg-body-tertiary text-body"
       x-data="siteShell"
       data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}"
       data-theme-preference-url="{% url 'accounts:theme_preference' %}"
@@ -31,110 +31,108 @@
       data-user-name="{{ user.get_full_name|default:user.email }}"
       data-user-initial="{{ user.first_name|default:user.email|slice:':1'|upper }}">
 
-  <a class="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-content" href="#portal-main">{% translate "Skip to content" %}</a>
+  <a class="glis-skip-link visually-hidden-focusable" href="#portal-main">{% translate "Skip to content" %}</a>
 
-  <div class="drawer lg:drawer-open">
-    <input id="portal-drawer" type="checkbox" class="drawer-toggle">
+  <div class="glis-shell">
 
-    <div class="drawer-content min-h-screen min-w-0 bg-base-200">
-      <header class="navbar sticky top-0 z-40 min-h-16 border-b border-base-300 bg-base-100/95 px-3 shadow-sm backdrop-blur-xl sm:px-4">
-        <div class="navbar-start min-w-0 gap-1 sm:gap-2">
-          <label for="portal-drawer" class="btn btn-ghost btn-circle lg:hidden" aria-label="{% translate 'Open navigation' %}">
-            <i class="bi bi-list text-xl"></i>
-          </label>
 
-          <button id="sidebar-toggle" class="btn btn-ghost btn-circle hidden lg:inline-flex"
+    <div class="glis-shell-content min-vh-100 glis-min-width-0 bg-body-tertiary">
+      <header class="navbar position-sticky top-0 glis-layer-40 glis-min-h-16 border-bottom border-body bg-body px-2 shadow-sm px-sm-3">
+        <div class="glis-navbar-start glis-min-width-0 gap-1 gap-sm-2">
+          <button type="button" data-bs-toggle="offcanvas" data-bs-target="#portal-navigation" aria-controls="portal-navigation" class="btn btn-light glis-btn-icon rounded-circle d-lg-none" aria-label="{% translate 'Open navigation' %}">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+
+          <button id="sidebar-toggle" class="btn btn-light glis-btn-icon rounded-circle d-none d-lg-inline-flex"
                   type="button" aria-expanded="false"
                   aria-label="{% translate 'Expand navigation' %}"
                   title="{% translate 'Expand or collapse navigation' %}">
             <i class="bi bi-layout-sidebar-inset"></i>
           </button>
 
-          <a class="btn btn-ghost btn-circle hidden sm:inline-flex" href="/" title="{% translate 'Public website' %}">
+          <a class="btn btn-light glis-btn-icon rounded-circle d-none d-sm-inline-flex" href="/" title="{% translate 'Public website' %}">
             <i class="bi bi-house"></i>
           </a>
 
-          <div class="dropdown hidden min-w-0 max-w-xl flex-1 md:block">
-            <label class="input input-bordered flex w-full items-center gap-2 rounded-full bg-base-200/60">
-              <i class="bi bi-search text-base-content/40"></i>
-              <input class="grow" type="search" name="q"
+          <div class="dropdown d-none glis-min-width-0 glis-max-xl glis-flex-fill d-md-block">
+            <label class="form-control glis-input-shell d-flex w-100 align-items-center gap-2 rounded-pill bg-body-tertiary">
+              <i class="bi bi-search text-body-secondary"></i>
+              <input class="flex-grow-1" type="search" name="q"
                      placeholder="{% translate 'Search tickets, requesters, projects…' %}"
                      hx-get="{% url 'portal:global_search' %}"
                      hx-trigger="input changed delay:300ms"
                      hx-target="#global-search-results" autocomplete="off">
             </label>
-            <div id="global-search-results" class="absolute inset-x-0 top-full z-[80] mt-2"></div>
+            <div id="global-search-results" class="position-absolute glis-inset-x glis-top-full glis-layer-80 mt-2"></div>
           </div>
         </div>
 
-        <div class="navbar-end gap-1">
-          <a class="btn btn-primary btn-sm hidden rounded-full sm:inline-flex" href="{% url 'portal:create_request' %}">
-            <i class="bi bi-plus-lg"></i><span class="hidden xl:inline">{% translate "Create Request" %}</span>
+        <div class="glis-navbar-end gap-1">
+          <a class="btn btn-primary btn-sm d-none rounded-pill d-sm-inline-flex" href="{% url 'portal:create_request' %}">
+            <i class="bi bi-plus-lg"></i><span class="d-none d-xl-inline">{% translate "Create Request" %}</span>
           </a>
 
-          <button class="btn btn-ghost btn-circle" type="button" data-theme-toggle aria-label="{% translate 'Toggle light and dark mode' %}">
-            <i class="bi bi-moon-stars text-lg" data-theme-icon></i>
+          <button class="btn btn-light glis-btn-icon rounded-circle" type="button" data-theme-toggle aria-label="{% translate 'Toggle light and dark mode' %}">
+            <i class="bi bi-moon-stars fs-6" data-theme-icon></i>
           </button>
 
           <form action="{% url 'switch_language' %}" method="post" class="m-0">
             {% csrf_token %}
             <input name="next" type="hidden" value="{{ request.get_full_path }}">
             <input name="language" type="hidden" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}">
-            <button class="btn btn-ghost btn-circle text-sm font-black" type="submit" title="{% translate 'Change language' %}">{% if LANGUAGE_CODE == 'ar' %}EN{% else %}ع{% endif %}</button>
+            <button class="btn btn-light glis-btn-icon rounded-circle small fw-bold" type="submit" title="{% translate 'Change language' %}">{% if LANGUAGE_CODE == 'ar' %}EN{% else %}ع{% endif %}</button>
           </form>
 
-          <details class="dropdown dropdown-end">
-            <summary id="notification-button" class="btn btn-ghost btn-circle relative" aria-label="{% translate 'Notifications' %}">
-              <i class="bi bi-bell text-lg"></i>
-              <span id="notification-count" class="badge badge-error badge-xs absolute -end-1 -top-1{% if not unread_notification_count %} hidden{% endif %}">{{ unread_notification_count }}</span>
-            </summary>
-            <div class="dropdown-content z-[90] mt-3 w-[min(92vw,26rem)] overflow-hidden rounded-box border border-base-300 bg-base-100 shadow-2xl">
-              <div class="flex items-center justify-between border-b border-base-300 px-5 py-4">
+          <div class="dropdown glis-dropdown-end"><button type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" id="notification-button" class="btn btn-light glis-btn-icon rounded-circle position-relative" aria-label="{% translate 'Notifications' %}">
+              <i class="bi bi-bell fs-6"></i>
+              <span id="notification-count" class="badge text-bg-danger glis-badge-small position-absolute glis-end-1 glis-top-1{% if not unread_notification_count %} d-none{% endif %}">{{ unread_notification_count }}</span>
+            </button>
+            <div class="dropdown-menu glis-layer-90 mt-2 glis-popover-width overflow-hidden rounded-3 border border-body bg-body shadow-lg">
+              <div class="d-flex align-items-center justify-content-between border-bottom border-body px-3 py-3">
                 <strong>{% translate "Notifications" %}</strong>
                 <form action="{% url 'portal:mark_notifications_read' %}" method="post" class="m-0">
                   {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
-                  <button class="btn btn-ghost btn-xs" type="submit">{% translate "Mark all read" %}</button>
+                  <button class="btn btn-light btn-sm glis-btn-xs" type="submit">{% translate "Mark all read" %}</button>
                 </form>
               </div>
-              <div id="notification-items" class="max-h-[28rem] overflow-y-auto">
+              <div id="notification-items" class="glis-max-height-28rem overflow-y-auto">
                 {% for item in header_notifications %}
-                <a class="flex gap-3 border-b border-base-300/70 px-5 py-4 no-underline hover:bg-base-200{% if not item.read_at %} bg-primary/5{% endif %}" href="{{ item.link|default:'#' }}">
-                  <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                <a class="d-flex gap-2 border-bottom border-body px-3 py-3 text-decoration-none {% if not item.read_at %} bg-primary-subtle{% endif %}" href="{{ item.link|default:'#' }}">
+                  <span class="d-grid glis-h-10 glis-w-10 flex-shrink-0 glis-place-center rounded-3 bg-primary-subtle text-primary">
                     <i class="bi bi-{% if item.kind == 'sla' %}alarm{% elif item.kind == 'assignment' %}person-check{% elif item.kind == 'approval' %}check2-square{% else %}bell{% endif %}"></i>
                   </span>
-                  <span class="min-w-0"><strong class="block truncate text-sm">{{ item.title }}</strong><small class="mt-1 block text-xs leading-5 text-base-content/55">{{ item.body|truncatechars:80 }}</small><time class="mt-1 block text-[.68rem] text-base-content/35">{{ item.created_at|timesince }} {% translate "ago" %}</time></span>
+                  <span class="glis-min-width-0"><strong class="d-block text-truncate small">{{ item.title }}</strong><small class="mt-1 d-block glis-text-xs lh-base text-body-secondary">{{ item.body|truncatechars:80 }}</small><time class="mt-1 d-block glis-text-xs text-body-secondary">{{ item.created_at|timesince }} {% translate "ago" %}</time></span>
                 </a>
                 {% empty %}
-                <div class="flex flex-col items-center gap-2 px-5 py-10 text-center text-base-content/45"><i class="bi bi-bell-slash text-2xl"></i><strong>{% translate "No notifications" %}</strong></div>
+                <div class="d-flex flex-column align-items-center gap-2 px-3 py-5 text-center text-body-secondary"><i class="bi bi-bell-slash fs-4"></i><strong>{% translate "No notifications" %}</strong></div>
                 {% endfor %}
               </div>
-              <a class="block px-5 py-3 text-center text-sm font-bold text-primary no-underline hover:bg-base-200" href="{% url 'portal:notifications' %}">{% translate "View all notifications" %}</a>
+              <a class="d-block px-3 py-2 text-center small fw-bold text-primary text-decoration-none" href="{% url 'portal:notifications' %}">{% translate "View all notifications" %}</a>
             </div>
-          </details>
+          </div>
 
-          <details class="dropdown dropdown-end">
-            <summary class="btn btn-ghost h-10 min-h-10 gap-2 rounded-full px-2 sm:px-3">
+          <div class="dropdown glis-dropdown-end"><button type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" class="btn btn-light glis-h-10 glis-min-h-10 gap-2 rounded-pill px-2 px-sm-2">
               {% if user.profile.avatar %}
-              <div class="avatar"><div class="w-9 rounded-full"><img src="{{ user.profile.avatar.url }}" alt=""></div></div>
+              <div class="glis-avatar"><div class="glis-w-9 rounded-pill"><img src="{{ user.profile.avatar.url }}" alt=""></div></div>
               {% else %}
-              <div class="avatar avatar-placeholder"><div class="w-9 rounded-full bg-primary text-primary-content"><span class="text-sm font-bold">{{ user.first_name|default:user.email|slice:":1"|upper }}</span></div></div>
+              <div class="glis-avatar"><div class="glis-w-9 rounded-pill bg-primary text-white"><span class="small fw-bold">{{ user.first_name|default:user.email|slice:":1"|upper }}</span></div></div>
               {% endif %}
-              <span class="hidden max-w-36 text-start xl:block"><strong class="block truncate text-xs">{{ user.get_full_name|default:user.email }}</strong><small class="block truncate text-[.68rem] font-normal text-base-content/45">{{ user.profile.get_role_display|default:'User' }}</small></span>
-              <i class="bi bi-chevron-down hidden text-xs xl:block"></i>
-            </summary>
-            <ul class="menu dropdown-content z-[90] mt-3 w-64 rounded-box border border-base-300 bg-base-100 p-2 shadow-2xl">
+              <span class="d-none glis-max-w-36 text-start d-xl-block"><strong class="d-block text-truncate glis-text-xs">{{ user.get_full_name|default:user.email }}</strong><small class="d-block text-truncate glis-text-xs fw-normal text-body-secondary">{{ user.profile.get_role_display|default:'User' }}</small></span>
+              <i class="bi bi-chevron-down d-none glis-text-xs d-xl-block"></i>
+            </button>
+            <ul class="glis-menu dropdown-menu glis-layer-90 mt-2 glis-w-64 rounded-3 border border-body bg-body p-2 shadow-lg">
               <li><a href="{% url 'accounts:profile' %}"><i class="bi bi-person"></i>{% translate "Profile & security" %}</a></li>
               {% if user.is_staff %}<li><a href="{% url 'admin:index' %}"><i class="bi bi-gear"></i>{% translate "Administration" %}</a></li>{% endif %}
-              <li><form action="{% url 'account_logout' %}" method="post">{% csrf_token %}<button class="btn btn-ghost w-full justify-start text-error" type="submit"><i class="bi bi-box-arrow-right"></i>{% translate "Sign out" %}</button></form></li>
+              <li><form action="{% url 'account_logout' %}" method="post">{% csrf_token %}<button class="btn btn-light w-100 justify-content-start text-danger" type="submit"><i class="bi bi-box-arrow-right"></i>{% translate "Sign out" %}</button></form></li>
             </ul>
-          </details>
+          </div>
         </div>
       </header>
 
       {% if messages %}
-      <div class="toast toast-top toast-end fixed top-16 z-[220] w-[min(92vw,26rem)] pointer-events-none" aria-live="polite">
+      <div class="glis-flash-stack position-fixed glis-top-16 glis-layer-220 glis-popover-width pe-none" aria-live="polite">
         {% for message in messages %}
-        <div role="alert" class="alert {% if 'error' in message.tags %}alert-error{% elif 'warning' in message.tags %}alert-warning{% elif 'success' in message.tags %}alert-success{% else %}alert-info{% endif %} pointer-events-auto border border-base-300 shadow-2xl">
+        <div role="alert" class="alert {% if 'error' in message.tags %}alert-danger{% elif 'warning' in message.tags %}alert-warning{% elif 'success' in message.tags %}alert-success{% else %}alert-info{% endif %} pe-auto border border-body shadow-lg">
           <i class="bi {% if 'error' in message.tags %}bi-x-octagon{% elif 'warning' in message.tags %}bi-exclamation-triangle{% elif 'success' in message.tags %}bi-check-circle{% else %}bi-info-circle{% endif %}"></i>
           <span>{{ message }}</span>
         </div>
@@ -142,112 +140,111 @@
       </div>
       {% endif %}
 
-      <main id="portal-main" class="min-h-[calc(100vh-4rem)] p-3 sm:p-4 lg:p-4 {% block main_class %}{% endblock %}">
-        <div class="{% block content_width_class %}mx-auto w-full max-w-[100rem]{% endblock %}">
+      <main id="portal-main" class="glis-content-height p-2 p-sm-3 p-lg-3 {% block main_class %}{% endblock %}">
+        <div class="{% block content_width_class %}mx-auto w-100 glis-content-width{% endblock %}">
           {% block content %}{% endblock %}
         </div>
       </main>
     </div>
 
-    <div class="drawer-side z-50">
-      <label for="portal-drawer" aria-label="{% translate 'Close navigation' %}" class="drawer-overlay"></label>
-      <aside id="portal-sidebar" class="min-h-full w-20 border-e border-base-300 bg-base-100 transition-[width] duration-200" data-sidebar-state="collapsed">
-        <div class="flex h-16 items-center gap-3 border-b border-base-300 px-3">
-          <a class="flex min-w-0 items-center gap-3 no-underline" href="{% url 'portal:dashboard' %}">
-              {% if glis_site.logo %}<img src="/api/v1/site-logo/" width="80" height="40" alt="{{ glis_site.short_name|default:'GLIS' }}">{% else %}<strong class="text-sm font-black text-primary">GLIS</strong>{% endif %}
-            
+    <div id="portal-navigation" class="offcanvas-lg offcanvas-start glis-sidebar-container" tabindex="-1" aria-label="{% translate 'Portal navigation' %}">
+      <aside id="portal-sidebar" class="glis-min-h-full glis-w-20 border-end border-body bg-body" data-sidebar-state="collapsed">
+        <div class="d-flex glis-h-16 align-items-center gap-2 border-bottom border-body px-2">
+          <a class="d-flex glis-min-width-0 align-items-center gap-2 text-decoration-none" href="{% url 'portal:dashboard' %}">
+              {% if glis_site.logo %}<img src="/api/v1/site-logo/" width="80" height="40" alt="{{ glis_site.short_name|default:'GLIS' }}">{% else %}<strong class="small fw-bold text-primary">GLIS</strong>{% endif %}
+
           </a>
-          
+          <button type="button" class="btn-close ms-auto d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#portal-navigation" aria-label="{% translate 'Close navigation' %}"></button>
         </div>
 
-        <nav class="portal-navigation p-2.5" aria-label="{% translate 'Portal navigation' %}">
+        <nav class="portal-navigation p-2" aria-label="{% translate 'Portal navigation' %}">
           {% for section in portal_navigation_sections %}
-          <ul class="menu w-full gap-1 p-0">
-            <li data-sidebar-label class="menu-title hidden"><span>{{ section.label }}</span></li>
+          <ul class="glis-menu w-100 gap-1 p-0">
+            <li data-sidebar-label class="glis-menu-heading d-none"><span>{{ section.label }}</span></li>
             {% for item in section.items %}
             <li>
-              <a data-sidebar-link class="justify-center {% if item.active %}menu-active{% endif %}" href="{{ item.url }}" title="{{ item.label }}" {% if item.new_window %}target="_blank" rel="noopener"{% endif %}>
-                <i class="bi {{ item.icon }} text-lg"></i><span data-sidebar-label class="hidden">{{ item.label }}</span>{% if item.emphasized %}<span data-sidebar-label class="badge badge-primary badge-sm ms-auto hidden">{% translate "New" %}</span>{% endif %}
+              <a data-sidebar-link class="justify-content-center {% if item.active %}active{% endif %}" href="{{ item.url }}" title="{{ item.label }}" {% if item.new_window %}target="_blank" rel="noopener"{% endif %}>
+                <i class="bi {{ item.icon }} fs-6"></i><span data-sidebar-label class="d-none">{{ item.label }}</span>{% if item.emphasized %}<span data-sidebar-label class="badge text-bg-primary glis-badge-small ms-auto d-none">{% translate "New" %}</span>{% endif %}
               </a>
             </li>
             {% endfor %}
           </ul>
           {% empty %}
-          <ul class="menu w-full p-0">
-            <li data-sidebar-label class="menu-title hidden"><span>{% translate "Workspace" %}</span></li>
-            <li><a data-sidebar-link class="justify-center" href="{% url 'portal:dashboard' %}" title="{% translate 'Overview' %}"><i class="bi bi-grid-1x2 text-lg"></i><span data-sidebar-label class="hidden">{% translate "Overview" %}</span></a></li>
-            <li><a data-sidebar-link class="justify-center" href="{% url 'portal:ticket_list' %}" title="{% translate 'Tickets' %}"><i class="bi bi-ticket-perforated text-lg"></i><span data-sidebar-label class="hidden">{% translate "Tickets" %}</span></a></li>
-            <li><a data-sidebar-link class="justify-center" href="{% url 'orchestrator:console' %}" title="{% translate 'Vanna analytics' %}"><i class="bi bi-stars text-lg"></i><span data-sidebar-label class="hidden">{% translate "Vanna analytics" %}</span></a></li>
+          <ul class="glis-menu w-100 p-0">
+            <li data-sidebar-label class="glis-menu-heading d-none"><span>{% translate "Workspace" %}</span></li>
+            <li><a data-sidebar-link class="justify-content-center" href="{% url 'portal:dashboard' %}" title="{% translate 'Overview' %}"><i class="bi bi-grid-1x2 fs-6"></i><span data-sidebar-label class="d-none">{% translate "Overview" %}</span></a></li>
+            <li><a data-sidebar-link class="justify-content-center" href="{% url 'portal:ticket_list' %}" title="{% translate 'Tickets' %}"><i class="bi bi-ticket-perforated fs-6"></i><span data-sidebar-label class="d-none">{% translate "Tickets" %}</span></a></li>
+            <li><a data-sidebar-link class="justify-content-center" href="{% url 'orchestrator:console' %}" title="{% translate 'Vanna analytics' %}"><i class="bi bi-stars fs-6"></i><span data-sidebar-label class="d-none">{% translate "Vanna analytics" %}</span></a></li>
           </ul>
           {% endfor %}
 
           {% if request.resolver_match.namespace == 'orchestrator' and selected_domain %}
-          <div data-sidebar-label class="mt-3 hidden rounded-box border border-base-300 bg-base-200/55 p-2">
-            <div class="mb-2 flex items-center justify-between gap-2 px-1">
-              <span class="text-[10px] font-black uppercase tracking-wider text-base-content/50">{% translate "Analytics chats" %}</span>
-              <button class="btn btn-primary btn-circle btn-xs" id="vanna-new-session" type="button" title="{% translate 'Start a new conversation' %}"><i class="bi bi-plus-lg"></i></button>
+          <div data-sidebar-label class="mt-2 d-none rounded-3 border border-body bg-body-tertiary p-2">
+            <div class="mb-2 d-flex align-items-center justify-content-between gap-2 px-1">
+              <span class="glis-text-xs fw-bold text-uppercase glis-letter-spacing text-body-secondary">{% translate "Analytics chats" %}</span>
+              <button class="btn btn-primary glis-btn-icon rounded-circle btn-sm glis-btn-xs" id="vanna-new-session" type="button" title="{% translate 'Start a new conversation' %}"><i class="bi bi-plus-lg"></i></button>
             </div>
             <form method="get" class="mb-2">
-              <select class="select select-bordered select-xs w-full" id="vanna-domain" name="domain" data-auto-submit aria-label="{% translate 'Analytics domain' %}">
+              <select class="form-select form-select-sm w-100" id="vanna-domain" name="domain" data-auto-submit aria-label="{% translate 'Analytics domain' %}">
                 {% for domain in domains %}<option value="{{ domain.pk }}" {% if domain == selected_domain %}selected{% endif %}>{{ domain.name }}</option>{% endfor %}
               </select>
             </form>
-            <div class="max-h-64 overflow-y-auto" id="vanna-session-list">
+            <div class="glis-max-h-64 overflow-y-auto" id="vanna-session-list">
               {% for session in analysis_sessions %}
-              <button class="btn btn-ghost mb-1 h-auto w-full justify-start gap-2 px-2 py-2 text-start {% if active_session.pk == session.pk %}btn-active{% endif %}" type="button" data-session-id="{{ session.pk }}">
-                <i class="bi bi-chat-left-text shrink-0 text-primary"></i>
-                <span class="min-w-0 flex-1"><strong class="block truncate text-xs">{{ session.title|truncatechars:42 }}</strong><small class="block truncate text-[10px] font-normal opacity-45">{{ session.question_count }} {% translate "questions" %} · {{ session.updated_at|timesince }} {% translate "ago" %}</small></span>
+              <button class="btn btn-light mb-1 glis-h-auto w-100 justify-content-start gap-2 px-2 py-2 text-start {% if active_session.pk == session.pk %}active{% endif %}" type="button" data-session-id="{{ session.pk }}">
+                <i class="bi bi-chat-left-text flex-shrink-0 text-primary"></i>
+                <span class="glis-min-width-0 glis-flex-fill"><strong class="d-block text-truncate glis-text-xs">{{ session.title|truncatechars:42 }}</strong><small class="d-block text-truncate glis-text-xs fw-normal opacity-50">{{ session.question_count }} {% translate "questions" %} · {{ session.updated_at|timesince }} {% translate "ago" %}</small></span>
               </button>
               {% empty %}
-              <div class="px-2 py-4 text-center text-xs opacity-45" id="vanna-session-empty">{% translate "Your conversations will appear here." %}</div>
+              <div class="px-2 py-3 text-center glis-text-xs opacity-50" id="vanna-session-empty">{% translate "Your conversations will appear here." %}</div>
               {% endfor %}
             </div>
-            {% if user.is_staff %}<a class="btn btn-ghost btn-xs mt-2 w-full justify-start" href="{% url 'admin:orchestrator_businessrule_changelist' %}"><i class="bi bi-sliders"></i>{% translate "Rules & training" %}</a>{% endif %}
+            {% if user.is_staff %}<a class="btn btn-light btn-sm glis-btn-xs mt-2 w-100 justify-content-start" href="{% url 'admin:orchestrator_businessrule_changelist' %}"><i class="bi bi-sliders"></i>{% translate "Rules & training" %}</a>{% endif %}
           </div>
           {% endif %}
 
           {% if can_access_tpa %}
-          <ul class="menu mt-3 w-full gap-1 p-0">
-            <li data-sidebar-label class="menu-title hidden"><span>{% translate "TPA Operations" %}</span></li>
+          <ul class="glis-menu mt-2 w-100 gap-1 p-0">
+            <li data-sidebar-label class="glis-menu-heading d-none"><span>{% translate "TPA Operations" %}</span></li>
             <li>
-              <a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name != 'user_guide' and 'inbound_email' not in request.resolver_match.url_name and 'policy_enrollment' not in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'portal:ticket_list' %}?tab=endorsement" title="{% translate 'Endorsements' %}">
-                <i class="bi bi-people text-lg"></i><span data-sidebar-label class="hidden">{% translate "Endorsements" %}</span>
+              <a data-sidebar-link class="justify-content-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name != 'user_guide' and 'inbound_email' not in request.resolver_match.url_name and 'policy_enrollment' not in request.resolver_match.url_name %}active{% endif %}" href="{% url 'portal:ticket_list' %}?tab=endorsement" title="{% translate 'Endorsements' %}">
+                <i class="bi bi-people fs-6"></i><span data-sidebar-label class="d-none">{% translate "Endorsements" %}</span>
               </a>
             </li>
             <li>
-              <a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tpa' and 'policy_enrollment' in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:policy_enrollment_list' %}" title="{% translate 'Policies' %}">
-                <i class="bi bi-building-add text-lg"></i><span data-sidebar-label class="hidden">{% translate "Policies" %}</span>
+              <a data-sidebar-link class="justify-content-center {% if request.resolver_match.namespace == 'tpa' and 'policy_enrollment' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'tpa:policy_enrollment_list' %}" title="{% translate 'Policies' %}">
+                <i class="bi bi-building-add fs-6"></i><span data-sidebar-label class="d-none">{% translate "Policies" %}</span>
               </a>
             </li>
             <li>
-              <a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tpa' and 'inbound_email' in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:inbound_email_list' %}" title="{% translate 'TPA Inbound Emails' %}">
-                <i class="bi bi-inbox text-lg"></i><span data-sidebar-label class="hidden">{% translate "TPA Inbound Emails" %}</span>
+              <a data-sidebar-link class="justify-content-center {% if request.resolver_match.namespace == 'tpa' and 'inbound_email' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'tpa:inbound_email_list' %}" title="{% translate 'TPA Inbound Emails' %}">
+                <i class="bi bi-inbox fs-6"></i><span data-sidebar-label class="d-none">{% translate "TPA Inbound Emails" %}</span>
               </a>
             </li>
             {% if can_create_tpa_transaction %}
-            <li data-sidebar-label class="hidden ps-5">
-              <a class="{% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name == 'inbound_email_create' %}menu-active{% endif %}" href="{% url 'tpa:inbound_email_create' %}">
+            <li data-sidebar-label class="d-none ps-3">
+              <a class="{% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name == 'inbound_email_create' %}active{% endif %}" href="{% url 'tpa:inbound_email_create' %}">
                 <i class="bi bi-envelope-plus"></i><span>{% translate "Add Email / Reprocess" %}</span>
               </a>
             </li>
             {% endif %}
             <li>
-              <a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name == 'user_guide' %}menu-active{% endif %}" href="{% url 'tpa:user_guide' %}" title="{% translate 'TPA User Guide' %}">
-                <i class="bi bi-book text-lg"></i><span data-sidebar-label class="hidden">{% translate "TPA User Guide" %}</span>
+              <a data-sidebar-link class="justify-content-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name == 'user_guide' %}active{% endif %}" href="{% url 'tpa:user_guide' %}" title="{% translate 'TPA User Guide' %}">
+                <i class="bi bi-book fs-6"></i><span data-sidebar-label class="d-none">{% translate "TPA User Guide" %}</span>
               </a>
             </li>
           </ul>
           {% endif %}
 
-          <ul class="menu mt-3 w-full p-0">
-            <li data-sidebar-label class="menu-title hidden"><span>{% translate "Productivity" %}</span></li>
-            <li><a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tasks' %}menu-active{% endif %}" href="{% url 'tasks:list' %}" title="{% translate 'Tasks' %}"><i class="bi bi-list-task text-lg"></i><span data-sidebar-label class="hidden">{% translate "Tasks" %}</span></a></li>
+          <ul class="glis-menu mt-2 w-100 p-0">
+            <li data-sidebar-label class="glis-menu-heading d-none"><span>{% translate "Productivity" %}</span></li>
+            <li><a data-sidebar-link class="justify-content-center {% if request.resolver_match.namespace == 'tasks' %}active{% endif %}" href="{% url 'tasks:list' %}" title="{% translate 'Tasks' %}"><i class="bi bi-list-task fs-6"></i><span data-sidebar-label class="d-none">{% translate "Tasks" %}</span></a></li>
           </ul>
 
-          <div class="card mt-5 border border-base-300 bg-base-200/50">
-            <div class="card-body items-center gap-2 p-3">
-              <div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-xl bg-success/15 text-success"><i class="bi bi-headset"></i></span><strong data-sidebar-label class="hidden">{% translate "Need help?" %}</strong></div>
-              <p data-sidebar-label class="hidden text-xs text-base-content/50">{% translate "Contact platform support if you need assistance." %}</p>
+          <div class="card mt-3 border border-body bg-body-tertiary">
+            <div class="card-body align-items-center gap-2 p-2">
+              <div class="d-flex align-items-center gap-2"><span class="d-grid glis-h-10 glis-w-10 glis-place-center rounded-3 bg-success-subtle text-success"><i class="bi bi-headset"></i></span><strong data-sidebar-label class="d-none">{% translate "Need help?" %}</strong></div>
+              <p data-sidebar-label class="d-none glis-text-xs text-body-secondary">{% translate "Contact platform support if you need assistance." %}</p>
             </div>
           </div>
         </nav>
@@ -257,10 +254,11 @@
 
   <script src="https://unpkg.com/htmx.org@2.0.8" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/apexcharts" defer></script>
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}?v=5.3.2" defer></script>
+  <script src="{% static 'js/main.js' %}?v=1.97-glis-1" defer></script>
   <script src="{% static 'js/portal.js' %}" defer></script>
   <script src="{% static 'js/portal-tables.js' %}" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.15.8/dist/cdn.min.js" defer></script>
-  <!-- <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script> -->
   {% block extra_js %}{% endblock %}
 </body>
 </html>

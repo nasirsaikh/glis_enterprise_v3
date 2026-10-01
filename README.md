@@ -2,7 +2,7 @@
 
 GLIS is a bilingual, enterprise-grade insurance service, TPA member-management, workflow, document, task and analytics platform built on Django 6.1.1. It combines a public Greenline-style website with a secure authenticated portal for customers, corporate clients, insurers, TPAs, brokers, support teams, managers, auditors and administrators.
 
-The platform is intentionally server-rendered and operationally simple: Django templates, HTMX and Alpine.js provide progressive enhancement; the authenticated portal uses Tailwind CSS + daisyUI semantic components; ApexCharts provides operational charts; APScheduler powers the built-in Job Center; Ollama is supported for local OCR, extraction and analytics; and Mayan EDMS can be used as the governed document engine.
+The platform is intentionally server-rendered and operationally simple: Django templates, HTMX and Alpine.js provide progressive enhancement; the authenticated portal uses Bootstrap 5.3.2 components; ApexCharts provides operational charts; APScheduler powers the built-in Job Center; Ollama is supported for local OCR, extraction and analytics; and Mayan EDMS can be used as the governed document engine.
 
 > **Core design principle:** AI assists extraction, mapping, summarization and analytics. Eligibility, validation, pricing, approvals, permissions, workflow transitions and final insurance/TPA updates remain deterministic application logic.
 
@@ -13,7 +13,7 @@ The platform is intentionally server-rendered and operationally simple: Django t
 | Capability | Current implementation |
 |---|---|
 | Public website | Bilingual English/Arabic site, RTL, CMS-managed content, services, network/provider content, downloads, contact information and theme support |
-| Authenticated portal | Responsive daisyUI workspace with light/dark/system and additional daisyUI themes, compact sidebar modes, notifications, profile and security settings |
+| Authenticated portal | Responsive Bootstrap workspace with light/dark/system modes, compact sidebar modes, notifications, profile and security settings |
 | Service tickets | Multi-project/product/category request handling, assignment, groups, comments, attachments, dynamic forms, approvals, SLA/TAT, notifications and audit events |
 | Task management | Manual tasks plus recurring task templates that create linked tickets automatically |
 | TPA member management | Initial policy enrollment, member additions, terminations, deletion/void, policy cancellation, validation, pricing, approval, TPA processing and completion |
@@ -54,8 +54,7 @@ The platform is intentionally server-rendered and operationally simple: Django t
 - Django templates
 - HTMX 2.x
 - Alpine.js CSP build
-- Tailwind CSS standalone compiler
-- daisyUI 5 semantic components
+- Bootstrap 5.3.2 CSS and JavaScript bundle
 - Bootstrap Icons
 - ApexCharts
 - responsive LTR/RTL layouts
@@ -87,7 +86,7 @@ The platform is intentionally server-rendered and operationally simple: Django t
 ~~~mermaid
 flowchart TB
     Public["Public GLIS Website<br/>django CMS / bilingual content"] --> Django["Django 6.1 Application"]
-    Portal["Authenticated Portal<br/>Tailwind + daisyUI + HTMX"] --> Django
+    Portal["Authenticated Portal<br/>Bootstrap + HTMX"] --> Django
     API["REST API / Integrations"] --> Django
 
     Django --> Tickets["Tickets / SLA / Approvals"]
@@ -130,75 +129,38 @@ flowchart TB
 | CMS | <code>apps/cms/</code>, django CMS | navigation, pages, public content and publishing |
 | Services | <code>services/</code> | access rules, dynamic forms and datasource registry |
 | Templates | <code>templates/</code> | public, portal, tickets, TPA, tasks, knowledge and document UI |
-| Static assets | <code>static/</code> | Tailwind/daisyUI build, brand CSS, portal JavaScript and TPA JavaScript |
+| Static assets | <code>static/</code> | Bootstrap assets and compact theme, brand CSS, portal JavaScript and TPA JavaScript |
 | Documentation | <code>docs/</code> | TPA, frontend, compatibility and operational guides |
 
 ---
 
 # 5. Frontend and design standard
 
-The authenticated portal follows the standard daisyUI Django model and uses **normal, unprefixed Tailwind/daisyUI classes**.
-
-Use:
+The public pages and authenticated portal use **Bootstrap 5.3.2** with a compact theme adapted from the supplied [Course Planner reference](https://course-planner-140256174016.asia-south1.run.app/). Existing GLIS page structure, navigation, grids, workflows and Arabic support are retained.
 
 ~~~html
-<section class="card bg-base-100">
+<section class="card">
   <div class="card-body">
-    <span class="badge badge-primary">Status</span>
-    <button class="btn btn-primary">Save</button>
+    <span class="badge text-bg-primary">Status</span>
+    <input class="form-control form-control-sm" aria-label="Subject">
+    <button class="btn btn-primary btn-sm">Save</button>
   </div>
 </section>
 ~~~
 
-Do not introduce old portal syntax such as:
+Bootstrap CSS, RTL CSS and the JavaScript bundle are pinned and committed locally. Shared template includes select the appropriate CSS for English or Arabic. The reference's reusable component rules and behavior are adapted in `static/css/style.css` and `static/js/main.js`; course-planner-specific routes and authentication scripts are not loaded.
 
-~~~text
-tw:flex
-tw:d-card
-tw:d-btn
+No frontend CSS compilation is needed. Edit the Bootstrap markup and small GLIS styles, then run:
+
+~~~bash
+python scripts/check_bootstrap_assets.py
+node --test scripts/test_portal_ui.cjs
+python manage.py collectstatic --noinput
 ~~~
 
-The current portal source is:
+Browser regression tests require Playwright and Chromium in the development/CI environment. Production does not require Node.js/npm. See [Bootstrap UI](docs/BOOTSTRAP_UI.md) for asset provenance, modal/HTMX behavior, testing and deployment.
 
-~~~text
-static/css/input.css
-~~~
-
-and the committed runtime bundle is:
-
-~~~text
-static/css/output.css
-~~~
-
-The application therefore **does not require Node.js/npm at runtime**. Frontend changes can be rebuilt using the standalone Tailwind compiler and daisyUI plugin.
-
-### Windows rebuild
-
-~~~powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\build_portal_css.ps1
-~~~
-
-### Manual/watch build
-
-~~~powershell
-static\css\tailwindcss.exe -i static/css/input.css -o static/css/output.css
-static\css\tailwindcss.exe -i static/css/input.css -o static/css/output.css --watch
-~~~
-
-### Design goals
-
-The portal is designed to be compact, modern and operational rather than a conventional Django admin-style application. UI work should prefer:
-
-- daisyUI <code>card</code>, <code>stats</code>, <code>badge</code>, <code>alert</code>, <code>table</code>, <code>menu</code>, <code>dropdown</code>, <code>modal</code>, <code>steps</code>, <code>timeline</code>, <code>chat</code>, <code>input</code>, <code>select</code>, <code>textarea</code> and <code>btn</code> components;
-- responsive grid/flex layouts;
-- compact KPI bands;
-- subtle depth, hover elevation and motion;
-- theme-aware components rather than hard-coded light backgrounds;
-- ApexCharts instead of Plotly for portal operational dashboards;
-- accessible dark/light rendering;
-- progressive enhancement through HTMX rather than full-page JavaScript frameworks.
-
-The profile currently supports System, Light, Dark and the standard daisyUI theme family configured in <code>UserProfile.THEME_CHOICES</code>.
+Use Bootstrap `card`, `badge`, `alert`, `table`, `nav`, `dropdown`, `modal`, `offcanvas`, `form-control`, `form-select`, `form-check-input` and `btn` components. Keep GLIS-specific step navigation, conversation messages and responsive grids in the shared semantic styles. The profile supports System, Light and Dark.
 
 Sidebar modes:
 
@@ -734,7 +696,7 @@ The system:
 1. creates a dedicated GLIS query ticket related to the transaction;
 2. moves the transaction to TPA Query;
 3. reuses normal TicketComment/TicketAttachment storage;
-4. renders the conversation as daisyUI chat inside the TPA case;
+4. renders the conversation as compact conversation cards inside the TPA case;
 5. keeps resolved conversations visible in history;
 6. resumes processing when the query is resolved.
 
@@ -824,7 +786,7 @@ The strict extraction schema distinguishes Member Addition, Deletion, Permanent 
 
 ## 12.15 TPA conversations, refund and card dispatch
 
-Approval and TPA discussions use the existing GLIS TicketComment/TicketAttachment infrastructure but render inside the transaction as daisyUI chat.
+Approval and TPA discussions use the existing GLIS TicketComment/TicketAttachment infrastructure but render inside the transaction as compact conversation cards.
 
 Conversation audiences are enforced server-side:
 
@@ -1224,7 +1186,7 @@ Task suite:
 python manage.py test apps.tasks
 ~~~
 
-Frontend build verification should confirm that the committed <code>static/css/output.css</code> contains daisyUI components and that authenticated templates do not reintroduce the old <code>tw:</code>/<code>d-</code> portal syntax.
+Frontend verification runs <code>scripts/check_bootstrap_assets.py</code> and the Playwright UI regression suite to verify the committed Bootstrap assets, compact layouts and interaction behavior.
 
 ---
 
@@ -1256,8 +1218,8 @@ When extending GLIS:
 
 1. Reuse existing apps/services before creating duplicate business concepts.
 2. Enforce authorization in views/services, not only templates.
-3. Keep operational portal UI on unprefixed Tailwind + daisyUI.
-4. Prefer daisyUI semantic components over custom one-off CSS.
+3. Keep public and operational UI on Bootstrap 5.3.2.
+4. Prefer Bootstrap components and shared GLIS semantic styles.
 5. Use ApexCharts for new portal charts.
 6. Use HTMX for targeted server updates rather than introducing a SPA framework.
 7. Keep AI advisory/extractive; deterministic insurance rules stay in Python/services.
@@ -1296,7 +1258,7 @@ This avoids creating separate workflow engines for claims, policy servicing, leg
 Important repository guides:
 
 - <code>docs/TPA_USER_GUIDE.md</code> — detailed TPA operating guide
-- <code>docs/TAILWIND_DAISYUI.md</code> — portal frontend/build rules
+- <code>docs/BOOTSTRAP_UI.md</code> — compact Bootstrap components, assets and deployment
 - <code>apps/job_center/README.md</code> — scheduler architecture and job registration
 - <code>MAYAN_EDMS_INTEGRATION.md</code> — document integration
 - <code>DJANGO_CMS_MIGRATION.md</code> — CMS migration notes

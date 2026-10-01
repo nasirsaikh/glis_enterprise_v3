@@ -12,7 +12,7 @@ from .models import UserProfile
 
 def _style_password_form(form):
     for field in form.fields.values():
-        field.widget.attrs["class"] = "input input-bordered w-full"
+        field.widget.attrs["class"] = "form-control w-100"
     return form
 
 

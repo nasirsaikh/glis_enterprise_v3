@@ -7,7 +7,7 @@
   document.addEventListener("htmx:beforeRequest", event => {
     const form = formFor(event);
     const error = form?.querySelector("[data-ticket-action-error]");
-    if (error) { error.textContent = ""; error.classList.add("hidden"); }
+    if (error) { error.textContent = ""; error.classList.add("d-none"); }
   });
   document.addEventListener("htmx:afterRequest", event => {
     const form = formFor(event);
@@ -16,6 +16,6 @@
     if (!error) return;
     const response = event.detail.xhr?.responseText || "";
     error.textContent = response.startsWith("<") ? "Unable to complete the request. Refresh and try again." : response;
-    error.classList.remove("hidden");
+    error.classList.remove("d-none");
   });
 })();

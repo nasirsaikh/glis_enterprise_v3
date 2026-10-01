@@ -5,23 +5,23 @@
     <noscript><style>[data-transaction-wizard] [data-wizard-step][hidden]{display:block!important}[data-transaction-wizard] [data-wizard-submit][hidden]{display:inline-flex!important}[data-wizard-next],[data-wizard-prev]{display:none!important}</style></noscript>
     <div class="card-body">
       <h2 class="card-title">{% translate "Policy setup" %} · <span data-wizard-current>1</span> / {{ creation_steps|length }}</h2>
-      <div class="workflow-step-scroll"><ol class="steps steps-horizontal workflow-steps" aria-label="{% translate 'Policy setup steps' %}">{% for step in creation_steps %}<li class="step" data-wizard-indicator="{{ forloop.counter }}">{{ step.label }}</li>{% endfor %}</ol></div>
+      <div class="workflow-step-scroll"><ol class="workflow-progress workflow-progress-horizontal workflow-steps" aria-label="{% translate 'Policy setup steps' %}">{% for step in creation_steps %}<li class="workflow-progress-step" data-wizard-indicator="{{ forloop.counter }}">{{ step.label }}</li>{% endfor %}</ol></div>
       {% if form.non_field_errors %}{% include "components/form_errors.html" with form=form %}{% endif %}
       {% for step in creation_steps %}
       <section class="tpa-wizard-step" data-wizard-step="{{ forloop.counter }}" {% if not forloop.first %}hidden{% endif %} aria-labelledby="creation-step-{{ forloop.counter }}">
-        <h3 id="creation-step-{{ forloop.counter }}" class="font-bold">{{ step.label }}</h3>
+        <h3 id="creation-step-{{ forloop.counter }}" class="fw-bold">{{ step.label }}</h3>
         {% if step.template %}
           {% include step.template %}
         {% else %}
-        <div class="grid gap-3 md:grid-cols-3">
-          {% for field in step.fields %}<fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}{% if field.help_text %}<p class="label">{{ field.help_text }}</p>{% endif %}{{ field.errors }}</fieldset>{% endfor %}
+        <div class="d-grid gap-2 glis-grid-md-3">
+          {% for field in step.fields %}<fieldset class="glis-field"><legend class="form-label">{{ field.label }}</legend>{{ field }}{% if field.help_text %}<p class="form-text">{{ field.help_text }}</p>{% endif %}{{ field.errors }}</fieldset>{% endfor %}
         </div>
         {% endif %}
       </section>
       {% endfor %}
-      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-base-300 pt-3">
-        <a class="btn btn-ghost" href="{{ creation_cancel_url }}">{% translate "Cancel" %}</a>
-        <div class="flex flex-wrap gap-2"><button class="btn btn-ghost" type="button" data-wizard-prev hidden>{% translate "Previous" %}</button><button class="btn btn-outline" type="button" data-wizard-next>{% translate "Next" %}</button><button class="btn btn-primary" type="submit" data-wizard-submit hidden>{% translate "Create Setup & Add Members" %}</button></div>
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-top border-body pt-2">
+        <a class="btn btn-light" href="{{ creation_cancel_url }}">{% translate "Cancel" %}</a>
+        <div class="d-flex flex-wrap gap-2"><button class="btn btn-light" type="button" data-wizard-prev hidden>{% translate "Previous" %}</button><button class="btn btn-outline-secondary" type="button" data-wizard-next>{% translate "Next" %}</button><button class="btn btn-primary" type="submit" data-wizard-submit hidden>{% translate "Create Setup & Add Members" %}</button></div>
       </div>
     </div>
   </form>

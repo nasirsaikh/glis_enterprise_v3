@@ -1,3 +1,0 @@
-/* Keep CMS Bootstrap plugins below application components in the CSS cascade. */
-@layer cms-legacy, properties, theme, base, components, utilities;
-@import url("https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css") layer(cms-legacy);

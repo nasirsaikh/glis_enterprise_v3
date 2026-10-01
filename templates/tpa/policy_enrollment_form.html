@@ -2,14 +2,14 @@
 {% load i18n %}
 {% block title %}{% translate "New Policy Enrollment" %}{% endblock %}
 {% block tpa_content %}
-<div class="mx-auto max-w-6xl space-y-5">
-  <header class="card flex flex-col gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6 lg:flex-row lg:items-end lg:justify-between">
+<div class="mx-auto glis-max-6xl glis-stack-5">
+  <header class="card d-flex flex-column gap-3 rounded-4 border border-body bg-body p-3 shadow-sm p-sm-4 flex-lg-row align-items-lg-end justify-content-lg-between">
     <div>
-      <div class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-building-add"></i>{% translate "TPA / Onboarding / Step 01" %}</div>
-      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "CREATE POLICY & INITIAL PLAN" %}</h1>
-      <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{% translate "The policy starts in Draft. Add plans and the opening census next, then validate, approve and complete through TPA processing." %}</p>
+      <div class="badge text-bg-primary glis-badge-soft mb-2 gap-2"><i class="bi bi-building-add"></i>{% translate "TPA / Onboarding / Step 01" %}</div>
+      <h1 class="fs-3 fw-bold">{% translate "CREATE POLICY & INITIAL PLAN" %}</h1>
+      <p class="mt-2 glis-max-4xl small lh-base text-body-secondary">{% translate "The policy starts in Draft. Add plans and the opening census next, then validate, approve and complete through TPA processing." %}</p>
     </div>
-    <a class="btn btn-ghost btn-sm" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Enrollment Queue" %}</a>
+    <a class="btn btn-light btn-sm" href="{% url 'tpa:policy_enrollment_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Enrollment Queue" %}</a>
   </header>
 
   <div role="alert" class="alert alert-info">

@@ -2,41 +2,41 @@
 {% load i18n widget_tweaks %}
 {% block title %}{% translate "Complete sign in" %} · GLIS{% endblock %}
 {% block content %}
-<section class="bg-base-200/45 py-14 sm:py-20">
-  <div class="mx-auto max-w-xl px-6">
-    <article class="card border border-base-300 bg-base-100 shadow-2xl">
-      <div class="card-body p-7 sm:p-9">
+<section class="bg-body-tertiary py-5 py-sm-5">
+  <div class="mx-auto glis-max-xl px-4">
+    <article class="card border border-body bg-body shadow-lg">
+      <div class="card-body p-4 p-sm-4">
         <div class="text-center">
-          <img class="mx-auto max-h-12 max-w-32" src="/api/v1/site-logo/" alt="GLIS">
-          <span class="badge badge-primary badge-soft mt-5"><i class="bi bi-shield-check me-1"></i>{% translate "Secure social sign in" %}</span>
-          <h1 class="mt-3 text-3xl font-black">{% translate "Complete your GLIS sign in" %}</h1>
-          <p class="mt-2 text-base-content/55">{% translate "We could not complete this social sign in automatically. Confirm the account information below to continue." %}</p>
+          <img class="mx-auto glis-max-h-12 glis-max-w-32" src="/api/v1/site-logo/" alt="GLIS">
+          <span class="badge text-bg-primary glis-badge-soft mt-3"><i class="bi bi-shield-check me-1"></i>{% translate "Secure social sign in" %}</span>
+          <h1 class="mt-2 fs-3 fw-bold">{% translate "Complete your GLIS sign in" %}</h1>
+          <p class="mt-2 text-body-secondary">{% translate "We could not complete this social sign in automatically. Confirm the account information below to continue." %}</p>
         </div>
 
         {% if form.non_field_errors %}
-        <div class="alert alert-error mt-6">
+        <div class="alert alert-danger mt-4">
           <i class="bi bi-exclamation-octagon"></i>
           <span>{{ form.non_field_errors|striptags }}</span>
         </div>
         {% endif %}
 
-        <form class="mt-6 grid gap-4" method="post" action="{% url 'socialaccount_signup' %}">
+        <form class="mt-4 d-grid gap-3" method="post" action="{% url 'socialaccount_signup' %}">
           {% csrf_token %}
           {% for field in form %}
-          <label class="fieldset">
-            <span class="fieldset-legend">{{ field.label }}{% if field.field.required %} *{% endif %}</span>
-            {{ field|add_class:"input input-bordered w-full" }}
-            {% if field.help_text %}<span class="label text-xs text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}
-            {% if field.errors %}<span class="text-sm text-error">{{ field.errors|striptags }}</span>{% endif %}
+          <label class="glis-field">
+            <span class="form-label">{{ field.label }}{% if field.field.required %} *{% endif %}</span>
+            {{ field|add_class:"form-control w-100" }}
+            {% if field.help_text %}<span class="form-text glis-text-xs text-body-secondary">{{ field.help_text|safe }}</span>{% endif %}
+            {% if field.errors %}<span class="small text-danger">{{ field.errors|striptags }}</span>{% endif %}
           </label>
           {% endfor %}
           {{ redirect_field }}
-          <button class="btn btn-primary btn-lg mt-2 w-full" type="submit">
+          <button class="btn btn-primary btn-lg mt-2 w-100" type="submit">
             <i class="bi bi-box-arrow-in-right"></i>{% translate "Continue" %}
           </button>
         </form>
 
-        <a class="btn btn-ghost mt-2 w-full" href="{% url 'account_login' %}">
+        <a class="btn btn-light mt-2 w-100" href="{% url 'account_login' %}">
           <i class="bi bi-arrow-left"></i>{% translate "Back to sign in" %}
         </a>
       </div>

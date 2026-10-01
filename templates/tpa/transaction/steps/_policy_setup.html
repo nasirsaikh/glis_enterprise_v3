@@ -1,42 +1,42 @@
 {% load i18n %}
-<section class="card border border-base-300 bg-base-100 shadow-sm">
-        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
-          <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Opening setup" %}</div><h2 class="text-lg font-black ">{% translate "POLICY & BENEFIT PLANS" %}</h2></div>
-          <span class="badge {% if tx.policy.status == 'active' %}badge-success{% else %}badge-warning{% endif %} badge-soft">{{ tx.policy.get_status_display }}</span>
+<section class="card border border-body bg-body shadow-sm">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 border-bottom border-body px-3 py-3 px-sm-4">
+          <div><div class="mb-1 glis-text-xs fw-bold text-uppercase glis-letter-spacing text-primary">{% translate "Opening setup" %}</div><h2 class="fs-6 fw-bold">{% translate "POLICY & BENEFIT PLANS" %}</h2></div>
+          <span class="badge {% if tx.policy.status == 'active' %}text-bg-success{% else %}text-bg-warning{% endif %} glis-badge-soft">{{ tx.policy.get_status_display }}</span>
         </div>
         <div class="card-body">
-          <div class="grid gap-3 lg:grid-cols-2">
-            <dl class="grid grid-cols-2 gap-3 text-sm">
-              <div><dt class="opacity-45">{% translate "Policy" %}</dt><dd class="font-bold">{{ tx.policy.policy_number }}</dd></div>
-              <div><dt class="opacity-45">{% translate "Period" %}</dt><dd>{{ tx.policy.start_date|date:"d-M-Y" }} → {{ tx.policy.expiry_date|date:"d-M-Y" }}</dd></div>
-              <div><dt class="opacity-45">{% translate "organization" %}</dt><dd>{{ tx.policy.organization.name_en }}</dd></div>
-              <div><dt class="opacity-45">{% translate "Processing Organization" %}</dt><dd>{{ tx.ticket.processing_organizations.first.organization.name_en|default:"—" }}</dd></div>
+          <div class="d-grid gap-2 glis-grid-lg-2">
+            <dl class="d-grid glis-grid-2 gap-2 small">
+              <div><dt class="opacity-50">{% translate "Policy" %}</dt><dd class="fw-bold">{{ tx.policy.policy_number }}</dd></div>
+              <div><dt class="opacity-50">{% translate "Period" %}</dt><dd>{{ tx.policy.start_date|date:"d-M-Y" }} → {{ tx.policy.expiry_date|date:"d-M-Y" }}</dd></div>
+              <div><dt class="opacity-50">{% translate "organization" %}</dt><dd>{{ tx.policy.organization.name_en }}</dd></div>
+              <div><dt class="opacity-50">{% translate "Processing Organization" %}</dt><dd>{{ tx.ticket.processing_organizations.first.organization.name_en|default:"—" }}</dd></div>
             </dl>
             <div class="overflow-x-auto">
               <table class="table table-sm">
                 <thead><tr><th>{% translate "Plan" %}</th><th>{% translate "Annual Premium" %}</th><th>{% translate "Sum Insured" %}</th></tr></thead>
-                <tbody>{% for plan in tx.policy.plans.all %}<tr><td><strong>{{ plan.code }}</strong><div class="text-xs opacity-45">{{ plan.name }}</div></td><td>{{ tx.currency }} {{ plan.annual_premium }}</td><td>{{ plan.default_sum_insured|default:"—" }}</td></tr>{% endfor %}</tbody>
+                <tbody>{% for plan in tx.policy.plans.all %}<tr><td><strong>{{ plan.code }}</strong><div class="glis-text-xs opacity-50">{{ plan.name }}</div></td><td>{{ tx.currency }} {{ plan.annual_premium }}</td><td>{{ plan.default_sum_insured|default:"—" }}</td></tr>{% endfor %}</tbody>
               </table>
             </div>
           </div>
           {% if can_edit_intake and policy_details_form %}
-          <details class="collapse collapse-arrow mt-3 border border-base-300" {% if policy_details_form.errors %}open{% endif %}>
-            <summary class="collapse-title text-sm font-bold">{% translate "Edit policy details" %}</summary>
-            <div class="collapse-content">
-              <form class="grid gap-3 md:grid-cols-3" method="post" action="{% url 'tpa:policy_details_edit' tx.reference %}" hx-post="{% url 'tpa:policy_details_edit' tx.reference %}" data-tpa-hx-form>
+          <details class="accordion-item glis-disclosure mt-2 border border-body" {% if policy_details_form.errors %}open{% endif %}>
+            <summary class="accordion-button small fw-bold">{% translate "Edit policy details" %}</summary>
+            <div class="accordion-body">
+              <form class="d-grid gap-2 glis-grid-md-3" method="post" action="{% url 'tpa:policy_details_edit' tx.reference %}" hx-post="{% url 'tpa:policy_details_edit' tx.reference %}" data-tpa-hx-form>
                 {% csrf_token %}{% include "components/form_errors.html" with form=policy_details_form %}
-                {% for field in policy_details_form %}<label class="fieldset"><span class="fieldset-legend">{{ field.label }}</span>{{ field }}{{ field.errors }}</label>{% endfor %}
+                {% for field in policy_details_form %}<label class="glis-field"><span class="form-label">{{ field.label }}</span>{{ field }}{{ field.errors }}</label>{% endfor %}
                 <div><button class="btn btn-primary btn-sm" type="submit">{% translate "Save policy details" %}</button></div>
               </form>
             </div>
           </details>
           {% endif %}
           {% if can_edit_intake and plan_form %}
-          <details class="collapse collapse-arrow mt-3 border border-base-300" {% if plan_form.errors %}open{% endif %}>
-            <summary class="collapse-title text-sm font-bold">{% translate "Add Benefit Plan" %}</summary>
-            <div class="collapse-content">
+          <details class="accordion-item glis-disclosure mt-2 border border-body" {% if plan_form.errors %}open{% endif %}>
+            <summary class="accordion-button small fw-bold">{% translate "Add Benefit Plan" %}</summary>
+            <div class="accordion-body">
               <form class="compact-plan-row" method="post" action="{% url 'tpa:policy_plan_add' tx.reference %}" hx-post="{% url 'tpa:policy_plan_add' tx.reference %}" data-tpa-hx-form>
-                {% csrf_token %}{% include "components/form_errors.html" with form=plan_form %}{% for field in plan_form %}<fieldset class="fieldset"><legend class="fieldset-legend">{{ field.label }}</legend>{{ field }}{{ field.errors }}</fieldset>{% endfor %}
+                {% csrf_token %}{% include "components/form_errors.html" with form=plan_form %}{% for field in plan_form %}<fieldset class="glis-field"><legend class="form-label">{{ field.label }}</legend>{{ field }}{{ field.errors }}</fieldset>{% endfor %}
                 <div><button class="btn btn-primary btn-sm">{% translate "Add Plan" %}</button></div>
               </form>
             </div>

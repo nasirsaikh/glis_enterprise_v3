@@ -2,19 +2,19 @@
 {% get_current_language as LANGUAGE_CODE %}
 
 
-<section class="py-5">
+<section class="py-3">
     <div class="container">
 <div class="card">
       <div class="card-body">
           <div class="row g-3 mb-2">
                     <div class="col-lg-8">
                         <div class="input-group input-group-lg">
-                            <span class="input-group-text bg-body border-end-0 rounded-start-pill ps-4"><i class="bi bi-search text-body-secondary"></i></span>
+                            <span class="input-group-text bg-body border-end-0 rounded-start-pill ps-3"><i class="bi bi-search text-body-secondary"></i></span>
                             <input type="search" id="downloadSearch" class="form-control border-start-0 rounded-end-pill" placeholder="{% translate 'Search documents, forms or policies...' %}">
                         </div>
                     </div>
                     <div class="col-lg-4">
-                        <select id="downloadCategory" class="form-select form-select-lg rounded-pill px-4">
+                        <select id="downloadCategory" class="form-select form-select-lg rounded-pill px-3">
                             <option value="">{% translate "All Categories" %}</option>
                             {% for category in categories %}
                                 <option value="{{ category.pk }}">{% if LANGUAGE_CODE == "ar" and category.name_ar %}{{ category.name_ar }}{% else %}{{ category.name_en }}{% endif %}</option>
@@ -32,9 +32,9 @@
 
                     <div class="card download-card h-100 border rounded-4 overflow-hidden">
 
-                        <div class="card-body p-4">
+                        <div class="card-body p-3">
 
-                            <div class="d-flex align-items-start gap-3">
+                            <div class="d-flex align-items-start gap-2">
 
                                 <div class="download-file-icon rounded-4 flex-shrink-0 file-{{ document.extension }}">
                                     {% if document.extension == "pdf" %}
@@ -57,7 +57,7 @@
                                     <div class="small text-body-secondary">{% if LANGUAGE_CODE == "ar" and document.category.name_ar %}{{ document.category.name_ar }}{% else %}{{ document.category.name_en }}{% endif %}</div>
 
                                     {% if document.description_en or document.description_ar %}
-                                        <p class="text-body-secondary small mt-3 mb-0">{% if LANGUAGE_CODE == "ar" and document.description_ar %}{{ document.description_ar|truncatechars:110 }}{% else %}{{ document.description_en|truncatechars:110 }}{% endif %}</p>
+                                        <p class="text-body-secondary small mt-2 mb-0">{% if LANGUAGE_CODE == "ar" and document.description_ar %}{{ document.description_ar|truncatechars:110 }}{% else %}{{ document.description_en|truncatechars:110 }}{% endif %}</p>
                                     {% endif %}
                                 </div>
 
@@ -65,15 +65,15 @@
 
                         </div>
 
-                        <div class="card-footer bg-body border-top px-4 py-3">
+                        <div class="card-footer bg-body border-top px-3 py-2">
                             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                                <div class="d-flex flex-wrap gap-3 text-body-secondary small">
+                                <div class="d-flex flex-wrap gap-2 text-body-secondary small">
                                     <span><i class="bi bi-calendar3 me-1"></i>{{ document.updated_at|date:"d-M-Y" }}</span>
                                     <span><i class="bi bi-file-earmark me-1"></i>{{ document.extension|upper }}</span>
                                     <span><i class="bi bi-hdd me-1"></i>{{ document.file_size_display }}</span>
                                 </div>
 
-                                <a href="{% url 'download_document' document.pk %}" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-download me-1"></i>{% translate "Download" %}</a>
+                                <a href="{% url 'download_document' document.pk %}" class="btn btn-sm btn-primary rounded-pill px-2"><i class="bi bi-download me-1"></i>{% translate "Download" %}</a>
                             </div>
                         </div>
 
@@ -91,8 +91,8 @@
 
         </div>
 
-        <div id="downloadNoResults" class="text-center py-5 d-none">
-            <div class="mb-3"><i class="bi bi-search display-4 text-body-secondary"></i></div>
+        <div id="downloadNoResults" class="text-center py-3 d-none">
+            <div class="mb-2"><i class="bi bi-search display-4 text-body-secondary"></i></div>
             <h4 class="fw-bold">{% translate "No matching documents" %}</h4>
             <p class="text-body-secondary">{% translate "Try another search term or category." %}</p>
         </div>

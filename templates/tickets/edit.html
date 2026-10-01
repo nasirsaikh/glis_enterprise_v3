@@ -1,22 +1,22 @@
 {% extends 'base_portal.html' %}{% load i18n %}{% block title %}{% translate "Edit" %} {{ ticket.reference }}{% endblock %}
 {% block content %}
-<div class="mx-auto max-w-5xl space-y-5">
-  <div class="breadcrumbs text-sm text-base-content/50"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li><a href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a></li><li>{% translate "Edit" %}</li></ul></div>
-  <section class="card rounded-[1.5rem] border border-base-300 bg-base-100 p-6 shadow-sm" data-reveal>
-    <span class="badge badge-primary badge-soft mb-3"><i class="bi bi-shield-lock me-1"></i>{% translate "Permission controlled" %}</span>
-    <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "Edit ticket" %}</h1>
-    <p class="mt-2 text-base-content/55">{% translate "Update core details and administrator-defined fields." %}</p>
+<div class="mx-auto glis-max-5xl glis-stack-5">
+  <div class="glis-breadcrumbs small text-body-secondary"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li><a href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a></li><li>{% translate "Edit" %}</li></ul></div>
+  <section class="card rounded-4 border border-body bg-body p-4 shadow-sm" data-reveal>
+    <span class="badge text-bg-primary glis-badge-soft mb-2"><i class="bi bi-shield-lock me-1"></i>{% translate "Permission controlled" %}</span>
+    <h1 class="fs-3 fw-bold">{% translate "Edit ticket" %}</h1>
+    <p class="mt-2 text-body-secondary">{% translate "Update core details and administrator-defined fields." %}</p>
   </section>
-  <form class="card border border-base-300 bg-base-100 shadow-sm" method="post" data-reveal>{% csrf_token %}
-    <div class="card-body p-5 sm:p-7">
-      <div class="grid gap-5 md:grid-cols-12">
-        <label class="fieldset {% if form.priority %}md:col-span-8{% else %}md:col-span-12{% endif %}"><span class="fieldset-legend">{% translate "Subject" %}</span>{{ form.subject }}{{ form.subject.errors }}</label>
-        {% if form.priority %}<label class="fieldset md:col-span-2"><span class="fieldset-legend">{% translate "Priority" %}</span>{{ form.priority }}</label><label class="fieldset md:col-span-2"><span class="fieldset-legend">{% translate "Status" %}</span>{{ form.status }}{{ form.status.errors }}</label>{% endif %}
-        <label class="fieldset md:col-span-12"><span class="fieldset-legend">{% translate "Description" %}</span>{{ form.description }}{{ form.description.errors }}</label>
-        {% for field in dynamic_form %}<fieldset class="fieldset md:col-span-6"><legend class="fieldset-legend"><label{% if field.id_for_label %} for="{{ field.id_for_label }}"{% endif %}>{{ field.label }}{% if field.field.required %} *{% endif %}</label></legend>{{ field }}{% if field.help_text %}<span class="label text-xs text-base-content/45">{{ field.help_text }}</span>{% endif %}{{ field.errors }}</fieldset>{% endfor %}
+  <form class="card border border-body bg-body shadow-sm" method="post" data-reveal>{% csrf_token %}
+    <div class="card-body p-3 p-sm-4">
+      <div class="d-grid gap-3 glis-grid-md-12">
+        <label class="glis-field {% if form.priority %}glis-span-md-8{% else %}glis-span-md-12{% endif %}"><span class="form-label">{% translate "Subject" %}</span>{{ form.subject }}{{ form.subject.errors }}</label>
+        {% if form.priority %}<label class="glis-field glis-span-md-2"><span class="form-label">{% translate "Priority" %}</span>{{ form.priority }}</label><label class="glis-field glis-span-md-2"><span class="form-label">{% translate "Status" %}</span>{{ form.status }}{{ form.status.errors }}</label>{% endif %}
+        <label class="glis-field glis-span-md-12"><span class="form-label">{% translate "Description" %}</span>{{ form.description }}{{ form.description.errors }}</label>
+        {% for field in dynamic_form %}<fieldset class="glis-field glis-span-md-6"><legend class="form-label"><label{% if field.id_for_label %} for="{{ field.id_for_label }}"{% endif %}>{{ field.label }}{% if field.field.required %} *{% endif %}</label></legend>{{ field }}{% if field.help_text %}<span class="form-text glis-text-xs text-body-secondary">{{ field.help_text }}</span>{% endif %}{{ field.errors }}</fieldset>{% endfor %}
       </div>
-      {% if form.non_field_errors or dynamic_form.non_field_errors %}<div class="alert alert-error mt-5"><i class="bi bi-exclamation-octagon"></i><span>{{ form.non_field_errors }}{{ dynamic_form.non_field_errors }}</span></div>{% endif %}
-      <div class="mt-7 flex flex-wrap justify-end gap-2"><a class="btn btn-ghost rounded-full" href="{% url 'portal:ticket_detail' ticket.reference %}">{% translate "Cancel" %}</a><button class="btn btn-primary rounded-full" type="submit"><i class="bi bi-check2"></i>{% translate "Save changes" %}</button></div>
+      {% if form.non_field_errors or dynamic_form.non_field_errors %}<div class="alert alert-danger mt-3"><i class="bi bi-exclamation-octagon"></i><span>{{ form.non_field_errors }}{{ dynamic_form.non_field_errors }}</span></div>{% endif %}
+      <div class="mt-4 d-flex flex-wrap justify-content-end gap-2"><a class="btn btn-light rounded-pill" href="{% url 'portal:ticket_detail' ticket.reference %}">{% translate "Cancel" %}</a><button class="btn btn-primary rounded-pill" type="submit"><i class="bi bi-check2"></i>{% translate "Save changes" %}</button></div>
     </div>
   </form>
 </div>

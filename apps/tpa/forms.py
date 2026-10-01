@@ -38,10 +38,10 @@ class TransactionForm(forms.ModelForm):
         ]
         widgets = {
             "effective_date": forms.DateInput(
-                attrs={"type": "date", "class": "input input-bordered input-sm w-full"}
+                attrs={"type": "date", "class": "form-control form-control-sm w-100"}
             ),
             "expected_reactivation_date": forms.DateInput(
-                attrs={"type": "date", "class": "input input-bordered input-sm w-full"}
+                attrs={"type": "date", "class": "form-control form-control-sm w-100"}
             ),
         }
 
@@ -87,9 +87,9 @@ class TransactionForm(forms.ModelForm):
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
-                "select select-bordered select-sm w-full"
+                "form-select form-select-sm w-100"
                 if isinstance(field.widget, forms.Select)
-                else "input input-bordered input-sm w-full",
+                else "form-control form-control-sm w-100",
             )
 
 
@@ -140,7 +140,7 @@ class TransactionDetailsForm(TransactionForm):
             ]
             self.fields["transaction_type"].disabled = True
             self.fields["transaction_type"].help_text = "Remove draft member rows before changing the endorsement type."
-        self.fields["remarks"].widget = forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 4})
+        self.fields["remarks"].widget = forms.Textarea(attrs={"class": "form-control w-100", "rows": 4})
 
 
 PROMPT_TASKS = [AIExtractionProfile.Task.EMAIL_EXTRACTION, AIExtractionProfile.Task.MEMBER_FIELD_MAPPING]
@@ -163,10 +163,10 @@ class ExtractionPromptForm(forms.ModelForm):
         self.fields["field_aliases"].help_text = 'Canonical field to source labels, for example {"national_id": ["Civil No", "CPR"]}.'
         self.fields["priority"].help_text = "Lower numbers run first among equally specific profiles. Edit an existing active profile to change its extraction instructions."
         for field in self.fields.values():
-            field.widget.attrs["class"] = ("toggle toggle-primary" if isinstance(field.widget, forms.CheckboxInput)
-                else "textarea textarea-bordered w-full" if isinstance(field.widget, forms.Textarea)
-                else "select select-bordered w-full" if isinstance(field.widget, forms.Select)
-                else "input input-bordered w-full")
+            field.widget.attrs["class"] = ("form-check-input glis-switch" if isinstance(field.widget, forms.CheckboxInput)
+                else "form-control w-100" if isinstance(field.widget, forms.Textarea)
+                else "form-select w-100" if isinstance(field.widget, forms.Select)
+                else "form-control w-100")
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs["rows"] = 5
 
@@ -192,9 +192,9 @@ class PromptExampleForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget.attrs["class"] = ("toggle toggle-primary" if isinstance(field.widget, forms.CheckboxInput)
-                else "textarea textarea-bordered w-full" if isinstance(field.widget, forms.Textarea)
-                else "input input-bordered w-full")
+            field.widget.attrs["class"] = ("form-check-input glis-switch" if isinstance(field.widget, forms.CheckboxInput)
+                else "form-control w-100" if isinstance(field.widget, forms.Textarea)
+                else "form-control w-100")
 
     def clean_expected_output(self):
         from .services.extraction import normalize_ai_payload
@@ -208,7 +208,7 @@ class PromptExampleForm(forms.ModelForm):
 
 class PromptPreviewForm(forms.Form):
     sample_text = forms.CharField(max_length=30000, label="Sample email body or OCR text",
-                                 widget=forms.Textarea(attrs={"rows": 7, "class": "textarea textarea-bordered w-full"}))
+                                 widget=forms.Textarea(attrs={"rows": 7, "class": "form-control w-100"}))
 
 
 class PolicyEnrollmentForm(forms.Form):
@@ -288,11 +288,11 @@ class PolicyEnrollmentForm(forms.Form):
 
         for field in self.fields.values():
             if isinstance(field.widget, forms.Select):
-                css = "select select-bordered select-sm w-full"
+                css = "form-select form-select-sm w-100"
             elif isinstance(field.widget, forms.CheckboxInput):
-                css = "checkbox checkbox-primary checkbox-sm"
+                css = "form-check-input"
             else:
-                css = "input input-bordered input-sm w-full"
+                css = "form-control form-control-sm w-100"
             field.widget.attrs.setdefault("class", css)
 
     def clean_policy_number(self):
@@ -340,11 +340,11 @@ class BenefitPlanSetupForm(forms.ModelForm):
             self.fields["is_active"].initial = True
         for field in self.fields.values():
             if isinstance(field.widget, forms.CheckboxInput):
-                css = "checkbox checkbox-primary checkbox-sm"
+                css = "form-check-input"
             elif isinstance(field.widget, forms.Textarea):
-                css = "textarea textarea-bordered textarea-sm w-full"
+                css = "form-control form-control-sm w-100"
             else:
-                css = "input input-bordered input-sm w-full"
+                css = "form-control form-control-sm w-100"
             field.widget.attrs.setdefault("class", css)
 
     def clean_code(self):
@@ -475,9 +475,9 @@ class MemberRowForm(forms.Form):
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
-                "select select-bordered select-sm w-full"
+                "form-select form-select-sm w-100"
                 if isinstance(field.widget, forms.Select)
-                else "input input-bordered input-sm w-full",
+                else "form-control form-control-sm w-100",
             )
 
     def clean(self):
@@ -556,7 +556,7 @@ class MemberLookupRowForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget.attrs.setdefault("class", "input input-bordered input-sm w-full")
+            field.widget.attrs.setdefault("class", "form-control form-control-sm w-100")
 
     def clean(self):
         data = super().clean()
@@ -586,9 +586,9 @@ class MemberDemographicUpdateForm(MemberLookupRowForm):
             if isinstance(field.widget, forms.HiddenInput):
                 continue
             field.widget.attrs["class"] = (
-                "select select-bordered select-sm w-full"
+                "form-select form-select-sm w-100"
                 if isinstance(field.widget, forms.Select)
-                else "input input-bordered input-sm w-full"
+                else "form-control form-control-sm w-100"
             )
 
 
@@ -599,7 +599,7 @@ class MemberUploadForm(forms.Form):
         widget=forms.ClearableFileInput(
             attrs={
                 "accept": ".csv,.xlsx",
-                "class": "file-input file-input-bordered file-input-sm w-full",
+                "class": "form-control form-control-sm w-100",
             }
         ),
     )
@@ -721,15 +721,15 @@ class InboundEmailForm(forms.ModelForm):
         )
         for field in self.fields.values():
             if isinstance(field.widget, forms.Textarea):
-                css = "textarea textarea-bordered textarea-sm w-full"
+                css = "form-control form-control-sm w-100"
             elif isinstance(field.widget, forms.Select):
-                css = "select select-bordered select-sm w-full"
+                css = "form-select form-select-sm w-100"
             elif isinstance(field.widget, forms.ClearableFileInput):
-                css = "file-input file-input-bordered file-input-sm w-full"
+                css = "form-control form-control-sm w-100"
             elif isinstance(field.widget, forms.CheckboxInput):
-                css = "checkbox checkbox-primary checkbox-sm"
+                css = "form-check-input"
             else:
-                css = "input input-bordered input-sm w-full"
+                css = "form-control form-control-sm w-100"
             field.widget.attrs.setdefault("class", css)
 
     def clean_attachments(self):
@@ -767,7 +767,7 @@ class SourceBundleUploadForm(forms.Form):
             attrs={
                 "multiple": True,
                 "accept": ".eml,.msg,.csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp",
-                "class": "file-input file-input-bordered file-input-sm w-full",
+                "class": "form-control form-control-sm w-100",
             }
         ),
         help_text="Upload EML/Outlook MSG, Excel/CSV, PDF, passport/ID images or multiple front/back evidence files.",
@@ -802,14 +802,14 @@ class QueryRaiseForm(forms.Form):
         required=False,
         label="Selected participants",
         widget=forms.SelectMultiple(
-            attrs={"class": "select select-bordered select-sm w-full", "size": 5}
+            attrs={"class": "form-select form-select-sm w-100", "size": 5}
         ),
     )
     message = forms.CharField(
         widget=forms.Textarea(
             attrs={
                 "rows": 3,
-                "class": "textarea textarea-bordered textarea-sm w-full richtext-source",
+                "class": "form-control form-control-sm w-100 richtext-source",
             }
         )
     )
@@ -819,7 +819,7 @@ class QueryRaiseForm(forms.Form):
             attrs={
                 "multiple": True,
                 "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.csv",
-                "class": "file-input file-input-bordered file-input-sm w-full",
+                "class": "form-control form-control-sm w-100",
             }
         ),
     )
@@ -842,13 +842,13 @@ class QueryRaiseForm(forms.Form):
         for field in self.fields.values():
             field.widget.attrs.setdefault(
                 "class",
-                "select select-bordered select-sm w-full"
+                "form-select form-select-sm w-100"
                 if isinstance(field.widget, (forms.Select, forms.SelectMultiple))
-                else "file-input file-input-bordered file-input-sm w-full"
+                else "form-control form-control-sm w-100"
                 if isinstance(field.widget, forms.ClearableFileInput)
-                else "textarea textarea-bordered textarea-sm w-full"
+                else "form-control form-control-sm w-100"
                 if isinstance(field.widget, forms.Textarea)
-                else "input input-bordered input-sm w-full",
+                else "form-control form-control-sm w-100",
             )
 
     def clean(self):
@@ -869,7 +869,7 @@ class QueryMessageForm(forms.Form):
         widget=forms.Textarea(
             attrs={
                 "rows": 3,
-                "class": "textarea textarea-bordered textarea-sm w-full richtext-source",
+                "class": "form-control form-control-sm w-100 richtext-source",
             }
         )
     )
@@ -883,7 +883,7 @@ class QueryMessageForm(forms.Form):
             attrs={
                 "multiple": True,
                 "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx",
-                "class": "file-input file-input-bordered file-input-sm w-full",
+                "class": "form-control form-control-sm w-100",
             }
         ),
     )
@@ -891,10 +891,10 @@ class QueryMessageForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["message"].widget.attrs.setdefault(
-            "class", "textarea textarea-bordered textarea-sm w-full richtext-source"
+            "class", "form-control form-control-sm w-100 richtext-source"
         )
         self.fields["audience"].widget.attrs.setdefault(
-            "class", "select select-bordered select-sm w-full"
+            "class", "form-select form-select-sm w-100"
         )
 
 
@@ -904,7 +904,7 @@ class BulkCardSelectionForm(forms.Form):
         widget=forms.Textarea(
             attrs={
                 "rows": 5,
-                "class": "textarea textarea-bordered w-full",
+                "class": "form-control w-100",
                 "placeholder": "CARD-001\nCARD-002, CARD-003",
             }
         ),
@@ -938,24 +938,24 @@ class CardDispatchForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             if isinstance(field.widget, forms.Select):
-                css = "select select-bordered select-sm w-full"
+                css = "form-select form-select-sm w-100"
             elif isinstance(field.widget, forms.Textarea):
-                css = "textarea textarea-bordered textarea-sm w-full"
+                css = "form-control form-control-sm w-100"
             else:
-                css = "input input-bordered input-sm w-full"
+                css = "form-control form-control-sm w-100"
             field.widget.attrs.setdefault("class", css)
 
 
 class TransactionRejectionForm(forms.Form):
     reason = forms.CharField(
         label="Rejection reason",
-        widget=forms.Textarea(attrs={"rows": 4, "class": "textarea textarea-bordered w-full"}),
+        widget=forms.Textarea(attrs={"rows": 4, "class": "form-control w-100"}),
     )
 
 
 class TPABulkProcessingForm(forms.Form):
     file = forms.FileField(label="Completed member file", widget=forms.ClearableFileInput(
-        attrs={"accept": ".xlsx,.csv", "class": "file-input file-input-bordered file-input-sm w-full"}
+        attrs={"accept": ".xlsx,.csv", "class": "form-control form-control-sm w-100"}
     ))
 
 
@@ -973,11 +973,11 @@ class TPAProcessingRowForm(forms.Form):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             if isinstance(field.widget, forms.Textarea):
-                css = "textarea textarea-bordered textarea-sm w-full"
+                css = "form-control form-control-sm w-100"
             elif isinstance(field.widget, forms.Select):
-                css = "select select-bordered select-sm w-full"
+                css = "form-select form-select-sm w-100"
             else:
-                css = "input input-bordered input-sm w-full"
+                css = "form-control form-control-sm w-100"
             field.widget.attrs.setdefault("class", css)
 
 
@@ -995,8 +995,8 @@ class PolicyDetailsForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = (
-                "checkbox checkbox-primary checkbox-sm" if isinstance(field.widget, forms.CheckboxInput)
-                else "input input-bordered input-sm w-full"
+                "form-check-input" if isinstance(field.widget, forms.CheckboxInput)
+                else "form-control form-control-sm w-100"
             )
 
     def clean_policy_number(self):

@@ -1,40 +1,40 @@
 {% load i18n %}
 <div id="comment-form-container">
   <div id="comment-form-errors">{% include "tickets/partials/comment_errors.html" %}</div>
-  <form id="ticket-comment-form" class="space-y-2" method="post" enctype="multipart/form-data"
+  <form id="ticket-comment-form" class="glis-stack-2" method="post" enctype="multipart/form-data"
         hx-post="{% url 'portal:add_comment' ticket.reference %}" hx-encoding="multipart/form-data"
         hx-target="#comment-list" hx-swap="beforeend" hx-disabled-elt="#comment-submit-button"
         hx-indicator="#comment-submit-spinner">
     {% csrf_token %}
-    <label class="fieldset"><span class="fieldset-legend">{% translate "Message" %} *</span>{{ comment_form.body }}</label>
+    <label class="glis-field"><span class="form-label">{% translate "Message" %} *</span>{{ comment_form.body }}</label>
 
     <div class="composer-options">
-    <label class="fieldset"><span class="fieldset-legend">{% translate "Status" %}</span>{{ comment_form.status }}</label>
+    <label class="glis-field"><span class="form-label">{% translate "Status" %}</span>{{ comment_form.status }}</label>
     {% if comment_form.is_internal %}
-    <label class="flex items-start gap-3 rounded-xl border border-base-300 bg-base-200/45 p-2">
+    <label class="d-flex align-items-start gap-2 rounded-3 border border-body bg-body-tertiary p-2">
       {{ comment_form.is_internal }}
-      <span><strong class="block text-sm">{% translate "Internal note" %}</strong><small class="text-base-content/45">{% translate "Internal notes are visible only to authorized staff." %}</small></span>
+      <span><strong class="d-block small">{% translate "Internal note" %}</strong><small class="text-body-secondary">{% translate "Internal notes are visible only to authorized staff." %}</small></span>
     </label>
     {% endif %}
     </div>
 
     {% if ticket.category.comment_attachment_required %}
     <div>
-      <span class="mb-2 block text-sm font-semibold"><i class="bi bi-paperclip me-1"></i>{% translate "Documents" %} *</span>
-      <div id="comment-dropzone" data-dropzone class="cursor-pointer rounded-[1.4rem] border border-dashed border-base-300 bg-base-200/35 p-6 text-center transition hover:border-primary hover:bg-primary/5" role="button" tabindex="0">
-        <i class="bi bi-cloud-arrow-up mb-2 block text-3xl text-primary"></i>
-        <strong class="block">{% translate "Drag & drop documents here" %}</strong>
-        <span class="mt-1 block text-sm text-base-content/45">{% translate "or click to select documents" %}</span>
-        <div class="mt-3 text-xs leading-5 text-base-content/40">{% translate "Maximum" %} {{ ticket.category.comment_attachment_max_size_mb }} MB {% translate "per file" %} · {% translate "Maximum" %} {{ ticket.category.comment_attachment_max_count }} {% translate "files" %}<br>{% translate "Allowed" %}: {{ ticket.category.comment_attachment_extensions }}</div>
-        <input id="comment-attachments" type="file" name="attachments" class="hidden" multiple>
+      <span class="mb-2 d-block small fw-semibold"><i class="bi bi-paperclip me-1"></i>{% translate "Documents" %} *</span>
+      <div id="comment-dropzone" data-dropzone class="glis-cursor-pointer rounded-4 border glis-border-dashed border-body bg-body-tertiary p-4 text-center" role="button" tabindex="0">
+        <i class="bi bi-cloud-arrow-up mb-2 d-block fs-3 text-primary"></i>
+        <strong class="d-block">{% translate "Drag & drop documents here" %}</strong>
+        <span class="mt-1 d-block small text-body-secondary">{% translate "or click to select documents" %}</span>
+        <div class="mt-2 glis-text-xs lh-base text-body-secondary">{% translate "Maximum" %} {{ ticket.category.comment_attachment_max_size_mb }} MB {% translate "per file" %} · {% translate "Maximum" %} {{ ticket.category.comment_attachment_max_count }} {% translate "files" %}<br>{% translate "Allowed" %}: {{ ticket.category.comment_attachment_extensions }}</div>
+        <input id="comment-attachments" type="file" name="attachments" class="d-none" multiple>
       </div>
-      <div id="comment-selected-files" class="mt-3 space-y-2"></div>
+      <div id="comment-selected-files" class="mt-2 glis-stack-2"></div>
     </div>
     {% else %}
 
     {% endif %}
 
-    <div class="flex justify-end"><button id="comment-submit-button" class="btn btn-primary rounded-full" type="submit"><span id="comment-submit-spinner" class="htmx-indicator loading loading-spinner loading-xs" role="status" aria-hidden="true"></span><i class="bi bi-send"></i>{% translate "Post Comment" %}</button></div>
+    <div class="d-flex justify-content-end"><button id="comment-submit-button" class="btn btn-primary rounded-pill" type="submit"><span id="comment-submit-spinner" class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><i class="bi bi-send"></i>{% translate "Post Comment" %}</button></div>
   </form>
 </div>
 
@@ -62,22 +62,22 @@
     selectedFilesContainer.innerHTML = "";
     selectedFiles.forEach(function (file, index) {
       const item = document.createElement("div");
-      item.className = "flex items-center gap-3 rounded-xl border border-base-300 bg-base-100 p-3";
+      item.className = "d-flex align-items-center gap-2 rounded-3 border border-body bg-body p-2";
       const icon = document.createElement("span");
-      icon.className = "grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary";
+      icon.className = "d-grid glis-h-9 glis-w-9 glis-place-center rounded-2 bg-primary-subtle text-primary";
       icon.innerHTML = '<i class="bi bi-file-earmark"></i>';
       const information = document.createElement("span");
-      information.className = "min-w-0 flex-1";
+      information.className = "glis-min-width-0 glis-flex-fill";
       const name = document.createElement("strong");
-      name.className = "block truncate text-sm";
+      name.className = "d-block text-truncate small";
       name.textContent = file.name;
       const size = document.createElement("small");
-      size.className = "text-xs text-base-content/45";
+      size.className = "glis-text-xs text-body-secondary";
       size.textContent = formatFileSize(file.size);
       information.append(name, size);
       const removeButton = document.createElement("button");
       removeButton.type = "button";
-      removeButton.className = "btn btn-ghost btn-circle btn-sm text-error";
+      removeButton.className = "btn btn-light glis-btn-icon rounded-circle btn-sm text-danger";
       removeButton.innerHTML = '<i class="bi bi-trash"></i>';
       removeButton.setAttribute("aria-label", "{% translate 'Remove document' %}");
       removeButton.addEventListener("click", function () {
@@ -106,9 +106,9 @@
     if (event.key === "Enter" || event.key === " ") { event.preventDefault(); input.click(); }
   });
   input.addEventListener("change", function () { addFiles(input.files); });
-  dropzone.addEventListener("dragover", function (event) { event.preventDefault(); dropzone.classList.add("border-primary", "bg-primary/5"); });
-  dropzone.addEventListener("dragleave", function () { dropzone.classList.remove("border-primary", "bg-primary/5"); });
-  dropzone.addEventListener("drop", function (event) { event.preventDefault(); dropzone.classList.remove("border-primary", "bg-primary/5"); addFiles(event.dataTransfer.files); });
+  dropzone.addEventListener("dragover", function (event) { event.preventDefault(); dropzone.classList.add("border-primary", "bg-primary-subtle"); });
+  dropzone.addEventListener("dragleave", function () { dropzone.classList.remove("border-primary", "bg-primary-subtle"); });
+  dropzone.addEventListener("drop", function (event) { event.preventDefault(); dropzone.classList.remove("border-primary", "bg-primary-subtle"); addFiles(event.dataTransfer.files); });
   document.body.addEventListener("ticketCommentPosted", function () {
     selectedFiles = []; syncInput(); renderSelectedFiles();
     const errorContainer = document.getElementById("comment-form-errors");

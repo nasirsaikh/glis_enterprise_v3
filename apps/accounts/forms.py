@@ -6,8 +6,8 @@ from .models import UserProfile
 
 
 class EmailOrUsernameAuthenticationForm(AuthenticationForm):
-    username = forms.CharField(label=_("Email or username"), widget=forms.TextInput(attrs={"class": "input input-bordered w-full", "autocomplete": "username", "autofocus": True}))
-    password = forms.CharField(label=_("Password"), strip=False, widget=forms.PasswordInput(attrs={"class": "input input-bordered w-full", "autocomplete": "current-password"}))
+    username = forms.CharField(label=_("Email or username"), widget=forms.TextInput(attrs={"class": "form-control w-100", "autocomplete": "username", "autofocus": True}))
+    password = forms.CharField(label=_("Password"), strip=False, widget=forms.PasswordInput(attrs={"class": "form-control w-100", "autocomplete": "current-password"}))
 
     error_messages = {"invalid_login": _("The email/username or password is incorrect. Check Caps Lock and try again."), "inactive": _("This account is inactive.")}
 
@@ -26,23 +26,23 @@ class EmailOrUsernameAuthenticationForm(AuthenticationForm):
 
 
 class UserProfileForm(forms.Form):
-    first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
-    last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
-    email = forms.EmailField(widget=forms.EmailInput(attrs={"class": "input input-bordered w-full"}))
-    phone = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
-    organization = forms.CharField(label=_("Organizations"), required=False, disabled=True, widget=forms.TextInput(attrs={"class": "input input-bordered w-full", "readonly": "readonly"}))
-    job_title = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
-    department = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
-    bio = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 2}))
-    preferred_language = forms.ChoiceField(choices=UserProfile._meta.get_field("preferred_language").choices, widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
+    first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={"class": "form-control w-100"}))
+    last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={"class": "form-control w-100"}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={"class": "form-control w-100"}))
+    phone = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={"class": "form-control w-100"}))
+    organization = forms.CharField(label=_("Organizations"), required=False, disabled=True, widget=forms.TextInput(attrs={"class": "form-control w-100", "readonly": "readonly"}))
+    job_title = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "form-control w-100"}))
+    department = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "form-control w-100"}))
+    bio = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": "form-control w-100", "rows": 2}))
+    preferred_language = forms.ChoiceField(choices=UserProfile._meta.get_field("preferred_language").choices, widget=forms.Select(attrs={"class": "form-select w-100"}))
     theme = forms.ChoiceField(
         choices=[("system", _("System")), ("light", _("Light")), ("dark", _("Dark"))],
-        widget=forms.Select(attrs={"class": "select select-bordered w-full", "data-theme-select": "true"}),
+        widget=forms.Select(attrs={"class": "form-select w-100", "data-theme-select": "true"}),
     )
-    avatar = forms.ImageField(required=False, widget=forms.FileInput(attrs={"class": "file-input file-input-bordered w-full", "accept": "image/png,image/jpeg,image/webp"}))
-    remove_avatar = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "toggle toggle-primary"}))
-    email_notifications = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "toggle toggle-primary"}))
-    browser_notifications = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "toggle toggle-primary"}))
+    avatar = forms.ImageField(required=False, widget=forms.FileInput(attrs={"class": "form-control w-100", "accept": "image/png,image/jpeg,image/webp"}))
+    remove_avatar = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input glis-switch"}))
+    email_notifications = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input glis-switch"}))
+    browser_notifications = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input glis-switch"}))
 
     def __init__(self, *args, user, **kwargs):
         self.user = user

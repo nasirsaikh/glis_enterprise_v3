@@ -9,12 +9,17 @@
     }
     const cancel = event.target.closest("[data-cancel-tpa-notes]");
     if (cancel) {
-      const notes = cancel.closest("dialog");
+      const notes = cancel.closest(".modal");
       notes.querySelectorAll("textarea").forEach(field => { field.value = field.dataset.notesOriginal ?? field.defaultValue; });
-      notes.close();
+      window.glisUI.closeModal(notes);
     }
   });
-  document.addEventListener("close", (event) => {
+  document.addEventListener("show.bs.modal", (event) => {
+    if (event.target.matches?.("[data-tpa-notes-dialog]")) {
+      event.target.querySelectorAll("textarea").forEach(field => { field.dataset.notesOriginal = field.value; });
+    }
+  });
+  document.addEventListener("hidden.bs.modal", (event) => {
     if (event.target.matches?.("[data-tpa-notes-dialog]")) {
       event.target.querySelectorAll("textarea").forEach(field => {
         field.value = field.dataset.notesOriginal ?? field.defaultValue;
@@ -31,13 +36,13 @@
   };
   const isDark = () => root.getAttribute("data-theme") === "dark";
   const palette = () => [
-    cssVar("--color-primary", "#167a52"),
-    cssVar("--color-info", "#0284c7"),
-    cssVar("--color-success", "#16a34a"),
-    cssVar("--color-warning", "#d97706"),
-    cssVar("--color-error", "#dc2626"),
-    cssVar("--color-secondary", "#7c3aed"),
-    cssVar("--color-accent", "#0891b2"),
+    cssVar("--bs-primary", "#167a52"),
+    cssVar("--bs-info", "#0284c7"),
+    cssVar("--bs-success", "#16a34a"),
+    cssVar("--bs-warning", "#d97706"),
+    cssVar("--bs-danger", "#dc2626"),
+    cssVar("--bs-secondary", "#7c3aed"),
+    cssVar("--bs-info", "#0891b2"),
   ];
 
   const destroyChart = (id) => {
@@ -62,7 +67,7 @@
       type,
       height,
       background: "transparent",
-      foreColor: cssVar("--color-base-content", "#475569"),
+      foreColor: cssVar("--bs-body-color", "#475569"),
       fontFamily: "Inter, Cairo, sans-serif",
       toolbar: { show: false },
       zoom: { enabled: false },
@@ -72,7 +77,7 @@
     },
     theme: { mode: isDark() ? "dark" : "light" },
     grid: {
-      borderColor: cssVar("--color-base-300", "#e5e7eb"),
+      borderColor: cssVar("--bs-border-color", "#e5e7eb"),
       strokeDashArray: 3,
       padding: { left: 6, right: 8, top: 0, bottom: 0 },
     },
@@ -80,7 +85,7 @@
     legend: {
       fontSize: "10px",
       fontWeight: 600,
-      labels: { colors: cssVar("--color-base-content", "#475569") },
+      labels: { colors: cssVar("--bs-body-color", "#475569") },
       markers: { size: 5 },
       itemMargin: { horizontal: 8, vertical: 3 },
     },
@@ -123,13 +128,13 @@
       series: quality.map((item) => Number(item.value || 0)),
       labels: quality.map((item) => item.label),
       colors: [
-        cssVar("--color-success", "#16a34a"),
-        cssVar("--color-warning", "#d97706"),
-        cssVar("--color-error", "#dc2626"),
+        cssVar("--bs-success", "#16a34a"),
+        cssVar("--bs-warning", "#d97706"),
+        cssVar("--bs-danger", "#dc2626"),
       ],
       stroke: {
         width: 2,
-        colors: [cssVar("--color-base-100", "#fff")],
+        colors: [cssVar("--bs-body-bg", "#fff")],
       },
       plotOptions: {
         pie: {
@@ -153,7 +158,7 @@
     const errorOptions = commonChart("bar");
     Object.assign(errorOptions, {
       series: [{ name: "Rows", data: errors.map((item) => Number(item.value || 0)) }],
-      colors: [cssVar("--color-error", "#dc2626")],
+      colors: [cssVar("--bs-danger", "#dc2626")],
       plotOptions: {
         bar: {
           horizontal: true,
@@ -185,7 +190,7 @@
       colors: palette(),
       stroke: {
         width: 2,
-        colors: [cssVar("--color-base-100", "#fff")],
+        colors: [cssVar("--bs-body-bg", "#fff")],
       },
       plotOptions: {
         pie: {
@@ -212,7 +217,7 @@
         name: "Transactions",
         data: sourceRows.map((item) => Number(item.value || 0)),
       }],
-      colors: [cssVar("--color-primary", "#167a52")],
+      colors: [cssVar("--bs-primary", "#167a52")],
       plotOptions: {
         bar: {
           horizontal: true,
@@ -277,13 +282,13 @@
         ["dragenter", "dragover"].forEach((name) =>
           zone.addEventListener(name, (event) => {
             event.preventDefault();
-            zone.classList.add("bg-primary/5");
+            zone.classList.add("bg-primary-subtle");
           })
         );
         ["dragleave", "drop"].forEach((name) =>
           zone.addEventListener(name, (event) => {
             event.preventDefault();
-            zone.classList.remove("bg-primary/5");
+            zone.classList.remove("bg-primary-subtle");
           })
         );
 
@@ -393,8 +398,8 @@
         indicators.forEach((indicator, stepIndex) => {
           const state = stepIndex < activeStep ? "complete" : stepIndex === activeStep ? "active" : "upcoming";
           indicator.dataset.state = state;
-          indicator.classList.toggle("step-primary", state === "active");
-          indicator.classList.toggle("step-success", state === "complete");
+          indicator.classList.toggle("is-current", state === "active");
+          indicator.classList.toggle("is-complete", state === "complete");
           if (state === "active") indicator.setAttribute("aria-current", "step");
           else indicator.removeAttribute("aria-current");
         });

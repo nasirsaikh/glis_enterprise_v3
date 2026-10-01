@@ -1,52 +1,52 @@
 {% extends "base_portal.html" %}{% load i18n %}
 {% block title %}{% translate "Vanna analytics" %}{% endblock %}
 {% block main_class %}p-0 portal-main-analytics{% endblock %}
-{% block content_width_class %}w-full{% endblock %}
+{% block content_width_class %}w-100{% endblock %}
 {% block content %}
 {% if selected_domain %}
 {% url 'orchestrator:session_detail' '00000000-0000-0000-0000-000000000000' as session_detail_template %}
 <div id="vanna-workbench"
-     class="vanna-workspace flex min-h-0 flex-col overflow-hidden bg-base-100"
+     class="vanna-workspace d-flex glis-min-height-0 flex-column overflow-hidden bg-body"
      data-session-detail-template="{{ session_detail_template }}"
      data-session-list-url="{% url 'orchestrator:session_list' %}"
      data-domain-id="{{ selected_domain.pk }}">
 
-  <section class="flex min-h-0 min-w-0 flex-col">
-    <header class="flex flex-wrap items-center justify-between gap-3 border-b border-base-300 px-4 py-3 sm:px-6">
-      <div class="flex items-center gap-3"><span class="status status-success animate-pulse"></span><div><strong class="block">{% translate "Ask Vanna" %} · {{ selected_domain.name }}</strong><small class="text-base-content/45">{% translate "Chats, sessions and domain selection are available from the main sidebar." %}</small></div></div>
-      <div class="flex flex-wrap gap-2"><span class="badge badge-outline gap-1"><i class="bi bi-database"></i>{{ selected_domain.collection_name|default:"Tool Memory" }}</span><span class="badge badge-success badge-soft gap-1"><i class="bi bi-shield-check"></i>{% translate "Governed" %}</span></div>
+  <section class="d-flex glis-min-height-0 glis-min-width-0 flex-column">
+    <header class="d-flex flex-wrap align-items-center justify-content-between gap-2 border-bottom border-body px-3 py-2 px-sm-4">
+      <div class="d-flex align-items-center gap-2"><span class="glis-status bg-success glis-pulse"></span><div><strong class="d-block">{% translate "Ask Vanna" %} · {{ selected_domain.name }}</strong><small class="text-body-secondary">{% translate "Chats, sessions and domain selection are available from the main sidebar." %}</small></div></div>
+      <div class="d-flex flex-wrap gap-2"><span class="badge border text-body-secondary bg-transparent gap-1"><i class="bi bi-database"></i>{{ selected_domain.collection_name|default:"Tool Memory" }}</span><span class="badge text-bg-success glis-badge-soft gap-1"><i class="bi bi-shield-check"></i>{% translate "Governed" %}</span></div>
     </header>
 
     {% if vanna_settings.provider == "ollama_vanna" and not vanna_settings.allow_sql_execution %}
-    <div class="alert alert-warning rounded-none"><i class="bi bi-exclamation-triangle"></i><span>{% translate "Local Model is selected, but SQL execution is disabled in Settings." %}</span></div>
+    <div class="alert alert-warning rounded-0"><i class="bi bi-exclamation-triangle"></i><span>{% translate "Local Model is selected, but SQL execution is disabled in Settings." %}</span></div>
     {% endif %}
 
-    <div class="flex-1 overflow-y-auto bg-base-200/30 p-4 sm:p-6" id="vanna-conversation" aria-live="polite">
-      <div class="flex items-center justify-center gap-2 py-16 text-base-content/45" id="vanna-history-loading"><span class="loading loading-spinner loading-sm"></span>{% translate "Loading conversation…" %}</div>
-      <div class="hidden mx-auto max-w-2xl py-16 text-center" id="vanna-welcome">
-        <span class="aura aura-holo aura-lg rounded-[2rem]"><span class="grid h-20 w-20 place-items-center rounded-[2rem] bg-primary text-primary-content"><i class="bi bi-stars text-3xl"></i></span></span>
-        <h2 class="mt-6 text-3xl font-black tracking-[-.04em]">{% translate "What would you like to analyze?" %}</h2>
-        <p class="mt-3 leading-7 text-base-content/55">{% translate "Ask about trends, totals or comparisons. Explore the chart and results in your conversation." %}</p>
+    <div class="glis-flex-fill overflow-y-auto bg-body-tertiary p-3 p-sm-4" id="vanna-conversation" aria-live="polite">
+      <div class="d-flex align-items-center justify-content-center gap-2 py-5 text-body-secondary" id="vanna-history-loading"><span class="spinner-border spinner-border-sm"></span>{% translate "Loading conversation…" %}</div>
+      <div class="d-none mx-auto glis-max-2xl py-5 text-center" id="vanna-welcome">
+        <span class="aura aura-holo aura-lg rounded-4"><span class="d-grid glis-h-20 glis-w-20 glis-place-center rounded-4 bg-primary text-white"><i class="bi bi-stars fs-3"></i></span></span>
+        <h2 class="mt-4 fs-3 fw-bold">{% translate "What would you like to analyze?" %}</h2>
+        <p class="mt-2 lh-lg text-body-secondary">{% translate "Ask about trends, totals or comparisons. Explore the chart and results in your conversation." %}</p>
       </div>
     </div>
 
-    <div class="border-t border-base-300 bg-base-100 p-3 sm:p-4">
-      <div class="mb-3 flex gap-2 overflow-x-auto pb-1" id="vanna-suggestions">{% for prompt in suggested_prompts %}<button type="button" class="btn btn-ghost btn-sm shrink-0 rounded-full border border-base-300" data-vanna-prompt="{{ prompt.text_en }}">{{ prompt.text_en }}</button>{% endfor %}</div>
-      <form id="vanna-form" class="mx-auto max-w-5xl" action="{% url 'orchestrator:ask' %}" method="post">
+    <div class="border-top border-body bg-body p-2 p-sm-3">
+      <div class="mb-2 d-flex gap-2 overflow-x-auto pb-1" id="vanna-suggestions">{% for prompt in suggested_prompts %}<button type="button" class="btn btn-light btn-sm flex-shrink-0 rounded-pill border border-body" data-vanna-prompt="{{ prompt.text_en }}">{{ prompt.text_en }}</button>{% endfor %}</div>
+      <form id="vanna-form" class="mx-auto glis-max-5xl" action="{% url 'orchestrator:ask' %}" method="post">
         {% csrf_token %}<input type="hidden" name="domain" value="{{ selected_domain.pk }}"><input type="hidden" name="session_id" id="vanna-session" value="{% if active_session %}{{ active_session.pk }}{% endif %}">
-        <label class="sr-only" for="vanna-question">{% translate "What would you like to analyze?" %}</label>
-        <div class="flex items-end gap-2 rounded-[1.6rem] border border-base-300 bg-base-200/55 p-2 shadow-lg focus-within:border-primary">
-          <textarea class="textarea min-h-16 flex-1 resize-none border-0 bg-transparent focus:outline-none" id="vanna-question" name="question" rows="2" required placeholder="{% translate 'How can I help with your data?' %}"></textarea>
-          <button class="btn btn-primary btn-circle shrink-0" id="vanna-send" type="submit" title="{% translate 'Send question' %}"><i class="bi bi-arrow-up"></i></button>
+        <label class="visually-hidden" for="vanna-question">{% translate "What would you like to analyze?" %}</label>
+        <div class="d-flex align-items-end gap-2 rounded-4 border border-body bg-body-tertiary p-2 shadow-lg">
+          <textarea class="form-control glis-min-h-16 glis-flex-fill glis-resize-none border-0 bg-transparent" id="vanna-question" name="question" rows="2" required placeholder="{% translate 'How can I help with your data?' %}"></textarea>
+          <button class="btn btn-primary glis-btn-icon rounded-circle flex-shrink-0" id="vanna-send" type="submit" title="{% translate 'Send question' %}"><i class="bi bi-arrow-up"></i></button>
         </div>
       </form>
-      <div id="vanna-error" class="alert alert-error hidden mx-auto mt-2 max-w-5xl"></div>
+      <div id="vanna-error" class="alert alert-danger d-none mx-auto mt-2 glis-max-5xl"></div>
     </div>
   </section>
 
-  <div id="vanna-diagnostic-log" class="hidden"></div><span id="vanna-diagnostic-count" class="hidden">0</span>
+  <div id="vanna-diagnostic-log" class="d-none"></div><span id="vanna-diagnostic-count" class="d-none">0</span>
 </div>
 {% else %}
-<div class="mx-auto max-w-3xl py-16"><div class="card border border-base-300 bg-base-100 shadow-sm"><div class="card-body items-center py-14 text-center"><i class="bi bi-database-x text-4xl text-base-content/35"></i><h2 class="card-title mt-3">{% translate "No analytics domain is available" %}</h2><p class="text-base-content/55">{% translate "Ask an administrator to configure a permitted AI domain." %}</p></div></div></div>
+<div class="mx-auto glis-max-3xl py-5"><div class="card border border-body bg-body shadow-sm"><div class="card-body align-items-center py-5 text-center"><i class="bi bi-database-x fs-2 text-body-secondary"></i><h2 class="card-title mt-2">{% translate "No analytics domain is available" %}</h2><p class="text-body-secondary">{% translate "Ask an administrator to configure a permitted AI domain." %}</p></div></div></div>
 {% endif %}
 {% endblock %}

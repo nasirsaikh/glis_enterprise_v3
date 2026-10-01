@@ -2,130 +2,129 @@
 {% load i18n static %}
 {% block title %}{{ ticket.reference }}{% endblock %}
 {% block content %}
-<div class="space-y-5">
-  <div class="breadcrumbs text-sm text-base-content/50"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li>{{ ticket.reference }}</li><li>{{ ticket.category }}</li></ul></div>
+<div class="glis-stack-5">
+  <div class="glis-breadcrumbs small text-body-secondary"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li>{{ ticket.reference }}</li><li>{{ ticket.category }}</li></ul></div>
 
-  <section class="card rounded-[1.5rem] border border-base-300 bg-base-100 p-5 shadow-sm sm:p-7" data-reveal>
-    <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-      <div class="min-w-0 flex-1">
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="badge badge-primary badge-lg font-black">{{ ticket.reference }}</span>
-          {% if ticket.project %}<span class="badge badge-outline">{{ ticket.project.name_en }}</span>{% endif %}
-          <span class="badge badge-warning badge-soft badge-sm">{{ ticket.get_priority_display }}</span>
-          <span id="ticket-status-header" class="badge badge-outline badge-sm">{{ ticket.get_status_display }}</span>
-          <span id="ticket-sla-header" class="badge badge-info badge-soft badge-sm">{{ ticket.sla_state|title }}</span>
-          {% if ticket.visibility == 'restricted' %}<span class="badge badge-warning badge-soft gap-1"><i class="bi bi-lock-fill"></i>{% translate "Restricted" %}</span>{% endif %}
-          {% if ticket.is_sensitive %}<span class="badge badge-error badge-soft gap-1"><i class="bi bi-eye-slash"></i>{% translate "Sensitive" %}</span>{% endif %}
+  <section class="card rounded-4 border border-body bg-body p-3 shadow-sm p-sm-4" data-reveal>
+    <div class="d-flex flex-column gap-3 flex-xl-row align-items-xl-start justify-content-xl-between">
+      <div class="glis-min-width-0 glis-flex-fill">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <span class="badge text-bg-primary fw-bold">{{ ticket.reference }}</span>
+          {% if ticket.project %}<span class="badge border text-body-secondary bg-transparent">{{ ticket.project.name_en }}</span>{% endif %}
+          <span class="badge text-bg-warning glis-badge-soft glis-badge-small">{{ ticket.get_priority_display }}</span>
+          <span id="ticket-status-header" class="badge border text-body-secondary bg-transparent glis-badge-small">{{ ticket.get_status_display }}</span>
+          <span id="ticket-sla-header" class="badge text-bg-info glis-badge-soft glis-badge-small">{{ ticket.sla_state|title }}</span>
+          {% if ticket.visibility == 'restricted' %}<span class="badge text-bg-warning glis-badge-soft gap-1"><i class="bi bi-lock-fill"></i>{% translate "Restricted" %}</span>{% endif %}
+          {% if ticket.is_sensitive %}<span class="badge text-bg-danger glis-badge-soft gap-1"><i class="bi bi-eye-slash"></i>{% translate "Sensitive" %}</span>{% endif %}
         </div>
-        <p class="mt-2 text-sm opacity-65">{{ ticket.organization.name_en }}{% if ticket.policy_id %} · {{ ticket.policy.policy_number }}{% endif %} · {{ ticket.product }} · {{ ticket.category }}</p>
-        <div class="flex flex-wrap gap-2">{% for tag in tagged_participants %}<span class="badge badge-outline">{{ tag.user.get_full_name|default:tag.user.username }}</span>{% if can_share %}<form method="post" action="{% url 'portal:tag_ticket_user' ticket.reference %}" hx-post="{% url 'portal:tag_ticket_user' ticket.reference %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}<input type="hidden" name="user" value="{{ tag.user_id }}"><input type="hidden" name="action" value="untag"><button class="btn btn-ghost btn-xs" type="submit">{% translate 'Untag' %}</button><span class="htmx-indicator loading loading-spinner loading-xs" aria-hidden="true"></span><div class="alert alert-error hidden mt-2" data-ticket-action-error role="alert"></div></form>{% endif %}{% endfor %}</div>
-        <h1 class="mt-4 max-w-4xl text-2xl font-black leading-tight tracking-[-.035em] sm:text-3xl">{{ ticket.subject }}</h1>
-        <p class="mt-2 text-sm text-base-content/50">{% blocktranslate with date=ticket.created_at|date:"d M Y, h:i A" requester=ticket.requester.get_full_name|default:ticket.requester.email %}Logged by {{ requester }} on {{ date }}{% endblocktranslate %}</p>
+        <p class="mt-2 small opacity-75">{{ ticket.organization.name_en }}{% if ticket.policy_id %} · {{ ticket.policy.policy_number }}{% endif %} · {{ ticket.product }} · {{ ticket.category }}</p>
+        <div class="d-flex flex-wrap gap-2">{% for tag in tagged_participants %}<span class="badge border text-body-secondary bg-transparent">{{ tag.user.get_full_name|default:tag.user.username }}</span>{% if can_share %}<form method="post" action="{% url 'portal:tag_ticket_user' ticket.reference %}" hx-post="{% url 'portal:tag_ticket_user' ticket.reference %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}<input type="hidden" name="user" value="{{ tag.user_id }}"><input type="hidden" name="action" value="untag"><button class="btn btn-light btn-sm glis-btn-xs" type="submit">{% translate 'Untag' %}</button><span class="htmx-indicator spinner-border spinner-border-sm" aria-hidden="true"></span><div class="alert alert-danger d-none mt-2" data-ticket-action-error role="alert"></div></form>{% endif %}{% endfor %}</div>
+        <h1 class="mt-3 glis-max-4xl fs-4 fw-bold lh-sm">{{ ticket.subject }}</h1>
+        <p class="mt-2 small text-body-secondary">{% blocktranslate with date=ticket.created_at|date:"d M Y, h:i A" requester=ticket.requester.get_full_name|default:ticket.requester.email %}Logged by {{ requester }} on {{ date }}{% endblocktranslate %}</p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <a class="btn btn-ghost btn-sm rounded-full" href="{% url 'portal:ticket_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Back" %}</a>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <a class="btn btn-light btn-sm rounded-pill" href="{% url 'portal:ticket_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Back" %}</a>
         {% if ticket.get_status_display == "Closed" %}
-          <span class="btn btn-disabled btn-sm rounded-full">{{ ticket.get_status_display }}</span>
+          <span class="btn disabled btn-sm rounded-pill">{{ ticket.get_status_display }}</span>
         {% else %}
-          {% if can_release %}<form method="post" action="{% url 'portal:release_ticket' ticket.reference %}" hx-post="{% url 'portal:release_ticket' ticket.reference %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}<button class="btn btn-outline btn-sm" type="submit">{% translate 'Release' %}</button><span class="htmx-indicator loading loading-spinner loading-xs" aria-hidden="true"></span><div class="alert alert-error hidden mt-2" data-ticket-action-error role="alert"></div></form>{% endif %}
-          {% if can_share %}<button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('tagModal').showModal()">{% translate 'Tag Users' %}</button><button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('approvalRequestModal').showModal()">{% translate 'Request Approval' %}</button>{% endif %}
-          {% if can_take_over %}<form action="{% url 'portal:take_over_ticket' ticket.reference %}" method="post" hx-post="{% url 'portal:take_over_ticket' ticket.reference %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}<button class="btn btn-outline btn-sm rounded-full" type="submit"><i class="bi bi-person-check"></i>{% translate "Take over" %}</button><span class="htmx-indicator loading loading-spinner loading-xs" aria-hidden="true"></span><div class="alert alert-error hidden mt-2" data-ticket-action-error role="alert"></div></form>{% endif %}
-          {% if can_assign %}<button class="btn btn-outline btn-sm rounded-full" type="button" onclick="document.getElementById('assignmentModal').showModal()"><i class="bi bi-arrow-left-right"></i>{% translate "Reassign" %}</button>{% endif %}
-          {% if ticket.approval_state != 'not_required' %}<a href="#approval-panel" class="btn btn-outline btn-sm rounded-full"><i class="bi bi-envelope-check"></i>{% translate "Approval Request" %}</a>{% endif %}
-          {% if can_edit %}<a class="btn btn-outline btn-sm rounded-full" href="{% url 'portal:edit_ticket' ticket.reference %}"><i class="bi bi-pencil"></i>{% translate "Edit" %}</a>{% endif %}
+          {% if can_release %}<form method="post" action="{% url 'portal:release_ticket' ticket.reference %}" hx-post="{% url 'portal:release_ticket' ticket.reference %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}<button class="btn btn-outline-secondary btn-sm" type="submit">{% translate 'Release' %}</button><span class="htmx-indicator spinner-border spinner-border-sm" aria-hidden="true"></span><div class="alert alert-danger d-none mt-2" data-ticket-action-error role="alert"></div></form>{% endif %}
+          {% if can_share %}<button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#tagModal">{% translate 'Tag Users' %}</button><button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#approvalRequestModal">{% translate 'Request Approval' %}</button>{% endif %}
+          {% if can_take_over %}<form action="{% url 'portal:take_over_ticket' ticket.reference %}" method="post" hx-post="{% url 'portal:take_over_ticket' ticket.reference %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}<button class="btn btn-outline-secondary btn-sm rounded-pill" type="submit"><i class="bi bi-person-check"></i>{% translate "Take over" %}</button><span class="htmx-indicator spinner-border spinner-border-sm" aria-hidden="true"></span><div class="alert alert-danger d-none mt-2" data-ticket-action-error role="alert"></div></form>{% endif %}
+          {% if can_assign %}<button class="btn btn-outline-secondary btn-sm rounded-pill" type="button" data-bs-toggle="modal" data-bs-target="#assignmentModal"><i class="bi bi-arrow-left-right"></i>{% translate "Reassign" %}</button>{% endif %}
+          {% if ticket.approval_state != 'not_required' %}<a href="#approval-panel" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="bi bi-envelope-check"></i>{% translate "Approval Request" %}</a>{% endif %}
+          {% if can_edit %}<a class="btn btn-outline-secondary btn-sm rounded-pill" href="{% url 'portal:edit_ticket' ticket.reference %}"><i class="bi bi-pencil"></i>{% translate "Edit" %}</a>{% endif %}
         {% endif %}
-        <details class="dropdown dropdown-end">
-          <summary class="btn btn-ghost btn-circle btn-sm"><i class="bi bi-three-dots"></i></summary>
-          <ul class="menu dropdown-content z-40 mt-2 w-52 rounded-box border border-base-300 bg-base-100 p-2 shadow-sm">
-            {% if can_share %}<li><button type="button" onclick="document.getElementById('shareModal').showModal()"><i class="bi bi-box-arrow-up-right"></i>{% translate "Share" %}</button></li>{% endif %}
+        <div class="dropdown glis-dropdown-end"><button type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" class="btn btn-light glis-btn-icon rounded-circle btn-sm"><i class="bi bi-three-dots"></i></button>
+          <ul class="glis-menu dropdown-menu glis-layer-40 mt-2 glis-w-52 rounded-3 border border-body bg-body p-2 shadow-sm">
+            {% if can_share %}<li><button type="button" data-bs-toggle="modal" data-bs-target="#shareModal"><i class="bi bi-box-arrow-up-right"></i>{% translate "Share" %}</button></li>{% endif %}
             <li><a href="{% url 'portal:export_tickets' %}?q={{ ticket.reference|urlencode }}"><i class="bi bi-file-earmark-arrow-down"></i>{% translate "Export" %}</a></li>
           </ul>
-        </details>
+        </div>
       </div>
     </div>
   </section>
 
   {% if embedded_workflow %}{% include 'tpa/transaction/_workspace.html' %}{% endif %}
-  <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-    <section class="card ticket-conversation min-w-0 border border-base-300 bg-base-100 shadow-sm" data-reveal>
-      <div class="flex items-center justify-between gap-4 border-b border-base-300 px-5 py-4 sm:px-6">
-        <div><h2 class="flex items-center gap-2 text-xl font-black"><i class="bi bi-chat-left-text text-primary"></i>{% translate "Conversation" %}</h2><p class="mt-1 text-xs text-base-content/45">{{ comments|length }} {% translate "updates" %}</p></div>
-        <span class="badge badge-ghost gap-1"><i class="bi bi-paperclip"></i>{{ ticket.attachments.count }} {% translate "files" %}</span>
+  <div class="d-grid gap-3 ticket-layout">
+    <section class="card ticket-conversation glis-min-width-0 border border-body bg-body shadow-sm" data-reveal>
+      <div class="d-flex align-items-center justify-content-between gap-3 border-bottom border-body px-3 py-3 px-sm-4">
+        <div><h2 class="d-flex align-items-center gap-2 fs-5 fw-bold"><i class="bi bi-chat-left-text text-primary"></i>{% translate "Conversation" %}</h2><p class="mt-1 glis-text-xs text-body-secondary">{{ comments|length }} {% translate "updates" %}</p></div>
+        <span class="badge bg-body-secondary text-body-secondary gap-1"><i class="bi bi-paperclip"></i>{{ ticket.attachments.count }} {% translate "files" %}</span>
       </div>
 
-      <div class="border-b border-base-300 p-5 sm:p-6">
-        <div class="chat chat-start">
-          <div class="chat-image avatar avatar-placeholder">
-            <div class="w-10 rounded-full bg-primary text-primary-content"><span class="text-sm font-bold">{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span></div>
+      <div class="border-bottom border-body p-3 p-sm-4">
+        <div class="glis-message glis-message-start">
+          <div class="glis-message-avatar glis-avatar">
+            <div class="glis-w-10 rounded-pill bg-primary text-white"><span class="small fw-bold">{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span></div>
           </div>
-          <div class="chat-header">
+          <div class="glis-message-header">
             <strong>{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong>
-            <time class="ms-2 text-xs opacity-50">{{ ticket.created_at|date:"d M Y, h:i A" }}</time>
+            <time class="ms-2 glis-text-xs opacity-50">{{ ticket.created_at|date:"d M Y, h:i A" }}</time>
           </div>
-          <div class="chat-bubble max-w-3xl">
-            <div class="rich-content leading-7">{{ ticket.description|safe }}</div>
+          <div class="glis-message-bubble glis-max-3xl">
+            <div class="rich-content lh-lg">{{ ticket.description|safe }}</div>
             {% if ticket.attachments.all %}
-            <ul class="list mt-4">
+            <ul class="list-group list-group-flush mt-3">
               {% for attachment in ticket.attachments.all %}{% if not attachment.comment_id %}
-              <li><a class="list-row rounded-xl bg-base-100/90 text-base-content no-underline" href="{% url 'portal:download_attachment' attachment.pk %}"><span class="grid h-9 w-9 place-items-center rounded-lg bg-primary/10 text-primary"><i class="bi bi-file-earmark"></i></span><span class="list-col-grow min-w-0"><strong class="block truncate text-sm">{{ attachment.original_name }}</strong><small class="text-xs opacity-60">{{ attachment.size|filesizeformat }} · {{ attachment.scan_status|title }}</small></span><i class="bi bi-download text-primary"></i></a></li>
+              <li><a class="list-group-item d-flex align-items-start gap-3 rounded-3 bg-body text-body text-decoration-none" href="{% url 'portal:download_attachment' attachment.pk %}"><span class="d-grid glis-h-9 glis-w-9 glis-place-center rounded-2 bg-primary-subtle text-primary"><i class="bi bi-file-earmark"></i></span><span class="flex-grow-1 glis-min-width-0"><strong class="d-block text-truncate small">{{ attachment.original_name }}</strong><small class="glis-text-xs opacity-50">{{ attachment.size|filesizeformat }} · {{ attachment.scan_status|title }}</small></span><i class="bi bi-download text-primary"></i></a></li>
               {% endif %}{% endfor %}
             </ul>
             {% endif %}
           </div>
-          <div class="chat-footer opacity-50">{% translate "Requester" %}</div>
+          <div class="glis-message-footer opacity-50">{% translate "Requester" %}</div>
         </div>
       </div>
 
-      <div id="comment-list" class="comment-list p-4 sm:p-6">
+      <div id="comment-list" class="comment-list p-3 p-sm-4">
         {% for comment in comments %}{% include "tickets/partials/comment.html" %}{% empty %}
-        <div id="no-comments" class="flex flex-col items-center gap-2 py-6 text-center text-base-content/45"><i class="bi bi-chat-square text-3xl"></i><strong class="text-base-content">{% translate "No conversation yet" %}</strong><span class="text-sm">{% translate "Add the first update below." %}</span></div>
+        <div id="no-comments" class="d-flex flex-column align-items-center gap-2 py-4 text-center text-body-secondary"><i class="bi bi-chat-square fs-3"></i><strong class="text-body">{% translate "No conversation yet" %}</strong><span class="small">{% translate "Add the first update below." %}</span></div>
         {% endfor %}
       </div>
-      <div id="comment-composer">{% if ticket.status != "closed" %}<div class="border-t border-base-300 p-5 sm:p-6">{% include "tickets/partials/comment_form.html" %}</div>{% endif %}</div>
+      <div id="comment-composer">{% if ticket.status != "closed" %}<div class="border-top border-body p-3 p-sm-4">{% include "tickets/partials/comment_form.html" %}</div>{% endif %}</div>
     </section>
 
-    <aside class="space-y-4">
-      <section class="card border border-base-300 bg-base-100 shadow-lg" data-reveal><div class="card-body p-5"><h2 class="card-title text-base"><i class="bi bi-card-checklist text-primary"></i>{% translate "Request Details" %}</h2><dl class="mt-2 space-y-3 text-sm">
-        {% if dynamic_values %}{% for key, value in dynamic_values.items %}<div class="flex justify-between gap-4"><dt class="text-base-content/45">{{ key|title }}</dt><dd class="text-end font-semibold">{{ value|default:"—" }}</dd></div>{% endfor %}
-        {% else %}<div class="flex justify-between gap-4"><dt class="text-base-content/45">{% translate "Project" %}</dt><dd class="text-end font-semibold">{{ ticket.project.name_en|default:"—" }}</dd></div><div class="flex justify-between gap-4"><dt class="text-base-content/45">{% translate "Product" %}</dt><dd class="text-end font-semibold">{{ ticket.product.name_en|default:"—" }}</dd></div><div class="flex justify-between gap-4"><dt class="text-base-content/45">{% translate "Category" %}</dt><dd class="text-end font-semibold">{{ ticket.category.name_en|default:"—" }}</dd></div>{% endif %}
+    <aside class="glis-stack-4">
+      <section class="card border border-body bg-body shadow-lg" data-reveal><div class="card-body p-3"><h2 class="card-title fs-6"><i class="bi bi-card-checklist text-primary"></i>{% translate "Request Details" %}</h2><dl class="mt-2 glis-stack-3 small">
+        {% if dynamic_values %}{% for key, value in dynamic_values.items %}<div class="d-flex justify-content-between gap-3"><dt class="text-body-secondary">{{ key|title }}</dt><dd class="text-end fw-semibold">{{ value|default:"—" }}</dd></div>{% endfor %}
+        {% else %}<div class="d-flex justify-content-between gap-3"><dt class="text-body-secondary">{% translate "Project" %}</dt><dd class="text-end fw-semibold">{{ ticket.project.name_en|default:"—" }}</dd></div><div class="d-flex justify-content-between gap-3"><dt class="text-body-secondary">{% translate "Product" %}</dt><dd class="text-end fw-semibold">{{ ticket.product.name_en|default:"—" }}</dd></div><div class="d-flex justify-content-between gap-3"><dt class="text-body-secondary">{% translate "Category" %}</dt><dd class="text-end fw-semibold">{{ ticket.category.name_en|default:"—" }}</dd></div>{% endif %}
       </dl></div></section>
 
-      <section class="card border border-base-300 bg-base-100 shadow-lg" data-reveal><div class="card-body p-5">
-        <div class="flex items-center justify-between gap-2"><h2 class="card-title text-base"><i class="bi bi-person-check text-primary"></i>{% translate "Assignment" %}</h2>{% if can_assign and ticket.get_status_display != "Closed" %}<button class="btn btn-ghost btn-xs text-primary" type="button" onclick="document.getElementById('assignmentModal').showModal()">{% translate "Manage" %}</button>{% endif %}</div>
-        <div class="mt-3"><span class="text-xs text-base-content/45">{% translate "Assigned to" %}</span><div class="mt-2 flex flex-wrap gap-1">{% for assignee in ticket.assignees.all %}<span class="badge badge-primary badge-soft">{{ assignee.get_full_name|default:assignee.email }}</span>{% empty %}<span class="text-sm text-base-content/45">{% translate "Unassigned" %}</span>{% endfor %}</div></div>
-        <div class="mt-3"><span class="text-xs text-base-content/45">{% translate "Group" %}</span><div class="mt-2 flex flex-wrap gap-1">{% for group in ticket.groups.all %}<span class="badge badge-outline">{{ group.name }}</span>{% empty %}<span class="text-sm text-base-content/45">{% translate "Unassigned" %}</span>{% endfor %}</div></div>
-        <div class="mt-3 flex justify-between gap-3 text-sm"><span class="text-base-content/45">{% translate "Resolution due" %}</span><strong class="text-end">{{ ticket.resolution_due_at|date:"d M Y h:i A"|default:"—" }}</strong></div>
+      <section class="card border border-body bg-body shadow-lg" data-reveal><div class="card-body p-3">
+        <div class="d-flex align-items-center justify-content-between gap-2"><h2 class="card-title fs-6"><i class="bi bi-person-check text-primary"></i>{% translate "Assignment" %}</h2>{% if can_assign and ticket.get_status_display != "Closed" %}<button class="btn btn-light btn-sm glis-btn-xs text-primary" type="button" data-bs-toggle="modal" data-bs-target="#assignmentModal">{% translate "Manage" %}</button>{% endif %}</div>
+        <div class="mt-2"><span class="glis-text-xs text-body-secondary">{% translate "Assigned to" %}</span><div class="mt-2 d-flex flex-wrap gap-1">{% for assignee in ticket.assignees.all %}<span class="badge text-bg-primary glis-badge-soft">{{ assignee.get_full_name|default:assignee.email }}</span>{% empty %}<span class="small text-body-secondary">{% translate "Unassigned" %}</span>{% endfor %}</div></div>
+        <div class="mt-2"><span class="glis-text-xs text-body-secondary">{% translate "Group" %}</span><div class="mt-2 d-flex flex-wrap gap-1">{% for group in ticket.groups.all %}<span class="badge border text-body-secondary bg-transparent">{{ group.name }}</span>{% empty %}<span class="small text-body-secondary">{% translate "Unassigned" %}</span>{% endfor %}</div></div>
+        <div class="mt-2 d-flex justify-content-between gap-2 small"><span class="text-body-secondary">{% translate "Resolution due" %}</span><strong class="text-end">{{ ticket.resolution_due_at|date:"d M Y h:i A"|default:"—" }}</strong></div>
       </div></section>
 
-      <section class="card border border-base-300 bg-base-100 shadow-lg" data-reveal><div class="card-body p-5"><h2 class="card-title text-base"><i class="bi bi-info-circle text-primary"></i>{% translate "Ticket Information" %}</h2><ul class="list mt-1"><li class="list-row px-0"><span class="text-sm text-base-content/45">{% translate "Created" %}</span><strong class="ms-auto text-xs">{{ ticket.created_at|date:"d M Y h:i A" }}</strong></li><li class="list-row px-0"><span class="text-sm text-base-content/45">{% translate "Status" %}</span><span id="ticket-status-sidebar" class="badge badge-outline badge-sm ms-auto">{{ ticket.get_status_display }}</span></li><li class="list-row px-0"><span class="text-sm text-base-content/45">{% translate "Priority" %}</span><span class="badge badge-warning badge-soft badge-sm ms-auto">{{ ticket.get_priority_display }}</span></li><li class="list-row px-0"><span class="text-sm text-base-content/45">{% translate "Messages" %}</span><strong class="ms-auto">{{ comments|length }}</strong></li><li class="list-row px-0"><span class="text-sm text-base-content/45">{% translate "Files" %}</span><strong class="ms-auto">{{ ticket.attachments.count }}</strong></li></ul></div></section>
+      <section class="card border border-body bg-body shadow-lg" data-reveal><div class="card-body p-3"><h2 class="card-title fs-6"><i class="bi bi-info-circle text-primary"></i>{% translate "Ticket Information" %}</h2><ul class="list-group list-group-flush mt-1"><li class="list-group-item d-flex align-items-start gap-3 px-0"><span class="small text-body-secondary">{% translate "Created" %}</span><strong class="ms-auto glis-text-xs">{{ ticket.created_at|date:"d M Y h:i A" }}</strong></li><li class="list-group-item d-flex align-items-start gap-3 px-0"><span class="small text-body-secondary">{% translate "Status" %}</span><span id="ticket-status-sidebar" class="badge border text-body-secondary bg-transparent glis-badge-small ms-auto">{{ ticket.get_status_display }}</span></li><li class="list-group-item d-flex align-items-start gap-3 px-0"><span class="small text-body-secondary">{% translate "Priority" %}</span><span class="badge text-bg-warning glis-badge-soft glis-badge-small ms-auto">{{ ticket.get_priority_display }}</span></li><li class="list-group-item d-flex align-items-start gap-3 px-0"><span class="small text-body-secondary">{% translate "Messages" %}</span><strong class="ms-auto">{{ comments|length }}</strong></li><li class="list-group-item d-flex align-items-start gap-3 px-0"><span class="small text-body-secondary">{% translate "Files" %}</span><strong class="ms-auto">{{ ticket.attachments.count }}</strong></li></ul></div></section>
 
-      <section class="card border border-primary/20 bg-base-100 shadow-lg" data-reveal><div class="card-body p-5"><div class="flex items-center justify-between gap-2"><h2 class="card-title text-base"><i class="bi bi-hourglass-split text-primary"></i>{% translate "SLA Time Left" %}</h2><span id="ticket-sla-sidebar" class="badge badge-info badge-soft badge-sm">{{ ticket.sla_state|title }} - {{ ticket.elapsed_time }}</span></div><progress class="progress progress-primary mt-3 w-full" value="{% if ticket.sla_state == 'overdue' %}100{% elif ticket.sla_state == 'at_risk' %}82{% else %}55{% endif %}" max="100"></progress><dl class="mt-3 space-y-3 text-sm"><div class="flex justify-between gap-3"><dt class="text-base-content/45">{% translate "First response" %}</dt><dd class="text-end">{{ ticket.first_response_due_at|date:"d M Y h:i A"|default:"—" }}</dd></div><div class="flex justify-between gap-3"><dt class="text-base-content/45">{% translate "Resolution due" %}</dt><dd class="text-end">{{ ticket.resolution_due_at|date:"d M Y h:i A"|default:"—" }}</dd></div><div class="flex justify-between gap-3"><dt class="text-base-content/45">{% translate "Policy" %}</dt><dd class="text-end">{{ ticket.sla_policy.name|default:"Standard service" }}</dd></div></dl></div></section>
+      <section class="card border border-primary-subtle bg-body shadow-lg" data-reveal><div class="card-body p-3"><div class="d-flex align-items-center justify-content-between gap-2"><h2 class="card-title fs-6"><i class="bi bi-hourglass-split text-primary"></i>{% translate "SLA Time Left" %}</h2><span id="ticket-sla-sidebar" class="badge text-bg-info glis-badge-soft glis-badge-small">{{ ticket.sla_state|title }} - {{ ticket.elapsed_time }}</span></div><progress class="progress mt-2 w-100" value="{% if ticket.sla_state == 'overdue' %}100{% elif ticket.sla_state == 'at_risk' %}82{% else %}55{% endif %}" max="100"></progress><dl class="mt-2 glis-stack-3 small"><div class="d-flex justify-content-between gap-2"><dt class="text-body-secondary">{% translate "First response" %}</dt><dd class="text-end">{{ ticket.first_response_due_at|date:"d M Y h:i A"|default:"—" }}</dd></div><div class="d-flex justify-content-between gap-2"><dt class="text-body-secondary">{% translate "Resolution due" %}</dt><dd class="text-end">{{ ticket.resolution_due_at|date:"d M Y h:i A"|default:"—" }}</dd></div><div class="d-flex justify-content-between gap-2"><dt class="text-body-secondary">{% translate "Policy" %}</dt><dd class="text-end">{{ ticket.sla_policy.name|default:"Standard service" }}</dd></div></dl></div></section>
 
-      <section class="card border border-base-300 bg-base-100 shadow-lg" data-reveal><div class="card-body p-5"><h2 class="card-title text-base"><i class="bi bi-activity text-primary"></i>{% translate "Activity" %}</h2><div class="stats w-full bg-base-200/50"><div class="stat p-3"><div class="stat-value text-xl">{{ comments|length }}</div><div class="stat-desc">{% translate "messages" %}</div></div><div class="stat p-3"><div class="stat-value text-xl">{{ ticket.attachments.count }}</div><div class="stat-desc">{% translate "files" %}</div></div></div><ul class="timeline timeline-vertical timeline-compact mt-3">{% for event in ticket.events.all|slice:":5" %}<li>{% if not forloop.first %}<hr>{% endif %}<div class="timeline-middle"><span class="status status-primary"></span></div><div class="timeline-end mb-3"><strong class="block text-xs">{{ event.summary }}</strong><small class="text-[.68rem] text-base-content/40">{% if event.actor %}{{ event.actor.get_full_name|default:event.actor.email }} · {% endif %}{{ event.created_at|timesince }} {% translate "ago" %}</small></div>{% if not forloop.last %}<hr>{% endif %}</li>{% empty %}<li class="text-sm text-base-content/45">{% translate "No additional activity." %}</li>{% endfor %}</ul></div></section>
+      <section class="card border border-body bg-body shadow-lg" data-reveal><div class="card-body p-3"><h2 class="card-title fs-6"><i class="bi bi-activity text-primary"></i>{% translate "Activity" %}</h2><div class="glis-stats w-100 bg-body-tertiary"><div class="glis-stat p-2"><div class="glis-stat-value fs-5">{{ comments|length }}</div><div class="glis-stat-note">{% translate "messages" %}</div></div><div class="glis-stat p-2"><div class="glis-stat-value fs-5">{{ ticket.attachments.count }}</div><div class="glis-stat-note">{% translate "files" %}</div></div></div><ul class="glis-timeline mt-2">{% for event in ticket.events.all|slice:":5" %}<li>{% if not forloop.first %}<hr>{% endif %}<div class="glis-timeline-icon"><span class="glis-status bg-primary"></span></div><div class="glis-timeline-content mb-2"><strong class="d-block glis-text-xs">{{ event.summary }}</strong><small class="glis-text-xs text-body-secondary">{% if event.actor %}{{ event.actor.get_full_name|default:event.actor.email }} · {% endif %}{{ event.created_at|timesince }} {% translate "ago" %}</small></div>{% if not forloop.last %}<hr>{% endif %}</li>{% empty %}<li class="small text-body-secondary">{% translate "No additional activity." %}</li>{% endfor %}</ul></div></section>
 
-      <section class="card border border-base-300 bg-base-100 shadow-lg" data-reveal><div class="card-body p-5"><h2 class="card-title text-base"><i class="bi bi-people text-primary"></i>{% translate "Team" %}</h2><ul class="list">{% for group in ticket.groups.all %}<li class="list-row px-0"><div class="avatar avatar-placeholder"><div class="w-9 rounded-xl bg-secondary text-secondary-content"><span>{{ group.name|first|upper }}</span></div></div><strong class="text-sm">{{ group.name }}</strong></li>{% endfor %}{% for assignee in ticket.assignees.all %}<li class="list-row px-0"><div class="avatar avatar-placeholder"><div class="w-9 rounded-xl bg-primary text-primary-content"><span>{{ assignee.first_name|default:assignee.email|slice:":1"|upper }}</span></div></div><div><strong class="block text-sm">{{ assignee.get_full_name|default:assignee.email }}</strong><small class="text-base-content/45">{% translate "Assigned staff" %}</small></div></li>{% empty %}{% if not ticket.groups.all %}<li class="text-sm text-base-content/45">{% translate "No team assigned" %}</li>{% endif %}{% endfor %}</ul></div></section>
+      <section class="card border border-body bg-body shadow-lg" data-reveal><div class="card-body p-3"><h2 class="card-title fs-6"><i class="bi bi-people text-primary"></i>{% translate "Team" %}</h2><ul class="list-group list-group-flush">{% for group in ticket.groups.all %}<li class="list-group-item d-flex align-items-start gap-3 px-0"><div class="glis-avatar"><div class="glis-w-9 rounded-3 bg-secondary text-white"><span>{{ group.name|first|upper }}</span></div></div><strong class="small">{{ group.name }}</strong></li>{% endfor %}{% for assignee in ticket.assignees.all %}<li class="list-group-item d-flex align-items-start gap-3 px-0"><div class="glis-avatar"><div class="glis-w-9 rounded-3 bg-primary text-white"><span>{{ assignee.first_name|default:assignee.email|slice:":1"|upper }}</span></div></div><div><strong class="d-block small">{{ assignee.get_full_name|default:assignee.email }}</strong><small class="text-body-secondary">{% translate "Assigned staff" %}</small></div></li>{% empty %}{% if not ticket.groups.all %}<li class="small text-body-secondary">{% translate "No team assigned" %}</li>{% endif %}{% endfor %}</ul></div></section>
 
       {% if ticket.approval_state != 'not_required' or ticket.approvals.exists %}
-      <section id="approval-panel" class="card border border-base-300 bg-base-100 shadow-lg" data-reveal><div class="card-body p-5"><div class="flex items-center justify-between gap-2"><h2 class="card-title text-base"><i class="bi bi-check2-square text-primary"></i>{% translate "Approvals" %}</h2><span class="badge badge-outline badge-sm">{{ ticket.get_approval_state_display }}</span></div><ul class="list mt-2">{% for approval in ticket.approvals.all %}<li class="list-row px-0"><div class="list-col-grow"><strong class="block text-xs">{% if approval.step_id %}{{ approval.step.sequence }}. {% endif %}{% if approval.step_id %}{{ approval.step.name }}{% else %}{% translate "Individual approval" %}{% endif %}</strong><small class="text-base-content/45">{{ approval.approver.get_full_name|default:approval.approver.email }}</small></div><span class="badge badge-outline badge-sm">{{ approval.get_status_display }}</span>{% if not approval.step_id and approval.status == "pending" %}{% if approval.requested_by_id == request.user.pk or request.user.is_superuser %}<form method="post" action="{% url 'portal:cancel_ticket_approval' ticket.reference approval.pk %}" hx-post="{% url 'portal:cancel_ticket_approval' ticket.reference approval.pk %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}<button class="btn btn-ghost btn-xs" type="submit">{% translate "Cancel approval" %}</button><span class="htmx-indicator loading loading-spinner loading-xs" aria-hidden="true"></span><div class="alert alert-error hidden mt-2" data-ticket-action-error role="alert"></div></form>{% endif %}{% endif %}</li>{% endfor %}</ul>{% for approval in actionable_approvals %}<form class="mt-4 space-y-3" action="{% url 'portal:decide_ticket_approval' ticket.reference approval.pk %}" method="post" hx-post="{% url 'portal:decide_ticket_approval' ticket.reference approval.pk %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}{{ approval_form.decision }}{{ approval_form.note }}<button class="btn btn-primary btn-sm w-full" type="submit">{% translate "Record decision" %}</button><span class="htmx-indicator loading loading-spinner loading-xs" aria-hidden="true"></span><div class="alert alert-error hidden mt-2" data-ticket-action-error role="alert"></div></form>{% endfor %}</div></section>
+      <section id="approval-panel" class="card border border-body bg-body shadow-lg" data-reveal><div class="card-body p-3"><div class="d-flex align-items-center justify-content-between gap-2"><h2 class="card-title fs-6"><i class="bi bi-check2-square text-primary"></i>{% translate "Approvals" %}</h2><span class="badge border text-body-secondary bg-transparent glis-badge-small">{{ ticket.get_approval_state_display }}</span></div><ul class="list-group list-group-flush mt-2">{% for approval in ticket.approvals.all %}<li class="list-group-item d-flex align-items-start gap-3 px-0"><div class="flex-grow-1"><strong class="d-block glis-text-xs">{% if approval.step_id %}{{ approval.step.sequence }}. {% endif %}{% if approval.step_id %}{{ approval.step.name }}{% else %}{% translate "Individual approval" %}{% endif %}</strong><small class="text-body-secondary">{{ approval.approver.get_full_name|default:approval.approver.email }}</small></div><span class="badge border text-body-secondary bg-transparent glis-badge-small">{{ approval.get_status_display }}</span>{% if not approval.step_id and approval.status == "pending" %}{% if approval.requested_by_id == request.user.pk or request.user.is_superuser %}<form method="post" action="{% url 'portal:cancel_ticket_approval' ticket.reference approval.pk %}" hx-post="{% url 'portal:cancel_ticket_approval' ticket.reference approval.pk %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}<button class="btn btn-light btn-sm glis-btn-xs" type="submit">{% translate "Cancel approval" %}</button><span class="htmx-indicator spinner-border spinner-border-sm" aria-hidden="true"></span><div class="alert alert-danger d-none mt-2" data-ticket-action-error role="alert"></div></form>{% endif %}{% endif %}</li>{% endfor %}</ul>{% for approval in actionable_approvals %}<form class="mt-3 glis-stack-3" action="{% url 'portal:decide_ticket_approval' ticket.reference approval.pk %}" method="post" hx-post="{% url 'portal:decide_ticket_approval' ticket.reference approval.pk %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}{{ approval_form.decision }}{{ approval_form.note }}<button class="btn btn-primary btn-sm w-100" type="submit">{% translate "Record decision" %}</button><span class="htmx-indicator spinner-border spinner-border-sm" aria-hidden="true"></span><div class="alert alert-danger d-none mt-2" data-ticket-action-error role="alert"></div></form>{% endfor %}</div></section>
       {% endif %}
 
-      <section class="card border border-base-300 bg-base-100 shadow-lg" data-reveal><div class="card-body p-5"><h2 class="card-title text-base"><i class="bi bi-person text-primary"></i>{% translate "Requester" %}</h2><div class="flex items-center gap-3"><div class="avatar avatar-placeholder"><div class="w-11 rounded-2xl bg-primary text-primary-content"><span>{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span></div></div><div class="min-w-0"><strong class="block truncate text-sm">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong><small class="block truncate text-base-content/45">{{ ticket.requester.email }}</small></div></div></div></section>
+      <section class="card border border-body bg-body shadow-lg" data-reveal><div class="card-body p-3"><h2 class="card-title fs-6"><i class="bi bi-person text-primary"></i>{% translate "Requester" %}</h2><div class="d-flex align-items-center gap-2"><div class="glis-avatar"><div class="glis-w-11 rounded-3 bg-primary text-white"><span>{{ ticket.requester.first_name|first|default:ticket.requester.email|first|upper }}</span></div></div><div class="glis-min-width-0"><strong class="d-block text-truncate small">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</strong><small class="d-block text-truncate text-body-secondary">{{ ticket.requester.email }}</small></div></div></div></section>
 
       {% if ticket.ai_summary or ticket.ai_recommendations %}
       <div class="aura aura-holo aura-lg" data-aura data-reveal>
-        <section class="card border border-primary/25 bg-primary text-primary-content shadow-xl">
-          <div class="card-body gap-4 p-5">
-            <div class="flex items-center justify-between gap-3">
-              <h2 class="card-title text-base"><i class="bi bi-stars"></i>{% translate "AI Insights" %}</h2>
-              <span class="badge border-primary-content/20 bg-primary-content/10 text-primary-content">{% translate "Assistive" %}</span>
+        <section class="card border border-primary-subtle bg-primary text-white shadow-lg">
+          <div class="card-body gap-3 p-3">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+              <h2 class="card-title fs-6"><i class="bi bi-stars"></i>{% translate "AI Insights" %}</h2>
+              <span class="badge border-white bg-white text-white">{% translate "Assistive" %}</span>
             </div>
-            {% if ticket.ai_summary %}<p class="text-sm leading-6 text-primary-content/75">{{ ticket.ai_summary }}</p>{% endif %}
+            {% if ticket.ai_summary %}<p class="small lh-base text-white-50">{{ ticket.ai_summary }}</p>{% endif %}
             {% if ticket.ai_recommendations %}
-            <div class="stats stats-vertical bg-primary-content/10 text-primary-content">
-              <div class="stat p-3"><div class="stat-title text-primary-content/55">{% translate "Priority" %}</div><div class="stat-value text-base">{{ ticket.ai_recommendations.suggested_priority|title|default:"—" }}</div></div>
-              <div class="stat p-3"><div class="stat-title text-primary-content/55">{% translate "Group" %}</div><div class="stat-value text-base">{{ ticket.ai_recommendations.suggested_group|default:"—" }}</div></div>
-              <div class="stat p-3"><div class="stat-title text-primary-content/55">{% translate "Confidence" %}</div><div class="stat-value text-base">{{ ticket.ai_recommendations.confidence|default:"—" }}</div></div>
+            <div class="glis-stats glis-stats-vertical bg-white text-white">
+              <div class="glis-stat p-2"><div class="glis-stat-title text-white-50">{% translate "Priority" %}</div><div class="glis-stat-value fs-6">{{ ticket.ai_recommendations.suggested_priority|title|default:"—" }}</div></div>
+              <div class="glis-stat p-2"><div class="glis-stat-title text-white-50">{% translate "Group" %}</div><div class="glis-stat-value fs-6">{{ ticket.ai_recommendations.suggested_group|default:"—" }}</div></div>
+              <div class="glis-stat p-2"><div class="glis-stat-title text-white-50">{% translate "Confidence" %}</div><div class="glis-stat-value fs-6">{{ ticket.ai_recommendations.confidence|default:"—" }}</div></div>
             </div>
             {% endif %}
           </div>
@@ -137,30 +136,30 @@
 </div>
 
 {% if can_assign %}
-<dialog id="assignmentModal" class="modal">
-  <div class="modal-box max-w-4xl">
-    <div class="flex items-start justify-between gap-4">
-      <div><span class="badge badge-primary badge-soft mb-2">{% translate "Assignment" %}</span><h2 class="text-2xl font-black">{% translate "Assign groups and staff" %}</h2><p class="mt-1 text-sm text-base-content/50">{% translate "Choose an organization and support group participating in this request." %}</p></div>
-      <button class="btn btn-ghost btn-circle btn-sm" type="button" onclick="document.getElementById('assignmentModal').close()"><i class="bi bi-x-lg"></i></button>
+<div tabindex="-1" aria-hidden="true" id="assignmentModal" class="modal fade"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable glis-max-4xl">
+  <div class="modal-content "><div class="modal-body">
+    <div class="d-flex align-items-start justify-content-between gap-3">
+      <div><span class="badge text-bg-primary glis-badge-soft mb-2">{% translate "Assignment" %}</span><h2 class="fs-4 fw-bold">{% translate "Assign groups and staff" %}</h2><p class="mt-1 small text-body-secondary">{% translate "Choose an organization and support group participating in this request." %}</p></div>
+      <button class="btn btn-light glis-btn-icon rounded-circle btn-sm" type="button" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
     </div>
-    <form class="mt-5" action="{% url 'portal:assign_ticket' ticket.reference %}" method="post" hx-post="{% url 'portal:assign_ticket' ticket.reference %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>
+    <form class="mt-3" action="{% url 'portal:assign_ticket' ticket.reference %}" method="post" hx-post="{% url 'portal:assign_ticket' ticket.reference %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>
       {% csrf_token %}{% include 'tickets/partials/assignment_fields.html' %}
-      <label class="mt-5 flex cursor-pointer items-center gap-3 rounded-xl bg-base-200/55 p-3">{{ assignment_form.replace_existing }}<span class="text-sm font-semibold">{% translate "Replace current assignment" %}</span></label>
-      <div class="mt-6 flex justify-end gap-2"><button class="btn btn-ghost" type="button" onclick="document.getElementById('assignmentModal').close()">{% translate "Cancel" %}</button><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i>{% translate "Save assignment" %}</button></div>
-    <span class="htmx-indicator loading loading-spinner loading-xs" aria-hidden="true"></span><div class="alert alert-error hidden mt-2" data-ticket-action-error role="alert"></div></form>
-  </div>
-  <form method="dialog" class="modal-backdrop"><button>{% translate "Close" %}</button></form>
-</dialog>
+      <label class="mt-3 d-flex glis-cursor-pointer align-items-center gap-2 rounded-3 bg-body-tertiary p-2">{{ assignment_form.replace_existing }}<span class="small fw-semibold">{% translate "Replace current assignment" %}</span></label>
+      <div class="mt-4 d-flex justify-content-end gap-2"><button class="btn btn-light" type="button" data-bs-dismiss="modal">{% translate "Cancel" %}</button><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i>{% translate "Save assignment" %}</button></div>
+    <span class="htmx-indicator spinner-border spinner-border-sm" aria-hidden="true"></span><div class="alert alert-danger d-none mt-2" data-ticket-action-error role="alert"></div></form>
+  </div></div>
+
+</div></div>
 {% endif %}
 
 {% if can_share %}
-<dialog id="shareModal" class="modal">
-  <div class="modal-box">
-    <div class="flex items-start justify-between gap-4"><div><span class="badge badge-primary badge-soft mb-2">{% translate "Secure sharing" %}</span><h2 class="text-2xl font-black">{% translate "Share securely" %}</h2><p class="mt-1 text-sm text-base-content/50">{% translate "Only the selected signed-in recipient can open this expiring link." %}</p></div><button class="btn btn-ghost btn-circle btn-sm" type="button" onclick="document.getElementById('shareModal').close()"><i class="bi bi-x-lg"></i></button></div>
-    <form class="mt-5 space-y-4" action="{% url 'portal:share_ticket' ticket.reference %}" method="post" hx-post="{% url 'portal:share_ticket' ticket.reference %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}<label class="fieldset"><span class="fieldset-legend">{% translate "Recipient" %}</span>{{ share_form.recipient }}</label><label class="fieldset"><span class="fieldset-legend">{% translate "Expires in days" %}</span>{{ share_form.expires_in_days }}</label><div class="flex justify-end"><button class="btn btn-primary" type="submit"><i class="bi bi-link-45deg"></i>{% translate "Create secure link" %}</button></div><span class="htmx-indicator loading loading-spinner loading-xs" aria-hidden="true"></span><div class="alert alert-error hidden mt-2" data-ticket-action-error role="alert"></div></form>
-  </div>
-  <form method="dialog" class="modal-backdrop"><button>{% translate "Close" %}</button></form>
-</dialog>
+<div tabindex="-1" aria-hidden="true" id="shareModal" class="modal fade"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ">
+  <div class="modal-content"><div class="modal-body">
+    <div class="d-flex align-items-start justify-content-between gap-3"><div><span class="badge text-bg-primary glis-badge-soft mb-2">{% translate "Secure sharing" %}</span><h2 class="fs-4 fw-bold">{% translate "Share securely" %}</h2><p class="mt-1 small text-body-secondary">{% translate "Only the selected signed-in recipient can open this expiring link." %}</p></div><button class="btn btn-light glis-btn-icon rounded-circle btn-sm" type="button" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button></div>
+    <form class="mt-3 glis-stack-4" action="{% url 'portal:share_ticket' ticket.reference %}" method="post" hx-post="{% url 'portal:share_ticket' ticket.reference %}" hx-swap="none" hx-indicator="find .htmx-indicator" data-ticket-action>{% csrf_token %}<label class="glis-field"><span class="form-label">{% translate "Recipient" %}</span>{{ share_form.recipient }}</label><label class="glis-field"><span class="form-label">{% translate "Expires in days" %}</span>{{ share_form.expires_in_days }}</label><div class="d-flex justify-content-end"><button class="btn btn-primary" type="submit"><i class="bi bi-link-45deg"></i>{% translate "Create secure link" %}</button></div><span class="htmx-indicator spinner-border spinner-border-sm" aria-hidden="true"></span><div class="alert alert-danger d-none mt-2" data-ticket-action-error role="alert"></div></form>
+  </div></div>
+
+</div></div>
 {% endif %}
 {% include 'tickets/partials/participant_modals.html' %}
 {% endblock %}

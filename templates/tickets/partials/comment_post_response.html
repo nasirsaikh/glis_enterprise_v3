@@ -1,6 +1,6 @@
 {% include "tickets/partials/comment.html" %}
-<span id="ticket-status-header" class="badge badge-outline badge-sm" hx-swap-oob="outerHTML">{{ ticket.get_status_display }}</span>
-<span id="ticket-sla-header" class="badge badge-info badge-soft badge-sm" hx-swap-oob="outerHTML">{{ ticket.sla_state|title }}</span>
-<span id="ticket-status-sidebar" class="badge badge-outline badge-sm ms-auto" hx-swap-oob="outerHTML">{{ ticket.get_status_display }}</span>
-<span id="ticket-sla-sidebar" class="badge badge-info badge-soft badge-sm" hx-swap-oob="outerHTML">{{ ticket.sla_state|title }} - {{ ticket.elapsed_time }}</span>
-<div id="comment-composer" hx-swap-oob="outerHTML">{% if ticket.status != "closed" %}<div class="border-t border-base-300 p-5 sm:p-6">{% include "tickets/partials/comment_form.html" %}</div>{% endif %}</div>
+<span id="ticket-status-header" class="badge border text-body-secondary bg-transparent glis-badge-small" hx-swap-oob="outerHTML">{{ ticket.get_status_display }}</span>
+<span id="ticket-sla-header" class="badge text-bg-info glis-badge-soft glis-badge-small" hx-swap-oob="outerHTML">{{ ticket.sla_state|title }}</span>
+<span id="ticket-status-sidebar" class="badge border text-body-secondary bg-transparent glis-badge-small ms-auto" hx-swap-oob="outerHTML">{{ ticket.get_status_display }}</span>
+<span id="ticket-sla-sidebar" class="badge text-bg-info glis-badge-soft glis-badge-small" hx-swap-oob="outerHTML">{{ ticket.sla_state|title }} - {{ ticket.elapsed_time }}</span>
+<div id="comment-composer" hx-swap-oob="outerHTML">{% if ticket.status != "closed" %}<div class="border-top border-body p-3 p-sm-4">{% include "tickets/partials/comment_form.html" %}</div>{% endif %}</div>

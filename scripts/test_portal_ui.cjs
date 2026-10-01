@@ -8,8 +8,10 @@ before(async () => { browser = await chromium.launch({headless: true, executable
 after(async () => { await browser?.close(); });
 
 const css = paths => paths.map(path => fs.readFileSync("static/css/" + path, "utf8")).join("\n");
-const portalCSS = css(["output.css", "portal-polish.css", "ui.css", "portal-compact.css"]);
-const publicCSS = css(["bootstrap-compat.css", "glis.css", "output.css", "public-greenline.css", "ui.css", "public-layout.css"]);
+const portalCSS = css(["bootstrap-layout.css", "portal-polish.css", "ui.css", "portal-compact.css", "style.css"]);
+const publicCSS = css(["bootstrap-layout.css", "glis.css", "public-greenline.css", "ui.css", "public-layout.css", "style.css"]);
+const bootstrapJS = fs.readFileSync("static/js/bootstrap.bundle.min.js", "utf8");
+const mainJS = fs.readFileSync("static/js/main.js", "utf8");
 const tableJS = fs.readFileSync("static/js/portal-tables.js", "utf8");
 const portalJS = fs.readFileSync("static/js/portal.js", "utf8");
 const tpaJS = fs.readFileSync("static/js/tpa.js", "utf8");
@@ -17,7 +19,7 @@ const rows = count => Array.from({length: count}, (_, number) => '<tr><td>Record
 const visibleRows = page => page.locator("tbody tr:visible").count();
 
 test("TPA member notes stay in a modal and compact rows fit the viewport", async () => {
-  const page = await fixture('<body class="glis-portal-app"><div id="portal-main"><div data-workflow-workspace><div class="overflow-x-auto"><table class="table table-sm tpa-processing-table"><tbody><tr><td>Sam Example</td><td><form id="member-form"></form><input class="input" form="member-form" value="000123"></td><td><input class="input" type="date" value="2026-07-01" form="member-form"></td><td>OMR 100.000</td><td><input class="input" value="100.000" form="member-form"></td><td><button type="button" class="btn btn-sm" data-open-dialog="member-notes">Notes</button></td><td><button class="btn btn-sm" form="member-form">Save</button></td></tr></tbody></table></div><dialog id="member-notes" class="modal" data-tpa-notes-dialog><div class="modal-box"><label>Processing notes<textarea form="member-form" name="comments">Existing note</textarea></label><button type="button" data-cancel-tpa-notes>Cancel</button></div></dialog></div></div></body>', portalCSS + css(["tpa-wizard.css"]));
+  const page = await fixture('<body class="glis-portal-app"><div id="portal-main"><div data-workflow-workspace><div class="overflow-x-auto"><table class="table table-sm tpa-processing-table"><tbody><tr><td>Sam Example</td><td><form id="member-form"></form><input class="form-control" form="member-form" value="000123"></td><td><input class="form-control" type="date" value="2026-07-01" form="member-form"></td><td>OMR 100.000</td><td><input class="form-control" value="100.000" form="member-form"></td><td><button type="button" class="btn btn-sm" data-open-dialog="member-notes">Notes</button></td><td><button class="btn btn-sm" form="member-form">Save</button></td></tr></tbody></table></div><div tabindex="-1" aria-hidden="true" id="member-notes" class="modal fade" data-tpa-notes-dialog><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><label>Processing notes<textarea form="member-form" name="comments">Existing note</textarea></label><button type="button" data-cancel-tpa-notes>Cancel</button></div></div></div></div></div></body>', portalCSS + css(["tpa-wizard.css"]));
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   try {
@@ -28,7 +30,7 @@ test("TPA member notes stay in a modal and compact rows fit the viewport", async
     const height = (await page.locator("tr").boundingBox()).height;
     assert.ok(height < 80);
     await page.locator('[data-open-dialog="member-notes"]').click();
-    assert.equal(await page.locator("dialog").evaluate(dialog => dialog.open), true);
+    await page.locator("#member-notes.show").waitFor({state:"visible"});
     await page.locator("textarea").fill("Changed note");
     await page.locator("textarea").evaluate(field => { if (field.form?.id !== "member-form") throw new Error("Notes detached from member form"); });
     await page.locator("[data-cancel-tpa-notes]").click();
@@ -42,13 +44,92 @@ test("TPA member notes stay in a modal and compact rows fit the viewport", async
 });
 async function fixture(body, style = portalCSS, viewport = {width: 1280, height: 900}) {
   const page = await browser.newPage({viewport});
-  await page.setContent('<!doctype html><html lang="en" data-theme="light"><head><style>' + style + '</style></head>' + body + '</html>');
+  await page.setContent('<!doctype html><html lang="en" data-theme="light" data-bs-theme="light"><head><style id="bootstrap-css">' + css(["bootstrap.min.css"]) + '</style><style>' + style + '</style></head>' + body + '</html>');
+  await page.addScriptTag({content: bootstrapJS});
+  await page.addScriptTag({content: mainJS});
+  await page.evaluate(() => document.dispatchEvent(new Event("DOMContentLoaded")));
   return page;
 }
 
+async function transition(page, selector, event, action) {
+  await page.evaluate(({selector,event}) => {
+    window.uiTransition = new Promise(resolve => document.querySelector(selector).addEventListener(event,resolve,{once:true}));
+  }, {selector,event});
+  await action();
+  await page.evaluate(() => window.uiTransition);
+}
+
+test("Bootstrap dialogs preserve HTMX targets and clean up after workspace replacement", async () => {
+  const page = await fixture('<body><main id="workspace" hx-target="#workspace" hx-swap="outerHTML" hx-sync="#workspace:drop" hx-indicator="#busy"><button id="open" class="btn" data-bs-toggle="modal" data-bs-target="#edit">Edit</button><div id="busy"></div><div class="modal fade" id="edit" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><h2>Edit row</h2><form><input class="form-control" name="name" value="Sam"><button type="button" class="btn" data-bs-dismiss="modal">Cancel</button></form></div></div></div></div></main></body>');
+  const errors = []; page.on("pageerror", error => errors.push(error.message));
+  try {
+    await transition(page,"#edit","shown.bs.modal",()=>page.locator("#open").click());
+    await page.locator("#edit.show").waitFor({state:"visible"});
+    assert.equal(await page.locator("#edit").getAttribute("hx-target"), "#workspace");
+    assert.equal(await page.locator("#edit").getAttribute("hx-sync"), "#workspace:drop");
+    assert.equal(await page.locator(".modal-backdrop").count(), 1);
+    await transition(page,"#edit","hidden.bs.modal",()=>page.locator("#edit input").press("Escape"));
+    await page.locator(".modal-backdrop").waitFor({state:"detached"});
+    assert.equal(await page.locator("#open").evaluate(el => el === document.activeElement), true);
+    assert.equal(await page.locator("#workspace #edit").count(), 1, "Closed dialog must remain in the HTMX history snapshot");
+    await transition(page,"#edit","shown.bs.modal",()=>page.locator("#open").click());
+    await page.locator("#edit input").fill("Updated row");
+    await page.evaluate(() => {
+      const target = document.getElementById("workspace");
+      document.dispatchEvent(new CustomEvent("htmx:beforeSwap", {detail:{target,shouldSwap:true}}));
+      target.outerHTML = '<main id="workspace"><p>Updated workspace</p></main>';
+      document.dispatchEvent(new CustomEvent("htmx:afterSwap", {detail:{target:document.getElementById("workspace")}}));
+    });
+    await page.waitForFunction(() => !document.body.classList.contains("modal-open"));
+    assert.equal(await page.locator(".modal-backdrop").count(), 0);
+    assert.equal(await page.locator("body").evaluate(el => el.classList.contains("modal-open")), false);
+    assert.equal(await page.locator("#edit").count(), 0);
+    assert.deepEqual(errors, []);
+  } finally { await page.close(); }
+});
+
+test("Bootstrap dropdowns and member tabs support keyboard use after HTMX replacement", async () => {
+  const tabs = '<div class="nav nav-tabs" role="tablist"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#valid" role="tab" aria-selected="true">Validated</button><button class="nav-link" data-bs-toggle="tab" data-bs-target="#errors" role="tab" aria-selected="false">Errors</button></div><div class="tab-content"><section id="valid" class="tab-pane active">Valid row</section><section id="errors" class="tab-pane">Missing date</section></div>';
+  const page = await fixture('<body><div class="dropdown"><button class="btn" data-bs-toggle="dropdown" id="menu">Actions</button><ul class="dropdown-menu"><li><a class="dropdown-item" href="#one">First action</a></li><li><a class="dropdown-item" href="#two">Second action</a></li></ul></div><main>'+tabs+'</main></body>');
+  try {
+    await page.locator("#menu").focus(); await page.locator("#menu").press("ArrowDown");
+    assert.equal(await page.getByText("First action").evaluate(el => el === document.activeElement), true);
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator(".dropdown-menu").isVisible(), false);
+    for (let i=0; i<2; i++) {
+      await page.getByRole("tab", {name:"Errors",exact:true}).click();
+      assert.equal(await page.locator("#errors").isVisible(), true);
+      assert.equal(await page.locator("#valid").isVisible(), false);
+      await page.getByRole("tab", {name:"Validated",exact:true}).click();
+      assert.equal(await page.locator("#valid").isVisible(), true);
+      await page.evaluate(tabs => {
+        document.querySelector("main").innerHTML = tabs;
+        document.dispatchEvent(new CustomEvent("htmx:afterSwap",{detail:{target:document.querySelector("main")}}));
+      }, tabs);
+    }
+  } finally { await page.close(); }
+});
+
+test("Bootstrap offcanvas navigation closes and leaves the mobile page scrollable", async () => {
+  const page = await fixture('<body class="glis-portal-app"><div class="glis-shell"><div class="glis-shell-content"><button class="btn" data-bs-toggle="offcanvas" data-bs-target="#portal-navigation">Open navigation</button><main id="portal-main">Workspace</main></div><div class="offcanvas-lg offcanvas-start glis-sidebar-container" id="portal-navigation" tabindex="-1"><aside id="portal-sidebar"><button class="btn" data-bs-dismiss="offcanvas" data-bs-target="#portal-navigation">Close navigation</button><nav><ul class="glis-menu"><li><a href="#tickets">Tickets</a></li></ul></nav></aside></div></div></body>', portalCSS, {width:390,height:844});
+  try {
+    for (const direction of ["ltr","rtl"]) {
+      await page.evaluate(({direction,rtl}) => { document.documentElement.dir=direction; document.getElementById("bootstrap-css").textContent=rtl; },{direction,rtl:css([direction==="rtl"?"bootstrap.rtl.min.css":"bootstrap.min.css"])});
+      await transition(page,"#portal-navigation","shown.bs.offcanvas",()=>page.getByRole("button",{name:"Open navigation"}).click());
+      await page.locator(".offcanvas-backdrop.show").waitFor({state:"visible"});
+      await page.locator("#portal-navigation.show").waitFor({state:"visible"});
+      assert.equal(await page.getByRole("link",{name:"Tickets"}).isVisible(),true);
+      await transition(page,"#portal-navigation","hidden.bs.offcanvas",()=>page.getByRole("button",{name:"Close navigation"}).click());
+      await page.locator(".offcanvas-backdrop").waitFor({state:"detached"});
+      assert.equal(await page.locator("body").evaluate(el=>getComputedStyle(el).overflow!=="hidden"),true);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    }
+  } finally { await page.close(); }
+});
+
 test("choice labels toggle independent controls and remain usable after HTMX replacement", async () => {
-  const options = '<div class="choice-options" id="id_users"><div><label for="id_users_0"><input class="checkbox checkbox-primary" type="checkbox" name="users" value="1" id="id_users_0">First staff member</label></div><div><label for="id_users_1"><input class="checkbox checkbox-primary" type="checkbox" name="users" value="2" id="id_users_1">Second staff member with a long email address</label></div></div>';
-  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><form><fieldset class="fieldset"><legend class="fieldset-legend">Users</legend>' + options + '</fieldset><label><input class="checkbox checkbox-primary" name="replace" type="checkbox" checked>Replace current assignment</label></form></main></body>');
+  const options = '<div class="choice-options" id="id_users"><div><label for="id_users_0"><input class="form-check-input" type="checkbox" name="users" value="1" id="id_users_0">First staff member</label></div><div><label for="id_users_1"><input class="form-check-input" type="checkbox" name="users" value="2" id="id_users_1">Second staff member with a long email address</label></div></div>';
+  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><form><fieldset class="glis-field"><legend class="form-label">Users</legend>' + options + '</fieldset><label><input class="form-check-input" name="replace" type="checkbox" checked>Replace current assignment</label></form></main></body>');
   try {
     for (const theme of ["light", "dark"]) {
       for (const direction of ["ltr", "rtl"]) {
@@ -56,6 +137,7 @@ test("choice labels toggle independent controls and remain usable after HTMX rep
           await page.setViewportSize({width, height: 844});
           await page.evaluate(({theme, direction, options}) => {
             document.documentElement.dataset.theme = theme;
+            document.documentElement.dataset.bsTheme = theme;
             document.documentElement.dir = direction;
             document.querySelector(".choice-options").outerHTML = options;
             document.dispatchEvent(new CustomEvent("htmx:load", {detail: {elt: document.querySelector(".choice-options")}}));
@@ -83,7 +165,7 @@ test("choice labels toggle independent controls and remain usable after HTMX rep
 });
 
 test("comment card follows its content height beside a taller sidebar", async () => {
-  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]"><section class="card ticket-conversation"><div class="card-body"><h2>Conversation</h2><p>Short comment text.</p><form><textarea class="textarea">Reply</textarea><button class="btn" type="button">Post comment</button></form></div></section><aside class="card" style="min-height: 1300px">Request details and history</aside></div></main></body>');
+  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><div class="d-grid gap-3 ticket-layout"><section class="card ticket-conversation"><div class="card-body"><h2>Conversation</h2><p>Short comment text.</p><form><textarea class="form-control">Reply</textarea><button class="btn" type="button">Post comment</button></form></div></section><aside class="card" style="min-height: 1300px">Request details and history</aside></div></main></body>');
   try {
     for (const width of [1440, 390]) {
       await page.setViewportSize({width, height: 900});
@@ -118,9 +200,9 @@ test("public inner-page CMS grid is centered, responsive and fits viewport", asy
 
 test("compact forms, benefit plan row and review editor fit their cards", async () => {
   const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><div class="card"><div class="card-body"><form class="compact-plan-row">' +
-    Array.from({length: 4}, (_, i) => '<label class="fieldset"><span class="fieldset-legend">Plan field ' + i + '</span><input class="input input-bordered w-full"></label>').join("") +
+    Array.from({length: 4}, (_, i) => '<label class="glis-field"><span class="form-label">Plan field ' + i + '</span><input class="form-control w-100"></label>').join("") +
     '<label class="plan-active"><input type="checkbox">Active</label><button class="btn btn-primary">Create</button></form></div></div>' +
-    '<div class="review-layout"><section class="card"><div class="card-body"><label class="fieldset"><span class="fieldset-legend">Subject</span><input id="subject" class="input w-full"></label><div class="richtext-editor"><div contenteditable="true">Request details</div></div></div></section><aside class="review-context">Summary</aside></div></main></body>');
+    '<div class="review-layout"><section class="card"><div class="card-body"><label class="glis-field"><span class="form-label">Subject</span><input id="subject" class="form-control w-100"></label><div class="richtext-editor"><div contenteditable="true">Request details</div></div></div></section><aside class="review-context">Summary</aside></div></main></body>');
   try {
     const boxes = await page.locator(".compact-plan-row > *").evaluateAll(items => items.map(item => item.getBoundingClientRect().bottom));
     assert.ok(Math.max(...boxes) - Math.min(...boxes) < 25);
@@ -166,7 +248,7 @@ test("small and server-paginated tables do not receive duplicate controls", asyn
 });
 
 test("Vanna renders ApexCharts, preserves null values and cleans up charts on new chat", async () => {
-  const page = await fixture('<body class="glis-portal-app"><button id="vanna-new-session">New chat</button><main id="portal-main"><div id="vanna-workbench" class="vanna-workspace" data-session-detail-template="/sessions/00000000-0000-0000-0000-000000000000/"><section><div id="vanna-conversation" class="flex-1 overflow-y-auto"><div id="vanna-welcome"></div><div id="vanna-history-loading"></div></div><form id="vanna-form" action="https://example.test/ask"><input id="vanna-session" name="session_id"><textarea id="vanna-question"></textarea><button id="vanna-send">Send</button></form><div id="vanna-error"></div></section><div id="vanna-session-list"></div><div id="vanna-diagnostic-log"></div><span id="vanna-diagnostic-count"></span></div></main></body>');
+  const page = await fixture('<body class="glis-portal-app"><button id="vanna-new-session">New chat</button><main id="portal-main"><div id="vanna-workbench" class="vanna-workspace" data-session-detail-template="/sessions/00000000-0000-0000-0000-000000000000/"><section><div id="vanna-conversation" class="glis-flex-fill overflow-y-auto"><div id="vanna-welcome"></div><div id="vanna-history-loading"></div></div><form id="vanna-form" action="https://example.test/ask"><input id="vanna-session" name="session_id"><textarea id="vanna-question"></textarea><button id="vanna-send">Send</button></form><div id="vanna-error"></div></section><div id="vanna-session-list"></div><div id="vanna-diagnostic-log"></div><span id="vanna-diagnostic-count"></span></div></main></body>');
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   try {

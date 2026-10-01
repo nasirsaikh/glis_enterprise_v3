@@ -6,11 +6,10 @@ class ChoiceGroupMixin:
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         # Django copies widget classes to both the group and each input.
-        # DaisyUI checkbox/radio classes belong only on the actual controls.
+        # Bootstrap's control class belongs only on the actual inputs.
         container_attrs = dict(context['widget']['attrs'])
         classes = container_attrs.get('class', '').split()
-        classes = [name for name in classes if name not in {'checkbox', 'radio'}
-                   and not name.startswith(('checkbox-', 'radio-'))]
+        classes = [name for name in classes if name not in {'form-check-input', 'glis-switch'}]
         container_attrs['class'] = ' '.join(['choice-options', *classes])
         context['widget']['attrs'] = container_attrs
         return context

@@ -2,40 +2,40 @@
 {% load i18n %}
 {% block title %}{% translate "Add Inbound Email" %}{% endblock %}
 {% block tpa_content %}
-<div class="mx-auto max-w-6xl space-y-5">
-  <header class="card flex flex-col gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6 lg:flex-row lg:items-end lg:justify-between">
+<div class="mx-auto glis-max-6xl glis-stack-5">
+  <header class="card d-flex flex-column gap-3 rounded-4 border border-body bg-body p-3 shadow-sm p-sm-4 flex-lg-row align-items-lg-end justify-content-lg-between">
     <div>
-      <div class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-envelope-plus"></i>{% translate "TPA / AI Intake / Manual Capture" %}</div>
-      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "ADD INBOUND EMAIL" %}</h1>
-      <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{% translate "Paste an inbound request and attach Excel/PDF/image evidence. Optional hints improve extraction when the message is ambiguous." %}</p>
+      <div class="badge text-bg-primary glis-badge-soft mb-2 gap-2"><i class="bi bi-envelope-plus"></i>{% translate "TPA / AI Intake / Manual Capture" %}</div>
+      <h1 class="fs-3 fw-bold">{% translate "ADD INBOUND EMAIL" %}</h1>
+      <p class="mt-2 glis-max-4xl small lh-base text-body-secondary">{% translate "Paste an inbound request and attach Excel/PDF/image evidence. Optional hints improve extraction when the message is ambiguous." %}</p>
     </div>
-    <a class="btn btn-ghost btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
+    <a class="btn btn-light btn-sm" href="{% url 'tpa:inbound_email_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Inbox" %}</a>
   </header>
 
-  <form method="post" enctype="multipart/form-data" class="card border border-base-300 bg-base-100 shadow-sm">
+  <form method="post" enctype="multipart/form-data" class="card border border-body bg-body shadow-sm">
     {% csrf_token %}
-    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
-      <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Message ingestion" %}</div><h2 class="text-lg font-black ">{% translate "EMAIL, HINTS & ATTACHMENTS" %}</h2></div>
-      <span class="badge badge-info badge-soft">{% translate "AI ASSISTED" %}</span>
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 border-bottom border-body px-3 py-3 px-sm-4">
+      <div><div class="mb-1 glis-text-xs fw-bold text-uppercase glis-letter-spacing text-primary">{% translate "Message ingestion" %}</div><h2 class="fs-6 fw-bold">{% translate "EMAIL, HINTS & ATTACHMENTS" %}</h2></div>
+      <span class="badge text-bg-info glis-badge-soft">{% translate "AI ASSISTED" %}</span>
     </div>
     <div class="card-body">
-      {% if form.non_field_errors %}<div role="alert" class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
-      <div class="grid gap-2.5 md:grid-cols-3">
+      {% if form.non_field_errors %}<div role="alert" class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="d-grid gap-2 glis-grid-md-3">
       {% for field in form %}
-        <fieldset class="fieldset {% if field.name == 'body_text' or field.name == 'attachments' or field.name == 'process_with_ai' %}md:col-span-3{% endif %}">
-          <legend class="fieldset-legend">{{ field.label }}</legend>
+        <fieldset class="glis-field {% if field.name == 'body_text' or field.name == 'attachments' or field.name == 'process_with_ai' %}glis-span-md-3{% endif %}">
+          <legend class="form-label">{{ field.label }}</legend>
           {% if field.name == "process_with_ai" %}
-          <label class="label justify-start gap-2">{{ field }}<span>{% translate "Save and immediately process through the configured Ollama/AI provider" %}</span></label>
+          <label class="form-text justify-content-start gap-2">{{ field }}<span>{% translate "Save and immediately process through the configured Ollama/AI provider" %}</span></label>
           {% else %}
           {{ field }}
           {% endif %}
-          {% if field.help_text %}<p class="label text-[10px] opacity-50">{{ field.help_text }}</p>{% endif %}
-          {% for error in field.errors %}<p class="label text-error">{{ error }}</p>{% endfor %}
+          {% if field.help_text %}<p class="form-text glis-text-xs opacity-50">{{ field.help_text }}</p>{% endif %}
+          {% for error in field.errors %}<p class="form-text text-danger">{{ error }}</p>{% endfor %}
         </fieldset>
       {% endfor %}
       </div>
-      <div class="flex justify-end gap-2 border-t border-base-300 pt-3">
-        <a class="btn btn-ghost btn-sm" href="{% url 'tpa:inbound_email_list' %}">{% translate "Cancel" %}</a>
+      <div class="d-flex justify-content-end gap-2 border-top border-body pt-2">
+        <a class="btn btn-light btn-sm" href="{% url 'tpa:inbound_email_list' %}">{% translate "Cancel" %}</a>
         <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-stars"></i>{% translate "Save Inbound Email" %}</button>
       </div>
     </div>

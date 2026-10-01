@@ -3,15 +3,15 @@
 {% block title %}{% translate "TPA Member Management" %}{% endblock %}
 
 {% block tpa_content %}
-<div class="space-y-5">
-  <header class="card flex flex-col gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6 lg:flex-row lg:items-end lg:justify-between">
-    <div class="min-w-0">
-      <div class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-bezier2"></i>{% translate "TPA / Operations / Live Control" %}</div>
-      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "TPA MEMBER MANAGEMENT" %}</h1>
-      <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{% translate "Individual and corporate policy enrollment, AI-assisted intake, deterministic validation, endorsement processing and TPA completion." %}</p>
+<div class="glis-stack-5">
+  <header class="card d-flex flex-column gap-3 rounded-4 border border-body bg-body p-3 shadow-sm p-sm-4 flex-lg-row align-items-lg-end justify-content-lg-between">
+    <div class="glis-min-width-0">
+      <div class="badge text-bg-primary glis-badge-soft mb-2 gap-2"><i class="bi bi-bezier2"></i>{% translate "TPA / Operations / Live Control" %}</div>
+      <h1 class="fs-3 fw-bold">{% translate "TPA MEMBER MANAGEMENT" %}</h1>
+      <p class="mt-2 glis-max-4xl small lh-base text-body-secondary">{% translate "Individual and corporate policy enrollment, AI-assisted intake, deterministic validation, endorsement processing and TPA completion." %}</p>
     </div>
-    <div class="flex flex-wrap gap-2">
-      <a class="btn btn-ghost btn-sm" href="{% url 'tpa:user_guide' %}"><i class="bi bi-book"></i>{% translate "Guide" %}</a>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-light btn-sm" href="{% url 'tpa:user_guide' %}"><i class="bi bi-book"></i>{% translate "Guide" %}</a>
       {% if can_create_endorsement %}
       <a class="btn btn-primary btn-sm" href="{% url 'tpa:transaction_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Endorsement" %}</a>
       {% endif %}
@@ -21,55 +21,55 @@
   {% if needs_information or pending_approval or inbound_review %}
   <div role="alert" class="alert alert-warning">
     <i class="bi bi-exclamation-triangle"></i>
-    <div class="flex-1">
+    <div class="glis-flex-fill">
       <strong>{% translate "Operational attention required" %}</strong>
-      <div class="mt-0.5 text-xs opacity-60">
+      <div class="mt-1 glis-text-xs opacity-50">
         {{ needs_information }} {% translate "needs information/query" %} ·
         {{ pending_approval }} {% translate "pending approval" %} ·
         {{ inbound_review }} {% translate "inbound review" %}
       </div>
     </div>
-    <a class="btn btn-warning btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "Open Pipeline" %}</a>
+    <a class="btn btn-warning btn-sm glis-btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "Open Pipeline" %}</a>
   </div>
   {% endif %}
 
-  <section class="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-    <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Active Clients" %}</div><div class="stat-value">{{ active_organizations }}</div><div class="stat-desc">{% translate "accessible portfolio" %}</div></div></div>
-    <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Active Policies" %}</div><div class="stat-value">{{ active_policies }}</div><div class="stat-desc">{% translate "endorsement enabled" %}</div></div></div>
-    <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Active Members" %}</div><div class="stat-value">{{ active_members }}</div><div class="stat-desc">{% translate "covered lives" %}</div></div></div>
-    <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Open Pipeline" %}</div><div class="stat-value">{{ open_transactions }}</div><div class="stat-desc">{% translate "active transactions" %}</div></div></div>
-    <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Needs Info / Query" %}</div><div class="stat-value {% if needs_information %}text-warning{% endif %}">{{ needs_information }}</div><div class="stat-desc">{% translate "exceptions" %}</div></div></div>
-    <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "Pending Approval" %}</div><div class="stat-value {% if pending_approval %}text-info{% endif %}">{{ pending_approval }}</div><div class="stat-desc">{% translate "decision queue" %}</div></div></div>
+  <section class="d-grid glis-grid-2 gap-2 glis-grid-md-3 glis-grid-xl-6">
+    <div class="glis-stats border border-body bg-body shadow-sm"><div class="glis-stat"><div class="glis-stat-title">{% translate "Active Clients" %}</div><div class="glis-stat-value">{{ active_organizations }}</div><div class="glis-stat-note">{% translate "accessible portfolio" %}</div></div></div>
+    <div class="glis-stats border border-body bg-body shadow-sm"><div class="glis-stat"><div class="glis-stat-title">{% translate "Active Policies" %}</div><div class="glis-stat-value">{{ active_policies }}</div><div class="glis-stat-note">{% translate "endorsement enabled" %}</div></div></div>
+    <div class="glis-stats border border-body bg-body shadow-sm"><div class="glis-stat"><div class="glis-stat-title">{% translate "Active Members" %}</div><div class="glis-stat-value">{{ active_members }}</div><div class="glis-stat-note">{% translate "covered lives" %}</div></div></div>
+    <div class="glis-stats border border-body bg-body shadow-sm"><div class="glis-stat"><div class="glis-stat-title">{% translate "Open Pipeline" %}</div><div class="glis-stat-value">{{ open_transactions }}</div><div class="glis-stat-note">{% translate "active transactions" %}</div></div></div>
+    <div class="glis-stats border border-body bg-body shadow-sm"><div class="glis-stat"><div class="glis-stat-title">{% translate "Needs Info / Query" %}</div><div class="glis-stat-value {% if needs_information %}text-warning{% endif %}">{{ needs_information }}</div><div class="glis-stat-note">{% translate "exceptions" %}</div></div></div>
+    <div class="glis-stats border border-body bg-body shadow-sm"><div class="glis-stat"><div class="glis-stat-title">{% translate "Pending Approval" %}</div><div class="glis-stat-value {% if pending_approval %}text-info{% endif %}">{{ pending_approval }}</div><div class="glis-stat-note">{% translate "decision queue" %}</div></div></div>
   </section>
 
-  <section class="grid grid-cols-2 gap-2 md:grid-cols-3">
-    <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "STP Rate" %}</div><div class="stat-value text-success">{{ stp_rate }}%</div><div class="stat-desc">{% translate "straight-through eligible" %}</div></div></div>
-    <div class="stats border border-base-300 bg-base-100 shadow-sm"><div class="stat"><div class="stat-title">{% translate "AI Providers" %}</div><div class="stat-value">{{ ai_provider_count }}</div><div class="stat-desc">{% translate "sensitive-data approved" %}</div></div></div>
-    <div class="stats col-span-2 md:col-span-1"><div class="stat"><div class="stat-title">{% translate "Inbound Review" %}</div><div class="stat-value {% if inbound_review %}text-warning{% endif %}">{{ inbound_review }}</div><div class="stat-desc">{% translate "email/OCR exceptions" %}</div></div></div>
+  <section class="d-grid glis-grid-2 gap-2 glis-grid-md-3">
+    <div class="glis-stats border border-body bg-body shadow-sm"><div class="glis-stat"><div class="glis-stat-title">{% translate "STP Rate" %}</div><div class="glis-stat-value text-success">{{ stp_rate }}%</div><div class="glis-stat-note">{% translate "straight-through eligible" %}</div></div></div>
+    <div class="glis-stats border border-body bg-body shadow-sm"><div class="glis-stat"><div class="glis-stat-title">{% translate "AI Providers" %}</div><div class="glis-stat-value">{{ ai_provider_count }}</div><div class="glis-stat-note">{% translate "sensitive-data approved" %}</div></div></div>
+    <div class="glis-stats glis-span-2 glis-span-md-1"><div class="glis-stat"><div class="glis-stat-title">{% translate "Inbound Review" %}</div><div class="glis-stat-value {% if inbound_review %}text-warning{% endif %}">{{ inbound_review }}</div><div class="glis-stat-note">{% translate "email/OCR exceptions" %}</div></div></div>
   </section>
 
-  <div class="grid gap-3 xl:grid-cols-2">
-    <section class="card border border-base-300 bg-base-100 shadow-sm">
-      <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
-        <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Pipeline telemetry" %}</div><h2 class="text-lg font-black ">{% translate "TRANSACTIONS BY STATUS" %}</h2></div>
-        <span class="badge badge-outline">{{ open_transactions }} {% translate "OPEN" %}</span>
+  <div class="d-grid gap-2 glis-grid-xl-2">
+    <section class="card border border-body bg-body shadow-sm">
+      <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 border-bottom border-body px-3 py-3 px-sm-4">
+        <div><div class="mb-1 glis-text-xs fw-bold text-uppercase glis-letter-spacing text-primary">{% translate "Pipeline telemetry" %}</div><h2 class="fs-6 fw-bold">{% translate "TRANSACTIONS BY STATUS" %}</h2></div>
+        <span class="badge border text-body-secondary bg-transparent">{{ open_transactions }} {% translate "OPEN" %}</span>
       </div>
-      <div class="card-body"><div id="tpa-status-chart" class="min-h-[20rem]"></div></div>
+      <div class="card-body"><div id="tpa-status-chart" class="glis-min-height-20rem"></div></div>
     </section>
 
-    <section class="card border border-base-300 bg-base-100 shadow-sm">
-      <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
-        <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Intake channels" %}</div><h2 class="text-lg font-black ">{% translate "TRANSACTIONS BY SOURCE" %}</h2></div>
-        <span class="badge badge-ghost"><i class="bi bi-cpu"></i>{% translate "AI READY" %}</span>
+    <section class="card border border-body bg-body shadow-sm">
+      <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 border-bottom border-body px-3 py-3 px-sm-4">
+        <div><div class="mb-1 glis-text-xs fw-bold text-uppercase glis-letter-spacing text-primary">{% translate "Intake channels" %}</div><h2 class="fs-6 fw-bold">{% translate "TRANSACTIONS BY SOURCE" %}</h2></div>
+        <span class="badge bg-body-secondary text-body-secondary"><i class="bi bi-cpu"></i>{% translate "AI READY" %}</span>
       </div>
-      <div class="card-body"><div id="tpa-source-chart" class="min-h-[20rem]"></div></div>
+      <div class="card-body"><div id="tpa-source-chart" class="glis-min-height-20rem"></div></div>
     </section>
   </div>
 
-  <section class="card border border-base-300 bg-base-100 shadow-sm">
-    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
-      <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Live workflow feed" %}</div><h2 class="text-lg font-black ">{% translate "RECENT TRANSACTIONS" %}</h2></div>
-      <a class="btn btn-ghost btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "View All" %}<i class="bi bi-arrow-right"></i></a>
+  <section class="card border border-body bg-body shadow-sm">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 border-bottom border-body px-3 py-3 px-sm-4">
+      <div><div class="mb-1 glis-text-xs fw-bold text-uppercase glis-letter-spacing text-primary">{% translate "Live workflow feed" %}</div><h2 class="fs-6 fw-bold">{% translate "RECENT TRANSACTIONS" %}</h2></div>
+      <a class="btn btn-light btn-sm glis-btn-xs" href="{% url 'tpa:transaction_list' %}">{% translate "View All" %}<i class="bi bi-arrow-right"></i></a>
     </div>
     <div class="overflow-x-auto">
       <table class="table table-sm">
@@ -89,19 +89,19 @@
           {% for tx in transactions %}
           <tr>
             <td>
-              <a class="link link-primary font-semibold font-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.display_reference }}</a>
-              {% if tx.ticket %}<div class="mt-0.5 text-[10px] opacity-45">{{ tx.ticket.reference }}</div>{% endif %}
+              <a class="link-body-emphasis link-primary fw-semibold fw-bold" href="{% url 'tpa:transaction_detail' tx.reference %}">{{ tx.display_reference }}</a>
+              {% if tx.ticket %}<div class="mt-1 glis-text-xs opacity-50">{{ tx.ticket.reference }}</div>{% endif %}
             </td>
-            <td><strong>{{ tx.policy.policy_number }}</strong><div class="text-[10px] opacity-50">{{ tx.organization.name_en }}</div></td>
+            <td><strong>{{ tx.policy.policy_number }}</strong><div class="glis-text-xs opacity-50">{{ tx.organization.name_en }}</div></td>
             <td>{{ tx.get_transaction_type_display }}</td>
-            <td><span class="badge badge-ghost">{{ tx.get_source_display }}</span></td>
-            <td class="font-semibold">{{ tx.validation_score }}%</td>
-            <td>{% if tx.stp_eligible %}<span class="badge badge-success badge-soft">YES</span>{% else %}<span class="badge badge-ghost">NO</span>{% endif %}</td>
-            <td><span class="badge badge-outline">{{ tx.get_status_display }}</span></td>
-            <td class="font-semibold text-[10px]">{{ tx.created_at|date:"d-M-Y H:i" }}</td>
+            <td><span class="badge bg-body-secondary text-body-secondary">{{ tx.get_source_display }}</span></td>
+            <td class="fw-semibold">{{ tx.validation_score }}%</td>
+            <td>{% if tx.stp_eligible %}<span class="badge text-bg-success glis-badge-soft">YES</span>{% else %}<span class="badge bg-body-secondary text-body-secondary">NO</span>{% endif %}</td>
+            <td><span class="badge border text-body-secondary bg-transparent">{{ tx.get_status_display }}</span></td>
+            <td class="fw-semibold glis-text-xs">{{ tx.created_at|date:"d-M-Y H:i" }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="8" class="py-8 text-center opacity-45">{% translate "No transactions yet." %}</td></tr>
+          <tr><td colspan="8" class="py-4 text-center opacity-50">{% translate "No transactions yet." %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

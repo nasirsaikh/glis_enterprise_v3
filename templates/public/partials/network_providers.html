@@ -1,54 +1,54 @@
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 
-<div id="network-provider-results" class="flex flex-col gap-6">
-  <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-    <div class="max-w-3xl">
-      <span class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-geo-alt"></i>{% translate "Healthcare Network" %}</span>
-      <h2 class="text-3xl font-black tracking-[-.035em] sm:text-4xl">{% translate "Find a network provider" %}</h2>
-      <p class="mt-3 text-base-content/60">{% translate "Search hospitals, clinics, pharmacies and other healthcare providers in our medical network." %}</p>
+<div id="network-provider-results" class="d-flex flex-column gap-4">
+  <div class="d-flex flex-column gap-3 flex-lg-row align-items-lg-end justify-content-lg-between">
+    <div class="glis-max-3xl">
+      <span class="badge text-bg-primary glis-badge-soft mb-2 gap-2"><i class="bi bi-geo-alt"></i>{% translate "Healthcare Network" %}</span>
+      <h2 class="fs-3 fw-bold">{% translate "Find a network provider" %}</h2>
+      <p class="mt-2 text-body-secondary">{% translate "Search hospitals, clinics, pharmacies and other healthcare providers in our medical network." %}</p>
     </div>
-    <span class="badge badge-success badge-outline badge-lg">{{ providers|length }} {% translate "providers found" %}</span>
+    <span class="badge text-bg-success border text-body-secondary bg-transparent">{{ providers|length }} {% translate "providers found" %}</span>
   </div>
 
   <form hx-get="{% url 'home_network_providers' %}" hx-target="#network-provider-results" hx-swap="outerHTML" hx-trigger="submit, change delay:300ms">
     <!-- Compact Single-Line Filter Grid -->
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-      <label class="fieldset m-0">
-        <span class="fieldset-legend text-xs">{% translate "Search" %}</span>
-        <div class="relative">
-          <i class="bi bi-search pointer-events-none absolute start-3 top-1/2 z-10 -translate-y-1/2 text-base-content/40"></i>
-          <input type="search" name="search" class="input input-sm w-full ps-9 transition focus:border-primary focus:outline-primary" placeholder="{% translate 'Hospital, clinic...' %}" value="{{ request.GET.search }}" hx-trigger="input changed delay:400ms, search">
+    <div class="d-grid glis-grid-1 gap-2 glis-grid-sm-2 glis-grid-lg-5">
+      <label class="glis-field m-0">
+        <span class="form-label glis-text-xs">{% translate "Search" %}</span>
+        <div class="position-relative">
+          <i class="bi bi-search pe-none position-absolute glis-start-3 top-50 glis-layer-10 translate-middle-y text-body-secondary"></i>
+          <input type="search" name="search" class="form-control form-control-sm w-100 ps-4" placeholder="{% translate 'Hospital, clinic...' %}" value="{{ request.GET.search }}" hx-trigger="input changed delay:400ms, search">
         </div>
       </label>
 
-      <label class="fieldset m-0">
-        <span class="fieldset-legend text-xs">{% translate "Provider Type" %}</span>
-        <select name="provider_type" class="select select-sm w-full">
+      <label class="glis-field m-0">
+        <span class="form-label glis-text-xs">{% translate "Provider Type" %}</span>
+        <select name="provider_type" class="form-select form-select-sm w-100">
           <option value="">{% translate "All types" %}</option>
           {% for item in provider_types %}<option value="{{ item.pk }}"{% if request.GET.provider_type == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
         </select>
       </label>
 
-      <label class="fieldset m-0">
-        <span class="fieldset-legend text-xs">{% translate "Governorate" %}</span>
-        <select name="governorate" class="select select-sm w-full">
+      <label class="glis-field m-0">
+        <span class="form-label glis-text-xs">{% translate "Governorate" %}</span>
+        <select name="governorate" class="form-select form-select-sm w-100">
           <option value="">{% translate "All governorates" %}</option>
           {% for item in governorates %}<option value="{{ item.pk }}"{% if request.GET.governorate == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
         </select>
       </label>
 
-      <label class="fieldset m-0">
-        <span class="fieldset-legend text-xs">{% translate "Insurance Partner" %}</span>
-        <select name="insurer" class="select select-sm w-full">
+      <label class="glis-field m-0">
+        <span class="form-label glis-text-xs">{% translate "Insurance Partner" %}</span>
+        <select name="insurer" class="form-select form-select-sm w-100">
           <option value="">{% translate "All insurers" %}</option>
           {% for item in insurance_partners %}<option value="{{ item.pk }}"{% if request.GET.insurer == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
         </select>
       </label>
 
-      <label class="fieldset m-0">
-        <span class="fieldset-legend text-xs">{% translate "Specialty" %}</span>
-        <select name="specialty" class="select select-sm w-full">
+      <label class="glis-field m-0">
+        <span class="form-label glis-text-xs">{% translate "Specialty" %}</span>
+        <select name="specialty" class="form-select form-select-sm w-100">
           <option value="">{% translate "All specialties" %}</option>
           {% for item in specialties %}<option value="{{ item.pk }}"{% if request.GET.specialty == item.pk|stringformat:"s" %} selected{% endif %}>{% if LANGUAGE_CODE == "ar" %}{{ item.name_ar|default:item.name_en }}{% else %}{{ item.name_en }}{% endif %}</option>{% endfor %}
         </select>
@@ -56,8 +56,8 @@
     </div>
   </form>
 
-  <div class="overflow-x-auto rounded-box border border-base-300">
-    <table class="table table-zebra min-w-[48rem]">
+  <div class="overflow-x-auto rounded-3 border border-body">
+    <table class="table table-striped glis-min-width-48rem">
       <thead>
         <tr>
           <th>{% translate "Provider" %}</th>
@@ -71,54 +71,54 @@
       <tbody>
         {% for provider in providers %}
           {% if provider.is_featured or request.GET.search or request.GET.provider_type or request.GET.governorate or request.GET.insurer or request.GET.specialty %}
-          <tr class="hover:bg-primary/5">
+          <tr class="">
             <td>
-              <div class="flex items-center gap-3">
-                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><i class="bi {{ provider.provider_type.icon|default:'bi-hospital' }}"></i></span>
-                <strong class="block">{% if LANGUAGE_CODE == "ar" %}{{ provider.name_ar|default:provider.name_en }}{% else %}{{ provider.name_en }}{% endif %}</strong>
+              <div class="d-flex align-items-center gap-2">
+                <span class="d-grid glis-h-10 glis-w-10 flex-shrink-0 glis-place-center rounded-3 bg-primary-subtle text-primary"><i class="bi {{ provider.provider_type.icon|default:'bi-hospital' }}"></i></span>
+                <strong class="d-block">{% if LANGUAGE_CODE == "ar" %}{{ provider.name_ar|default:provider.name_en }}{% else %}{{ provider.name_en }}{% endif %}</strong>
               </div>
             </td>
             <td>
-              <div class="flex flex-wrap gap-2">
-                <span class="badge badge-success badge-soft">{% if LANGUAGE_CODE == "ar" %}{{ provider.provider_type.name_ar|default:provider.provider_type.name_en }}{% else %}{{ provider.provider_type.name_en }}{% endif %}</span>
-                {% if provider.is_24_hours %}<span class="badge badge-warning badge-outline">24/7</span>{% endif %}
+              <div class="d-flex flex-wrap gap-2">
+                <span class="badge text-bg-success glis-badge-soft">{% if LANGUAGE_CODE == "ar" %}{{ provider.provider_type.name_ar|default:provider.provider_type.name_en }}{% else %}{{ provider.provider_type.name_en }}{% endif %}</span>
+                {% if provider.is_24_hours %}<span class="badge text-bg-warning border text-body-secondary bg-transparent">24/7</span>{% endif %}
               </div>
             </td>
             <td>
              {% if provider.network_level %}
               {% with band_label=provider.network_level %}
-                {% if band_label|upper == "BASIC" %}<span class="badge badge-warning badge-outline">{% translate "Bronze" %}</span>
-                {% elif band_label|upper == "A" %}<span class="badge badge-warning">{{ band_label }}</span>
-                {% elif band_label|upper == "B" %}<span class="badge badge-outline">{{ band_label }}</span>
-                {% elif band_label|upper == "C" %}<span class="badge badge-secondary badge-outline">{{ band_label }}</span>
-                {% else %}<span class="badge badge-primary badge-outline">{{ band_label }}</span>{% endif %}
+                {% if band_label|upper == "BASIC" %}<span class="badge text-bg-warning border text-body-secondary bg-transparent">{% translate "Bronze" %}</span>
+                {% elif band_label|upper == "A" %}<span class="badge text-bg-warning">{{ band_label }}</span>
+                {% elif band_label|upper == "B" %}<span class="badge border text-body-secondary bg-transparent">{{ band_label }}</span>
+                {% elif band_label|upper == "C" %}<span class="badge text-bg-secondary border text-body-secondary bg-transparent">{{ band_label }}</span>
+                {% else %}<span class="badge text-bg-primary border text-body-secondary bg-transparent">{{ band_label }}</span>{% endif %}
               {% endwith %}
              {% else %}
-              <span class="text-base-content/40">—</span>
+              <span class="text-body-secondary">—</span>
              {% endif %}
             </td>
-            <td><span class="flex items-start gap-2 text-sm text-base-content/65"><i class="bi bi-geo-alt mt-1 text-primary"></i><span>{% if LANGUAGE_CODE == "ar" %}{{ provider.address_ar|default:provider.address_en }}{% else %}{{ provider.address_en }}{% endif %}</span></span></td>
-            <td>{% if provider.phone %}<a href="tel:{{ provider.phone }}" class="btn btn-outline btn-xs text-success"><i class="bi bi-telephone"></i>{{ provider.phone }}</a>{% else %}<span class="text-base-content/40">—</span>{% endif %}</td>
-            <td class="text-end">{% if provider.latitude and provider.longitude %}<button type="button" class="show-map-modal-btn btn btn-outline btn-primary btn-xs" data-lat="{{ provider.latitude }}" data-lng="{{ provider.longitude }}" data-name="{% if LANGUAGE_CODE == 'ar' %}{{ provider.name_ar|default:provider.name_en }}{% else %}{{ provider.name_en }}{% endif %}"><i class="bi bi-map"></i>{% translate "Map" %}</button>{% endif %}</td>
+            <td><span class="d-flex align-items-start gap-2 small text-body-secondary"><i class="bi bi-geo-alt mt-1 text-primary"></i><span>{% if LANGUAGE_CODE == "ar" %}{{ provider.address_ar|default:provider.address_en }}{% else %}{{ provider.address_en }}{% endif %}</span></span></td>
+            <td>{% if provider.phone %}<a href="tel:{{ provider.phone }}" class="btn btn-outline-secondary btn-sm glis-btn-xs text-success"><i class="bi bi-telephone"></i>{{ provider.phone }}</a>{% else %}<span class="text-body-secondary">—</span>{% endif %}</td>
+            <td class="text-end">{% if provider.latitude and provider.longitude %}<button type="button" class="show-map-modal-btn btn btn-outline-primary btn-sm glis-btn-xs" data-lat="{{ provider.latitude }}" data-lng="{{ provider.longitude }}" data-name="{% if LANGUAGE_CODE == 'ar' %}{{ provider.name_ar|default:provider.name_en }}{% else %}{{ provider.name_en }}{% endif %}"><i class="bi bi-map"></i>{% translate "Map" %}</button>{% endif %}</td>
           </tr>
           {% endif %}
         {% empty %}
-          <tr><td colspan="6"><div class="flex flex-col items-center gap-3 py-14 text-base-content/45"><i class="bi bi-search text-3xl"></i><strong>{% translate "No providers found" %}</strong><p>{% translate "Try changing the search or filters." %}</p></div></td></tr>
+          <tr><td colspan="6"><div class="d-flex flex-column align-items-center gap-2 py-5 text-body-secondary"><i class="bi bi-search fs-3"></i><strong>{% translate "No providers found" %}</strong><p>{% translate "Try changing the search or filters." %}</p></div></td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 
-  <dialog id="providerMapModal" class="modal">
-    <div class="modal-box max-w-4xl p-0">
-      <div class="flex items-center justify-between border-b border-base-300 px-5 py-4">
-        <h3 id="providerMapModalLabel" class="text-lg font-black">{% translate "Provider Location" %}</h3>
-        <form method="dialog"><button class="btn btn-ghost btn-circle btn-sm" aria-label="{% translate 'Close' %}"><i class="bi bi-x-lg"></i></button></form>
+  <div tabindex="-1" aria-hidden="true" id="providerMapModal" class="modal fade"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable glis-max-4xl">
+    <div class="modal-content  p-0"><div class="modal-body">
+      <div class="d-flex align-items-center justify-content-between border-bottom border-body px-3 py-3">
+        <h3 id="providerMapModalLabel" class="fs-6 fw-bold">{% translate "Provider Location" %}</h3>
+        <button type="button" data-bs-dismiss="modal" class="btn btn-light glis-btn-icon rounded-circle btn-sm" aria-label="{% translate 'Close' %}"><i class="bi bi-x-lg"></i></button>
       </div>
-      <div id="modalProviderMap" class="w-full" style="height:450px"></div>
-    </div>
-    <form method="dialog" class="modal-backdrop"><button>{% translate "Close" %}</button></form>
-  </dialog>
+      <div id="modalProviderMap" class="w-100" style="height:450px"></div>
+    </div></div>
+
+  </div></div>
 </div>
 
 <script>
@@ -157,7 +157,7 @@
     if (!dialog) return;
     const name = btn.getAttribute("data-name") || "";
     if (title && name) title.textContent = name;
-    if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "open");
+    window.glisUI.openModal(dialog);
     setTimeout(function () { initModalMap(btn.getAttribute("data-lat"), btn.getAttribute("data-lng"), name); }, 60);
   });
 })();

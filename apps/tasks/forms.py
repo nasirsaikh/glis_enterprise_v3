@@ -27,15 +27,15 @@ class TaskForm(forms.ModelForm):
             "due_date",
         )
         widgets = {
-            "title": forms.TextInput(attrs={"class": "input input-bordered w-full"}),
-            "description": forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 2}),
-            "project": forms.Select(attrs={"class": "select select-bordered w-full"}),
-            "product": forms.Select(attrs={"class": "select select-bordered w-full"}),
-            "category": forms.Select(attrs={"class": "select select-bordered w-full"}),
-            "priority": forms.Select(attrs={"class": "select select-bordered w-full"}),
-            "owner": forms.Select(attrs={"class": "select select-bordered w-full"}),
-            "tagged_users": CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary checkbox-sm"}),
-            "due_date": forms.DateInput(attrs={"class": "input input-bordered w-full", "type": "date"}),
+            "title": forms.TextInput(attrs={"class": "form-control w-100"}),
+            "description": forms.Textarea(attrs={"class": "form-control w-100", "rows": 2}),
+            "project": forms.Select(attrs={"class": "form-select w-100"}),
+            "product": forms.Select(attrs={"class": "form-select w-100"}),
+            "category": forms.Select(attrs={"class": "form-select w-100"}),
+            "priority": forms.Select(attrs={"class": "form-select w-100"}),
+            "owner": forms.Select(attrs={"class": "form-select w-100"}),
+            "tagged_users": CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
+            "due_date": forms.DateInput(attrs={"class": "form-control w-100", "type": "date"}),
         }
 
     def __init__(self, *args, user=None, **kwargs):
@@ -44,7 +44,7 @@ class TaskForm(forms.ModelForm):
         User = get_user_model()
         self.fields["owner"].queryset = visible_users(user).order_by("first_name", "last_name", "email")
         self.fields["tagged_users"].queryset = self.fields["owner"].queryset
-        self.fields["status"].widget.attrs["class"] = "select select-bordered w-full"
+        self.fields["status"].widget.attrs["class"] = "form-select w-100"
 
         if user and user.is_authenticated:
             if user.is_superuser:

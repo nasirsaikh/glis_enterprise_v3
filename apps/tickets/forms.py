@@ -18,15 +18,15 @@ def selection_id(value):
 
 class TicketCreateStep1Form(forms.Form):
     supports_business_requests = False
-    organization = forms.ModelChoiceField(required=False,queryset=Organization.objects.none(),widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
-    policy = forms.ModelChoiceField(required=False,queryset=Policy.objects.none(),widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
+    organization = forms.ModelChoiceField(required=False,queryset=Organization.objects.none(),widget=forms.Select(attrs={'class':'form-select w-100'}))
+    policy = forms.ModelChoiceField(required=False,queryset=Policy.objects.none(),widget=forms.Select(attrs={'class':'form-select w-100'}))
 
 
     project = forms.ModelChoiceField(
         queryset=Project.objects.none(),
         widget=forms.Select(
             attrs={
-                "class": "select select-bordered w-full",
+                "class": "form-select w-100",
                 "hx-get": "/portal/lookups/products/",
                 "hx-target": "#id_product",
                 "hx-swap": "innerHTML settle:0ms",
@@ -40,7 +40,7 @@ class TicketCreateStep1Form(forms.Form):
         queryset=Product.objects.none(),
         widget=forms.Select(
             attrs={
-                "class": "select select-bordered w-full",
+                "class": "form-select w-100",
                 "hx-get": "/portal/lookups/categories/",
                 "hx-target": "#id_category",
                 "hx-swap": "innerHTML settle:0ms",
@@ -54,7 +54,7 @@ class TicketCreateStep1Form(forms.Form):
         queryset=Category.objects.none(),
         widget=forms.Select(
             attrs={
-                "class": "select select-bordered w-full",
+                "class": "form-select w-100",
             }
         ),
     )
@@ -134,23 +134,23 @@ class TicketIntakeForm(forms.Form):
         for index, question in enumerate(self.questions, start=1):
             self.fields[f"answer_{index}"] = forms.CharField(
                 label=_(question["text"]), required=not question.get("optional", False),
-                widget=forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 3, "data-question": index}),
+                widget=forms.Textarea(attrs={"class": "form-control w-100", "rows": 3, "data-question": index}),
                 help_text=_("Optional") if question.get("optional") else "",
             )
 
 
 class TicketReviewForm(forms.Form):
-    subject = forms.CharField(max_length=240, widget=forms.TextInput(attrs={"class": "input input-bordered w-full"}))
-    description = forms.CharField(max_length=2_000_000, widget=forms.Textarea(attrs={"class": "textarea textarea-bordered w-full richtext-source", "rows": 6}))
-    priority = forms.ChoiceField(choices=Ticket.Priority.choices, widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
-    acknowledgment = forms.BooleanField(label=_("I confirm that the information is accurate and may be processed to provide this service."), widget=forms.CheckboxInput(attrs={"class": "checkbox checkbox-primary"}))
+    subject = forms.CharField(max_length=240, widget=forms.TextInput(attrs={"class": "form-control w-100"}))
+    description = forms.CharField(max_length=2_000_000, widget=forms.Textarea(attrs={"class": "form-control w-100 richtext-source", "rows": 6}))
+    priority = forms.ChoiceField(choices=Ticket.Priority.choices, widget=forms.Select(attrs={"class": "form-select w-100"}))
+    acknowledgment = forms.BooleanField(label=_("I confirm that the information is accurate and may be processed to provide this service."), widget=forms.CheckboxInput(attrs={"class": "form-check-input"}))
 
 
 # class TicketCommentForm(forms.ModelForm):
 #     class Meta:
 #         model = TicketComment
 #         fields = ("body", "is_internal")
-#         widgets = {"body": forms.Textarea(attrs={"class": "textarea textarea-bordered w-full richtext-source", "rows": 3, "placeholder": _("Write an update…")}), "is_internal": forms.CheckboxInput(attrs={"class": "checkbox checkbox-primary"})}
+#         widgets = {"body": forms.Textarea(attrs={"class": "form-control w-100 richtext-source", "rows": 3, "placeholder": _("Write an update…")}), "is_internal": forms.CheckboxInput(attrs={"class": "form-check-input"})}
 
 class TicketCommentForm(forms.ModelForm):
     class Meta:
@@ -159,19 +159,19 @@ class TicketCommentForm(forms.ModelForm):
         widgets = {
             "body": forms.Textarea(
                 attrs={
-                    "class": "textarea textarea-bordered w-full richtext-source",
+                    "class": "form-control w-100 richtext-source",
                     "rows": 3,
                     "placeholder": "Write an update…",
                 }
             ),
             "status": forms.Select(
                 attrs={
-                    "class": "select select-bordered w-full",
+                    "class": "form-select w-100",
                 }
             ),
             "is_internal": forms.CheckboxInput(
                 attrs={
-                    "class": "toggle toggle-primary",
+                    "class": "form-check-input glis-switch",
                     "role": "switch",
                 }
             ),
@@ -187,10 +187,10 @@ class TicketEditForm(forms.ModelForm):
         model = Ticket
         fields = ("subject", "description", "priority", "status")
         widgets = {
-            "subject": forms.TextInput(attrs={"class": "input input-bordered w-full"}),
-            "description": forms.Textarea(attrs={"class": "textarea textarea-bordered w-full richtext-source", "rows": 8}),
-            "priority": forms.Select(attrs={"class": "select select-bordered w-full"}),
-            "status": forms.Select(attrs={"class": "select select-bordered w-full"}),
+            "subject": forms.TextInput(attrs={"class": "form-control w-100"}),
+            "description": forms.Textarea(attrs={"class": "form-control w-100 richtext-source", "rows": 8}),
+            "priority": forms.Select(attrs={"class": "form-select w-100"}),
+            "status": forms.Select(attrs={"class": "form-select w-100"}),
         }
 
     def __init__(self, *args, user=None, **kwargs):
@@ -206,21 +206,21 @@ class TicketAssignmentForm(forms.Form):
     users = forms.ModelMultipleChoiceField(
         required=False,
         queryset=get_user_model().objects.none(),
-        widget=CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}),
+        widget=CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
     )
     groups = forms.ModelMultipleChoiceField(
         required=False,
         queryset=SupportGroup.objects.none(),
-        widget=CheckboxSelectMultiple(attrs={"class": "checkbox checkbox-primary"}),
+        widget=CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
     )
     replace_existing = forms.BooleanField(
         required=False,
         initial=True,
-        widget=forms.CheckboxInput(attrs={"class": "checkbox checkbox-primary"}),
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
     )
 
-    organization = forms.ModelChoiceField(required=False,queryset=Organization.objects.none(),widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
-    support_group = forms.ModelChoiceField(required=False,queryset=SupportGroup.objects.none(),widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
+    organization = forms.ModelChoiceField(required=False,queryset=Organization.objects.none(),widget=forms.Select(attrs={'class':'form-select w-100'}))
+    support_group = forms.ModelChoiceField(required=False,queryset=SupportGroup.objects.none(),widget=forms.Select(attrs={'class':'form-select w-100'}))
 
     def __init__(self,*args,ticket=None,user=None,**kwargs):
         super().__init__(*args,**kwargs)
@@ -240,8 +240,8 @@ class TicketAssignmentForm(forms.Form):
 
 
 class TicketShareForm(forms.Form):
-    recipient = forms.ModelChoiceField(queryset=get_user_model().objects.none(), widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
-    expires_in_days = forms.IntegerField(min_value=1, max_value=30, initial=7, widget=forms.NumberInput(attrs={"class": "input input-bordered w-full"}))
+    recipient = forms.ModelChoiceField(queryset=get_user_model().objects.none(), widget=forms.Select(attrs={"class": "form-select w-100"}))
+    expires_in_days = forms.IntegerField(min_value=1, max_value=30, initial=7, widget=forms.NumberInput(attrs={"class": "form-control w-100"}))
 
     def __init__(self, *args, user=None, ticket=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -249,23 +249,23 @@ class TicketShareForm(forms.Form):
 
 
 class TicketApprovalDecisionForm(forms.Form):
-    decision = forms.ChoiceField(choices=[("approve", _("Approve")), ("reject", _("Reject"))], widget=RadioSelect(attrs={"class": "radio radio-primary"}))
-    note = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={"class": "textarea textarea-bordered w-full", "rows": 3}))
+    decision = forms.ChoiceField(choices=[("approve", _("Approve")), ("reject", _("Reject"))], widget=RadioSelect(attrs={"class": "form-check-input"}))
+    note = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={"class": "form-control w-100", "rows": 3}))
 
 
 class TicketFilterForm(forms.Form):
-    q = forms.CharField(required=False, widget=forms.SearchInput(attrs={"class": "input input-bordered w-full", "placeholder": _("Search tickets")}))
-    status = forms.ChoiceField(required=False, choices=[("", _("All statuses")), *Ticket.Status.choices], widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
-    priority = forms.ChoiceField(required=False, choices=[("", _("All priorities")), *Ticket.Priority.choices], widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
-    project = forms.ModelChoiceField(required=False, queryset=Project.objects.filter(is_active=True), empty_label=_("All projects"), widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
-    category = forms.ModelChoiceField(required=False, queryset=Category.objects.filter(is_active=True), empty_label=_("All categories"), widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
+    q = forms.CharField(required=False, widget=forms.SearchInput(attrs={"class": "form-control w-100", "placeholder": _("Search tickets")}))
+    status = forms.ChoiceField(required=False, choices=[("", _("All statuses")), *Ticket.Status.choices], widget=forms.Select(attrs={"class": "form-select w-100"}))
+    priority = forms.ChoiceField(required=False, choices=[("", _("All priorities")), *Ticket.Priority.choices], widget=forms.Select(attrs={"class": "form-select w-100"}))
+    project = forms.ModelChoiceField(required=False, queryset=Project.objects.filter(is_active=True), empty_label=_("All projects"), widget=forms.Select(attrs={"class": "form-select w-100"}))
+    category = forms.ModelChoiceField(required=False, queryset=Category.objects.filter(is_active=True), empty_label=_("All categories"), widget=forms.Select(attrs={"class": "form-select w-100"}))
     organization = forms.ModelChoiceField(
         required=False,
         queryset=Organization.objects.none(),
         empty_label=_("All organizations"),
-        widget=forms.Select(attrs={"class": "select select-bordered w-full"}),
+        widget=forms.Select(attrs={"class": "form-select w-100"}),
     )
-    sla = forms.ChoiceField(required=False, choices=[("", _("All SLA states")), ("overdue", _("Overdue")), ("at_risk", _("At risk"))], widget=forms.Select(attrs={"class": "select select-bordered w-full"}))
+    sla = forms.ChoiceField(required=False, choices=[("", _("All SLA states")), ("overdue", _("Overdue")), ("at_risk", _("At risk"))], widget=forms.Select(attrs={"class": "form-select w-100"}))
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -280,23 +280,23 @@ class TicketFilterForm(forms.Form):
 
 
 class TicketParticipantForm(forms.Form):
-    user = forms.ModelChoiceField(queryset=get_user_model().objects.none(),widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
+    user = forms.ModelChoiceField(queryset=get_user_model().objects.none(),widget=forms.Select(attrs={'class':'form-select w-100'}))
     def __init__(self,*args,ticket,user,**kwargs):
         super().__init__(*args,**kwargs)
         self.fields['user'].queryset=taggable_users(user,ticket)
 
 class TicketApprovalRequestForm(forms.Form):
-    approver = forms.ModelChoiceField(queryset=get_user_model().objects.none(),widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
-    note = forms.CharField(required=False,max_length=2000,widget=forms.Textarea(attrs={'class':'textarea textarea-bordered w-full','rows':3}))
+    approver = forms.ModelChoiceField(queryset=get_user_model().objects.none(),widget=forms.Select(attrs={'class':'form-select w-100'}))
+    note = forms.CharField(required=False,max_length=2000,widget=forms.Textarea(attrs={'class':'form-control w-100','rows':3}))
     def __init__(self,*args,ticket,user,**kwargs):
         super().__init__(*args,**kwargs)
         self.fields['approver'].queryset=available_approvers(user,ticket)
 
 class UnifiedRequestForm(TicketCreateStep1Form):
     supports_business_requests = True
-    request_type = forms.ChoiceField(choices=Project.RequestType.choices,widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
-    effective_date = forms.DateField(required=False,widget=forms.DateInput(attrs={'type':'date','class':'input input-bordered w-full'}))
-    policy_type = forms.ChoiceField(required=False,choices=[],widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
+    request_type = forms.ChoiceField(choices=Project.RequestType.choices,widget=forms.Select(attrs={'class':'form-select w-100'}))
+    effective_date = forms.DateField(required=False,widget=forms.DateInput(attrs={'type':'date','class':'form-control w-100'}))
+    policy_type = forms.ChoiceField(required=False,choices=[],widget=forms.Select(attrs={'class':'form-select w-100'}))
     def __init__(self,*args,user=None,**kwargs):
         super().__init__(*args,user=user,**kwargs)
         kind=self.data.get('request_type') or self.initial.get('request_type') or Project.RequestType.SERVICE

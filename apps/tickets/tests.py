@@ -415,7 +415,7 @@ class PortalShellPreferenceTests(TestCase):
     def test_global_sidebar_has_no_forced_overflow_class(self):
         self.client.force_login(self.user)
         response = self.client.get(reverse("portal:dashboard"))
-        self.assertContains(response, 'class="portal-navigation p-2.5"')
+        self.assertContains(response, 'class="portal-navigation p-2"')
         self.assertNotContains(response, 'h-[calc(100dvh-4rem)] overflow-y-auto')
         self.assertContains(response, "js/portal.js")
 

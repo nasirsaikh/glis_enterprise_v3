@@ -1,89 +1,89 @@
 {% load i18n %}
-<section class="card border border-base-300 bg-base-100 shadow-sm">
-  <div class="tpa-processing-header border-b border-base-300">
-    <div><h2 class="text-lg font-black">{% translate "TPA Processing" %}</h2><p class="text-xs opacity-60">{{ processing_ready_count }} / {{ processing_total }} {% translate "members ready" %}{% if processing_missing_count %} · {{ processing_missing_count }} {% translate "need card or processing details" %}{% endif %}</p></div>
-    <div class="tpa-processing-tools"><span class="badge badge-info badge-soft">{{ tx.get_status_display }}</span>
+<section class="card border border-body bg-body shadow-sm">
+  <div class="tpa-processing-header border-bottom border-body">
+    <div><h2 class="fs-6 fw-bold">{% translate "TPA Processing" %}</h2><p class="glis-text-xs opacity-50">{{ processing_ready_count }} / {{ processing_total }} {% translate "members ready" %}{% if processing_missing_count %} · {{ processing_missing_count }} {% translate "need card or processing details" %}{% endif %}</p></div>
+    <div class="tpa-processing-tools"><span class="badge text-bg-info glis-badge-soft">{{ tx.get_status_display }}</span>
       {% if can_tpa_process %}
-      <a class="btn btn-outline btn-sm" href="{% url 'tpa:transaction_tpa_export' tx.reference %}"><i class="bi bi-download" aria-hidden="true"></i>{% translate "Download members (Excel)" %}</a>
-      <a class="btn btn-ghost btn-sm" href="{% url 'tpa:transaction_tpa_export' tx.reference %}?format=csv">CSV</a>
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'tpa:transaction_tpa_export' tx.reference %}"><i class="bi bi-download" aria-hidden="true"></i>{% translate "Download members (Excel)" %}</a>
+      <a class="btn btn-light btn-sm" href="{% url 'tpa:transaction_tpa_export' tx.reference %}?format=csv">CSV</a>
       {% if tx.status == "tpa_in_progress" %}<button class="btn btn-primary btn-sm" type="button" data-open-dialog="tpa-bulk-import"><i class="bi bi-upload" aria-hidden="true"></i>{% translate "Upload card details" %}</button>{% endif %}
       {% endif %}
     </div>
   </div>
-  <div class="card-body gap-3 p-4">
+  <div class="card-body gap-2 p-3">
     {% if can_start_tpa %}<form method="post" action="{% url 'tpa:transaction_tpa_start' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_start' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-info btn-sm" type="submit"><i class="bi bi-play-fill" aria-hidden="true"></i>{% translate "Start TPA Processing" %}</button></form>{% endif %}
-    {% if tx.status == 'failed' %}<div class="alert alert-error" role="alert"><span>{% translate "Processing failed. Review the member results and audit." %}</span></div>{% endif %}
+    {% if tx.status == 'failed' %}<div class="alert alert-danger" role="alert"><span>{% translate "Processing failed. Review the member results and audit." %}</span></div>{% endif %}
     {% if tx.status == "sent_to_tpa" %}<div class="alert alert-info py-2"><span>{% translate "Approved and dispatched to the TPA queue." %}</span></div>{% endif %}
     <form class="tpa-processing-search" method="get" action="{% url 'tpa:transaction_detail' tx.reference %}" hx-get="{% url 'tpa:transaction_detail' tx.reference %}" hx-push-url="true">
       <input type="hidden" name="step" value="tpa_processing">
-      <label class="input input-bordered input-sm"><i class="bi bi-search" aria-hidden="true"></i><input name="q" value="{{ processing_query }}" placeholder="{% translate 'Search name, employee or card number' %}" aria-label="{% translate 'Search members' %}"></label>
-      <select name="processing_status" class="select select-bordered select-sm" aria-label="{% translate 'Processing readiness' %}"><option value="">{% translate "All members" %}</option><option value="missing" {% if processing_filter == 'missing' %}selected{% endif %}>{% translate "Missing details" %}</option><option value="ready" {% if processing_filter == 'ready' %}selected{% endif %}>{% translate "Ready" %}</option></select>
-      <button class="btn btn-outline btn-sm" type="submit">{% translate "Search" %}</button>
+      <label class="form-control glis-input-shell form-control-sm"><i class="bi bi-search" aria-hidden="true"></i><input name="q" value="{{ processing_query }}" placeholder="{% translate 'Search name, employee or card number' %}" aria-label="{% translate 'Search members' %}"></label>
+      <select name="processing_status" class="form-select form-select-sm" aria-label="{% translate 'Processing readiness' %}"><option value="">{% translate "All members" %}</option><option value="missing" {% if processing_filter == 'missing' %}selected{% endif %}>{% translate "Missing details" %}</option><option value="ready" {% if processing_filter == 'ready' %}selected{% endif %}>{% translate "Ready" %}</option></select>
+      <button class="btn btn-outline-secondary btn-sm" type="submit">{% translate "Search" %}</button>
     </form>
     <div class="overflow-x-auto">
       <table class="table table-sm tpa-processing-table" data-table-pagination="server">
         <thead><tr><th>{% translate "Member" %}</th><th>{% translate "Card / Member No." %}</th><th>{% translate "Effective date" %}</th><th>{% translate "System amount" %}</th><th>{% translate "TPA final amount" %}</th><th>{% translate "Notes" %}</th><th>{% translate "Status" %}</th><th></th></tr></thead>
         <tbody>{% for a in processing_page_obj %}<tr>
-          <td><strong>{{ a.display_first_name }} {{ a.display_last_name }}</strong><div class="text-xs opacity-50">{{ a.display_employee_id }} · #{{ a.pk }}</div></td>
+          <td><strong>{{ a.display_first_name }} {{ a.display_last_name }}</strong><div class="glis-text-xs opacity-50">{{ a.display_employee_id }} · #{{ a.pk }}</div></td>
           {% if can_tpa_process and tx.status == "tpa_in_progress" %}
-          <td><form id="tpa-row-{{ a.pk }}" method="post" action="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}?{{ processing_pagination_query }}&amp;page={{ processing_page_obj.number }}" hx-post="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}?{{ processing_pagination_query }}&amp;page={{ processing_page_obj.number }}" data-tpa-hx-form>{% csrf_token %}</form>{% if requires_source_intake %}<label class="sr-only" for="{{ a.processing_form.card_number.id_for_label }}">{% translate "Card number" %}</label>{{ a.processing_form.card_number }}{{ a.processing_form.card_number.errors }}{% else %}{{ a.final_card_number }}{% endif %}</td>
-          <td><label class="sr-only" for="{{ a.processing_form.effective_date.id_for_label }}">{% translate "Effective date" %}</label>{{ a.processing_form.effective_date }}{{ a.processing_form.effective_date.errors }}</td>
-          <td class="whitespace-nowrap">{{ tx.currency }} {{ a.calculated_premium }}</td>
-          <td><label class="sr-only" for="{{ a.processing_form.amount.id_for_label }}">{% translate "Final amount" %}</label>{{ a.processing_form.amount }}{{ a.processing_form.amount.errors }}</td>
+          <td><form id="tpa-row-{{ a.pk }}" method="post" action="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}?{{ processing_pagination_query }}&amp;page={{ processing_page_obj.number }}" hx-post="{% url 'tpa:transaction_tpa_action' tx.reference a.pk %}?{{ processing_pagination_query }}&amp;page={{ processing_page_obj.number }}" data-tpa-hx-form>{% csrf_token %}</form>{% if requires_source_intake %}<label class="visually-hidden" for="{{ a.processing_form.card_number.id_for_label }}">{% translate "Card number" %}</label>{{ a.processing_form.card_number }}{{ a.processing_form.card_number.errors }}{% else %}{{ a.final_card_number }}{% endif %}</td>
+          <td><label class="visually-hidden" for="{{ a.processing_form.effective_date.id_for_label }}">{% translate "Effective date" %}</label>{{ a.processing_form.effective_date }}{{ a.processing_form.effective_date.errors }}</td>
+          <td class="text-nowrap">{{ tx.currency }} {{ a.calculated_premium }}</td>
+          <td><label class="visually-hidden" for="{{ a.processing_form.amount.id_for_label }}">{% translate "Final amount" %}</label>{{ a.processing_form.amount }}{{ a.processing_form.amount.errors }}</td>
           {% else %}
           <td>{{ a.final_card_number }}</td><td>{{ a.tpa_effective_date|date:"d-M-Y"|default:"—" }}</td><td>{{ tx.currency }} {{ a.calculated_premium }}</td><td>{{ tx.currency }} {{ a.tpa_premium_amount|default_if_none:"—" }}</td>
           {% endif %}
-          <td><button class="btn btn-ghost btn-sm" type="button" data-open-dialog="tpa-notes-{{ a.pk }}" aria-label="{% translate 'Member notes' %}: {{ a.display_first_name }} {{ a.display_last_name }}"><i class="bi bi-chat-left-text" aria-hidden="true"></i>{% if a.tpa_override_reason or a.processing_message %}{% translate "View notes" %}{% else %}{% translate "Add notes" %}{% endif %}</button></td>
-          <td>{% if a.tpa_ready %}<span class="badge badge-success badge-sm">{% translate "Ready" %}</span>{% else %}<span class="badge badge-warning badge-sm">{% translate "Incomplete" %}</span>{% endif %}</td>
+          <td><button class="btn btn-light btn-sm" type="button" data-open-dialog="tpa-notes-{{ a.pk }}" aria-label="{% translate 'Member notes' %}: {{ a.display_first_name }} {{ a.display_last_name }}"><i class="bi bi-chat-left-text" aria-hidden="true"></i>{% if a.tpa_override_reason or a.processing_message %}{% translate "View notes" %}{% else %}{% translate "Add notes" %}{% endif %}</button></td>
+          <td>{% if a.tpa_ready %}<span class="badge text-bg-success glis-badge-small">{% translate "Ready" %}</span>{% else %}<span class="badge text-bg-warning glis-badge-small">{% translate "Incomplete" %}</span>{% endif %}</td>
           <td>{% if can_tpa_process and tx.status == "tpa_in_progress" %}<button form="tpa-row-{{ a.pk }}" class="btn btn-info btn-sm" type="submit">{% translate "Save" %}</button>{% endif %}</td>
-        </tr>{% if a.processing_form.errors %}<tr><td colspan="8">{% include "components/form_errors.html" with form=a.processing_form %}</td></tr>{% endif %}{% empty %}<tr><td colspan="8" class="py-6 text-center opacity-60">{% translate "No members match this search." %}</td></tr>{% endfor %}</tbody>
+        </tr>{% if a.processing_form.errors %}<tr><td colspan="8">{% include "components/form_errors.html" with form=a.processing_form %}</td></tr>{% endif %}{% empty %}<tr><td colspan="8" class="py-4 text-center opacity-50">{% translate "No members match this search." %}</td></tr>{% endfor %}</tbody>
       </table>
     </div>
     {% include "components/table_pagination.html" with page_obj=processing_page_obj pagination_query=processing_pagination_query pagination_target="#transaction-workspace" %}
-    {% if can_tpa_process and tx.status == "tpa_in_progress" %}<div class="flex justify-end"><form method="post" action="{% url 'tpa:transaction_tpa_complete' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_complete' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-success btn-sm" {% if processing_missing_count %}disabled{% endif %}><i class="bi bi-check2-circle" aria-hidden="true"></i>{% translate "Complete TPA Processing" %}</button></form></div>{% endif %}
+    {% if can_tpa_process and tx.status == "tpa_in_progress" %}<div class="d-flex justify-content-end"><form method="post" action="{% url 'tpa:transaction_tpa_complete' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_complete' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<button class="btn btn-success btn-sm" {% if processing_missing_count %}disabled{% endif %}><i class="bi bi-check2-circle" aria-hidden="true"></i>{% translate "Complete TPA Processing" %}</button></form></div>{% endif %}
   </div>
 </section>
 
 {% for a in processing_page_obj %}
-<dialog id="tpa-notes-{{ a.pk }}" class="modal" data-tpa-notes-dialog aria-labelledby="tpa-notes-title-{{ a.pk }}">
-  <div class="modal-box max-w-2xl"><h3 id="tpa-notes-title-{{ a.pk }}" class="text-lg font-bold">{{ a.display_first_name }} {{ a.display_last_name }} · {% translate "Notes" %}</h3><p class="text-xs opacity-60">{{ a.display_employee_id }} · #{{ a.pk }}</p>
+<div tabindex="-1" aria-hidden="true" id="tpa-notes-{{ a.pk }}" class="modal fade" data-tpa-notes-dialog aria-labelledby="tpa-notes-title-{{ a.pk }}"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable glis-max-2xl">
+  <div class="modal-content "><div class="modal-body"><h3 id="tpa-notes-title-{{ a.pk }}" class="fs-6 fw-bold">{{ a.display_first_name }} {{ a.display_last_name }} · {% translate "Notes" %}</h3><p class="glis-text-xs opacity-50">{{ a.display_employee_id }} · #{{ a.pk }}</p>
     {% if can_tpa_process and tx.status == "tpa_in_progress" %}
     {% include "components/form_errors.html" with form=a.processing_form %}
-    <fieldset class="fieldset"><legend class="fieldset-legend">{% translate "Amount override reason" %}</legend>{{ a.processing_form.override_reason }}{{ a.processing_form.override_reason.errors }}<p class="text-xs opacity-60">{% translate "Required when the final amount differs from the system amount." %}</p></fieldset>
-    <fieldset class="fieldset"><legend class="fieldset-legend">{% translate "Description / processing notes" %}</legend>{{ a.processing_form.comments }}{{ a.processing_form.comments.errors }}</fieldset>
-    <div class="modal-action"><button class="btn btn-primary btn-sm" form="tpa-row-{{ a.pk }}" type="submit">{% translate "Save member and notes" %}</button><button class="btn btn-ghost btn-sm" type="button" data-cancel-tpa-notes>{% translate "Cancel" %}</button></div>
+    <fieldset class="glis-field"><legend class="form-label">{% translate "Amount override reason" %}</legend>{{ a.processing_form.override_reason }}{{ a.processing_form.override_reason.errors }}<p class="glis-text-xs opacity-50">{% translate "Required when the final amount differs from the system amount." %}</p></fieldset>
+    <fieldset class="glis-field"><legend class="form-label">{% translate "Description / processing notes" %}</legend>{{ a.processing_form.comments }}{{ a.processing_form.comments.errors }}</fieldset>
+    <div class="modal-footer"><button class="btn btn-primary btn-sm" form="tpa-row-{{ a.pk }}" type="submit">{% translate "Save member and notes" %}</button><button class="btn btn-light btn-sm" type="button" data-cancel-tpa-notes>{% translate "Cancel" %}</button></div>
     {% else %}
-    <dl class="space-y-3 mt-4"><div><dt class="font-semibold">{% translate "Override reason" %}</dt><dd class="whitespace-pre-wrap">{{ a.tpa_override_reason|default:"—" }}</dd></div><div><dt class="font-semibold">{% translate "Processing notes" %}</dt><dd class="whitespace-pre-wrap">{{ a.processing_message|default:"—" }}</dd></div></dl>
-    <div class="modal-action"><form method="dialog"><button class="btn btn-sm">{% translate "Close" %}</button></form></div>
+    <dl class="glis-stack-3 mt-3"><div><dt class="fw-semibold">{% translate "Override reason" %}</dt><dd class="glis-pre-wrap">{{ a.tpa_override_reason|default:"—" }}</dd></div><div><dt class="fw-semibold">{% translate "Processing notes" %}</dt><dd class="glis-pre-wrap">{{ a.processing_message|default:"—" }}</dd></div></dl>
+    <div class="modal-footer"><button type="button" data-bs-dismiss="modal" class="btn btn-sm">{% translate "Close" %}</button></div>
     {% endif %}
-  </div><form method="dialog" class="modal-backdrop"><button>{% translate "Close" %}</button></form>
-</dialog>
+  </div></div>
+</div></div>
 {% endfor %}
 
 {% if can_tpa_process and tx.status == "tpa_in_progress" %}
-<dialog id="tpa-bulk-import" class="modal" aria-labelledby="tpa-bulk-title">
-  <div class="modal-box max-w-5xl"><h3 id="tpa-bulk-title" class="text-lg font-bold">{% translate "Bulk member card and processing details" %}</h3>
-    <p class="text-sm opacity-65 mt-2">{% translate "Download the member list, fill the green columns, and upload it here. Keep each member's action_id and row_version unchanged. Sorting or importing a subset is supported." %}</p>
-    <p class="text-xs opacity-60 mt-1">{% translate "Up to 10,000 rows per batch. Blank notes preserve existing notes. Additions without a card number are skipped. Amount changes require an override reason." %}</p>
-    <form class="tpa-bulk-upload mt-4" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_tpa_bulk' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_bulk' tx.reference %}" hx-encoding="multipart/form-data" data-tpa-hx-form>{% csrf_token %}<input type="hidden" name="mode" value="preview">
+<div tabindex="-1" aria-hidden="true" id="tpa-bulk-import" class="modal fade" aria-labelledby="tpa-bulk-title"><div class="modal-dialog modal-dialog-centered modal-dialog-scrollable glis-max-5xl">
+  <div class="modal-content "><div class="modal-body"><h3 id="tpa-bulk-title" class="fs-6 fw-bold">{% translate "Bulk member card and processing details" %}</h3>
+    <p class="small opacity-75 mt-2">{% translate "Download the member list, fill the green columns, and upload it here. Keep each member's action_id and row_version unchanged. Sorting or importing a subset is supported." %}</p>
+    <p class="glis-text-xs opacity-50 mt-1">{% translate "Up to 10,000 rows per batch. Blank notes preserve existing notes. Additions without a card number are skipped. Amount changes require an override reason." %}</p>
+    <form class="tpa-bulk-upload mt-3" method="post" enctype="multipart/form-data" action="{% url 'tpa:transaction_tpa_bulk' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_bulk' tx.reference %}" hx-encoding="multipart/form-data" data-tpa-hx-form>{% csrf_token %}<input type="hidden" name="mode" value="preview">
       {% include "components/form_errors.html" with form=bulk_tpa_form %}
-      <label class="fieldset"><span class="fieldset-legend">{{ bulk_tpa_form.file.label }}</span>{{ bulk_tpa_form.file }}{{ bulk_tpa_form.file.errors }}</label><button class="btn btn-primary btn-sm" type="submit">{% translate "Preview changes" %}</button>
+      <label class="glis-field"><span class="form-label">{{ bulk_tpa_form.file.label }}</span>{{ bulk_tpa_form.file }}{{ bulk_tpa_form.file.errors }}</label><button class="btn btn-primary btn-sm" type="submit">{% translate "Preview changes" %}</button>
     </form>
     {% if bulk_tpa_preview %}
-    <div class="alert {% if bulk_tpa_preview.errors %}alert-warning{% else %}alert-success{% endif %} mt-4" role="status"><span>{{ bulk_tpa_preview.entries|length }} {% translate "updates" %} · {{ bulk_tpa_preview.skipped }} {% translate "skipped / unchanged" %} · {{ bulk_tpa_preview.errors|length }} {% translate "errors" %}. {% translate "Nothing has been saved yet." %}</span></div>
+    <div class="alert {% if bulk_tpa_preview.errors %}alert-warning{% else %}alert-success{% endif %} mt-3" role="status"><span>{{ bulk_tpa_preview.entries|length }} {% translate "updates" %} · {{ bulk_tpa_preview.skipped }} {% translate "skipped / unchanged" %} · {{ bulk_tpa_preview.errors|length }} {% translate "errors" %}. {% translate "Nothing has been saved yet." %}</span></div>
     {% if bulk_tpa_preview.errors %}
-    <div class="overflow-x-auto mt-3"><table class="table table-sm" data-table-pagination="server"><thead><tr><th>{% translate "File row" %}</th><th>{% translate "Member row ID" %}</th><th>{% translate "Error" %}</th></tr></thead><tbody>{% for row in bulk_tpa_preview.error_rows %}<tr><td>{{ row.line }}</td><td>{{ row.action_id }}</td><td>{{ row.message }}</td></tr>{% endfor %}</tbody></table></div>
-    <p class="text-xs opacity-60">{% translate "Showing the first 50 errors. Download the full report, correct the file, and upload it again." %}</p>
-    <form method="post" action="{% url 'tpa:transaction_tpa_bulk' tx.reference %}">{% csrf_token %}<input type="hidden" name="mode" value="errors"><input type="hidden" name="preview_token" value="{{ bulk_tpa_preview.token }}"><button class="btn btn-outline btn-sm mt-2">{% translate "Download error report" %}</button></form>
+    <div class="overflow-x-auto mt-2"><table class="table table-sm" data-table-pagination="server"><thead><tr><th>{% translate "File row" %}</th><th>{% translate "Member row ID" %}</th><th>{% translate "Error" %}</th></tr></thead><tbody>{% for row in bulk_tpa_preview.error_rows %}<tr><td>{{ row.line }}</td><td>{{ row.action_id }}</td><td>{{ row.message }}</td></tr>{% endfor %}</tbody></table></div>
+    <p class="glis-text-xs opacity-50">{% translate "Showing the first 50 errors. Download the full report, correct the file, and upload it again." %}</p>
+    <form method="post" action="{% url 'tpa:transaction_tpa_bulk' tx.reference %}">{% csrf_token %}<input type="hidden" name="mode" value="errors"><input type="hidden" name="preview_token" value="{{ bulk_tpa_preview.token }}"><button class="btn btn-outline-secondary btn-sm mt-2">{% translate "Download error report" %}</button></form>
     {% endif %}
     {% if bulk_tpa_preview.preview_rows %}
-    <div class="overflow-x-auto mt-3"><table class="table table-sm" data-table-pagination="server"><thead><tr><th>{% translate "Member" %}</th><th>{% translate "Card number" %}</th><th>{% translate "Effective date" %}</th><th>{% translate "Final amount" %}</th><th>{% translate "Notes" %}</th></tr></thead><tbody>{% for row in bulk_tpa_preview.preview_rows %}<tr><td>{{ row.member_name }}<div class="text-xs opacity-50">#{{ row.action_id }}</div></td><td>{{ row.values.card_number }}</td><td>{{ row.values.tpa_effective_date }}</td><td>{{ tx.currency }} {{ row.values.tpa_premium_amount }}</td><td>{{ row.values.tpa_override_reason|truncatechars:40 }} {{ row.values.processing_message|truncatechars:40 }}</td></tr>{% endfor %}</tbody></table></div><p class="text-xs opacity-60">{% translate "Showing the first 20 updates. Applying saves every validated row in the batch." %}</p>
+    <div class="overflow-x-auto mt-2"><table class="table table-sm" data-table-pagination="server"><thead><tr><th>{% translate "Member" %}</th><th>{% translate "Card number" %}</th><th>{% translate "Effective date" %}</th><th>{% translate "Final amount" %}</th><th>{% translate "Notes" %}</th></tr></thead><tbody>{% for row in bulk_tpa_preview.preview_rows %}<tr><td>{{ row.member_name }}<div class="glis-text-xs opacity-50">#{{ row.action_id }}</div></td><td>{{ row.values.card_number }}</td><td>{{ row.values.tpa_effective_date }}</td><td>{{ tx.currency }} {{ row.values.tpa_premium_amount }}</td><td>{{ row.values.tpa_override_reason|truncatechars:40 }} {{ row.values.processing_message|truncatechars:40 }}</td></tr>{% endfor %}</tbody></table></div><p class="glis-text-xs opacity-50">{% translate "Showing the first 20 updates. Applying saves every validated row in the batch." %}</p>
     {% endif %}
-    {% if bulk_tpa_preview.can_apply %}<form method="post" action="{% url 'tpa:transaction_tpa_bulk' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_bulk' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<input type="hidden" name="mode" value="apply"><input type="hidden" name="preview_token" value="{{ bulk_tpa_preview.token }}"><button class="btn btn-success btn-sm mt-4" type="submit">{% translate "Apply validated batch" %} ({{ bulk_tpa_preview.entries|length }})</button></form>{% endif %}
+    {% if bulk_tpa_preview.can_apply %}<form method="post" action="{% url 'tpa:transaction_tpa_bulk' tx.reference %}" hx-post="{% url 'tpa:transaction_tpa_bulk' tx.reference %}" data-tpa-hx-form>{% csrf_token %}<input type="hidden" name="mode" value="apply"><input type="hidden" name="preview_token" value="{{ bulk_tpa_preview.token }}"><button class="btn btn-success btn-sm mt-3" type="submit">{% translate "Apply validated batch" %} ({{ bulk_tpa_preview.entries|length }})</button></form>{% endif %}
     {% endif %}
-    <div class="modal-action"><form method="dialog"><button class="btn btn-ghost btn-sm">{% translate "Close" %}</button></form></div>
-  </div><form method="dialog" class="modal-backdrop"><button>{% translate "Close" %}</button></form>
-</dialog>
+    <div class="modal-footer"><button type="button" data-bs-dismiss="modal" class="btn btn-light btn-sm">{% translate "Close" %}</button></div>
+  </div></div>
+</div></div>
 {% endif %}
 
 {% include "tpa/transaction/_conversations.html" %}

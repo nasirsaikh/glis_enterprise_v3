@@ -7,38 +7,38 @@
       <div><span class="tpa-wizard-eyebrow">{% translate "Endorsement setup" %}</span><h2>{% translate "Request details" %}</h2><p>{% translate "Complete each step, then review your request before creating it." %}</p></div>
       <span class="tpa-wizard-step-count"><span data-wizard-current>1</span><span aria-hidden="true">/</span>3</span>
     </div>
-    <div class="workflow-step-scroll"><ol class="steps steps-horizontal workflow-steps" aria-label="{% translate 'Endorsement setup steps' %}">
-      <li class="step" data-wizard-indicator="1" aria-current="step">{% translate "Policy & Type" %}</li>
-      <li class="step" data-wizard-indicator="2">{% translate "Dates & Refund" %}</li>
-      <li class="step" data-wizard-indicator="3">{% translate "Review & Create" %}</li>
+    <div class="workflow-step-scroll"><ol class="workflow-progress workflow-progress-horizontal workflow-steps" aria-label="{% translate 'Endorsement setup steps' %}">
+      <li class="workflow-progress-step" data-wizard-indicator="1" aria-current="step">{% translate "Policy & Type" %}</li>
+      <li class="workflow-progress-step" data-wizard-indicator="2">{% translate "Dates & Refund" %}</li>
+      <li class="workflow-progress-step" data-wizard-indicator="3">{% translate "Review & Create" %}</li>
     </ol></div>
-    {% if form.non_field_errors %}<div class="alert alert-error tpa-wizard-errors" role="alert"><i aria-hidden="true" class="bi bi-exclamation-triangle"></i><div>{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div></div>{% endif %}
+    {% if form.non_field_errors %}<div class="alert alert-danger tpa-wizard-errors" role="alert"><i aria-hidden="true" class="bi bi-exclamation-triangle"></i><div>{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div></div>{% endif %}
     <div class="tpa-wizard-card__body">
       <section class="tpa-wizard-step" data-wizard-step="1" aria-labelledby="transaction-step-title-1">
         <div class="tpa-wizard-step__intro"><span class="tpa-wizard-step__icon"><i aria-hidden="true" class="bi bi-file-earmark-text"></i></span><div><h3 id="transaction-step-title-1">{% translate "Choose the policy and request type" %}</h3><p>{% translate "Start by selecting an active policy and the change you need to make." %}</p></div></div>
         <div class="tpa-wizard-fields tpa-wizard-fields--two">
-          <fieldset class="fieldset"><legend class="fieldset-legend">{{ form.policy.label }}</legend>{{ form.policy }}{% if form.policy.help_text %}<p class="label">{{ form.policy.help_text }}</p>{% endif %}{% for error in form.policy.errors %}<p class="label text-error">{{ error }}</p>{% endfor %}</fieldset>
-          <fieldset class="fieldset"><legend class="fieldset-legend">{{ form.transaction_type.label }}</legend>{{ form.transaction_type }}{% if form.transaction_type.help_text %}<p class="label">{{ form.transaction_type.help_text }}</p>{% endif %}{% for error in form.transaction_type.errors %}<p class="label text-error">{{ error }}</p>{% endfor %}</fieldset>
+          <fieldset class="glis-field"><legend class="form-label">{{ form.policy.label }}</legend>{{ form.policy }}{% if form.policy.help_text %}<p class="form-text">{{ form.policy.help_text }}</p>{% endif %}{% for error in form.policy.errors %}<p class="form-text text-danger">{{ error }}</p>{% endfor %}</fieldset>
+          <fieldset class="glis-field"><legend class="form-label">{{ form.transaction_type.label }}</legend>{{ form.transaction_type }}{% if form.transaction_type.help_text %}<p class="form-text">{{ form.transaction_type.help_text }}</p>{% endif %}{% for error in form.transaction_type.errors %}<p class="form-text text-danger">{{ error }}</p>{% endfor %}</fieldset>
         </div>
       </section>
       <section class="tpa-wizard-step" data-wizard-step="2" aria-labelledby="transaction-step-title-2" hidden>
         <div class="tpa-wizard-step__intro"><span class="tpa-wizard-step__icon tpa-wizard-step__icon--blue"><i aria-hidden="true" class="bi bi-calendar2-week"></i></span><div><h3 id="transaction-step-title-2">{% translate "Set the effective date" %}</h3><p>{% translate "Dates and refund details depend on the endorsement type you selected." %}</p></div></div>
         <div class="tpa-wizard-fields tpa-wizard-fields--two">
-          <fieldset class="fieldset"><legend class="fieldset-legend">{{ form.effective_date.label }}</legend>{{ form.effective_date }}{% if form.effective_date.help_text %}<p class="label">{{ form.effective_date.help_text }}</p>{% endif %}{% for error in form.effective_date.errors %}<p class="label text-error">{{ error }}</p>{% endfor %}</fieldset>
-          <fieldset class="fieldset" data-refund-fieldset hidden><legend class="fieldset-legend">{{ form.refund_basis.label }}</legend>{{ form.refund_basis }}<p class="label">{% translate "Choose a refund basis for policy cancellation or member deletion." %}</p>{% for error in form.refund_basis.errors %}<p class="label text-error">{{ error }}</p>{% endfor %}</fieldset>
-          <fieldset class="fieldset" data-reactivation-fieldset hidden><legend class="fieldset-legend">{{ form.expected_reactivation_date.label }}</legend>{{ form.expected_reactivation_date }}{% if form.expected_reactivation_date.help_text %}<p class="label">{{ form.expected_reactivation_date.help_text }}</p>{% endif %}{% for error in form.expected_reactivation_date.errors %}<p class="label text-error">{{ error }}</p>{% endfor %}</fieldset>
+          <fieldset class="glis-field"><legend class="form-label">{{ form.effective_date.label }}</legend>{{ form.effective_date }}{% if form.effective_date.help_text %}<p class="form-text">{{ form.effective_date.help_text }}</p>{% endif %}{% for error in form.effective_date.errors %}<p class="form-text text-danger">{{ error }}</p>{% endfor %}</fieldset>
+          <fieldset class="glis-field" data-refund-fieldset hidden><legend class="form-label">{{ form.refund_basis.label }}</legend>{{ form.refund_basis }}<p class="form-text">{% translate "Choose a refund basis for policy cancellation or member deletion." %}</p>{% for error in form.refund_basis.errors %}<p class="form-text text-danger">{{ error }}</p>{% endfor %}</fieldset>
+          <fieldset class="glis-field" data-reactivation-fieldset hidden><legend class="form-label">{{ form.expected_reactivation_date.label }}</legend>{{ form.expected_reactivation_date }}{% if form.expected_reactivation_date.help_text %}<p class="form-text">{{ form.expected_reactivation_date.help_text }}</p>{% endif %}{% for error in form.expected_reactivation_date.errors %}<p class="form-text text-danger">{{ error }}</p>{% endfor %}</fieldset>
         </div>
         <div class="tpa-wizard-note"><i aria-hidden="true" class="bi bi-info-circle"></i><span>{% translate "For a temporary suspension, add a reactivation date if it is known. Other endorsement types do not use that date." %}</span></div>
       </section>
       <section class="tpa-wizard-step" data-wizard-step="3" aria-labelledby="transaction-step-title-3" hidden>
         <div class="tpa-wizard-step__intro"><span class="tpa-wizard-step__icon tpa-wizard-step__icon--violet"><i aria-hidden="true" class="bi bi-clipboard2-check"></i></span><div><h3 id="transaction-step-title-3">{% translate "Add a reason and review" %}</h3><p>{% translate "Check the request summary and include context for the processing team." %}</p></div></div>
-        <fieldset class="fieldset"><legend class="fieldset-legend">{{ form.remarks.label }}</legend>{{ form.remarks }}{% if form.remarks.help_text %}<p class="label">{{ form.remarks.help_text }}</p>{% endif %}{% for error in form.remarks.errors %}<p class="label text-error">{{ error }}</p>{% endfor %}</fieldset>
+        <fieldset class="glis-field"><legend class="form-label">{{ form.remarks.label }}</legend>{{ form.remarks }}{% if form.remarks.help_text %}<p class="form-text">{{ form.remarks.help_text }}</p>{% endif %}{% for error in form.remarks.errors %}<p class="form-text text-danger">{{ error }}</p>{% endfor %}</fieldset>
         <div class="tpa-wizard-review"><div class="tpa-wizard-review__title"><i aria-hidden="true" class="bi bi-card-checklist"></i><strong>{% translate "Request summary" %}</strong></div><dl><div><dt>{% translate "Policy" %}</dt><dd data-wizard-summary-policy>—</dd></div><div><dt>{% translate "Endorsement type" %}</dt><dd data-wizard-summary-type>—</dd></div><div><dt>{% translate "Effective date" %}</dt><dd data-wizard-summary-date>—</dd></div></dl></div>
       </section>
     </div>
     <div class="tpa-wizard-card__foot">
-      <a class="btn btn-ghost btn-sm" href="{% url 'tpa:transaction_list' %}">{% translate "Cancel" %}</a>
-      <div class="tpa-wizard-controls"><button class="btn btn-ghost btn-sm" type="button" data-wizard-prev hidden><i aria-hidden="true" class="bi bi-arrow-left"></i>{% translate "Previous" %}</button><button class="btn btn-outline btn-sm" type="button" data-wizard-next>{% translate "Next" %}<i aria-hidden="true" class="bi bi-arrow-right"></i></button><button class="btn btn-primary btn-sm" type="submit" data-wizard-submit hidden><span>{% translate "Create endorsement" %}</span><i aria-hidden="true" class="bi bi-check2"></i><span class="loading loading-spinner loading-sm" data-processing-spinner aria-hidden="true" hidden></span></button></div>
+      <a class="btn btn-light btn-sm" href="{% url 'tpa:transaction_list' %}">{% translate "Cancel" %}</a>
+      <div class="tpa-wizard-controls"><button class="btn btn-light btn-sm" type="button" data-wizard-prev hidden><i aria-hidden="true" class="bi bi-arrow-left"></i>{% translate "Previous" %}</button><button class="btn btn-outline-secondary btn-sm" type="button" data-wizard-next>{% translate "Next" %}<i aria-hidden="true" class="bi bi-arrow-right"></i></button><button class="btn btn-primary btn-sm" type="submit" data-wizard-submit hidden><span>{% translate "Create endorsement" %}</span><i aria-hidden="true" class="bi bi-check2"></i><span class="spinner-border spinner-border-sm" data-processing-spinner aria-hidden="true" hidden></span></button></div>
     </div>
   </form>
 </div>

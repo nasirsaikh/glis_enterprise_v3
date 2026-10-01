@@ -1,25 +1,25 @@
 {% load i18n %}
-<div id="knowledge-managed-documents" class="card mt-4 border border-base-300 bg-base-100">
-  <div class="card-body p-5">
-    <div class="flex items-start justify-between gap-3">
-      <div><h3 class="card-title text-base"><i class="bi bi-shield-check text-primary"></i>{% translate "Controlled documents" %}</h3><p class="mt-1 text-xs text-base-content/45">{% translate "Versioned and governed by Mayan EDMS" %}</p></div>
-      <span class="badge badge-outline">Mayan</span>
+<div id="knowledge-managed-documents" class="card mt-3 border border-body bg-body">
+  <div class="card-body p-3">
+    <div class="d-flex align-items-start justify-content-between gap-2">
+      <div><h3 class="card-title fs-6"><i class="bi bi-shield-check text-primary"></i>{% translate "Controlled documents" %}</h3><p class="mt-1 glis-text-xs text-body-secondary">{% translate "Versioned and governed by Mayan EDMS" %}</p></div>
+      <span class="badge border text-body-secondary bg-transparent">Mayan</span>
     </div>
-    {% if mayan_error %}<div class="alert alert-warning mt-4"><i class="bi bi-exclamation-triangle"></i><span>{{ mayan_error }}</span></div>{% endif %}
+    {% if mayan_error %}<div class="alert alert-warning mt-3"><i class="bi bi-exclamation-triangle"></i><span>{{ mayan_error }}</span></div>{% endif %}
     {% if request.user.is_staff or request.user.is_superuser or article.author_id == request.user.id %}
-    <form enctype="multipart/form-data" hx-post="{% url 'knowledge:document_upload' article.slug %}" hx-target="#knowledge-managed-documents" hx-swap="outerHTML" class="mt-4 flex flex-col gap-3 sm:flex-row">
-      {% csrf_token %}<input type="file" name="file" class="file-input file-input-bordered min-w-0 flex-1" required><button class="btn btn-primary"><i class="bi bi-upload"></i>{% translate "Upload" %}</button>
+    <form enctype="multipart/form-data" hx-post="{% url 'knowledge:document_upload' article.slug %}" hx-target="#knowledge-managed-documents" hx-swap="outerHTML" class="mt-3 d-flex flex-column gap-2 flex-sm-row">
+      {% csrf_token %}<input type="file" name="file" class="form-control glis-min-width-0 glis-flex-fill" required><button class="btn btn-primary"><i class="bi bi-upload"></i>{% translate "Upload" %}</button>
     </form>
     {% endif %}
-    <ul class="list mt-4">
+    <ul class="list-group list-group-flush mt-3">
       {% for document in managed_documents %}
-      <li class="list-row items-center rounded-xl px-2">
-        <span class="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary"><i class="bi bi-file-earmark-lock"></i></span>
-        <div class="list-col-grow min-w-0"><strong class="block truncate">{{ document.label|default:"Controlled document" }}</strong><small class="text-base-content/45">Mayan #{{ document.id }}</small></div>
-        <a class="btn btn-ghost btn-circle btn-sm" href="{% url 'knowledge:document_download' article.slug document.id %}"><i class="bi bi-download"></i></a>
-        {% if request.user.is_staff or request.user.is_superuser %}<a class="btn btn-ghost btn-circle btn-sm" target="_blank" href="{% url 'documents:open' document.id %}"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}
+      <li class="list-group-item d-flex align-items-start gap-3 align-items-center rounded-3 px-2">
+        <span class="d-grid glis-h-10 glis-w-10 glis-place-center rounded-3 bg-primary-subtle text-primary"><i class="bi bi-file-earmark-lock"></i></span>
+        <div class="flex-grow-1 glis-min-width-0"><strong class="d-block text-truncate">{{ document.label|default:"Controlled document" }}</strong><small class="text-body-secondary">Mayan #{{ document.id }}</small></div>
+        <a class="btn btn-light glis-btn-icon rounded-circle btn-sm" href="{% url 'knowledge:document_download' article.slug document.id %}"><i class="bi bi-download"></i></a>
+        {% if request.user.is_staff or request.user.is_superuser %}<a class="btn btn-light glis-btn-icon rounded-circle btn-sm" target="_blank" href="{% url 'documents:open' document.id %}"><i class="bi bi-box-arrow-up-right"></i></a>{% endif %}
       </li>
-      {% empty %}<li class="py-5 text-center text-sm text-base-content/45">{% translate "No controlled documents attached." %}</li>{% endfor %}
+      {% empty %}<li class="py-3 text-center small text-body-secondary">{% translate "No controlled documents attached." %}</li>{% endfor %}
     </ul>
   </div>
 </div>

@@ -9,7 +9,7 @@
     <div class="container py-2">
         <div class="row align-items-center g-2">
             <div class="col-lg-8">
-                <h3 class="display-6 fw-bold mb-3">{% translate "Forms & Document Download Center" %}</h1>
+                <h3 class="display-6 fw-bold mb-2">{% translate "Forms & Document Download Center" %}</h1>
                 <p class="lead text-body-secondary mb-0">{% translate "Search and download forms, policies, guidelines, documents and other useful resources." %}</p>
             </div>
         </div>
@@ -17,9 +17,9 @@
 </section>
 
 <div hx-get="{% url 'download_center_content' %}" hx-trigger="load" hx-swap="innerHTML">
-    <div class="container py-5 text-center">
+    <div class="container py-3 text-center">
         <div class="spinner-border text-primary"></div>
-        <div class="mt-3 text-body-secondary">{% translate "Loading documents..." %}</div>
+        <div class="mt-2 text-body-secondary">{% translate "Loading documents..." %}</div>
     </div>
 </div>
 

@@ -3,46 +3,46 @@
 {% block title %}{% translate "TPA Operations Guide" %}{% endblock %}
 
 {% block tpa_content %}
-<div class="space-y-4">
-  <header class="card flex flex-col gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6 lg:flex-row lg:items-end lg:justify-between">
+<div class="glis-stack-4">
+  <header class="card d-flex flex-column gap-3 rounded-4 border border-body bg-body p-3 shadow-sm p-sm-4 flex-lg-row align-items-lg-end justify-content-lg-between">
     <div>
-      <div class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-book"></i>{% translate "TPA / Operations Manual" %}</div>
-      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "AUTOMATED ENDORSEMENT OPERATIONS" %}</h1>
-      <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{% translate "Office 365 intake, governed AI extraction, deterministic validation, approval, TPA processing, secure conversations and card dispatch." %}</p>
+      <div class="badge text-bg-primary glis-badge-soft mb-2 gap-2"><i class="bi bi-book"></i>{% translate "TPA / Operations Manual" %}</div>
+      <h1 class="fs-3 fw-bold">{% translate "AUTOMATED ENDORSEMENT OPERATIONS" %}</h1>
+      <p class="mt-2 glis-max-4xl small lh-base text-body-secondary">{% translate "Office 365 intake, governed AI extraction, deterministic validation, approval, TPA processing, secure conversations and card dispatch." %}</p>
     </div>
-    <a class="btn btn-outline btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "TPA Dashboard" %}</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "TPA Dashboard" %}</a>
   </header>
 
-  <div class="grid gap-4 xl:grid-cols-2">
-    <section class="card border border-base-300 bg-base-100 shadow-sm">
+  <div class="d-grid gap-3 glis-grid-xl-2">
+    <section class="card border border-body bg-body shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-envelope-check text-primary"></i>{% translate "1. Automatic Office 365 Intake" %}</h2>
         <p>{% translate "The configured Office 365/shared mailbox is monitored automatically through Microsoft Graph and GLIS Job Center. Users do not normally upload incoming emails manually." %}</p>
         <div class="alert alert-info"><i class="bi bi-arrow-repeat"></i><span>{% translate "Graph delta synchronization stores new messages once and resumes safely after scheduler/application restarts." %}</span></div>
-        <div class="flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap gap-2">
           <a class="btn btn-primary btn-sm" href="{% url 'tpa:inbound_email_list' %}">{% translate "Mailbox Monitor" %}</a>
-          <span class="badge badge-outline">Mail.Read</span>
-          <span class="badge badge-outline">OAuth2 client credentials</span>
+          <span class="badge border text-body-secondary bg-transparent">Mail.Read</span>
+          <span class="badge border text-body-secondary bg-transparent">OAuth2 client credentials</span>
         </div>
       </div>
     </section>
 
-    <section class="card border border-base-300 bg-base-100 shadow-sm">
+    <section class="card border border-body bg-body shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-shield-check text-primary"></i>{% translate "2. Classification & Authority" %}</h2>
         <p>{% translate "AI classifies and extracts evidence, but Django validates sender authority and resolves the policy. Unrelated, uncertain, unauthorized or ambiguous requests are retained for review instead of being guessed." %}</p>
-        <div class="flex flex-wrap gap-1">
-          <span class="badge badge-success badge-soft">MEMBER_ADD</span>
-          <span class="badge badge-error badge-soft">MEMBER_DELETE</span>
-          <span class="badge badge-warning badge-soft">MEMBER_TERMINATE</span>
-          <span class="badge badge-info badge-soft">MEMBER_SUSPEND</span>
-          <span class="badge badge-info badge-soft">MEMBER_REACTIVATE</span>
-          <span class="badge badge-secondary badge-soft">POLICY_CANCEL</span>
+        <div class="d-flex flex-wrap gap-1">
+          <span class="badge text-bg-success glis-badge-soft">MEMBER_ADD</span>
+          <span class="badge text-bg-danger glis-badge-soft">MEMBER_DELETE</span>
+          <span class="badge text-bg-warning glis-badge-soft">MEMBER_TERMINATE</span>
+          <span class="badge text-bg-info glis-badge-soft">MEMBER_SUSPEND</span>
+          <span class="badge text-bg-info glis-badge-soft">MEMBER_REACTIVATE</span>
+          <span class="badge text-bg-secondary glis-badge-soft">POLICY_CANCEL</span>
         </div>
       </div>
     </section>
 
-    <section class="card border border-base-300 bg-base-100 shadow-sm">
+    <section class="card border border-body bg-body shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-stars text-primary"></i>{% translate "3. Evidence & AI/OCR" %}</h2>
         <p>{% translate "Email body and all attachments are treated as one logical evidence bundle. Structured spreadsheets are parsed deterministically; PDFs use native text first; scanned PDFs/images use an approved vision provider and a text model maps OCR into strict member JSON." %}</p>
@@ -57,88 +57,88 @@
           </table>
         </div>
         <div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i><span>{% translate "Failed OCR never deletes the source or previously valid rows. Correct the provider configuration and use Reprocess Evidence." %}</span></div>
-        <p class="text-xs opacity-60">{% translate "Authorized intake editors may delete failed/review-required manual evidence. Office365/email-linked evidence is retained for audit and must be reprocessed or supplemented rather than deleted." %}</p>
+        <p class="glis-text-xs opacity-50">{% translate "Authorized intake editors may delete failed/review-required manual evidence. Office365/email-linked evidence is retained for audit and must be reprocessed or supplemented rather than deleted." %}</p>
       </div>
     </section>
 
-    <section class="card border border-base-300 bg-base-100 shadow-sm">
+    <section class="card border border-body bg-body shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-people text-primary"></i>{% translate "4. Intake & Correction" %}</h2>
         <p>{% translate "Extracted, imported and manual members use one MemberAction matrix. Validated rows and Errors / Needs Correction are separated for operational review." %}</p>
-        <ul class="list list-disc ps-5 text-sm">
+        <ul class="list-group list-group-flush glis-list-disc ps-3 small">
           <li>{% translate "Add or reprocess supporting evidence" %}</li>
           <li>{% translate "Add Member Manually in a modal" %}</li>
           <li>{% translate "Select existing active/suspended members as required" %}</li>
           <li>{% translate "Paste multiple card numbers for bulk matching" %}</li>
           <li>{% translate "Correct rows and immediately revalidate" %}</li>
         </ul>
-        <div class="alert alert-error"><i class="bi bi-ban"></i><span>{% translate "Member workflows cannot progress with zero member rows or blocking validation errors." %}</span></div>
+        <div class="alert alert-danger"><i class="bi bi-ban"></i><span>{% translate "Member workflows cannot progress with zero member rows or blocking validation errors." %}</span></div>
       </div>
     </section>
 
-    <section class="card border border-base-300 bg-base-100 shadow-sm">
+    <section class="card border border-body bg-body shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-calculator text-primary"></i>{% translate "5. Validation, Refund & STP" %}</h2>
         <p>{% translate "Policy dates, backdating, plans, identifiers, duplicates, principal/dependent relationships and member state are validated deterministically." %}</p>
         <p>{% translate "Deletion and cancellation use explicit Full or Pro-Rata refund basis. Decimal calculations and calculation snapshots preserve the system amount separately from the TPA final amount." %}</p>
-        <div class="stats stats-vertical sm:stats-horizontal">
-          <div class="stat"><div class="stat-title">STP</div><div class="stat-desc">{% translate "Auto approval only when deterministic rules pass" %}</div></div>
-          <div class="stat"><div class="stat-title">{% translate "Override" %}</div><div class="stat-desc">{% translate "Reason required when TPA final amount differs" %}</div></div>
+        <div class="glis-stats glis-stats-vertical glis-stats-sm">
+          <div class="glis-stat"><div class="glis-stat-title">STP</div><div class="glis-stat-note">{% translate "Auto approval only when deterministic rules pass" %}</div></div>
+          <div class="glis-stat"><div class="glis-stat-title">{% translate "Override" %}</div><div class="glis-stat-note">{% translate "Reason required when TPA final amount differs" %}</div></div>
         </div>
       </div>
     </section>
 
-    <section class="card border border-base-300 bg-base-100 shadow-sm">
+    <section class="card border border-body bg-body shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-chat-dots text-primary"></i>{% translate "6. Approval & TPA Conversations" %}</h2>
         <p>{% translate "Approval and TPA queries are multi-message conversations embedded in the transaction. Open approval queries must be resolved before approval or rejection." %}</p>
-        <div class="grid gap-2 sm:grid-cols-3">
-          <div class="rounded-box border border-base-300 p-3"><strong>CLIENT_VISIBLE</strong><div class="text-xs opacity-60">{% translate "Requester/client can participate." %}</div></div>
-          <div class="rounded-box border border-base-300 p-3"><strong>INSURER_TPA_INTERNAL</strong><div class="text-xs opacity-60">{% translate "Server-side private insurer/TPA discussion." %}</div></div>
-          <div class="rounded-box border border-base-300 p-3"><strong>SELECTED_PARTICIPANTS</strong><div class="text-xs opacity-60">{% translate "Restricted to explicitly selected users; only those users are notified." %}</div></div>
+        <div class="d-grid gap-2 glis-grid-sm-3">
+          <div class="rounded-3 border border-body p-2"><strong>CLIENT_VISIBLE</strong><div class="glis-text-xs opacity-50">{% translate "Requester/client can participate." %}</div></div>
+          <div class="rounded-3 border border-body p-2"><strong>INSURER_TPA_INTERNAL</strong><div class="glis-text-xs opacity-50">{% translate "Server-side private insurer/TPA discussion." %}</div></div>
+          <div class="rounded-3 border border-body p-2"><strong>SELECTED_PARTICIPANTS</strong><div class="glis-text-xs opacity-50">{% translate "Restricted to explicitly selected users; only those users are notified." %}</div></div>
         </div>
         <div class="alert alert-info"><i class="bi bi-lock"></i><span>{% translate "Internal staff may explicitly share a selected message body with the client. The parent internal thread and its attachments remain private." %}</span></div>
       </div>
     </section>
 
-    <section class="card border border-base-300 bg-base-100 shadow-sm">
+    <section class="card border border-body bg-body shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-heart-pulse text-primary"></i>{% translate "7. Suspension & Reactivation" %}</h2>
         <p><strong>{% translate "Permanent termination" %}</strong> — {% translate "permanently terminates remaining coverage." %}</p>
         <p><strong>{% translate "Temporary suspension" %}</strong> — {% translate "retains the historical policy/card relationship and records suspension date/reason/expected reactivation." %}</p>
-        <p class="text-xs opacity-60">{% translate "Manual suspension requires a reason and can capture an optional expected reactivation date; email temporary_until is mapped into the same structured field." %}</p>
+        <p class="glis-text-xs opacity-50">{% translate "Manual suspension requires a reason and can capture an optional expected reactivation date; email temporary_until is mapped into the same structured field." %}</p>
         <p><strong>{% translate "Reactivation" %}</strong> — {% translate "allowed only for an eligible suspended member on an active policy with a valid reactivation date." %}</p>
       </div>
     </section>
 
-    <section class="card border border-base-300 bg-base-100 shadow-sm">
+    <section class="card border border-body bg-body shadow-sm">
       <div class="card-body">
         <h2 class="card-title"><i class="bi bi-truck text-primary"></i>{% translate "8. Card Dispatch" %}</h2>
         <p>{% translate "When a physical card is required for Member Addition, successful TPA processing enters Card Dispatch instead of completing early." %}</p>
-        <div class="flex flex-wrap gap-1">
-          <span class="badge badge-outline">{% translate "Courier" %}</span>
-          <span class="badge badge-outline">{% translate "Hand Delivery" %}</span>
-          <span class="badge badge-outline">{% translate "Client Collection" %}</span>
-          <span class="badge badge-outline">{% translate "Insurer Collection" %}</span>
-          <span class="badge badge-outline">{% translate "TPA Collection" %}</span>
+        <div class="d-flex flex-wrap gap-1">
+          <span class="badge border text-body-secondary bg-transparent">{% translate "Courier" %}</span>
+          <span class="badge border text-body-secondary bg-transparent">{% translate "Hand Delivery" %}</span>
+          <span class="badge border text-body-secondary bg-transparent">{% translate "Client Collection" %}</span>
+          <span class="badge border text-body-secondary bg-transparent">{% translate "Insurer Collection" %}</span>
+          <span class="badge border text-body-secondary bg-transparent">{% translate "TPA Collection" %}</span>
         </div>
-        <p class="text-sm opacity-60">{% translate "Deletion, termination, suspension and cancellation do not require card dispatch." %}</p>
+        <p class="small opacity-50">{% translate "Deletion, termination, suspension and cancellation do not require card dispatch." %}</p>
       </div>
     </section>
   </div>
 
-  <section class="card border border-base-300 bg-base-100 shadow-sm">
+  <section class="card border border-body bg-body shadow-sm">
     <div class="card-body">
       <h2 class="card-title"><i class="bi bi-diagram-3 text-primary"></i>{% translate "End-to-End Workflow" %}</h2>
-      <ul class="steps steps-vertical lg:steps-horizontal w-full">
-        <li class="step step-primary">{% translate "Intake & Correction" %}</li>
-        <li class="step step-primary">{% translate "Validation" %}</li>
-        <li class="step step-primary">{% translate "Approval / STP" %}</li>
-        <li class="step step-primary">{% translate "TPA Processing" %}</li>
-        <li class="step step-primary">{% translate "Card Dispatch if required" %}</li>
-        <li class="step step-primary">{% translate "Complete" %}</li>
+      <ul class="workflow-progress workflow-progress-vertical workflow-progress-lg w-100">
+        <li class="workflow-progress-step is-current">{% translate "Intake & Correction" %}</li>
+        <li class="workflow-progress-step is-current">{% translate "Validation" %}</li>
+        <li class="workflow-progress-step is-current">{% translate "Approval / STP" %}</li>
+        <li class="workflow-progress-step is-current">{% translate "TPA Processing" %}</li>
+        <li class="workflow-progress-step is-current">{% translate "Card Dispatch if required" %}</li>
+        <li class="workflow-progress-step is-current">{% translate "Complete" %}</li>
       </ul>
-      <p class="text-sm opacity-60">{% translate "Permanent member/policy changes are applied only at the appropriate final completion stage, never merely because an email was received or an approval was granted." %}</p>
+      <p class="small opacity-50">{% translate "Permanent member/policy changes are applied only at the appropriate final completion stage, never merely because an email was received or an approval was granted." %}</p>
     </div>
   </section>
 </div>

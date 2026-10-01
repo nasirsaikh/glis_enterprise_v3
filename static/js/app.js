@@ -69,7 +69,7 @@
         const query = input.value.trim().toLowerCase();
         target.querySelectorAll("[data-multiselect-option]").forEach((option) => {
           const haystack = (option.dataset.searchText || option.textContent || "").toLowerCase();
-          option.classList.toggle("hidden", Boolean(query) && !haystack.includes(query));
+          option.classList.toggle("d-none", Boolean(query) && !haystack.includes(query));
         });
       };
       input.addEventListener("input", filter);
@@ -225,9 +225,9 @@
     const dialog = document.getElementById("mobilePortalNav");
     if (!dialog || dialog.dataset.ready === "true") return;
     dialog.dataset.ready = "true";
-    document.querySelectorAll("[data-mobile-nav-open]").forEach((button) => button.addEventListener("click", () => dialog.showModal()));
-    dialog.querySelectorAll("[data-mobile-nav-close]").forEach((button) => button.addEventListener("click", () => dialog.close()));
-    dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
+    document.querySelectorAll("[data-mobile-nav-open]").forEach((button) => button.addEventListener("click", () => window.glisUI.openModal(dialog)));
+    dialog.querySelectorAll("[data-mobile-nav-close]").forEach((button) => button.addEventListener("click", () => window.glisUI.closeModal(dialog)));
+    dialog.addEventListener("click", (event) => { if (event.target === dialog) window.glisUI.closeModal(dialog); });
   };
 
   const chartInstances = new Map();
@@ -237,20 +237,20 @@
   };
   const chartTheme = () => root.getAttribute("data-theme") === "dark" ? "dark" : "light";
   const chartColors = () => [
-    cssColor("--color-primary", "#147A50"),
-    cssColor("--color-info", "#2563EB"),
-    cssColor("--color-warning", "#D99400"),
-    cssColor("--color-error", "#C2413B"),
-    cssColor("--color-secondary", "#7357C7"),
-    cssColor("--color-success", "#3CA37A"),
-    cssColor("--color-neutral", "#6B7280")
+    cssColor("--bs-primary", "#147A50"),
+    cssColor("--bs-info", "#2563EB"),
+    cssColor("--bs-warning", "#D99400"),
+    cssColor("--bs-danger", "#C2413B"),
+    cssColor("--bs-secondary", "#7357C7"),
+    cssColor("--bs-success", "#3CA37A"),
+    cssColor("--bs-secondary", "#6B7280")
   ];
   const baseChartOptions = (type, height = 300) => ({
     chart: {
       type,
       height,
       background: "transparent",
-      foreColor: cssColor("--color-base-content", "#4c5c54"),
+      foreColor: cssColor("--bs-body-color", "#4c5c54"),
       fontFamily: "Inter, Cairo, sans-serif",
       toolbar: {show: false},
       zoom: {enabled: false},
@@ -258,7 +258,7 @@
     },
     theme: {mode: chartTheme()},
     grid: {
-      borderColor: cssColor("--color-base-300", "#edf1ef"),
+      borderColor: cssColor("--bs-border-color", "#edf1ef"),
       strokeDashArray: 3
     },
     dataLabels: {enabled: false},
@@ -287,7 +287,7 @@
         series: rows.map(row => Number(row.total || 0)),
         labels: labels(rows, key),
         colors: customColors,
-        stroke: {width: 2, colors: [cssColor("--color-base-100", "#ffffff")]},
+        stroke: {width: 2, colors: [cssColor("--bs-body-bg", "#ffffff")]},
         legend: {position: "bottom", fontSize: "11px"},
         plotOptions: {
           pie: {
@@ -306,10 +306,10 @@
 
     donut("ticket-status-chart", data.status || [], "status");
     donut("ticket-priority-chart", data.priority || [], "priority", "62%", [
-      cssColor("--color-success", "#7ACFA5"),
-      cssColor("--color-info", "#2563EB"),
-      cssColor("--color-warning", "#D99400"),
-      cssColor("--color-error", "#C2413B")
+      cssColor("--bs-success", "#7ACFA5"),
+      cssColor("--bs-info", "#2563EB"),
+      cssColor("--bs-warning", "#D99400"),
+      cssColor("--bs-danger", "#C2413B")
     ]);
     donut("ticket-assignee-chart", data.assignee || [], "label", "55%");
 
@@ -350,14 +350,14 @@
     const render = (mode) => {
       const expanded = mode === "expanded";
       sidebar.dataset.sidebarState = mode;
-      sidebar.classList.toggle("w-20", !expanded);
-      sidebar.classList.toggle("w-72", expanded);
+
+
 
       sidebar.querySelectorAll("[data-sidebar-label]").forEach((element) => {
-        element.classList.toggle("hidden", !expanded);
+        element.classList.toggle("d-none", !expanded);
       });
       sidebar.querySelectorAll("[data-sidebar-link]").forEach((link) => {
-        link.classList.toggle("justify-center", !expanded);
+        link.classList.toggle("justify-content-center", !expanded);
       });
 
       button.setAttribute("aria-expanded", String(expanded));
@@ -368,7 +368,7 @@
     };
 
     const syncViewport = () => {
-      if (window.matchMedia("(min-width: 1024px)").matches) render(desktopMode);
+      if (window.matchMedia("(min-width: 992px)").matches) render(desktopMode);
       else render("expanded");
     };
 
@@ -399,8 +399,8 @@
       source.dataset.editorReady = "true";
       source.hidden = true;
       const wrapper = document.createElement("div");
-      wrapper.className = "card overflow-hidden border border-base-300 bg-base-100 shadow-sm";
-      wrapper.innerHTML = '<div class="flex flex-wrap items-center gap-1 border-b border-base-300 bg-base-200/55 p-2"><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="bold" title="Bold" aria-label="Bold"><i class="bi bi-type-bold"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i class="bi bi-type-italic"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="underline" title="Underline" aria-label="Underline"><i class="bi bi-type-underline"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bullets"><i class="bi bi-list-ul"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list"><i class="bi bi-list-ol"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-cmd="createLink" title="Link" aria-label="Insert link"><i class="bi bi-link-45deg"></i></button><button class="btn btn-ghost btn-sm btn-square" type="button" data-image-button title="Upload image" aria-label="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span class="badge badge-ghost badge-sm ms-2">Paste or upload images</span></div><div class="richtext-canvas textarea textarea-bordered w-full rounded-none border-0 bg-base-100 p-4" style="min-height:10rem;overflow:auto" contenteditable="true" role="textbox" aria-multiline="true"></div>';
+      wrapper.className = "card overflow-hidden border border-body bg-body shadow-sm";
+      wrapper.innerHTML = '<div class="d-flex flex-wrap align-items-center gap-1 border-bottom border-body bg-body-tertiary p-2"><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="bold" title="Bold" aria-label="Bold"><i class="bi bi-type-bold"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i class="bi bi-type-italic"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="underline" title="Underline" aria-label="Underline"><i class="bi bi-type-underline"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bullets"><i class="bi bi-list-ul"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list"><i class="bi bi-list-ol"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="createLink" title="Link" aria-label="Insert link"><i class="bi bi-link-45deg"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-image-button title="Upload image" aria-label="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span class="badge bg-body-secondary text-body-secondary glis-badge-small ms-2">Paste or upload images</span></div><div class="richtext-canvas form-control w-100 rounded-0 border-0 bg-body p-3" style="min-height:10rem;overflow:auto" contenteditable="true" role="textbox" aria-multiline="true"></div>';
       source.insertAdjacentElement("afterend", wrapper);
       const editor = wrapper.querySelector(".richtext-canvas");
       editor.innerHTML = source.value || "";
@@ -464,11 +464,11 @@
 
     const userAvatar = () => {
       const image = document.createElement("div");
-      image.className = "chat-image avatar avatar-placeholder";
+      image.className = "glis-message-avatar glis-avatar";
       const circle = document.createElement("div");
-      circle.className = "w-10 rounded-full bg-primary text-primary-content";
+      circle.className = "glis-w-10 rounded-pill bg-primary text-white";
       const initial = document.createElement("span");
-      initial.className = "text-sm font-black";
+      initial.className = "small fw-bold";
       initial.textContent = currentUserInitial;
       circle.appendChild(initial);
       image.appendChild(circle);
@@ -486,15 +486,15 @@
     };
     const addQuestion = (text, createdAt = null) => {
       const article = document.createElement("article");
-      article.className = "chat chat-end ai-message";
+      article.className = "glis-message glis-message-end ai-message";
       const header = document.createElement("div");
-      header.className = "chat-header";
+      header.className = "glis-message-header";
       header.textContent = currentUserName;
       const bubble = document.createElement("div");
-      bubble.className = "chat-bubble chat-bubble-primary max-w-3xl";
+      bubble.className = "glis-message-bubble glis-message-primary glis-max-3xl";
       bubble.textContent = text;
       const footer = document.createElement("div");
-      footer.className = "chat-footer opacity-50";
+      footer.className = "glis-message-footer opacity-50";
       footer.textContent = formatTime(createdAt);
       article.append(userAvatar(), header, bubble, footer);
       conversation.appendChild(article);
@@ -502,9 +502,9 @@
     };
     const buildTable = rows => {
       const wrapper = document.createElement("div");
-      wrapper.className = "mt-3 overflow-x-auto rounded-box bg-base-100 text-base-content";
+      wrapper.className = "mt-2 overflow-x-auto rounded-3 bg-body text-body";
       const table = document.createElement("table");
-      table.className = "table table-zebra ";
+      table.className = "table table-striped";
       wrapper.appendChild(table);
       if (!rows.length) return wrapper;
       const keys = Object.keys(rows[0]);
@@ -544,9 +544,9 @@
     };
     const addAnswer = queryData => {
       const article = document.createElement("article");
-      article.className = "chat chat-start ai-message";
+      article.className = "glis-message glis-message-start ai-message";
       const header = document.createElement("div");
-      header.className = "chat-header flex items-center gap-2";
+      header.className = "glis-message-header d-flex align-items-center gap-2";
       const label = document.createElement("strong");
       label.innerHTML = '<i class="bi bi-stars"></i> Vanna';
       const meta = document.createElement("small");
@@ -555,22 +555,22 @@
       header.append(label, meta);
 
       const bubble = document.createElement("div");
-      bubble.className = "chat-bubble max-w-5xl";
+      bubble.className = "glis-message-bubble glis-max-5xl";
       if (queryData.status !== "completed") bubble.classList.add("chat-bubble-error");
 
       const summary = document.createElement("p");
-      summary.className = "leading-6";
+      summary.className = "lh-base";
       summary.textContent = queryData.summary || (queryData.status === "completed" ? "The query completed successfully." : "The query could not be completed.");
       bubble.appendChild(summary);
 
       if (queryData.sql) {
         const details = document.createElement("details");
-        details.className = "mt-3 rounded-box bg-base-200 p-3 text-base-content";
+        details.className = "mt-2 rounded-3 bg-body-tertiary p-2 text-body";
         const detailsLabel = document.createElement("summary");
-        detailsLabel.className = "cursor-pointer font-semibold";
+        detailsLabel.className = "glis-cursor-pointer fw-semibold";
         detailsLabel.textContent = "Generated SQL";
         const pre = document.createElement("pre"), code = document.createElement("code");
-        pre.className = "mt-2 overflow-x-auto text-xs";
+        pre.className = "mt-2 overflow-x-auto glis-text-xs";
         code.textContent = queryData.sql;
         pre.appendChild(code); details.append(detailsLabel, pre); bubble.appendChild(details);
       }
@@ -581,17 +581,17 @@
         chartId = `vanna-chart-${queryData.id || ++chartSequence}-${++chartSequence}`;
         const chart = document.createElement("div");
         chart.id = chartId;
-        chart.className = "mt-3 min-h-64 rounded-box bg-base-100";
+        chart.className = "mt-2 glis-min-h-64 rounded-3 bg-body";
         bubble.appendChild(chart);
       }
       if (rows.length) bubble.appendChild(buildTable(rows));
 
       const actions = document.createElement("div");
-      actions.className = "mt-3 flex flex-wrap gap-2";
+      actions.className = "mt-2 d-flex flex-wrap gap-2";
       (queryData.followups || []).forEach(text => {
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "btn btn-ghost btn-xs";
+        button.className = "btn btn-light btn-sm glis-btn-xs";
         button.textContent = text;
         button.dataset.vannaPrompt = text;
         bindPrompt(button);
@@ -599,7 +599,7 @@
       });
       if (queryData.export_url) {
         const link = document.createElement("a");
-        link.className = "btn btn-outline btn-sm";
+        link.className = "btn btn-outline-secondary btn-sm";
         link.href = queryData.export_url;
         link.innerHTML = '<i class="bi bi-download"></i> Export CSV';
         actions.appendChild(link);
@@ -607,7 +607,7 @@
       if (actions.childElementCount) bubble.appendChild(actions);
 
       const footer = document.createElement("div");
-      footer.className = "chat-footer opacity-50";
+      footer.className = "glis-message-footer opacity-50";
       footer.textContent = formatTime(queryData.created_at);
       article.append(header, bubble, footer);
       conversation.appendChild(article);
@@ -617,24 +617,24 @@
     };
     const showWelcome = () => {
       conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
-      historyLoading.classList.add("hidden"); welcome.classList.remove("hidden");
+      historyLoading.classList.add("d-none"); welcome.classList.remove("d-none");
     };
     const renderHistory = queries => {
       conversation.querySelectorAll(".ai-message").forEach(item => item.remove());
-      historyLoading.classList.add("hidden"); welcome.classList.toggle("hidden", Boolean(queries.length));
+      historyLoading.classList.add("d-none"); welcome.classList.toggle("d-none", Boolean(queries.length));
       queries.forEach(item => { addQuestion(item.question, item.created_at); addAnswer(item); });
       if (queries.length) setDiagnostics(queries[queries.length - 1]);
     };
     const setActiveSession = id => {
       sessionInput.value = id || "";
-      sessionList.querySelectorAll("[data-session-id]").forEach(item => item.classList.toggle("btn-active", item.dataset.sessionId === id));
+      sessionList.querySelectorAll("[data-session-id]").forEach(item => item.classList.toggle("active", item.dataset.sessionId === id));
       const url = new URL(window.location.href);
       if (id) url.searchParams.set("session", id); else url.searchParams.delete("session");
       history.replaceState({}, "", url);
     };
     const loadSession = async id => {
       if (!id) { setActiveSession(""); showWelcome(); return; }
-      historyLoading.classList.remove("hidden"); welcome.classList.add("hidden"); error.classList.add("hidden");
+      historyLoading.classList.remove("d-none"); welcome.classList.add("d-none"); error.classList.add("d-none");
       try {
         const endpoint = workbench.dataset.sessionDetailTemplate.replace("00000000-0000-0000-0000-000000000000", id);
         const response = await fetch(endpoint, {headers: {"X-Requested-With": "XMLHttpRequest"}});
@@ -642,7 +642,7 @@
         if (!response.ok) throw new Error(payload.error || "Conversation could not be loaded.");
         setActiveSession(id); renderHistory(payload.queries || []);
       } catch (exception) {
-        historyLoading.classList.add("hidden"); error.textContent = exception.message; error.classList.remove("hidden");
+        historyLoading.classList.add("d-none"); error.textContent = exception.message; error.classList.remove("d-none");
       }
     };
     const upsertSession = session => {
@@ -650,8 +650,8 @@
       document.getElementById("vanna-session-empty")?.remove();
       let item = sessionList.querySelector(`[data-session-id="${session.id}"]`);
       if (!item) {
-        item = document.createElement("button"); item.type = "button"; item.className = "btn btn-ghost h-auto w-full justify-start gap-3 py-3 text-start"; item.dataset.sessionId = session.id;
-        item.innerHTML = '<i class="bi bi-chat-left-text text-primary"></i><span class="min-w-0 flex-1"><strong class="block truncate"></strong><small class="block truncate font-normal opacity-50"></small></span>';
+        item = document.createElement("button"); item.type = "button"; item.className = "btn btn-light glis-h-auto w-100 justify-content-start gap-2 py-2 text-start"; item.dataset.sessionId = session.id;
+        item.innerHTML = '<i class="bi bi-chat-left-text text-primary"></i><span class="glis-min-width-0 glis-flex-fill"><strong class="d-block text-truncate"></strong><small class="d-block text-truncate fw-normal opacity-50"></small></span>';
         sessionList.prepend(item);
       }
       item.querySelector("strong").textContent = session.title;
@@ -672,9 +672,9 @@
       const formData = new FormData(form);
       formData.set("question", text);
 
-      welcome.classList.add("hidden");
-      historyLoading.classList.add("hidden");
-      error.classList.add("hidden");
+      welcome.classList.add("d-none");
+      historyLoading.classList.add("d-none");
+      error.classList.add("d-none");
       send.disabled = true;
 
       addQuestion(text);
@@ -700,12 +700,12 @@
         }
       } catch (exception) {
         error.textContent = exception.message;
-        error.classList.remove("hidden");
+        error.classList.remove("d-none");
       } finally {
         send.disabled = false;
         question.focus();
       }
-    });    
+    });
 
     if (sessionInput.value) loadSession(sessionInput.value); else showWelcome();
   };
@@ -722,7 +722,7 @@
         const response = await fetch("/portal/notifications/feed/", {headers: {"X-Requested-With": "XMLHttpRequest"}});
         if (!response.ok) return;
         const data = await response.json(), previous = Number(count.textContent || 0);
-        count.textContent = data.unread; count.classList.toggle("hidden", !data.unread);
+        count.textContent = data.unread; count.classList.toggle("d-none", !data.unread);
         if (browserEnabled && data.unread > previous && "Notification" in window && Notification.permission === "granted" && data.items.length) new Notification(data.items[0].title, {body: data.items[0].body});
       } catch (_) { /* Network interruptions should not affect portal use. */ }
     };

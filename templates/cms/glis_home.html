@@ -4,9 +4,9 @@
 {% block public_page_class %}public-home-page{% endblock %}
 {% block content %}
 <div id="home-content" hx-get="{% url 'home_content_html' %}" hx-trigger="load" hx-swap="innerHTML">
-  <div class="mx-auto flex min-h-[65vh] max-w-7xl flex-col items-center justify-center gap-5 px-6">
-    <span class="loading loading-spinner loading-lg text-primary"></span>
-    <div class="text-center"><strong class="block text-lg">{% translate "Preparing your GLIS experience" %}</strong><span class="text-sm text-base-content/50">{% translate "Loading services and live content..." %}</span></div>
+  <div class="mx-auto d-flex glis-min-height-65vh glis-max-7xl flex-column align-items-center justify-content-center gap-3 px-4">
+    <span class="spinner-border text-primary"></span>
+    <div class="text-center"><strong class="d-block fs-6">{% translate "Preparing your GLIS experience" %}</strong><span class="small text-body-secondary">{% translate "Loading services and live content..." %}</span></div>
   </div>
 </div>
 {% endblock %}

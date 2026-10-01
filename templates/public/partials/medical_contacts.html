@@ -1,29 +1,29 @@
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
-<div class="mx-auto max-w-7xl px-6">
-  <div class="card border border-base-300 bg-base-100 shadow-2xl">
-    <div class="card-body grid gap-8 p-6 lg:grid-cols-[.65fr_1.35fr]">
+<div class="mx-auto glis-max-7xl px-4">
+  <div class="card border border-body bg-body shadow-lg">
+    <div class="card-body d-grid gap-4 p-4 intro-columns">
       <div data-reveal>
-        <span class="badge badge-primary badge-soft mb-4"><i class="bi bi-headset me-2"></i>{% translate "Need Assistance?" %}</span>
-        <h2 class="text-4xl font-black">{% translate "We're here to help" %}</h2>
-        <p class="mt-4 leading-7 text-base-content/60">{% translate "Contact the appropriate team for claims, approvals, provider support or emergencies." %}</p>
+        <span class="badge text-bg-primary glis-badge-soft mb-3"><i class="bi bi-headset me-2"></i>{% translate "Need Assistance?" %}</span>
+        <h2 class="fs-2 fw-bold">{% translate "We're here to help" %}</h2>
+        <p class="mt-3 lh-lg text-body-secondary">{% translate "Contact the appropriate team for claims, approvals, provider support or emergencies." %}</p>
       </div>
-      <ul class="list rounded-box bg-base-200/45 p-2">
+      <ul class="list-group list-group-flush rounded-3 bg-body-tertiary p-2">
         {% for contact in medical_contacts %}
-        <li class="list-row rounded-box bg-base-100 shadow-sm transition hover:bg-success/5 hover:shadow-md" data-reveal>
-          <span class="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary"><i class="bi {{ contact.icon|default:'bi-headset' }} text-xl"></i></span>
-          <div class="list-col-grow">
-            <strong class="block">{% if LANGUAGE_CODE == "ar" %}{{ contact.title_ar|default:contact.title_en }}{% else %}{{ contact.title_en }}{% endif %}</strong>
-            <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-base-content/60">
-              {% if contact.phone %}<a class="underline underline-offset-4 hover:text-primary" href="tel:{{ contact.phone }}">{{ contact.phone }}</a>{% endif %}
-              {% if contact.email %}<a class="underline underline-offset-4 hover:text-primary" href="mailto:{{ contact.email }}">{{ contact.email }}</a>{% endif %}
-              {% if contact.whatsapp %}<a class="text-success underline underline-offset-4 hover:text-primary" href="https://wa.me/{{ contact.whatsapp }}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> {{ contact.whatsapp }}</a>{% endif %}
+        <li class="list-group-item d-flex align-items-start gap-3 rounded-3 bg-body shadow-sm" data-reveal>
+          <span class="d-grid glis-h-12 glis-w-12 glis-place-center rounded-3 bg-primary-subtle text-primary"><i class="bi {{ contact.icon|default:'bi-headset' }} fs-5"></i></span>
+          <div class="flex-grow-1">
+            <strong class="d-block">{% if LANGUAGE_CODE == "ar" %}{{ contact.title_ar|default:contact.title_en }}{% else %}{{ contact.title_en }}{% endif %}</strong>
+            <div class="mt-1 d-flex flex-wrap glis-gap-x-4 glis-gap-y-1 small text-body-secondary">
+              {% if contact.phone %}<a class="text-decoration-underline" href="tel:{{ contact.phone }}">{{ contact.phone }}</a>{% endif %}
+              {% if contact.email %}<a class="text-decoration-underline" href="mailto:{{ contact.email }}">{{ contact.email }}</a>{% endif %}
+              {% if contact.whatsapp %}<a class="text-success text-decoration-underline" href="https://wa.me/{{ contact.whatsapp }}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> {{ contact.whatsapp }}</a>{% endif %}
             </div>
           </div>
-          {% if contact.is_24_hours %}<span class="badge badge-success badge-soft">24/7</span>{% endif %}
+          {% if contact.is_24_hours %}<span class="badge text-bg-success glis-badge-soft">24/7</span>{% endif %}
         </li>
         {% empty %}
-        <li class="list-row"><span>{% translate "No medical contacts configured." %}</span></li>
+        <li class="list-group-item d-flex align-items-start gap-3"><span>{% translate "No medical contacts configured." %}</span></li>
         {% endfor %}
       </ul>
     </div>

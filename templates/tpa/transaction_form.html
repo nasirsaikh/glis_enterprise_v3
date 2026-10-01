@@ -4,8 +4,8 @@
 {% block tpa_content %}
 <div class="tpa-transaction-create">
   <header class="tpa-transaction-create__header">
-    <div><div class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-plus-square"></i>{% translate "TPA / Pipeline / Create" %}</div><h1>{% translate "New endorsement" %}</h1><p>{% translate "Create a member addition, termination, deletion/void or policy cancellation for an endorsement-enabled policy." %}</p></div>
-    <a class="btn btn-ghost btn-sm" href="{% url 'tpa:transaction_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Pipeline" %}</a>
+    <div><div class="badge text-bg-primary glis-badge-soft mb-2 gap-2"><i class="bi bi-plus-square"></i>{% translate "TPA / Pipeline / Create" %}</div><h1>{% translate "New endorsement" %}</h1><p>{% translate "Create a member addition, termination, deletion/void or policy cancellation for an endorsement-enabled policy." %}</p></div>
+    <a class="btn btn-light btn-sm" href="{% url 'tpa:transaction_list' %}"><i class="bi bi-arrow-left"></i>{% translate "Pipeline" %}</a>
   </header>
   <div role="alert" class="alert alert-info tpa-transaction-create__notice"><i class="bi bi-building-add"></i><span>{% translate "New policy onboarding and opening census are handled under Initial Policy Enrollment." %}</span></div>
   {% include "tpa/partials/transaction_wizard_form.html" %}

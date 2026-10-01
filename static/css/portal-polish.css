@@ -1,11 +1,11 @@
 /* GLIS portal refresh: shared shell polish and dashboard-specific visual hierarchy. */
 body.glis-portal-app {
-  --portal-page: var(--color-base-200);
-  --portal-surface: var(--color-base-100);
-  --portal-surface-soft: color-mix(in srgb, var(--color-base-100) 60%, var(--color-base-200));
-  --portal-ink: var(--color-base-content);
-  --portal-muted: color-mix(in srgb, var(--color-base-content) 60%, transparent);
-  --portal-border: var(--color-base-300);
+  --portal-page: var(--bs-tertiary-bg);
+  --portal-surface: var(--bs-body-bg);
+  --portal-surface-soft: color-mix(in srgb, var(--bs-body-bg) 60%, var(--bs-tertiary-bg));
+  --portal-ink: var(--bs-body-color);
+  --portal-muted: color-mix(in srgb, var(--bs-body-color) 60%, transparent);
+  --portal-border: var(--bs-border-color);
   --portal-green: #18704c;
   --portal-green-deep: #0e4935;
   --portal-shadow: 0 16px 42px rgba(32, 65, 47, .055), 0 2px 8px rgba(32, 65, 47, .035);
@@ -13,21 +13,21 @@ body.glis-portal-app {
   color: var(--portal-ink);
   font-family: Inter, Cairo, sans-serif;
 }
-.glis-portal-app .drawer-content { background: transparent; }
+.glis-portal-app .glis-shell-content { background: transparent; }
 .glis-portal-app header.navbar {
   min-height: 4.5rem;
   padding-inline: clamp(.75rem, 2vw, 1.5rem);
   border-color: var(--portal-border);
-  background: color-mix(in srgb, var(--color-base-100) 94%, transparent);
+  background: color-mix(in srgb, var(--bs-body-bg) 94%, transparent);
   box-shadow: 0 5px 24px rgba(32, 65, 47, .035);
 }
-.glis-portal-app header.navbar .input {
+.glis-portal-app header.navbar .form-control {
   min-height: 2.8rem;
-  border-color: var(--color-base-300);
-  background: var(--color-base-200);
+  border-color: var(--bs-border-color);
+  background: var(--bs-tertiary-bg);
   box-shadow: none;
 }
-.glis-portal-app header.navbar .input:focus-within {
+.glis-portal-app header.navbar .form-control:focus-within {
   border-color: rgba(24, 112, 76, .42);
   box-shadow: 0 0 0 4px rgba(24, 112, 76, .08);
 }
@@ -47,18 +47,18 @@ body.glis-portal-app {
 .glis-portal-app #portal-sidebar > div:first-child { min-height: 4.5rem; flex-shrink: 0; border-color: var(--portal-border); padding-inline: 1rem; }
 .glis-portal-app #portal-sidebar > div:first-child img { max-width: 8rem; max-height: 2.5rem; object-fit: contain; }
 .glis-portal-app #portal-sidebar nav { padding: .9rem .7rem 1.25rem; }
-.glis-portal-app #portal-sidebar nav .menu-title { padding: 1rem .8rem .45rem; color: #9aa79f; font-size: .65rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.glis-portal-app #portal-sidebar .menu a {
+.glis-portal-app #portal-sidebar nav .glis-menu-heading { padding: 1rem .8rem .45rem; color: #9aa79f; font-size: .65rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.glis-portal-app #portal-sidebar .glis-menu a {
   min-height: 2.9rem;
   border-radius: .9rem;
-  color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
+  color: color-mix(in srgb, var(--bs-body-color) 70%, transparent);
   font-size: .86rem;
   font-weight: 650;
   transition: color .16s ease, background .16s ease, transform .16s ease;
 }
-.glis-portal-app #portal-sidebar .menu a:hover { background: color-mix(in srgb, var(--color-primary) 8%, var(--color-base-100)); color: var(--portal-green); transform: translateX(2px); }
-.glis-portal-app #portal-sidebar .menu a.menu-active { background: color-mix(in srgb, var(--color-primary) 12%, var(--color-base-100)); color: var(--portal-green); box-shadow: inset 3px 0 0 #2a9965; }
-.glis-portal-app #portal-sidebar .menu a i { width: 1.5rem; text-align: center; }
+.glis-portal-app #portal-sidebar .glis-menu a:hover { background: color-mix(in srgb, var(--bs-primary) 8%, var(--bs-body-bg)); color: var(--portal-green); transform: translateX(2px); }
+.glis-portal-app #portal-sidebar .glis-menu a.active { background: color-mix(in srgb, var(--bs-primary) 12%, var(--bs-body-bg)); color: var(--portal-green); box-shadow: inset 3px 0 0 #2a9965; }
+.glis-portal-app #portal-sidebar .glis-menu a i { width: 1.5rem; text-align: center; }
 .glis-portal-app #portal-sidebar nav > .card { border-color: var(--portal-border); border-radius: 1rem; background: #f7faf7; box-shadow: none; }
 .glis-portal-app .portal-dashboard { display: grid; gap: 1.45rem; width: 100%; color: var(--portal-ink); }
 .portal-welcome {
@@ -219,12 +219,12 @@ html[data-theme="dark"] body.glis-portal-app, html[data-bs-theme="dark"] body.gl
   --portal-shadow: 0 14px 34px rgba(0, 0, 0, .13);
 }
 html[data-theme="dark"] .glis-portal-app header.navbar, html[data-bs-theme="dark"] .glis-portal-app header.navbar { background: rgba(24, 36, 29, .92); }
-html[data-theme="dark"] .glis-portal-app header.navbar .input, html[data-bs-theme="dark"] .glis-portal-app header.navbar .input { border-color: var(--portal-border); background: #202e25; color: var(--portal-ink); }
+html[data-theme="dark"] .glis-portal-app header.navbar .form-control, html[data-bs-theme="dark"] .glis-portal-app header.navbar .form-control { border-color: var(--portal-border); background: #202e25; color: var(--portal-ink); }
 html[data-theme="dark"] .glis-portal-app #portal-main, html[data-bs-theme="dark"] .glis-portal-app #portal-main { background: radial-gradient(ellipse at 85% 0%, rgba(43, 88, 57, .18), transparent 34rem), var(--portal-page); }
 html[data-theme="dark"] .glis-portal-app #portal-sidebar, html[data-bs-theme="dark"] .glis-portal-app #portal-sidebar { background: var(--portal-surface); }
-html[data-theme="dark"] .glis-portal-app #portal-sidebar .menu a, html[data-bs-theme="dark"] .glis-portal-app #portal-sidebar .menu a { color: #aab9af; }
-html[data-theme="dark"] .glis-portal-app #portal-sidebar .menu a:hover, html[data-bs-theme="dark"] .glis-portal-app #portal-sidebar .menu a:hover { background: #22352a; color: #9fe1b5; }
-html[data-theme="dark"] .glis-portal-app #portal-sidebar .menu a.menu-active, html[data-bs-theme="dark"] .glis-portal-app #portal-sidebar .menu a.menu-active { background: #233d2d; color: #a4e5b9; }
+html[data-theme="dark"] .glis-portal-app #portal-sidebar .glis-menu a, html[data-bs-theme="dark"] .glis-portal-app #portal-sidebar .glis-menu a { color: #aab9af; }
+html[data-theme="dark"] .glis-portal-app #portal-sidebar .glis-menu a:hover, html[data-bs-theme="dark"] .glis-portal-app #portal-sidebar .glis-menu a:hover { background: #22352a; color: #9fe1b5; }
+html[data-theme="dark"] .glis-portal-app #portal-sidebar .glis-menu a.active, html[data-bs-theme="dark"] .glis-portal-app #portal-sidebar .glis-menu a.active { background: #233d2d; color: #a4e5b9; }
 html[data-theme="dark"] .glis-portal-app #portal-sidebar nav > .card, html[data-bs-theme="dark"] .glis-portal-app #portal-sidebar nav > .card { border-color: var(--portal-border); background: #202e25; }
 html[data-theme="dark"] .portal-metric__icon, html[data-bs-theme="dark"] .portal-metric__icon, html[data-theme="dark"] .portal-service-stat__icon, html[data-bs-theme="dark"] .portal-service-stat__icon, html[data-theme="dark"] .portal-panel__icon, html[data-bs-theme="dark"] .portal-panel__icon { filter: saturate(.85) brightness(.8); }
 html[data-theme="dark"] .portal-metric[data-tone="blue"] .portal-metric__icon, html[data-bs-theme="dark"] .portal-metric[data-tone="blue"] .portal-metric__icon, html[data-theme="dark"] .portal-panel__icon--blue, html[data-bs-theme="dark"] .portal-panel__icon--blue, html[data-theme="dark"] .portal-shortcut-icon--blue, html[data-bs-theme="dark"] .portal-shortcut-icon--blue { background: #253447; color: #a8c2ed; }
@@ -288,7 +288,7 @@ html[data-theme="dark"] .portal-metric__note, html[data-bs-theme="dark"] .portal
   .portal-ticket-table th, .portal-ticket-table td { padding-inline: .65rem; }
   .portal-ticket-table td:first-child, .portal-ticket-table th:first-child { padding-inline-start: 1rem; }
 }
-@media (max-width: 1023px) {
+@media (max-width: 991.98px) {
   .glis-portal-app #portal-sidebar { width: min(17rem, 86vw) !important; }
   .glis-portal-app #portal-sidebar [data-sidebar-label] { display: inline-flex !important; }
   .glis-portal-app #portal-sidebar li[data-sidebar-label] { display: block !important; }
@@ -296,19 +296,19 @@ html[data-theme="dark"] .portal-metric__note, html[data-bs-theme="dark"] .portal
   .glis-portal-app #portal-sidebar nav > .card .card-body { align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .portal-metric, .portal-action, .portal-shortcuts > a, .glis-portal-app #portal-sidebar, .glis-portal-app #portal-sidebar .menu a { transition: none !important; }
+  .portal-metric, .portal-action, .portal-shortcuts > a, .glis-portal-app #portal-sidebar, .glis-portal-app #portal-sidebar .glis-menu a { transition: none !important; }
 }
 
-html[dir="rtl"] .glis-portal-app #portal-sidebar .menu a.menu-active { box-shadow: inset -3px 0 0 #2a9965; }
+html[dir="rtl"] .glis-portal-app #portal-sidebar .glis-menu a.active { box-shadow: inset -3px 0 0 #2a9965; }
 
 
 /* Keep the shared navigation scrollable only when its contents exceed the viewport. */
 .glis-portal-app #portal-sidebar { display: flex; height: 100dvh; min-height: 100dvh; flex-direction: column; }
-.glis-portal-app #portal-sidebar nav { height: auto !important; min-height: 0; flex: 1 1 auto; overflow-x: hidden; overflow-y: hidden !important; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--color-base-content) 35%, transparent) transparent; }
+.glis-portal-app #portal-sidebar nav { height: auto !important; min-height: 0; flex: 1 1 auto; overflow-x: hidden; overflow-y: hidden !important; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--bs-body-color) 35%, transparent) transparent; }
 .glis-portal-app #portal-sidebar nav[data-scrollable="true"] { overflow-y: auto !important; }
 .glis-portal-app #portal-sidebar nav::-webkit-scrollbar { width: 6px; }
 .glis-portal-app #portal-sidebar nav::-webkit-scrollbar-track { background: transparent; }
-.glis-portal-app #portal-sidebar nav::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: color-mix(in srgb, var(--color-base-content) 35%, transparent); background-clip: padding-box; }
+.glis-portal-app #portal-sidebar nav::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 999px; background: color-mix(in srgb, var(--bs-body-color) 35%, transparent); background-clip: padding-box; }
 
 .glis-portal-app #portal-sidebar nav:not([data-scrollable]) { overflow-y: auto !important; }
 
@@ -317,7 +317,7 @@ html[dir="rtl"] .glis-portal-app #portal-sidebar .menu a.menu-active { box-shado
 .workflow-step-scroll { min-width: 0; overflow-x: auto; padding: .75rem; position: relative; }
 .workflow-steps { width: 100%; min-width: max-content; }
 .workflow-step-link { height: auto; min-height: 2.75rem; white-space: normal; max-width: 10rem; position: relative; }
-.workflow-step-link[aria-current="step"] { color: var(--color-primary); font-weight: 800; }
+.workflow-step-link[aria-current="step"] { color: var(--bs-primary); font-weight: 800; }
 .workflow-loading { display: none; }
 .workflow-loading.htmx-request { display: flex; }
 .processing-form [type="submit"] { cursor: progress; }
@@ -325,7 +325,7 @@ html[dir="rtl"] .glis-portal-app #portal-sidebar .menu a.menu-active { box-shado
 .processing-status { display: block; margin-top: .5rem; font-size: .8rem; }
 [data-processing-spinner][hidden], [data-processing-status][hidden] { display: none !important; }
 #transaction-step-container { animation: workflow-enter .16s ease-out; }
-#transaction-step-container .errorlist { color: var(--color-error); font-size: .8rem; }
+#transaction-step-container .errorlist { color: var(--bs-danger); font-size: .8rem; }
 @keyframes workflow-enter { from { opacity: .5; transform: translateY(.2rem); } to { opacity: 1; transform: none; } }
 @media (max-width: 640px) { .workflow-step-link { font-size: .75rem; max-width: 8rem; } }
 @media (prefers-reduced-motion: reduce) { #transaction-step-container { animation: none; } }

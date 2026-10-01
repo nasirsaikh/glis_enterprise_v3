@@ -1,19 +1,19 @@
 {% load i18n %}
-<section class="card border border-base-300 bg-base-100 shadow-sm">
+<section class="card border border-body bg-body shadow-sm">
   <div class="card-body">
     <h2 class="card-title">{% translate "COMPLETE" %}</h2>
     <div class="alert {% if tx.status == 'cancelled' %}alert-warning{% else %}alert-success{% endif %}" role="status"><i class="bi bi-check2-circle" aria-hidden="true"></i><span>{{ tx.get_status_display }} · {{ tx.processed_at|date:"d-M-Y H:i"|default:"—" }}</span></div>
-    <dl class="grid gap-3 md:grid-cols-2">
-      <div><dt class="opacity-60">{% translate "Final premium adjustment" %}</dt><dd class="font-bold">{{ tx.currency }} {{ tx.premium_adjustment }}</dd></div>
-      <div><dt class="opacity-60">{% translate "Completed / processed at" %}</dt><dd>{{ tx.processed_at|date:"d-M-Y H:i"|default:"—" }}</dd></div>
-      <div><dt class="opacity-60">{% translate "Total TAT" %}</dt><dd>{{ elapsed_tat_hours }}h</dd></div>
-      <div><dt class="opacity-60">{% translate "Target TAT" %}</dt><dd>{% if target_tat_hours != None %}{{ target_tat_hours }}h{% else %}—{% endif %}</dd></div>
-      <div><dt class="opacity-60">{% translate "SLA result" %}</dt><dd>{% if sla_breached != None %}{% if sla_breached %}<span class="badge badge-error">{% translate "Breached" %}</span>{% else %}<span class="badge badge-success">{% translate "Within SLA" %}</span>{% endif %}{% else %}—{% endif %}</dd></div>
-      <div><dt class="opacity-60">{% translate "Requester" %}</dt><dd>{% if tx.requester %}{{ tx.requester.get_full_name|default:tx.requester.username }}{% else %}—{% endif %}</dd></div>
+    <dl class="d-grid gap-2 glis-grid-md-2">
+      <div><dt class="opacity-50">{% translate "Final premium adjustment" %}</dt><dd class="fw-bold">{{ tx.currency }} {{ tx.premium_adjustment }}</dd></div>
+      <div><dt class="opacity-50">{% translate "Completed / processed at" %}</dt><dd>{{ tx.processed_at|date:"d-M-Y H:i"|default:"—" }}</dd></div>
+      <div><dt class="opacity-50">{% translate "Total TAT" %}</dt><dd>{{ elapsed_tat_hours }}h</dd></div>
+      <div><dt class="opacity-50">{% translate "Target TAT" %}</dt><dd>{% if target_tat_hours != None %}{{ target_tat_hours }}h{% else %}—{% endif %}</dd></div>
+      <div><dt class="opacity-50">{% translate "SLA result" %}</dt><dd>{% if sla_breached != None %}{% if sla_breached %}<span class="badge text-bg-danger">{% translate "Breached" %}</span>{% else %}<span class="badge text-bg-success">{% translate "Within SLA" %}</span>{% endif %}{% else %}—{% endif %}</dd></div>
+      <div><dt class="opacity-50">{% translate "Requester" %}</dt><dd>{% if tx.requester %}{{ tx.requester.get_full_name|default:tx.requester.username }}{% else %}—{% endif %}</dd></div>
     </dl>
     <div class="overflow-x-auto">
       <table class="table table-sm"><thead><tr><th>{% translate "Member" %}</th><th>{% translate "Card / Member" %}</th><th>{% translate "Final status" %}</th><th>{% translate "Effective date" %}</th><th>{% translate "Final amount" %}</th><th>{% translate "Result" %}</th></tr></thead><tbody>{% for a in actions %}<tr><td>{{ a.display_first_name }} {{ a.display_last_name }}</td><td>{{ a.final_card_number }}</td><td>{{ a.final_member_status }}</td><td>{{ a.tpa_effective_date|date:"d-M-Y"|default:"—" }}</td><td>{{ tx.currency }} {{ a.tpa_premium_amount|default_if_none:a.calculated_premium }}</td><td>{{ a.processing_message|default:a.processing_status|default:"—" }}</td></tr>{% empty %}<tr><td colspan="6">{% translate "No member rows." %}</td></tr>{% endfor %}</tbody></table>
     </div>
-    <details class="collapse collapse-arrow border border-base-300"><summary class="collapse-title font-bold">{% translate "Audit summary" %} · {{ events|length }}</summary><div class="collapse-content"><ul class="list">{% for event in recent_events %}<li class="list-row"><span>{{ event.summary }}</span><time class="text-xs opacity-60">{{ event.created_at|date:"d-M-Y H:i" }}</time></li>{% endfor %}</ul><button class="btn btn-ghost btn-sm" type="button" data-open-dialog="transaction-audit">{% translate "View full audit" %}</button></div></details>
+    <details class="accordion-item glis-disclosure border border-body"><summary class="accordion-button fw-bold">{% translate "Audit summary" %} · {{ events|length }}</summary><div class="accordion-body"><ul class="list-group list-group-flush">{% for event in recent_events %}<li class="list-group-item d-flex align-items-start gap-3"><span>{{ event.summary }}</span><time class="glis-text-xs opacity-50">{{ event.created_at|date:"d-M-Y H:i" }}</time></li>{% endfor %}</ul><button class="btn btn-light btn-sm" type="button" data-open-dialog="transaction-audit">{% translate "View full audit" %}</button></div></details>
   </div>
 </section>

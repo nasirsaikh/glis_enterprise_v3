@@ -1,7 +1,7 @@
 {% load cms_tags i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 
-<div class="gl-home-page overflow-hidden bg-base-100 text-base-content">
+<div class="gl-home-page overflow-hidden bg-body text-body">
   <section class="gl-home-hero gl-home-hero--cinematic">
     <div class="gl-home-starfield" aria-hidden="true"></div>
     <div class="gl-home-container gl-home-hero-grid">
@@ -84,10 +84,10 @@
   <section class="gl-quick-services">
     <div class="gl-home-container">
       <ul class="gl-quick-grid">
-        <li class="gl-quick-card"><span class="grid h-11 w-11 place-items-center rounded-xl bg-primary/12 text-primary"><i class="bi bi-hospital"></i></span><div><a class="font-bold" href="#network-providers">{% translate "Find a Provider" %}</a><div class="text-xs text-base-content/55">{% translate "Hospitals, clinics and pharmacies" %}</div></div></li>
-        <li class="gl-quick-card"><span class="grid h-11 w-11 place-items-center rounded-xl bg-secondary/12 text-secondary"><i class="bi bi-clipboard2-check"></i></span><div><a class="font-bold" href="#journey">{% translate "Pre-Authorization" %}</a><div class="text-xs text-base-content/55">{% translate "Medical approval guidance" %}</div></div></li>
-        <li class="gl-quick-card"><span class="grid h-11 w-11 place-items-center rounded-xl bg-accent/18 text-accent-content"><i class="bi bi-receipt"></i></span><div><a class="font-bold" href="#downloads">{% translate "Reimbursement" %}</a><div class="text-xs text-base-content/55">{% translate "Forms and claim guidance" %}</div></div></li>
-        <li class="gl-quick-card"><span class="grid h-11 w-11 place-items-center rounded-xl bg-info/12 text-info"><i class="bi bi-headset"></i></span><div><a class="font-bold" href="#medical-contacts">{% translate "Need Help?" %}</a><div class="text-xs text-base-content/55">{% translate "Contact our support team" %}</div></div></li>
+        <li class="gl-quick-card"><span class="d-grid glis-h-11 glis-w-11 glis-place-center rounded-3 bg-primary-subtle text-primary"><i class="bi bi-hospital"></i></span><div><a class="fw-bold" href="#network-providers">{% translate "Find a Provider" %}</a><div class="glis-text-xs text-body-secondary">{% translate "Hospitals, clinics and pharmacies" %}</div></div></li>
+        <li class="gl-quick-card"><span class="d-grid glis-h-11 glis-w-11 glis-place-center rounded-3 bg-secondary-subtle text-secondary"><i class="bi bi-clipboard2-check"></i></span><div><a class="fw-bold" href="#journey">{% translate "Pre-Authorization" %}</a><div class="glis-text-xs text-body-secondary">{% translate "Medical approval guidance" %}</div></div></li>
+        <li class="gl-quick-card"><span class="d-grid glis-h-11 glis-w-11 glis-place-center rounded-3 bg-primary-subtle text-body"><i class="bi bi-receipt"></i></span><div><a class="fw-bold" href="#downloads">{% translate "Reimbursement" %}</a><div class="glis-text-xs text-body-secondary">{% translate "Forms and claim guidance" %}</div></div></li>
+        <li class="gl-quick-card"><span class="d-grid glis-h-11 glis-w-11 glis-place-center rounded-3 bg-info-subtle text-info"><i class="bi bi-headset"></i></span><div><a class="fw-bold" href="#medical-contacts">{% translate "Need Help?" %}</a><div class="glis-text-xs text-body-secondary">{% translate "Contact our support team" %}</div></div></li>
       </ul>
     </div>
   </section>
@@ -105,9 +105,9 @@
         <a href="{{ service.link|default:'#' }}" class="gl-service-link" data-reveal>
           <article class="gl-service-card">
             <div class="gl-service-card-body">
-              <div class="flex items-start justify-between gap-4">
+              <div class="d-flex align-items-start justify-content-between gap-3">
                 <span class="gl-service-icon"><i class="bi {{ service.icon|default:'bi-stars' }}"></i></span>
-                {% if service.category %}<span class="badge badge-outline">{% if LANGUAGE_CODE == "ar" %}{{ service.category.name_ar|default:service.category.name_en }}{% else %}{{ service.category.name_en }}{% endif %}</span>{% endif %}
+                {% if service.category %}<span class="badge border text-body-secondary bg-transparent">{% if LANGUAGE_CODE == "ar" %}{{ service.category.name_ar|default:service.category.name_en }}{% else %}{{ service.category.name_en }}{% endif %}</span>{% endif %}
               </div>
               <h3 class="gl-service-title">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3>
               <p class="gl-service-copy">{% if LANGUAGE_CODE == "ar" %}{{ service.summary_ar|default:service.summary_en }}{% else %}{{ service.summary_en }}{% endif %}</p>
@@ -116,7 +116,7 @@
           </article>
         </a>
         {% empty %}
-        <div class="alert alert-info md:col-span-2 xl:col-span-3"><i class="bi bi-info-circle"></i><span>{% translate "No services currently available." %}</span></div>
+        <div class="alert alert-info glis-span-md-2 glis-span-xl-3"><i class="bi bi-info-circle"></i><span>{% translate "No services currently available." %}</span></div>
         {% endfor %}
       </div>
     </div>
@@ -133,15 +133,15 @@
       <div class="gl-tpa-grid">
         {% for service in tpa_services %}
         <article class="gl-tpa-card" data-reveal data-tilt>
-          {% if service.image %}<figure class="h-40 overflow-hidden"><img class="h-full w-full object-cover" src="{{ service.image.url }}" alt=""></figure>{% endif %}
+          {% if service.image %}<figure class="glis-h-40 overflow-hidden"><img class="h-100 w-100 object-fit-cover" src="{{ service.image.url }}" alt=""></figure>{% endif %}
           <div class="gl-tpa-card-body">
-            <div class="flex items-start justify-between gap-3">
+            <div class="d-flex align-items-start justify-content-between gap-2">
               <span class="gl-tpa-icon"><i class="bi {{ service.icon|default:'bi-heart-pulse' }}"></i></span>
-              {% if service.is_featured %}<span class="badge badge-secondary badge-soft">{% translate "Featured" %}</span>{% endif %}
+              {% if service.is_featured %}<span class="badge text-bg-secondary glis-badge-soft">{% translate "Featured" %}</span>{% endif %}
             </div>
             <h3 class="gl-tpa-title">{% if LANGUAGE_CODE == "ar" %}{{ service.title_ar|default:service.title_en }}{% else %}{{ service.title_en }}{% endif %}</h3>
             <p class="gl-tpa-copy">{% if LANGUAGE_CODE == "ar" %}{{ service.short_description_ar|default:service.short_description_en }}{% else %}{{ service.short_description_en }}{% endif %}</p>
-            {% if service.url %}<div class="card-actions mt-auto pt-4"><a class="btn btn-ghost btn-sm text-secondary" href="{{ service.url }}">{% translate "Learn more" %}<i class="bi bi-arrow-up-right"></i></a></div>{% endif %}
+            {% if service.url %}<div class="d-flex justify-content-end gap-2 mt-auto pt-3"><a class="btn btn-light btn-sm text-secondary" href="{{ service.url }}">{% translate "Learn more" %}<i class="bi bi-arrow-up-right"></i></a></div>{% endif %}
           </div>
         </article>
         {% endfor %}
@@ -150,47 +150,47 @@
   </section>
   {% endif %}
 
-  <section id="service-intelligence" class="bg-base-200 py-16 text-base-content">
-    <div class="mx-auto max-w-7xl px-6">
-      <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between" data-reveal>
-        <div><span class="badge badge-success badge-soft mb-4">{% translate "Live service intelligence" %}</span><h2 class="max-w-3xl text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "Operational clarity you can feel at a glance." %}</h2></div>
-        <p class="max-w-xl text-base-content/60">{% translate "Useful signals stay visible without overwhelming the experience." %}</p>
+  <section id="service-intelligence" class="bg-body-tertiary py-5 text-body">
+    <div class="mx-auto glis-max-7xl px-4">
+      <div class="d-flex flex-column gap-4 flex-lg-row align-items-lg-end justify-content-lg-between" data-reveal>
+        <div><span class="badge text-bg-success glis-badge-soft mb-3">{% translate "Live service intelligence" %}</span><h2 class="glis-max-3xl fs-2 fw-bold">{% translate "Operational clarity you can feel at a glance." %}</h2></div>
+        <p class="glis-max-xl text-body-secondary">{% translate "Useful signals stay visible without overwhelming the experience." %}</p>
       </div>
 
-      <div class="glis-stat-strip stats stats-horizontal mt-10 w-full overflow-x-auto border border-base-300 bg-base-100 shadow-lg">
+      <div class="glis-stat-strip glis-stats glis-stats-horizontal mt-5 w-100 overflow-x-auto border border-body bg-body shadow-lg">
         {% for stat in statistics %}
-        <div class="stat border-base-300" data-reveal>
-          <div class="stat-figure text-success"><i class="bi bi-graph-up-arrow text-2xl"></i></div>
-          <div class="stat-value text-base-content" data-counter="{{ stat.value }}" data-suffix="{{ stat.suffix }}">{{ stat.value }}{{ stat.suffix }}</div>
-          <div class="stat-desc text-base-content/55">{% if LANGUAGE_CODE == "ar" %}{{ stat.label_ar|default:stat.label_en }}{% else %}{{ stat.label_en }}{% endif %}</div>
+        <div class="glis-stat border-body" data-reveal>
+          <div class="glis-stat-icon text-success"><i class="bi bi-graph-up-arrow fs-4"></i></div>
+          <div class="glis-stat-value text-body" data-counter="{{ stat.value }}" data-suffix="{{ stat.suffix }}">{{ stat.value }}{{ stat.suffix }}</div>
+          <div class="glis-stat-note text-body-secondary">{% if LANGUAGE_CODE == "ar" %}{{ stat.label_ar|default:stat.label_en }}{% else %}{{ stat.label_en }}{% endif %}</div>
         </div>
         {% empty %}
-        <div class="stat"><div class="stat-value">24/7</div><div class="stat-desc">{% translate "Request visibility" %}</div></div>
-        <div class="stat"><div class="stat-value">2</div><div class="stat-desc">{% translate "Languages" %}</div></div>
-        <div class="stat"><div class="stat-value">100%</div><div class="stat-desc">{% translate "Activity tracked" %}</div></div>
-        <div class="stat"><div class="stat-value">1</div><div class="stat-desc">{% translate "Connected workspace" %}</div></div>
+        <div class="glis-stat"><div class="glis-stat-value">24/7</div><div class="glis-stat-note">{% translate "Request visibility" %}</div></div>
+        <div class="glis-stat"><div class="glis-stat-value">2</div><div class="glis-stat-note">{% translate "Languages" %}</div></div>
+        <div class="glis-stat"><div class="glis-stat-value">100%</div><div class="glis-stat-note">{% translate "Activity tracked" %}</div></div>
+        <div class="glis-stat"><div class="glis-stat-value">1</div><div class="glis-stat-note">{% translate "Connected workspace" %}</div></div>
         {% endfor %}
       </div>
     </div>
   </section>
 
   {% if features %}
-  <section class="py-24">
-    <div class="mx-auto max-w-7xl px-6">
-      <div class="mx-auto max-w-3xl text-center" data-reveal>
-        <span class="badge badge-primary badge-soft mb-4"><i class="bi bi-grid-3x3-gap me-2"></i>{% translate "Interactive gallery" %}</span>
-        <h2 class="text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "Explore what makes the experience different." %}</h2>
+  <section class="py-5">
+    <div class="mx-auto glis-max-7xl px-4">
+      <div class="mx-auto glis-max-3xl text-center" data-reveal>
+        <span class="badge text-bg-primary glis-badge-soft mb-3"><i class="bi bi-grid-3x3-gap me-2"></i>{% translate "Interactive gallery" %}</span>
+        <h2 class="fs-2 fw-bold">{% translate "Explore what makes the experience different." %}</h2>
       </div>
-      <div class="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div class="mt-5 d-grid gap-3 glis-grid-md-2 glis-grid-xl-3">
         {% for feature in features %}
-        <article class="card border border-base-300 bg-base-100 shadow-xl" data-reveal>
-          <div class="card-body p-7">
-            <div class="flex items-center justify-between gap-4">
-              <span class="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-2xl text-primary"><i class="bi {{ feature.icon|default:'bi-stars' }}"></i></span>
-              <span class="badge badge-ghost">{% translate "Capability" %}</span>
+        <article class="card border border-body bg-body shadow-lg" data-reveal>
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between gap-3">
+              <span class="d-grid glis-h-14 glis-w-14 glis-place-center rounded-3 bg-primary-subtle fs-4 text-primary"><i class="bi {{ feature.icon|default:'bi-stars' }}"></i></span>
+              <span class="badge bg-body-secondary text-body-secondary">{% translate "Capability" %}</span>
             </div>
-            <h3 class="card-title mt-5 text-2xl font-black">{% if LANGUAGE_CODE == "ar" %}{{ feature.title_ar|default:feature.title_en }}{% else %}{{ feature.title_en }}{% endif %}</h3>
-            <p class="leading-7 text-base-content/60">{% if LANGUAGE_CODE == "ar" %}{{ feature.description_ar|default:feature.description_en }}{% else %}{{ feature.description_en }}{% endif %}</p>
+            <h3 class="card-title mt-3 fs-4 fw-bold">{% if LANGUAGE_CODE == "ar" %}{{ feature.title_ar|default:feature.title_en }}{% else %}{{ feature.title_en }}{% endif %}</h3>
+            <p class="lh-lg text-body-secondary">{% if LANGUAGE_CODE == "ar" %}{{ feature.description_ar|default:feature.description_en }}{% else %}{{ feature.description_en }}{% endif %}</p>
           </div>
         </article>
         {% endfor %}
@@ -199,21 +199,21 @@
   </section>
   {% endif %}
 
-  <section id="journey" class="glis-journey-section border-y border-base-300 py-20">
-    <div class="mx-auto max-w-7xl px-6">
-      <div class="mx-auto max-w-4xl text-center" data-reveal>
-        <span class="badge badge-primary badge-soft mb-4"><i class="bi bi-signpost-split me-2"></i>{% translate "Step-by-step journey" %}</span>
-        <h2 class="text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "From request to resolution, every step stays visible." %}</h2>
+  <section id="journey" class="glis-journey-section border-top border-bottom border-body py-5">
+    <div class="mx-auto glis-max-7xl px-4">
+      <div class="mx-auto glis-max-4xl text-center" data-reveal>
+        <span class="badge text-bg-primary glis-badge-soft mb-3"><i class="bi bi-signpost-split me-2"></i>{% translate "Step-by-step journey" %}</span>
+        <h2 class="fs-2 fw-bold">{% translate "From request to resolution, every step stays visible." %}</h2>
       </div>
-      
-      <div class="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        
+
+      <div class="mt-4 d-grid gap-3 glis-grid-md-2 glis-grid-xl-4">
+
         {% for step in process_steps %}
-        <article class="glis-card-lift card border border-base-300 bg-base-100 shadow-lg" data-reveal data-tilt>
-          <div class="card-body p-5">
-            <div class="flex items-center justify-between gap-3"><span class="badge badge-primary badge-outline">0{{ forloop.counter }}</span><i class="bi {{ step.icon|default:'bi-check2-circle' }} text-xl text-primary"></i></div>
-            <h3 class="card-title mt-3 text-lg">{% if LANGUAGE_CODE == "ar" %}{{ step.title_ar|default:step.title_en }}{% else %}{{ step.title_en }}{% endif %}</h3>
-            <p class="text-sm leading-6 text-base-content/55">{% if LANGUAGE_CODE == "ar" %}{{ step.description_ar|default:step.description_en }}{% else %}{{ step.description_en }}{% endif %}</p>
+        <article class="glis-card-lift card border border-body bg-body shadow-lg" data-reveal data-tilt>
+          <div class="card-body p-3">
+            <div class="d-flex align-items-center justify-content-between gap-2"><span class="badge text-bg-primary border text-body-secondary bg-transparent">0{{ forloop.counter }}</span><i class="bi {{ step.icon|default:'bi-check2-circle' }} fs-5 text-primary"></i></div>
+            <h3 class="card-title mt-2 fs-6">{% if LANGUAGE_CODE == "ar" %}{{ step.title_ar|default:step.title_en }}{% else %}{{ step.title_en }}{% endif %}</h3>
+            <p class="small lh-base text-body-secondary">{% if LANGUAGE_CODE == "ar" %}{{ step.description_ar|default:step.description_en }}{% else %}{{ step.description_en }}{% endif %}</p>
           </div>
         </article>
         {% endfor %}
@@ -221,49 +221,49 @@
     </div>
   </section>
 
-  <section id="network-providers" class="border-y border-base-300 bg-base-200/55 py-20">
-    <div class="mx-auto max-w-7xl px-6">
-      <div class="card border border-base-300 bg-base-100 shadow-2xl">
-        <div class="card-body p-4 sm:p-6 lg:p-8">
+  <section id="network-providers" class="border-top border-bottom border-body bg-body-tertiary py-5">
+    <div class="mx-auto glis-max-7xl px-4">
+      <div class="card border border-body bg-body shadow-lg">
+        <div class="card-body p-3 p-sm-4 p-lg-4">
           <div hx-get="{% url 'home_network_providers' %}" hx-trigger="load" hx-swap="innerHTML">
-            <div class="flex min-h-56 flex-col items-center justify-center gap-4"><span class="loading loading-spinner loading-lg text-primary"></span><p class="text-base-content/55">{% translate "Loading healthcare network..." %}</p></div>
+            <div class="d-flex glis-min-h-56 flex-column align-items-center justify-content-center gap-3"><span class="spinner-border text-primary"></span><p class="text-body-secondary">{% translate "Loading healthcare network..." %}</p></div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="medical-process" class="py-20">
+  <section id="medical-process" class="py-5">
     <div hx-get="{% url 'home_medical_process' %}" hx-trigger="revealed" hx-swap="innerHTML">
-      <div class="mx-auto flex max-w-7xl items-center justify-center gap-3 px-6 py-16"><span class="loading loading-dots loading-lg text-primary"></span><span class="text-base-content/55">{% translate "Loading medical process..." %}</span></div>
+      <div class="mx-auto d-flex glis-max-7xl align-items-center justify-content-center gap-2 px-4 py-5"><span class="spinner-border text-primary"></span><span class="text-body-secondary">{% translate "Loading medical process..." %}</span></div>
     </div>
   </section>
 
-  <section id="insurance-partners" class="border-y border-base-300 bg-base-200/40 py-16">
-    <div hx-get="{% url 'home_insurance_partners' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="mx-auto flex max-w-7xl items-center justify-center gap-3 px-6"><span class="loading loading-ring text-primary"></span><span class="text-base-content/55">{% translate "Loading insurance partners..." %}</span></div></div>
+  <section id="insurance-partners" class="border-top border-bottom border-body bg-body-tertiary py-5">
+    <div hx-get="{% url 'home_insurance_partners' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="mx-auto d-flex glis-max-7xl align-items-center justify-content-center gap-2 px-4"><span class="spinner-border text-primary"></span><span class="text-body-secondary">{% translate "Loading insurance partners..." %}</span></div></div>
   </section>
 
-  <section id="management" class="py-20">
-    <div hx-get="{% url 'home_management' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="mx-auto flex max-w-7xl items-center justify-center gap-3 px-6 py-14"><span class="loading loading-spinner text-primary"></span><span class="text-base-content/55">{% translate "Loading management team..." %}</span></div></div>
+  <section id="management" class="py-5">
+    <div hx-get="{% url 'home_management' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="mx-auto d-flex glis-max-7xl align-items-center justify-content-center gap-2 px-4 py-5"><span class="spinner-border text-primary"></span><span class="text-body-secondary">{% translate "Loading management team..." %}</span></div></div>
   </section>
 
-  <section id="downloads" class="border-y border-base-300 bg-base-200/45 py-20">
-    <div hx-get="{% url 'home_medical_downloads' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="mx-auto flex max-w-7xl items-center justify-center gap-3 px-6 py-14"><span class="loading loading-bars text-primary"></span><span class="text-base-content/55">{% translate "Loading resources..." %}</span></div></div>
+  <section id="downloads" class="border-top border-bottom border-body bg-body-tertiary py-5">
+    <div hx-get="{% url 'home_medical_downloads' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="mx-auto d-flex glis-max-7xl align-items-center justify-content-center gap-2 px-4 py-5"><span class="spinner-border text-primary"></span><span class="text-body-secondary">{% translate "Loading resources..." %}</span></div></div>
   </section>
 
-  <section id="medical-contacts" class="py-20">
-    <div hx-get="{% url 'home_medical_contacts' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="mx-auto flex max-w-7xl items-center justify-center gap-3 px-6 py-14"><span class="loading loading-dots text-primary"></span><span class="text-base-content/55">{% translate "Loading contact information..." %}</span></div></div>
+  <section id="medical-contacts" class="py-5">
+    <div hx-get="{% url 'home_medical_contacts' %}" hx-trigger="revealed" hx-swap="innerHTML"><div class="mx-auto d-flex glis-max-7xl align-items-center justify-content-center gap-2 px-4 py-5"><span class="spinner-border text-primary"></span><span class="text-body-secondary">{% translate "Loading contact information..." %}</span></div></div>
   </section>
 
   {% if testimonials %}
-  <section class="bg-base-200 py-20 text-base-content">
-    <div class="mx-auto max-w-7xl px-6">
-      <div data-reveal><span class="badge badge-success badge-soft mb-4"><i class="bi bi-chat-quote me-2"></i>{% translate "Testimonials" %}</span><h2 class="text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "Trusted experiences, shared by people." %}</h2></div>
-      <div class="carousel mt-10 w-full gap-5 rounded-box">
+  <section class="bg-body-tertiary py-5 text-body">
+    <div class="mx-auto glis-max-7xl px-4">
+      <div data-reveal><span class="badge text-bg-success glis-badge-soft mb-3"><i class="bi bi-chat-quote me-2"></i>{% translate "Testimonials" %}</span><h2 class="fs-2 fw-bold">{% translate "Trusted experiences, shared by people." %}</h2></div>
+      <div class="glis-carousel mt-5 w-100 gap-3 rounded-3">
         {% for testimonial in testimonials %}
-        <article class="carousel-item w-[88%] sm:w-[60%] lg:w-[38%]">
-          <div class="card w-full border border-base-300 bg-base-100 text-base-content shadow-xl">
-            <div class="card-body p-7"><div class="text-6xl font-black text-success/35">“</div><p class="text-lg leading-8 text-base-content/75">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.quote_ar|default:testimonial.quote_en }}{% else %}{{ testimonial.quote_en }}{% endif %}</p><div class="mt-5 flex items-center gap-3">{% if testimonial.photo %}<div class="avatar"><div class="w-12 rounded-2xl"><img src="{{ testimonial.photo.url }}" alt="{{ testimonial.name }}"></div></div>{% else %}<div class="avatar avatar-placeholder"><div class="w-12 rounded-2xl bg-success text-success-content"><span>{{ testimonial.name|first }}</span></div></div>{% endif %}<div><strong class="block">{{ testimonial.name }}</strong><small class="text-base-content/50">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.role_ar|default:testimonial.role_en }}{% else %}{{ testimonial.role_en }}{% endif %}</small></div></div></div>
+        <article class="glis-carousel-item glis-width-88 glis-width-60 glis-width-38">
+          <div class="card w-100 border border-body bg-body text-body shadow-lg">
+            <div class="card-body p-4"><div class="display-5 fw-bold text-success">“</div><p class="fs-6 lh-lg text-body-secondary">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.quote_ar|default:testimonial.quote_en }}{% else %}{{ testimonial.quote_en }}{% endif %}</p><div class="mt-3 d-flex align-items-center gap-2">{% if testimonial.photo %}<div class="glis-avatar"><div class="glis-w-12 rounded-3"><img src="{{ testimonial.photo.url }}" alt="{{ testimonial.name }}"></div></div>{% else %}<div class="glis-avatar"><div class="glis-w-12 rounded-3 bg-success text-white"><span>{{ testimonial.name|first }}</span></div></div>{% endif %}<div><strong class="d-block">{{ testimonial.name }}</strong><small class="text-body-secondary">{% if LANGUAGE_CODE == "ar" %}{{ testimonial.role_ar|default:testimonial.role_en }}{% else %}{{ testimonial.role_en }}{% endif %}</small></div></div></div>
           </div>
         </article>
         {% endfor %}
@@ -273,14 +273,14 @@
   {% endif %}
 
   {% if faqs %}
-  <section class="py-24">
-      <div class="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-[.72fr_1.28fr]">
-      <div data-reveal><span class="badge badge-primary badge-soft mb-4"><i class="bi bi-question-circle me-2"></i>{% translate "Help Center" %}</span><h2 class="text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "Questions, answered without friction." %}</h2><p class="mt-5 text-lg leading-8 text-base-content/60">{% translate "Quick guidance about services, healthcare providers and medical administration." %}</p></div>
-      <div class="space-y-3">
+  <section class="py-5">
+      <div class="mx-auto d-grid glis-max-7xl gap-5 px-4 content-columns">
+      <div data-reveal><span class="badge text-bg-primary glis-badge-soft mb-3"><i class="bi bi-question-circle me-2"></i>{% translate "Help Center" %}</span><h2 class="fs-2 fw-bold">{% translate "Questions, answered without friction." %}</h2><p class="mt-3 fs-6 lh-lg text-body-secondary">{% translate "Quick guidance about services, healthcare providers and medical administration." %}</p></div>
+      <div class="glis-stack-3">
         {% for faq in faqs %}
-        <details class="collapse collapse-arrow border border-base-300 bg-base-100 shadow-sm" data-reveal>
-          <summary class="collapse-title text-lg font-bold">{% if LANGUAGE_CODE == "ar" %}{{ faq.question_ar|default:faq.question_en }}{% else %}{{ faq.question_en }}{% endif %}</summary>
-          <div class="collapse-content leading-7 text-base-content/60"><p>{% if LANGUAGE_CODE == "ar" %}{{ faq.answer_ar|default:faq.answer_en }}{% else %}{{ faq.answer_en }}{% endif %}</p></div>
+        <details class="accordion-item glis-disclosure border border-body bg-body shadow-sm" data-reveal>
+          <summary class="accordion-button fs-6 fw-bold">{% if LANGUAGE_CODE == "ar" %}{{ faq.question_ar|default:faq.question_en }}{% else %}{{ faq.question_en }}{% endif %}</summary>
+          <div class="accordion-body lh-lg text-body-secondary"><p>{% if LANGUAGE_CODE == "ar" %}{{ faq.answer_ar|default:faq.answer_en }}{% else %}{{ faq.answer_en }}{% endif %}</p></div>
         </details>
         {% endfor %}
       </div>
@@ -289,18 +289,18 @@
   {% endif %}
 
   {% if partners %}
-  <section class="border-t border-base-300 bg-base-200/50 py-16">
-    <div class="mx-auto max-w-7xl px-6">
-      <div class="text-center" data-reveal><span class="badge badge-outline"><i class="bi bi-building-check me-2"></i>{% translate "Our ecosystem" %}</span></div>
-      <div class="mt-8 grid gap-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center">
-        <figure class="hover-gallery h-64 overflow-hidden rounded-[2rem] border border-base-300 bg-base-100 shadow-xl" data-reveal>
-          {% for partner in partners|slice:":10" %}{% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="h-full w-full bg-base-100 object-contain p-10">{% endif %}{% endfor %}
+  <section class="border-top border-body bg-body-tertiary py-5">
+    <div class="mx-auto glis-max-7xl px-4">
+      <div class="text-center" data-reveal><span class="badge border text-body-secondary bg-transparent"><i class="bi bi-building-check me-2"></i>{% translate "Our ecosystem" %}</span></div>
+      <div class="mt-4 d-grid gap-4 feature-columns align-items-lg-center">
+        <figure class="glis-h-64 overflow-hidden rounded-4 border border-body bg-body shadow-lg" data-reveal>
+          {% for partner in partners|slice:":10" %}{% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="h-100 w-100 bg-body object-fit-contain p-5">{% endif %}{% endfor %}
         </figure>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="d-grid glis-grid-2 gap-2">
           {% for partner in partners|slice:":8" %}
-          <div class="grid min-h-24 place-items-center rounded-2xl border border-base-300 bg-base-100 p-4 shadow-sm" data-reveal>
-            {% if partner.website %}<a href="{{ partner.website }}" target="_blank" rel="noopener" class="grid h-full w-full place-items-center">{% endif %}
-            {% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="max-h-10 max-w-full object-contain">{% else %}<strong class="text-center text-sm">{{ partner.name }}</strong>{% endif %}
+          <div class="d-grid glis-min-h-24 glis-place-center rounded-3 border border-body bg-body p-3 shadow-sm" data-reveal>
+            {% if partner.website %}<a href="{{ partner.website }}" target="_blank" rel="noopener" class="d-grid h-100 w-100 glis-place-center">{% endif %}
+            {% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name }}" class="glis-max-h-10 glis-max-w-full object-fit-contain">{% else %}<strong class="text-center small">{{ partner.name }}</strong>{% endif %}
             {% if partner.website %}</a>{% endif %}
           </div>
           {% endfor %}
@@ -310,18 +310,18 @@
   </section>
   {% endif %}
 
-  <section class="relative py-24">
-    <div class="mx-auto max-w-6xl px-6">
-      <div class="glis-cta-panel glis-aura card relative overflow-hidden border border-primary/20 bg-base-100 p-8 text-center shadow-2xl sm:p-12 lg:p-16" data-reveal data-aura>
-        <span class="badge badge-primary badge-soft mb-5">{% translate "Ready when you are" %}</span>
-        <h2 class="mx-auto max-w-4xl text-4xl font-black tracking-[-.045em] sm:text-5xl lg:text-6xl">{% translate "Tell us what you need. We’ll make the next step clear." %}</h2>
-        <p class="mx-auto mt-5 max-w-2xl text-lg leading-8 text-base-content/60">{% translate "Start a secure request or sign in to continue an existing conversation." %}</p>
-        <div class="mt-8 flex flex-wrap justify-center gap-3">
-          <span class="aura aura-dual aura-glow aura-lg rounded-full"><a class="btn btn-primary btn-lg rounded-full px-8" href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}<i class="bi bi-arrow-up-right"></i></a></span>
+  <section class="position-relative py-5">
+    <div class="mx-auto glis-max-6xl px-4">
+      <div class="glis-cta-panel glis-aura card position-relative overflow-hidden border border-primary-subtle bg-body p-4 text-center shadow-lg p-sm-5 p-lg-5" data-reveal data-aura>
+        <span class="badge text-bg-primary glis-badge-soft mb-3">{% translate "Ready when you are" %}</span>
+        <h2 class="mx-auto glis-max-4xl fs-2 fw-bold">{% translate "Tell us what you need. We’ll make the next step clear." %}</h2>
+        <p class="mx-auto mt-3 glis-max-2xl fs-6 lh-lg text-body-secondary">{% translate "Start a secure request or sign in to continue an existing conversation." %}</p>
+        <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
+          <span class="aura aura-dual aura-glow aura-lg rounded-pill"><a class="btn btn-primary btn-lg rounded-pill px-4" href="{% url 'portal:create_ticket' 1 %}">{% translate "Submit a request" %}<i class="bi bi-arrow-up-right"></i></a></span>
           {% if user.is_authenticated %}
-          <a class="btn btn-outline btn-lg rounded-full px-8" href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Open portal" %}</a>
+          <a class="btn btn-outline-secondary btn-lg rounded-pill px-4" href="{% url 'portal:dashboard' %}"><i class="bi bi-grid-1x2"></i>{% translate "Open portal" %}</a>
           {% else %}
-          <a class="btn btn-outline btn-lg rounded-full px-8" href="{% url 'account_login' %}"><i class="bi bi-box-arrow-in-right"></i>{% translate "Sign in" %}</a>
+          <a class="btn btn-outline-secondary btn-lg rounded-pill px-4" href="{% url 'account_login' %}"><i class="bi bi-box-arrow-in-right"></i>{% translate "Sign in" %}</a>
           {% endif %}
         </div>
       </div>

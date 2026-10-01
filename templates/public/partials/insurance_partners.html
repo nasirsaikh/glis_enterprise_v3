@@ -1,24 +1,24 @@
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
-<div class="mx-auto max-w-7xl px-6">
-  <div class="mx-auto max-w-3xl text-center" data-reveal>
-    <span class="badge badge-success badge-soft mb-4"><i class="bi bi-shield-check me-2"></i>{% translate "Our Health Insurance Partners" %}</span>
-    <h2 class="text-4xl font-black tracking-[-.04em] sm:text-5xl">{% translate "Trusted insurance partnerships" %}</h2>
-    <p class="mt-4 text-lg leading-8 text-base-content/60">{% translate "We collaborate with insurers to deliver connected healthcare administration and reliable member support." %}</p>
+<div class="mx-auto glis-max-7xl px-4">
+  <div class="mx-auto glis-max-3xl text-center" data-reveal>
+    <span class="badge text-bg-success glis-badge-soft mb-3"><i class="bi bi-shield-check me-2"></i>{% translate "Our Health Insurance Partners" %}</span>
+    <h2 class="fs-2 fw-bold">{% translate "Trusted insurance partnerships" %}</h2>
+    <p class="mt-3 fs-6 lh-lg text-body-secondary">{% translate "We collaborate with insurers to deliver connected healthcare administration and reliable member support." %}</p>
   </div>
-  <div class="gl-insurance-partners flex flex-wrap justify-center gap-4 mt-10" aria-label="{% translate 'Insurance partners' %}">
+  <div class="gl-insurance-partners d-flex flex-wrap justify-content-center gap-3 mt-5" aria-label="{% translate 'Insurance partners' %}">
     {% for partner in insurance_partners %}
-    <div class="w-64 max-w-full">
-      <div class="card w-full border border-base-300 bg-base-100 shadow-lg transition duration-200 hover:-translate-y-1 hover:shadow-xl">
-        <div class="card-body grid min-h-40 place-items-center p-6">
-          {% if partner.website_url %}<a href="{{ partner.website_url }}" target="_blank" rel="noopener" class="grid h-full w-full place-items-center rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary">{% endif %}
-          {% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name_en }}" class="max-h-20 max-w-full object-contain">{% else %}<strong class="text-center">{% if LANGUAGE_CODE == "ar" %}{{ partner.name_ar|default:partner.name_en }}{% else %}{{ partner.name_en }}{% endif %}</strong>{% endif %}
+    <div class="glis-w-64 glis-max-w-full">
+      <div class="card w-100 border border-body bg-body shadow-lg">
+        <div class="card-body d-grid glis-min-h-40 glis-place-center p-4">
+          {% if partner.website_url %}<a href="{{ partner.website_url }}" target="_blank" rel="noopener" class="d-grid h-100 w-100 glis-place-center rounded-2">{% endif %}
+          {% if partner.logo %}<img src="{{ partner.logo.url }}" alt="{{ partner.name_en }}" class="glis-max-h-20 glis-max-w-full object-fit-contain">{% else %}<strong class="text-center">{% if LANGUAGE_CODE == "ar" %}{{ partner.name_ar|default:partner.name_en }}{% else %}{{ partner.name_en }}{% endif %}</strong>{% endif %}
           {% if partner.website_url %}</a>{% endif %}
         </div>
       </div>
     </div>
     {% empty %}
-    <div class="alert alert-info w-full"><i class="bi bi-info-circle"></i><span>{% translate "No insurance partners configured." %}</span></div>
+    <div class="alert alert-info w-100"><i class="bi bi-info-circle"></i><span>{% translate "No insurance partners configured." %}</span></div>
     {% endfor %}
   </div>
 </div>

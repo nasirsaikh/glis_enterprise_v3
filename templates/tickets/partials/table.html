@@ -1,50 +1,50 @@
 {% load i18n %}
-<section class="card border border-base-300 bg-base-100 shadow-xl" data-reveal>
-  <div class="flex flex-col gap-4 border-b border-base-300 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+<section class="card border border-body bg-body shadow-lg" data-reveal>
+  <div class="d-flex flex-column gap-3 border-bottom border-body px-3 py-3 flex-sm-row align-items-sm-center justify-content-sm-between px-sm-4">
     <div>
       {% if ticket_tab == "tasks" %}
-      <h2 class="text-xl font-black">{% blocktranslate count count=page_obj.paginator.count %}{{ count }} task ticket{% plural %}{{ count }} task tickets{% endblocktranslate %}</h2>
-      <p class="mt-1 text-sm text-base-content/50">{% translate "Task tickets remain part of the normal GLIS workflow and audit history." %}</p>
+      <h2 class="fs-5 fw-bold">{% blocktranslate count count=page_obj.paginator.count %}{{ count }} task ticket{% plural %}{{ count }} task tickets{% endblocktranslate %}</h2>
+      <p class="mt-1 small text-body-secondary">{% translate "Task tickets remain part of the normal GLIS workflow and audit history." %}</p>
       {% else %}
-      <h2 class="text-xl font-black">{% blocktranslate count count=page_obj.paginator.count %}{{ count }} ticket{% plural %}{{ count }} tickets{% endblocktranslate %}</h2>
-      <p class="mt-1 text-sm text-base-content/50">{% translate "Results respect your role, project and group access." %}</p>
+      <h2 class="fs-5 fw-bold">{% blocktranslate count count=page_obj.paginator.count %}{{ count }} ticket{% plural %}{{ count }} tickets{% endblocktranslate %}</h2>
+      <p class="mt-1 small text-body-secondary">{% translate "Results respect your role, project and group access." %}</p>
       {% endif %}
     </div>
-    <div class="flex items-center gap-2">
-      <span class="badge badge-success badge-soft gap-1"><i class="bi bi-shield-check"></i>{% translate "Permission filtered" %}</span>
-      <a class="btn btn-outline btn-sm" href="{% url 'portal:export_tickets' %}?{{ request.GET.urlencode }}"><i class="bi bi-download"></i>{% translate "Export" %}</a>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge text-bg-success glis-badge-soft gap-1"><i class="bi bi-shield-check"></i>{% translate "Permission filtered" %}</span>
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal:export_tickets' %}?{{ request.GET.urlencode }}"><i class="bi bi-download"></i>{% translate "Export" %}</a>
     </div>
   </div>
 
   <div class="overflow-x-auto">
-    <table class="table table-zebra">
+    <table class="table table-striped">
       <thead><tr><th>{% translate "Ticket" %}</th><th>{% translate "Project / category" %}</th><th>{% translate "Requester" %}</th><th>{% translate "Assigned" %}</th><th>{% translate "Priority" %}</th><th>{% translate "Status" %}</th><th>{% if ticket_tab == "tasks" %}{% translate "Task due" %}{% else %}{% translate "SLA due" %}{% endif %}</th><th></th></tr></thead>
       <tbody>
       {% for ticket in page_obj %}
-      <tr class="hover:bg-primary/5">
+      <tr class="">
         <td>
-          <a class="block min-w-52 no-underline" href="{% url 'portal:ticket_detail' ticket.reference %}"><strong class="block text-primary">{{ ticket.reference }}</strong><span class="mt-1 block max-w-72 truncate text-xs text-base-content/50">{{ ticket.subject|truncatechars:48 }}</span></a>
-          {% if ticket.visibility == 'restricted' %}<span class="badge badge-warning badge-soft badge-xs mt-2"><i class="bi bi-lock"></i>{% translate "Restricted" %}</span>{% endif %}
+          <a class="d-block glis-min-w-52 text-decoration-none" href="{% url 'portal:ticket_detail' ticket.reference %}"><strong class="d-block text-primary">{{ ticket.reference }}</strong><span class="mt-1 d-block glis-max-w-72 text-truncate glis-text-xs text-body-secondary">{{ ticket.subject|truncatechars:48 }}</span></a>
+          {% if ticket.visibility == 'restricted' %}<span class="badge text-bg-warning glis-badge-soft glis-badge-small mt-2"><i class="bi bi-lock"></i>{% translate "Restricted" %}</span>{% endif %}
         </td>
-        <td><span class="block font-semibold">{{ ticket.project.name_en }}</span><small class="text-base-content/45">{{ ticket.category.name_en }}</small></td>
-        <td><span class="block max-w-48 truncate">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</span><small class="block max-w-48 truncate text-base-content/45">{{ ticket.requester.email }}</small></td>
-        <td><div class="flex -space-x-2">{% for assignee in ticket.assignees.all %}<div class="avatar avatar-placeholder" title="{{ assignee.get_full_name|default:assignee.email }}"><div class="w-8 rounded-full border-2 border-base-100 bg-primary text-primary-content"><span class="text-xs">{{ assignee.first_name|default:assignee.email|slice:":1"|upper }}</span></div></div>{% empty %}<span class="text-xs text-base-content/40">{% translate "No staff" %}</span>{% endfor %}</div><small class="mt-1 block max-w-40 truncate text-base-content/45">{% for group in ticket.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "No group" %}{% endfor %}</small></td>
-        <td><span class="badge badge-warning badge-soft badge-sm">{{ ticket.get_priority_display }}</span></td>
-        <td><span class="badge badge-outline badge-sm">{{ ticket.get_status_display }}</span></td>
-        <td>{% if ticket_tab == "tasks" %}<span class="block">{{ ticket.task_item.due_date|date:"d M Y" }}</span><small class="text-base-content/45">{% if ticket.task_item.recurring_task_id %}{% translate "Recurring" %}{% else %}{% translate "Manual" %}{% endif %}</small>{% else %}<span class="badge badge-info badge-soft badge-sm">{{ ticket.sla_state|title }}</span><small class="mt-1 block text-base-content/45">{% if ticket.resolution_due_at %}{{ ticket.resolution_due_at|date:"d M Y H:i" }}{% else %}—{% endif %}</small>{% endif %}</td>
-        <td><a class="btn btn-ghost btn-circle btn-sm" href="{% url 'portal:ticket_detail' ticket.reference %}" aria-label="{% translate 'Open ticket' %}"><i class="bi bi-chevron-right"></i></a></td>
+        <td><span class="d-block fw-semibold">{{ ticket.project.name_en }}</span><small class="text-body-secondary">{{ ticket.category.name_en }}</small></td>
+        <td><span class="d-block glis-max-w-48 text-truncate">{{ ticket.requester.get_full_name|default:ticket.requester.email }}</span><small class="d-block glis-max-w-48 text-truncate text-body-secondary">{{ ticket.requester.email }}</small></td>
+        <td><div class="d-flex glis-avatar-stack">{% for assignee in ticket.assignees.all %}<div class="glis-avatar" title="{{ assignee.get_full_name|default:assignee.email }}"><div class="glis-w-8 rounded-pill border-2 border-body bg-primary text-white"><span class="glis-text-xs">{{ assignee.first_name|default:assignee.email|slice:":1"|upper }}</span></div></div>{% empty %}<span class="glis-text-xs text-body-secondary">{% translate "No staff" %}</span>{% endfor %}</div><small class="mt-1 d-block glis-max-w-40 text-truncate text-body-secondary">{% for group in ticket.groups.all %}{{ group.name }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "No group" %}{% endfor %}</small></td>
+        <td><span class="badge text-bg-warning glis-badge-soft glis-badge-small">{{ ticket.get_priority_display }}</span></td>
+        <td><span class="badge border text-body-secondary bg-transparent glis-badge-small">{{ ticket.get_status_display }}</span></td>
+        <td>{% if ticket_tab == "tasks" %}<span class="d-block">{{ ticket.task_item.due_date|date:"d M Y" }}</span><small class="text-body-secondary">{% if ticket.task_item.recurring_task_id %}{% translate "Recurring" %}{% else %}{% translate "Manual" %}{% endif %}</small>{% else %}<span class="badge text-bg-info glis-badge-soft glis-badge-small">{{ ticket.sla_state|title }}</span><small class="mt-1 d-block text-body-secondary">{% if ticket.resolution_due_at %}{{ ticket.resolution_due_at|date:"d M Y H:i" }}{% else %}—{% endif %}</small>{% endif %}</td>
+        <td><a class="btn btn-light glis-btn-icon rounded-circle btn-sm" href="{% url 'portal:ticket_detail' ticket.reference %}" aria-label="{% translate 'Open ticket' %}"><i class="bi bi-chevron-right"></i></a></td>
       </tr>
       {% empty %}
-      <tr><td colspan="8"><div class="flex flex-col items-center gap-3 py-14 text-center text-base-content/45"><span class="grid h-14 w-14 place-items-center rounded-2xl bg-base-200"><i class="bi bi-search text-2xl"></i></span><strong class="text-base-content">{% if ticket_tab == "tasks" %}{% translate "No matching task tickets" %}{% else %}{% translate "No matching tickets" %}{% endif %}</strong><p>{% translate "Adjust the filters or create a new request." %}</p></div></td></tr>
+      <tr><td colspan="8"><div class="d-flex flex-column align-items-center gap-2 py-5 text-center text-body-secondary"><span class="d-grid glis-h-14 glis-w-14 glis-place-center rounded-3 bg-body-tertiary"><i class="bi bi-search fs-4"></i></span><strong class="text-body">{% if ticket_tab == "tasks" %}{% translate "No matching task tickets" %}{% else %}{% translate "No matching tickets" %}{% endif %}</strong><p>{% translate "Adjust the filters or create a new request." %}</p></div></td></tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
 
   {% if page_obj.paginator.num_pages > 1 %}
-  <div class="flex flex-col gap-3 border-t border-base-300 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-    <span class="text-sm text-base-content/50">{% blocktranslate with current=page_obj.number total=page_obj.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}</span>
-    <div class="join">{% if page_obj.has_previous %}<a class="btn btn-sm join-item" hx-get="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}" hx-target="#ticket-table" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a>{% endif %}{% if page_obj.has_next %}<a class="btn btn-sm join-item" hx-get="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}" hx-target="#ticket-table" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">{% translate "Next" %}</a>{% endif %}</div>
+  <div class="d-flex flex-column gap-2 border-top border-body px-3 py-3 flex-sm-row align-items-sm-center justify-content-sm-between">
+    <span class="small text-body-secondary">{% blocktranslate with current=page_obj.number total=page_obj.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}</span>
+    <div class="btn-group">{% if page_obj.has_previous %}<a class="btn btn-sm" hx-get="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}" hx-target="#ticket-table" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a>{% endif %}{% if page_obj.has_next %}<a class="btn btn-sm" hx-get="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}" hx-target="#ticket-table" href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}">{% translate "Next" %}</a>{% endif %}</div>
   </div>
   {% endif %}
 </section>

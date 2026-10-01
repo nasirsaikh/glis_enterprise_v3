@@ -9,14 +9,14 @@
     if (rows.length <= 20) return;
     const id = table.id || (table.id = "portal-table-" + ++sequence);
     const search = document.createElement("input");
-    search.type = "search"; search.className = "input input-bordered input-sm";
+    search.type = "search"; search.className = "form-control form-control-sm";
     search.placeholder = document.documentElement.lang === "ar" ? "البحث في الجدول" : "Search this table";
     search.setAttribute("aria-label", search.placeholder); search.setAttribute("aria-controls", id);
     const toolbar = document.createElement("div"); toolbar.className = "table-tools";
-    const controls = document.createElement("div"); controls.className = "join";
+    const controls = document.createElement("div"); controls.className = "btn-group";
     const previous = document.createElement("button"), next = document.createElement("button");
     previous.type = next.type = "button";
-    previous.className = next.className = "btn btn-outline btn-sm";
+    previous.className = next.className = "btn btn-outline-secondary btn-sm";
     previous.textContent = document.documentElement.lang === "ar" ? "السابق" : "Previous";
     next.textContent = document.documentElement.lang === "ar" ? "التالي" : "Next";
     const status = document.createElement("span"); status.setAttribute("role", "status"); status.setAttribute("aria-live", "polite");

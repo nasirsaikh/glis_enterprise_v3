@@ -2,7 +2,7 @@
 
 ## 1. Operating model
 
-The GLIS TPA module is an automated endorsement-processing platform built inside the existing GLIS portal. It reuses GLIS authentication, policy access, tickets, approvals, SLA/TAT, notifications, attachments, audit events, HTMX, Job Center, Tailwind and daisyUI.
+The GLIS TPA module is an automated endorsement-processing platform built inside the existing GLIS portal. It reuses GLIS authentication, policy access, tickets, approvals, SLA/TAT, notifications, attachments, audit events, HTMX, Job Center, Bootstrap 5.3.2.
 
 Normal automated flow:
 
@@ -484,7 +484,7 @@ An unresolved Approval query blocks both approval and rejection.
 
 ## 19. Embedded conversations and visibility
 
-Transaction discussions reuse TicketComment/TicketAttachment while rendering as daisyUI chat inside the TPA transaction.
+Transaction discussions reuse TicketComment/TicketAttachment while rendering as compact conversation cards inside the TPA transaction.
 
 Purposes:
 

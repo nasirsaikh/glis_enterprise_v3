@@ -1,4 +1,4 @@
-/* Bootstrap CMS grids share a shell with Tailwind. Restore layout explicitly. */
+/* Preserve GLIS CMS content widths and responsive Bootstrap grids. */
 .public-shell.public-inner-page #main-content { min-width: 0; width: 100%; }
 .public-shell.public-inner-page #main-content .container { width: 100%; max-width: 1180px; margin-inline: auto; padding-inline: 1rem; }
 .public-shell.public-inner-page #main-content .row { display: flex; flex-wrap: wrap; margin-inline: calc(-.5 * var(--bs-gutter-x,1.5rem)); }
@@ -44,7 +44,7 @@
 }
 
 .public-shell .table-tools { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; justify-content:space-between; padding:.65rem; }
-.public-shell .table-tools .join { display:flex; align-items:center; gap:.4rem; }
+.public-shell .table-tools .btn-group { display:flex; align-items:center; gap:.4rem; }
 .public-shell table tr[hidden], .public-shell .table-search-empty[hidden] { display:none!important; }
 
 .public-shell.public-inner-page #main-content :is(.container-fluid,.container-sm,.container-md,.container-lg,.container-xl,.container-xxl) { width:100%; margin-inline:auto; padding-inline:1rem; }
@@ -137,4 +137,8 @@
 .public-shell.public-inner-page #main-content .row > .col-xxl-10 { flex:0 0 auto; width:83.333333%; }
 .public-shell.public-inner-page #main-content .row > .col-xxl-11 { flex:0 0 auto; width:91.666667%; }
 .public-shell.public-inner-page #main-content .row > .col-xxl-12 { flex:0 0 auto; width:100.000000%; }
+}
+
+@media (max-width:575.98px) {
+  .public-shell.public-inner-page #main-content .row:is(.g-5,.gx-5) { --bs-gutter-x: 1.5rem; }
 }

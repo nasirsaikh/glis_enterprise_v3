@@ -1,6 +1,6 @@
 {% load i18n %}
 {% if form.errors %}
-<div class="alert alert-error" role="alert" tabindex="-1" data-form-errors>
+<div class="alert alert-danger" role="alert" tabindex="-1" data-form-errors>
   <div><strong>{% translate "Correct the highlighted fields." %}</strong>{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
 </div>
 {% endif %}

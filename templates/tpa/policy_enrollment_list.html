@@ -2,25 +2,25 @@
 {% load i18n %}
 {% block title %}{% translate "Policies" %}{% endblock %}
 {% block tpa_content %}
-<div class="space-y-5">
-  <header class="card flex flex-col gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6 lg:flex-row lg:items-end lg:justify-between">
+<div class="glis-stack-5">
+  <header class="card d-flex flex-column gap-3 rounded-4 border border-body bg-body p-3 shadow-sm p-sm-4 flex-lg-row align-items-lg-end justify-content-lg-between">
     <div>
-      <div class="badge badge-primary badge-soft mb-3 gap-2"><i class="bi bi-building-add"></i>{% translate "TPA / Onboarding" %}</div>
-      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "INITIAL POLICY ENROLLMENT" %}</h1>
-      <p class="mt-2 max-w-4xl text-sm leading-6 text-base-content/55 sm:text-base">{% translate "Create the policy, benefit plans and opening member census. Successful TPA completion activates the policy for endorsements." %}</p>
+      <div class="badge text-bg-primary glis-badge-soft mb-2 gap-2"><i class="bi bi-building-add"></i>{% translate "TPA / Onboarding" %}</div>
+      <h1 class="fs-3 fw-bold">{% translate "INITIAL POLICY ENROLLMENT" %}</h1>
+      <p class="mt-2 glis-max-4xl small lh-base text-body-secondary">{% translate "Create the policy, benefit plans and opening member census. Successful TPA completion activates the policy for endorsements." %}</p>
     </div>
-    <div class="flex flex-wrap gap-2">
-      <a class="btn btn-ghost btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "Dashboard" %}</a>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-light btn-sm" href="{% url 'tpa:dashboard' %}"><i class="bi bi-arrow-left"></i>{% translate "Dashboard" %}</a>
       {% if can_create_policy_enrollment %}
       <a class="btn btn-primary btn-sm" href="{% url 'tpa:policy_enrollment_create' %}"><i class="bi bi-plus-lg"></i>{% translate "New Policy Enrollment" %}</a>
       {% endif %}
     </div>
   </header>
 
-  <section class="card border border-base-300 bg-base-100 shadow-sm">
-    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-base-300 px-5 py-4 sm:px-6">
-      <div><div class="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{% translate "Opening census control" %}</div><h2 class="text-lg font-black ">{% translate "POLICY ONBOARDING QUEUE" %}</h2></div>
-      <span class="badge badge-outline">{{ page_obj.paginator.count }} {% translate "POLICIES" %}</span>
+  <section class="card border border-body bg-body shadow-sm">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 border-bottom border-body px-3 py-3 px-sm-4">
+      <div><div class="mb-1 glis-text-xs fw-bold text-uppercase glis-letter-spacing text-primary">{% translate "Opening census control" %}</div><h2 class="fs-6 fw-bold">{% translate "POLICY ONBOARDING QUEUE" %}</h2></div>
+      <span class="badge border text-body-secondary bg-transparent">{{ page_obj.paginator.count }} {% translate "POLICIES" %}</span>
     </div>
     {% include "components/table_search.html" %}
     <div class="overflow-x-auto">
@@ -30,27 +30,27 @@
         {% for row in policy_rows %}
           <tr>
             <td>
-              <a class="link link-primary font-bold" href="{% url 'tpa:policy_enrollment_detail' row.policy.pk %}" aria-label="{% translate 'View policy dashboard' %}: {{ row.policy.policy_number }}">{{ row.policy.policy_number }}</a>
-              <div class="text-[10px] opacity-45">{{ row.policy.policy_name }}</div>
+              <a class="link-body-emphasis link-primary fw-bold" href="{% url 'tpa:policy_enrollment_detail' row.policy.pk %}" aria-label="{% translate 'View policy dashboard' %}: {{ row.policy.policy_number }}">{{ row.policy.policy_number }}</a>
+              <div class="glis-text-xs opacity-50">{{ row.policy.policy_name }}</div>
             </td>
-            <td>{{ row.policy.organization.name_en }}<div class="text-[10px] opacity-45">{{ row.policy.organization.get_organization_type_display }}</div></td>
+            <td>{{ row.policy.organization.name_en }}<div class="glis-text-xs opacity-50">{{ row.policy.organization.get_organization_type_display }}</div></td>
             <td>{{ row.policy.insurance_company.name_en }}</td>
             <td>{{ row.policy.workflow_organizations.first.name_en|default:"GLIS TPA Operations" }}</td>
-            <td class="font-semibold">{{ row.policy.plans.count }}</td>
+            <td class="fw-semibold">{{ row.policy.plans.count }}</td>
             <td>
               {% if row.policy.initial_enrollment_completed_at %}
-              <span class="badge badge-success badge-soft">{% translate "Completed" %}</span>
+              <span class="badge text-bg-success glis-badge-soft">{% translate "Completed" %}</span>
               {% elif row.transaction %}
-              <span class="badge badge-warning badge-soft">{{ row.transaction.get_status_display }}</span>
+              <span class="badge text-bg-warning glis-badge-soft">{{ row.transaction.get_status_display }}</span>
               {% else %}
-              <span class="badge badge-ghost">{% translate "Not Started" %}</span>
+              <span class="badge bg-body-secondary text-body-secondary">{% translate "Not Started" %}</span>
               {% endif %}
-              {% if row.transaction %}<a class="link link-primary mt-1 block text-xs" href="{% url 'tpa:transaction_detail' row.transaction.reference %}">{% translate "Enrollment workflow" %}</a>{% endif %}
+              {% if row.transaction %}<a class="link-body-emphasis link-primary mt-1 d-block glis-text-xs" href="{% url 'tpa:transaction_detail' row.transaction.reference %}">{% translate "Enrollment workflow" %}</a>{% endif %}
             </td>
-            <td><span class="badge {% if row.policy.status == 'active' %}badge-success badge-soft{% else %}badge-outline{% endif %}">{{ row.policy.get_status_display }}</span></td>
+            <td><span class="badge {% if row.policy.status == 'active' %}text-bg-success glis-badge-soft{% else %}border text-body-secondary bg-transparent{% endif %}">{{ row.policy.get_status_display }}</span></td>
           </tr>
         {% empty %}
-          <tr><td colspan="7" class="py-8 text-center opacity-45">{% translate "No policies have been enrolled yet." %}</td></tr>
+          <tr><td colspan="7" class="py-4 text-center opacity-50">{% translate "No policies have been enrolled yet." %}</td></tr>
         {% endfor %}
         </tbody>
       </table>

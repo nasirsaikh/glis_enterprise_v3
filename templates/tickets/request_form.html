@@ -1,11 +1,11 @@
 {% extends 'base_portal.html' %}{% load i18n %}
 {% block title %}{% translate 'Create Request' %}{% endblock %}
 {% block content %}
-<section class="card border border-base-300 bg-base-100 shadow-sm max-w-4xl mx-auto"><div class="card-body p-5">
-<h1 class="text-2xl font-bold">{% translate 'Create Request' %}</h1>
-<form method="post" class="space-y-4">{% csrf_token %}
-<label class="fieldset"><span class="fieldset-legend">{% translate 'Request Type' %}</span><select class="select select-bordered w-full" name="request_type" hx-get="{% url 'portal:create_request' %}" hx-include="this" hx-target="#request-fields" hx-swap="outerHTML" hx-indicator="#request-loading">{% for value,label in form.request_type.field.choices %}<option value="{{ value }}" {% if form.request_type.value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
-<div id="request-loading" class="htmx-indicator"><span class="loading loading-spinner loading-sm"></span></div>
+<section class="card border border-body bg-body shadow-sm glis-max-4xl mx-auto"><div class="card-body p-3">
+<h1 class="fs-4 fw-bold">{% translate 'Create Request' %}</h1>
+<form method="post" class="glis-stack-4">{% csrf_token %}
+<label class="glis-field"><span class="form-label">{% translate 'Request Type' %}</span><select class="form-select w-100" name="request_type" hx-get="{% url 'portal:create_request' %}" hx-include="this" hx-target="#request-fields" hx-swap="outerHTML" hx-indicator="#request-loading">{% for value,label in form.request_type.field.choices %}<option value="{{ value }}" {% if form.request_type.value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+<div id="request-loading" class="htmx-indicator"><span class="spinner-border spinner-border-sm"></span></div>
 {% include 'tickets/partials/request_fields.html' %}
 <button class="btn btn-primary" type="submit">{% translate 'Continue' %}</button>
 </form></div></section>

@@ -1,41 +1,41 @@
 {% extends 'base_public.html' %}{% load i18n socialaccount %}
 {% block title %}{% translate "Create account" %} · GLIS{% endblock %}
 {% block content %}
-<section class="bg-base-200/45 py-14 sm:py-5">
-  <div class="mx-auto max-w-2xl px-2">
+<section class="bg-body-tertiary py-5 py-sm-3">
+  <div class="mx-auto glis-max-2xl px-2">
     <div class="aura aura-holo aura-lg" data-aura data-reveal>
-      <article class="card border border-base-300 bg-base-100 shadow-2xl">
-        <div class="card-body p-7 sm:p-9">
-          <div class="text-center"><img class="mx-auto max-h-12 max-w-32" src="/api/v1/site-logo/"
+      <article class="card border border-body bg-body shadow-lg">
+        <div class="card-body p-4 p-sm-4">
+          <div class="text-center"><img class="mx-auto glis-max-h-12 glis-max-w-32" src="/api/v1/site-logo/"
               alt="GLIS"></div>
-          <div class="mt-6 grid gap-3 sm:grid-cols-2">
+          <div class="mt-4 d-grid gap-2 glis-grid-sm-2">
             <form method="post" action="/accounts/microsoft/login/">{% csrf_token %}
-              <button type="submit" class="btn btn-outline w-full"><i class="bi bi-microsoft"></i>{% translate "Microsoft" %}</button></form>
+              <button type="submit" class="btn btn-outline-secondary w-100"><i class="bi bi-microsoft"></i>{% translate "Microsoft" %}</button></form>
             <form method="post" action="/accounts/google/login/">
               {% csrf_token %}
-              <button type="submit" class="btn btn-outline w-full">
+              <button type="submit" class="btn btn-outline-secondary w-100">
                 <i class="bi bi-google"></i>{% translate "Google" %}
               </button>
             </form>
           </div>
-          <div class="divider">{% translate "OR" %}</div>
-          <form class="grid grid-cols-1 gap-2" method="post" action="{% url 'account_signup' %}">{% csrf_token %}
-            {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
-            {% for field in form %}<div class="fieldset w-full"><label class="fieldset-legend"
+          <div class="glis-divider">{% translate "OR" %}</div>
+          <form class="d-grid glis-grid-1 gap-2" method="post" action="{% url 'account_signup' %}">{% csrf_token %}
+            {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+            {% for field in form %}<div class="glis-field w-100"><label class="form-label"
                 for="{{ field.id_for_label }}">{{ field.label }}</label><input
-                class="input input-bordered w-full {% if field.errors %}input-error{% endif %}"
+                class="form-control w-100 {% if field.errors %}is-invalid{% endif %}"
                 id="{{ field.id_for_label }}" name="{{ field.html_name }}"
                 type="{{ field.field.widget.input_type|default:'text' }}"
-                value="{% if field.value and 'password' not in field.name %}{{ field.value }}{% endif %}" 
+                value="{% if field.value and 'password' not in field.name %}{{ field.value }}{% endif %}"
                 {% if field.field.required %}required{% endif %}>{% if field.help_text %}<span
-                class="label text-xs text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}{% if field.errors %}
-                <span class="text-xs text-error">{{ field.errors|striptags }}</span>{% endif %}</div>
+                class="form-text glis-text-xs text-body-secondary">{{ field.help_text|safe }}</span>{% endif %}{% if field.errors %}
+                <span class="glis-text-xs text-danger">{{ field.errors|striptags }}</span>{% endif %}</div>
             {% endfor %}
-            <button type="submit" class="btn btn-primary btn-lg w-full"><i
+            <button type="submit" class="btn btn-primary btn-lg w-100"><i
                 class="bi bi-person-plus"></i>{% translate "Create account" %}</button>
           </form>
-          <p class="mt-6 text-center text-sm text-base-content/50">{% translate "Already registered?" %} <a
-              href="{% url 'account_login' %}" class="link link-primary font-bold">{% translate "Sign in" %}</a></p>
+          <p class="mt-4 text-center small text-body-secondary">{% translate "Already registered?" %} <a
+              href="{% url 'account_login' %}" class="link-body-emphasis link-primary fw-bold">{% translate "Sign in" %}</a></p>
         </div>
       </article>
     </div>

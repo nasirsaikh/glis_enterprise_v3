@@ -57,13 +57,55 @@ def canonical_member(data, field_aliases=None):
     return {key: normalized.get(key, mapped.get(key)) for key in CANONICAL_MEMBER_FIELDS}
 
 
+def _coerce_members_payload(payload):
+    """Accept common LLM JSON shapes and convert them to the canonical members envelope."""
+    if isinstance(payload, list):
+        return {"members": payload}
+    if not isinstance(payload, dict):
+        raise ValueError("AI response must be a JSON object or array.")
+
+    # Canonical shape.
+    if isinstance(payload.get("members"), list):
+        return payload
+
+    # Common wrappers produced by local LLMs.
+    for key in ("data", "result", "results", "records", "rows", "items"):
+        value = payload.get(key)
+        if isinstance(value, list):
+            return {**payload, "members": value}
+        if isinstance(value, dict):
+            if isinstance(value.get("members"), list):
+                merged = {**payload, **value}
+                merged["members"] = value["members"]
+                return merged
+            for nested_key in ("records", "rows", "items", "results"):
+                nested = value.get(nested_key)
+                if isinstance(nested, list):
+                    merged = {**payload, **value}
+                    merged["members"] = nested
+                    return merged
+
+    # A single member may be returned as {"member": {...}}.
+    member = payload.get("member")
+    if isinstance(member, dict):
+        return {**payload, "members": [member]}
+
+    # Or the model may return the member object itself.
+    member_keys = set(CANONICAL_MEMBER_FIELDS) - {"confidence"}
+    if any(key in payload for key in member_keys):
+        return {"members": [payload], "confidence": payload.get("confidence")}
+
+    keys = ", ".join(sorted(str(key) for key in payload.keys())) or "none"
+    raise ValueError(
+        "AI response did not contain recognizable member data. "
+        f"Received top-level keys: {keys}."
+    )
+
+
 def normalize_ai_payload(payload, *, field_aliases=None):
     if isinstance(payload, str):
         payload = json.loads(payload)
-    if isinstance(payload, list):
-        payload = {"members": payload}
-    if not isinstance(payload, dict) or not isinstance(payload.get("members"), list):
-        raise ValueError("AI response did not contain the required members array.")
+    payload = _coerce_members_payload(payload)
     payload = apply_field_aliases(payload, field_aliases)
 
     normalized = {

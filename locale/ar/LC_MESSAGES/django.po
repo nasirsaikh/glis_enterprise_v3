@@ -2632,9 +2632,6 @@ msgstr "خدمات إدارة مطالبات الرعاية الصحية (TPA)"
 msgid "Healthcare management"
 msgstr "إدارة الرعاية الصحية"
 
-msgid "Medical Claim"
-msgstr "مطالبة طبية"
-
 
 msgid "Integrated health administration services connecting members, healthcare providers and insurance partners."
 msgstr "خدمات إدارة صحية متكاملة تربط بين الأعضاء، مزودي الرعاية الصحية وشركاء التأمين."
@@ -2720,8 +2717,33 @@ msgstr "الخريطة"
 msgid "made easier"
 msgstr "أصبحت أكثر سهولة"
 
+
+msgid "Medical Claim"
+msgstr "مطالبة طبية"
+
 msgid "Pre-Authorization"
 msgstr "الموافقة المسبقة"
 
 msgid "Quick guidance about services, healthcare providers and medical administration."
 msgstr "إرشادات سريعة حول الخدمات ومقدمي الرعاية الصحية والإدارة الطبية"
+
+msgid "All types"
+msgstr "جميع الأنواع"
+
+msgid "All governorates"
+msgstr "جميع المحافظات"
+
+msgid "All insurers"
+msgstr "جميع شركات التأمين"
+
+msgid "All specialties"
+msgstr "جميع التخصصات"
+
+msgid "Hospital, clinic..."
+msgstr "مستشفى، عيادة..."
+
+msgid "Connected care"
+msgstr "رعاية متصلة"
+
+msgid "Every request, traceable"
+msgstr "كل طلب قابل للتتبع"

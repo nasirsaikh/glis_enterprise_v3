@@ -400,21 +400,44 @@ def _process_attachments(tx, email, actor):
     for attachment in email.attachments.all().order_by("pk"):
         existing = tx.source_documents.filter(source_hash=attachment.sha256).first()
         if existing:
-            attachment.processing_state = (
-                InboundEmailAttachment.State.PROCESSED
-                if existing.processed and existing.processing_state == SourceDocument.State.PROCESSED
-                else InboundEmailAttachment.State.REVIEW
-            )
-            attachment.extracted_payload = existing.extracted_payload
-            attachment.processing_error = existing.processing_error
-            attachment.save(
+            if existing.processed and existing.processing_state == SourceDocument.State.PROCESSED:
+                attachment.processing_state = InboundEmailAttachment.State.PROCESSED
+                attachment.extracted_payload = existing.extracted_payload
+                attachment.processing_error = ""
+                attachment.save(
+                    update_fields=[
+                        "processing_state",
+                        "extracted_payload",
+                        "processing_error",
+                        "updated_at",
+                    ]
+                )
+                continue
+
+            # Reprocess must retry an existing RECEIVED/REVIEW/FAILED source
+            # instead of skipping it forever just because the hash already exists.
+            existing.processing_state = SourceDocument.State.RECEIVED
+            existing.processed = False
+            existing.processing_error = ""
+            existing.save(
                 update_fields=[
                     "processing_state",
-                    "extracted_payload",
+                    "processed",
                     "processing_error",
                     "updated_at",
                 ]
             )
+            attachment.processing_state = InboundEmailAttachment.State.PROCESSING
+            attachment.processing_error = ""
+            attachment.save(
+                update_fields=[
+                    "processing_state",
+                    "processing_error",
+                    "updated_at",
+                ]
+            )
+            documents.append(existing)
+            attachment_map[existing.pk] = attachment
             continue
 
         ticket_attachment = _copy_attachment_to_ticket(tx, attachment, actor)

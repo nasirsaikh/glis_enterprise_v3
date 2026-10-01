@@ -12,7 +12,7 @@ from apps.ai.models import AIExtractionProfile, AIInteraction
 from apps.ai.runtime import generate_json, generate_text
 
 from ..models import ExtractionAttempt, MemberAction, SourceDocument, TransactionEvent
-from .extraction import normalize_ai_payload, select_profile, select_provider
+from .extraction import canonical_member, normalize_ai_payload, select_profile, select_provider
 from .intake import normalize_member_row
 from .member_merge import merge_member_rows
 from .prompts import profile_guidance
@@ -378,9 +378,20 @@ def process_source_bundle(tx, documents, actor=None):
                 recovery_sources.append((document, document.original_name, content))
             if suffix in {".csv", ".xlsx", ".xls"}:
                 raw_rows = _structured_rows(document.original_name, content)
+
+                # Structured files do not need OCR/Docling, but they still pass
+                # through the same canonical member contract before persistence.
+                # This applies aliases/normalization and Pydantic scalar validation
+                # so spreadsheet columns cannot bypass the extraction contract.
+                validated_rows = [
+                    canonical_member(row)
+                    for row in raw_rows
+                    if any(value not in (None, "") for value in row.values())
+                ]
+
                 actions = _create_actions(
                     tx,
-                    raw_rows,
+                    validated_rows,
                     confidence=100,
                     source=f"structured:{document.pk}:{document.original_name}",
                 )

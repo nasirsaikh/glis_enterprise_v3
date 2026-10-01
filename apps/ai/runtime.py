@@ -125,8 +125,25 @@ def generate_json(config, *, system_prompt, user_prompt, images=None, response_s
         }
         with httpx.Client(timeout=timeout) as client:
             response = client.post(f"{endpoint}/api/chat", json=body)
-            response.raise_for_status()
-            raw = response.json()["message"]["content"]
+
+            # Ollama converts JSON schema into a llama.cpp grammar. Complex
+            # schemas can be rejected by some Ollama/llama.cpp versions even
+            # though the model itself is healthy. Retry in JSON mode while
+            # retaining the schema instructions in the system prompt.
+            if response.status_code == 400 and response_schema:
+                fallback_body = {**body, "format": "json"}
+                response = client.post(f"{endpoint}/api/chat", json=fallback_body)
+
+            if response.is_error:
+                try:
+                    detail = response.json()
+                except Exception:
+                    detail = response.text
+                raise RuntimeError(
+                    f"Ollama returned HTTP {response.status_code}: {detail}"
+                )
+
+            raw = (response.json().get("message") or {}).get("content", "")
         payload = _json_from_text(raw)
 
     elif provider in {"openai", "openai_compatible"}:

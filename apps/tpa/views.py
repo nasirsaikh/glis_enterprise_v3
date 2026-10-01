@@ -908,6 +908,10 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
             action.edit_form = MemberLookupRowForm(initial=display_data)
         else:
             action.edit_form = None
+        if form_overrides.get("edited_action_id") == action.pk:
+            action.edit_form = form_overrides["edit_form"]
+        if action.edit_form:
+            action.edit_form.auto_id = f"id_edit_{action.pk}_%s"
         if action.pk not in processing_ids or wizard["active_step"]["key"] != "tpa_processing":
             action.processing_form = None
             continue
@@ -921,10 +925,6 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
                 "comments": action.processing_message,
             },
         )
-        if form_overrides.get("edited_action_id") == action.pk:
-            action.edit_form = form_overrides["edit_form"]
-        if action.edit_form:
-            action.edit_form.auto_id = f"id_edit_{action.pk}_%s"
         if form_overrides.get("processing_action_id") == action.pk:
             action.processing_form = form_overrides["processing_form"]
         action.processing_form.auto_id = f"id_tpa_{action.pk}_%s"

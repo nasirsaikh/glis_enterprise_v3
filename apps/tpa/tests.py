@@ -113,7 +113,8 @@ class TPACoreTests(TestCase):
 
     def test_transaction_reference_generated(self):
         tx = self._transaction()
-        self.assertTrue(tx.reference.startswith("TPA-END-2026-"))
+        self.assertTrue(tx.reference.startswith("ADD-2026-"))
+        self.assertEqual(tx.reference, tx.ticket.reference)
 
     def test_user_without_permission_or_policy_access_cannot_enter_tpa(self):
         self.assertFalse(can_access_tpa(self.user))

@@ -7,6 +7,10 @@ on:
       - "codex/**"
     paths:
       - "apps/tpa/**"
+      - "apps/accounts/**"
+      - "services/**"
+      - "templates/tickets/**"
+      - "static/js/ticket-collaboration.js"
       - "apps/ai/**"
       - "apps/tickets/**"
       - "apps/job_center/jobs/tpa_jobs.py"
@@ -18,6 +22,10 @@ on:
   pull_request:
     paths:
       - "apps/tpa/**"
+      - "apps/accounts/**"
+      - "services/**"
+      - "templates/tickets/**"
+      - "static/js/ticket-collaboration.js"
       - "apps/ai/**"
       - "apps/tickets/**"
       - "apps/job_center/jobs/tpa_jobs.py"
@@ -61,10 +69,11 @@ jobs:
       - name: Validate TPA JavaScript syntax
         run: |
           node --check static/js/tpa.js
+          node --check static/js/ticket-collaboration.js
           node --check static/js/app.js
 
       - name: Django system check
         run: python manage.py check
 
-      - name: Run TPA regression suite
-        run: python manage.py test apps.tpa
+      - name: Run unified workflow regression suite
+        run: python manage.py test apps.tickets apps.tpa

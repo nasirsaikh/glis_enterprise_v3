@@ -18,7 +18,7 @@ def organization_ids(user):
         return assigned
     # PolicyAccess is the legacy explicit organization membership mechanism.
     grants = getattr(user, "tpa_policy_access", None)
-    return list(grants.filter(active=True, organization__is_active=True).values_list("organization_id", flat=True).distinct()) if grants is not None else []
+    return list(grants.filter(active=True, organization__is_active=True, organization__organization_type__is_active=True).values_list("organization_id", flat=True).distinct()) if grants is not None else []
 
 
 def membership_group_ids(user):
@@ -83,7 +83,9 @@ def scope_policies(queryset, user):
         return queryset.none()
     if user.is_superuser:
         return queryset
-    organizations = organization_ids(user)
+    organizations = set(organization_ids(user))
+    organizations.update(SupportGroup.objects.filter(pk__in=membership_group_ids(user),can_view_all_group_tickets=True,
+        organizations__is_active=True,organizations__organization_type__is_active=True).values_list('organizations__pk',flat=True))
     scope = (
         Q(organization_id__in=organizations)
         | Q(insurance_company_id__in=organizations)
@@ -93,8 +95,8 @@ def scope_policies(queryset, user):
     # accounts without profile organizations. It must not override newer
     # profile organization restrictions.
     grants = Q(access_entries__user=user, access_entries__active=True, access_entries__can_view=True, access_entries__organization__is_active=True, access_entries__organization__organization_type__is_active=True)
-    if organizations or (getattr(user, "profile", None) and user.profile.organizations.exists()):
-        grants &= Q(access_entries__organization_id__in=organizations)
+    if organization_ids(user) or (getattr(user, "profile", None) and user.profile.organizations.exists()):
+        grants &= Q(access_entries__organization_id__in=organization_ids(user))
     return queryset.filter(scope | grants).distinct()
 
 
@@ -120,8 +122,7 @@ def visible_organizations(user, ticket=None):
     if ticket.organization_id:
         ids.add(ticket.organization_id)
     if not ids:
-        ids.update(organization_ids(ticket.requester))
-        ids.update(organization_ids(user))
+        ids.update(organization_ids(user) or organization_ids(ticket.requester))
     return qs.filter(pk__in=ids)
 
 
@@ -133,9 +134,6 @@ def assignable_groups(user, ticket, organization=None):
     groups = groups.filter(scope)
     if ticket.project.groups.exists():
         groups = groups.filter(Q(projects=ticket.project) | Q(pk__in=ticket.groups.values('pk')))
-    if ticket.category.allowed_groups.exists():
-        groups = groups.filter(Q(auth_group__in=ticket.category.allowed_groups.all()) | Q(pk__in=ticket.groups.values('pk'))
-            | Q(pk__in=ticket.category.default_groups.values('pk')) | Q(pk=ticket.category.default_group_id))
     if organization:
         groups = groups.filter(organizations=organization)
     return groups.distinct()

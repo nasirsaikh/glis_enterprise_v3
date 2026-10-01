@@ -477,6 +477,7 @@ class TPAAutomationTests(TestCase):
         self.assertFalse(blocked)
 
     def test_organization_wide_authority_supports_insurer_and_tpa(self):
+        self.policy.workflow_organizations.add(self.tpa)
         insurer_authority = TPAEmailAuthority.objects.create(
             email_address="insurer@example.com",
             organization=self.insurer,

@@ -69,7 +69,7 @@
 
         <div class="navbar-end gap-1">
           <a class="btn btn-primary btn-sm hidden rounded-full sm:inline-flex" href="{% url 'portal:create_request' %}">
-            <i class="bi bi-plus-lg"></i><span class="hidden xl:inline">{% translate "New ticket" %}</span>
+            <i class="bi bi-plus-lg"></i><span class="hidden xl:inline">{% translate "Create Request" %}</span>
           </a>
 
           <button class="btn btn-ghost btn-circle" type="button" data-theme-toggle aria-label="{% translate 'Toggle light and dark mode' %}">
@@ -210,13 +210,13 @@
           <ul class="menu mt-3 w-full gap-1 p-0">
             <li data-sidebar-label class="menu-title hidden"><span>{% translate "TPA Operations" %}</span></li>
             <li>
-              <a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name != 'user_guide' and 'inbound_email' not in request.resolver_match.url_name and 'policy_enrollment' not in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:dashboard' %}" title="{% translate 'TPA Member Management' %}">
+              <a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tpa' and request.resolver_match.url_name != 'user_guide' and 'inbound_email' not in request.resolver_match.url_name and 'policy_enrollment' not in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'portal:ticket_list' %}?tab=endorsement" title="{% translate 'Endorsements' %}">
                 <i class="bi bi-people text-lg"></i><span data-sidebar-label class="hidden">{% translate "Endorsements" %}</span>
               </a>
             </li>
             <li>
-              <a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tpa' and 'policy_enrollment' in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:policy_enrollment_list' %}" title="{% translate 'Initial Policy Enrollment' %}">
-                <i class="bi bi-building-add text-lg"></i><span data-sidebar-label class="hidden">{% translate "Initial Policy Enrollment" %}</span>
+              <a data-sidebar-link class="justify-center {% if request.resolver_match.namespace == 'tpa' and 'policy_enrollment' in request.resolver_match.url_name %}menu-active{% endif %}" href="{% url 'tpa:policy_enrollment_list' %}" title="{% translate 'Policies' %}">
+                <i class="bi bi-building-add text-lg"></i><span data-sidebar-label class="hidden">{% translate "Policies" %}</span>
               </a>
             </li>
             <li>

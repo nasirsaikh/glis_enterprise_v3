@@ -53,7 +53,7 @@ Create a new policy from:
 Portal → TPA Operations → Initial Policy Enrollment
 ~~~
 
-Initial setup creates a Draft policy and a dedicated New Policy Enrollment transaction. Configure sponsor/individual, insurer, optional TPA, dates, currency, STP/backdating, physical-card requirement and benefit plans.
+Initial setup creates a Draft policy and a dedicated New Policy Enrollment transaction. Configure the global organization, insurer, processing organizations, dates, currency, STP/backdating, physical-card requirement and benefit plans.
 
 The opening census can be entered manually or loaded through the same structured/OCR evidence pipeline used by later endorsements.
 
@@ -316,7 +316,7 @@ Configure <code>TPAEmailAuthority</code> for:
 
 - email address;
 - optional linked user;
-- organization/sponsor;
+- global organization;
 - optional specific policy;
 - permitted transaction types;
 - valid-from / valid-until;

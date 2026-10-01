@@ -60,7 +60,7 @@ def backfill(apps,schema_editor):
             sla=SLA.objects.using(alias).filter(category=category,priority=ticket.priority,is_active=True).first() or SLA.objects.using(alias).filter(project=project,category=None,priority='medium').first()
             Ticket.objects.using(alias).filter(pk=ticket.pk).update(sla_policy_id=sla.pk,first_response_due_at=ticket.created_at+timedelta(minutes=sla.first_response_minutes),resolution_due_at=ticket.created_at+timedelta(minutes=sla.resolution_minutes))
         roles=[(tx.organization_id,'owner',True),(tx.insurer_id,'insurer',False),(tx.requester_organization_id,'requester',False)]+[(i,'processing',False) for i in tx.policy.workflow_organizations.values_list('pk',flat=True)]
-        for org,role,primary in roles:Participant.objects.using(alias).get_or_create(ticket=ticket,organization_id=org,relationship_type=role,defaults={'is_primary':primary})
+        for org,role,primary in roles:Participant.objects.using(alias).get_or_create(ticket=ticket,organization_id=org,relationship_type=role,defaults={'is_primary':primary,'can_edit':role in {'owner','processing'},'can_assign':role in {'owner','processing'},'can_approve':role=='insurer'})
         Event.objects.using(alias).create(ticket=ticket,actor_id=None,event_type='workflow_migrated',summary='Business request consolidated into ticket workflow.',details={'transaction_id':tx.pk,'legacy_reference':tx.reference})
     Email=apps.get_model('tpa','InboundEmail')
     for email in Email.objects.using(alias).filter(transaction__isnull=False).select_related('transaction').iterator():

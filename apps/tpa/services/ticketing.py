@@ -44,7 +44,7 @@ def record_transaction_link(tx):
     TicketOrganization.objects.get_or_create(ticket=ticket, organization=tx.requester_organization, relationship_type='requester')
     processor = SiteSettings.load().default_processing_organization
     if processor and processor.is_active:
-        TicketOrganization.objects.get_or_create(ticket=ticket, organization=processor, relationship_type='processing')
+        TicketOrganization.objects.get_or_create(ticket=ticket, organization=processor, relationship_type='processing',defaults={'can_edit':True,'can_assign':True})
     TicketDynamicData.objects.update_or_create(ticket=ticket, defaults={'reporting_values': {
         'transaction_reference':tx.reference,'organization':tx.organization.name_en,'insurer':tx.insurer.name_en,
         'policy_number':tx.policy.policy_number,'transaction_type':tx.transaction_type,'effective_date':tx.effective_date.isoformat()}})

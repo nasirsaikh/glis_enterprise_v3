@@ -475,15 +475,7 @@ AI is limited to source understanding and semantic extraction. Business decision
 
 ## 12.2 Supported organizations
 
-The TPA domain supports:
-
-- Individual
-- Corporate / Sponsor
-- Insurance Company
-- TPA
-- Broker
-- Agent
-- Other
+Global organization types are editable masters shared across portal workflows. Initial types include Individual, Corporate, Insurance Company, TPA, Broker, Agent, Branch, Service Provider, Healthcare Provider, Reinsurer, Surveyor / Loss Adjuster, Law Firm, Vendor, Internal Department and Other.
 
 Policy access can additionally be restricted by organization, policy and user.
 
@@ -492,7 +484,7 @@ Policy access can additionally be restricted by organization, policy and user.
 A new policy starts in:
 
 ~~~text
-Portal → TPA Operations → Initial Policy Enrollment
+Portal → Create Request → Policies
 ~~~
 
 Initial setup creates the policy and a dedicated <code>NEW_POLICY_ENROLLMENT</code> transaction.
@@ -503,9 +495,9 @@ Before approval, authorized intake users can use **Edit details** on a request t
 
 The policy can contain:
 
-- sponsor/individual;
+- global owner organization;
 - insurance company;
-- optional TPA organization;
+- configured processing organizations;
 - policy period;
 - currency;
 - STP setting;
@@ -1335,3 +1327,10 @@ Important repository guides:
 ## Project objective
 
 GLIS is intended to provide one consistent insurance-service platform rather than a collection of disconnected portals: a modern public site, a role-based operational workspace, shared workflow/SLA services, governed documents, AI-assisted intake, deterministic insurance processing, TPA member administration, recurring work management and governed analytics — all within the existing Django architecture.
+
+
+## Global organizations and unified requests
+
+Policy enrollment, endorsements and claims use the existing Ticket engine. Organizations and organization types are global Accounts masters. Create Request chooses a configured process; Tickets provides scoped request-type tabs, a common workspace, assignment/release/takeover, tagging and one approval ledger.
+
+See [the architecture, migration and implementation checklist](docs/UNIFIED_WORKFLOW.md) for the complete change map, default prefixes, configuration, rollback behavior, test commands and deployment boundaries.

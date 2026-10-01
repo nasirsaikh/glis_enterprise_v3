@@ -476,14 +476,6 @@ def inbound_email_sync_now(request):
 def policy_enrollment_list(request):
     _require_tpa_access(request.user)
     policies = visible_policies(request.user).prefetch_related("plans", "transactions")
-    if not (
-        request.user.is_superuser
-        or request.user.has_perm("tpa.configure_tpa")
-    ):
-        policies = policies.filter(
-            models.Q(access_entries__user=request.user)
-            | models.Q(transactions__requester=request.user)
-        ).distinct()
     query = request.GET.get("q", "").strip()
     if query:
         policies = policies.filter(

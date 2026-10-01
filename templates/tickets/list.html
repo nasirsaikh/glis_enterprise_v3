@@ -3,13 +3,13 @@
 <div class="flex flex-col gap-5">
   <section class="card flex flex-col gap-6 rounded-[1.5rem] border border-base-300 bg-base-100 p-6 shadow-sm lg:flex-row lg:items-end lg:justify-between" data-reveal>
     <div>
-      <span class="badge badge-primary badge-soft mb-3"><i class="bi {% if ticket_tab == 'tasks' %}bi-list-task{% else %}bi-ticket-perforated{% endif %} me-1"></i>{% translate "Ticket workspace" %}</span>
-      {% if ticket_tab == "tasks" %}
+      <span class="badge badge-primary badge-soft mb-3"><i class="bi {% if ticket_tab == 'task' %}bi-list-task{% else %}bi-ticket-perforated{% endif %} me-1"></i>{% translate "Ticket workspace" %}</span>
+      {% if ticket_tab == "task" %}
       <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "Task tickets" %}</h1>
       <p class="mt-2 text-base-content/55">{% translate "Tickets generated for manual and recurring tasks." %}</p>
       {% else %}
-      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "Service requests" %}</h1>
-      <p class="mt-2 text-base-content/55">{% translate "Search, filter and act on service tickets you are permitted to access." %}</p>
+      <h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "Requests" %}</h1>
+      <p class="mt-2 text-base-content/55">{% translate "Search, filter and act on requests you are permitted to access." %}</p>
       {% endif %}
     </div>
 

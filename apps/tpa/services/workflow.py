@@ -182,7 +182,7 @@ def dispatch_to_tpa(tx, actor=None):
         actor,
         "sent_to_tpa",
         "Transaction dispatched to TPA processing.",
-        {"tpa_organization_id": tx.ticket.organization_participants.filter(relationship_type='processing').values_list('organization_id', flat=True).first()},
+        {"processing_organization_id": tx.ticket.organization_participants.filter(relationship_type='processing').values_list('organization_id', flat=True).first()},
     )
     return tx
 
@@ -588,6 +588,8 @@ def resolve_tpa_query(query, actor):
             f"{query.get_purpose_display()} resolved: {query.subject}",
             "The information request has been resolved.",
         )
+    if query.purpose == TransactionQuery.Purpose.APPROVAL:
+        return sync_from_ticket_approval(tx, actor=actor)
     return tx
 
 

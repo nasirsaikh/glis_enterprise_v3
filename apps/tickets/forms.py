@@ -2,6 +2,7 @@ from apps.accounts.models import Organization
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from apps.ai.models import default_questions
 from .models import Category, Product, Project, SupportGroup, Ticket, TicketComment
@@ -15,6 +16,7 @@ def selection_id(value):
 
 
 class TicketCreateStep1Form(forms.Form):
+    supports_business_requests = False
     organization = forms.ModelChoiceField(required=False,queryset=Organization.objects.none(),widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
     policy = forms.ModelChoiceField(required=False,queryset=Policy.objects.none(),widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
 
@@ -74,6 +76,9 @@ class TicketCreateStep1Form(forms.Form):
             accessible_projects(user)
             .order_by("name_en")
         )
+
+        if not self.supports_business_requests:
+            self.fields['project'].queryset=self.fields['project'].queryset.filter(request_type__in=['service','other'])
 
         project_id = selection_id(
             self.data.get("project")
@@ -287,6 +292,7 @@ class TicketApprovalRequestForm(forms.Form):
         self.fields['approver'].queryset=available_approvers(user,ticket)
 
 class UnifiedRequestForm(TicketCreateStep1Form):
+    supports_business_requests = True
     request_type = forms.ChoiceField(choices=Project.RequestType.choices,widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
     effective_date = forms.DateField(required=False,widget=forms.DateInput(attrs={'type':'date','class':'input input-bordered w-full'}))
     policy_type = forms.ChoiceField(required=False,choices=[],widget=forms.Select(attrs={'class':'select select-bordered w-full'}))
@@ -311,4 +317,4 @@ class UnifiedRequestForm(TicketCreateStep1Form):
                 self.fields['category'].queryset=accessible_categories(user).filter(product=selected)
                 if self.fields['category'].queryset.count()==1:self.initial['category']=self.fields['category'].queryset.first().pk
         for name in ['project','product','policy']:
-            self.fields[name].widget.attrs.update({'hx-get':'/portal/requests/new/','hx-include':'closest form','hx-target':'#request-fields','hx-swap':'outerHTML','hx-trigger':'change','hx-indicator':'#request-loading'})
+            self.fields[name].widget.attrs.update({'hx-get':reverse('portal:create_request'),'hx-include':'closest form','hx-target':'#request-fields','hx-swap':'outerHTML','hx-trigger':'change','hx-indicator':'#request-loading'})

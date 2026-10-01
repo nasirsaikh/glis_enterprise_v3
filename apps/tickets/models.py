@@ -5,6 +5,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from apps.core.models import LocalizedModelMixin, TimeStampedModel
 
 
@@ -45,12 +46,12 @@ class SupportGroup(TimeStampedModel):
 
 class Project(TimeStampedModel, LocalizedModelMixin):
     class RequestType(models.TextChoices):
-        SERVICE = 'service', 'Service Tickets'
-        POLICY = 'policy', 'Policies'
-        ENDORSEMENT = 'endorsement', 'Endorsements'
-        CLAIM = 'claim', 'Claims'
-        TASK = 'task', 'Tasks'
-        OTHER = 'other', 'Other'
+        SERVICE = 'service', _('Service Tickets')
+        POLICY = 'policy', _('Policies')
+        ENDORSEMENT = 'endorsement', _('Endorsements')
+        CLAIM = 'claim', _('Claims')
+        TASK = 'task', _('Tasks')
+        OTHER = 'other', _('Other')
 
     request_type = models.CharField(max_length=20, choices=RequestType.choices, default=RequestType.SERVICE, db_index=True)
     workflow_type = models.CharField(max_length=40, blank=True, db_index=True)

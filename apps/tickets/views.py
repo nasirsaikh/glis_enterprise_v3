@@ -55,7 +55,7 @@ def _apply_ticket_filters(qs, data):
             qs = qs.filter(**{key: data[key]})
     if data.get("organization"):
         qs = qs.filter(
-            requester__profile__organizations=data["organization"]
+            Q(organization=data["organization"]) | Q(organization_participants__organization=data["organization"],organization_participants__can_view=True) | Q(organization__isnull=True,requester__profile__organizations=data["organization"])
         ).distinct()
     if data.get("sla") == "overdue":
         qs = qs.filter(resolution_due_at__lt=timezone.now()).exclude(status__in=[Ticket.Status.RESOLVED, Ticket.Status.CLOSED])
@@ -136,11 +136,19 @@ def dashboard(request):
 @login_required
 def ticket_list(request):
     base_qs = TicketAccessPolicy.visible_queryset(request.user)
+    if request.GET.get("owner") == "me":base_qs=base_qs.filter(requester=request.user)
+    if request.GET.get("scope") == "group":base_qs=base_qs.filter(groups__members=request.user).distinct()
+    form = TicketFilterForm(request.GET,user=request.user)
+    if form.is_valid():
+        data=form.cleaned_data
+        if not data.get("status"):base_qs=base_qs.exclude(status="closed")
+        base_qs=_apply_ticket_filters(base_qs,data)
+
     task_filter = Q(project__request_type='task') | Q(task_item__is_deleted=False)
     counts = {row['project__request_type']:row['total'] for row in base_qs.values('project__request_type').annotate(total=Count('pk',distinct=True))}
     counts['task']=base_qs.filter(task_filter).count()
     counts['service']=base_qs.filter(project__request_type='service',task_item__isnull=True).count()
-    workflow_tabs = [{'key':'all','label':'All','count':base_qs.count()}] + [{'key':key,'label':label,'count':counts.get(key,0)} for key,label in Project.RequestType.choices]
+    workflow_tabs = [{'key':'all','label':_('All'),'count':base_qs.count()}] + [{'key':key,'label':label,'count':counts.get(key,0)} for key,label in Project.RequestType.choices]
     ticket_tab = {'tickets':'service','tasks':'task'}.get(request.GET.get('tab'),request.GET.get('tab','all'))
     qs=base_qs
     if ticket_tab=='task':qs=qs.filter(task_filter).select_related('task_item')
@@ -149,17 +157,6 @@ def ticket_list(request):
     else:ticket_tab='all'
     service_ticket_count,task_ticket_count=counts['service'],counts['task']
 
-    if request.GET.get("owner") == "me":
-        qs = qs.filter(requester=request.user)
-    if request.GET.get("scope") == "group":
-        qs = qs.filter(groups__members=request.user).distinct()
-
-    form = TicketFilterForm(request.GET, user=request.user)
-    if form.is_valid():
-        data = form.cleaned_data
-        if not data.get("status"):
-            qs = qs.exclude(status="closed")
-        qs = _apply_ticket_filters(qs, data)
 
     allowed_sorts = {"created_at", "-created_at", "priority", "-priority", "status", "resolution_due_at", "-resolution_due_at"}
     qs = qs.order_by(request.GET.get("sort") if request.GET.get("sort") in allowed_sorts else "-created_at")
@@ -215,11 +212,21 @@ def ticket_detail(request, reference):
     }
     if hasattr(ticket,'tpa_transaction'):
         from apps.tpa.views import transaction_detail
-        context.update(transaction_detail(request,ticket.tpa_transaction.reference,embedded=True))
+        workflow_context = transaction_detail(request,ticket.tpa_transaction.reference,embedded=True)
+        if request.headers.get('HX-Request','').lower()=='true' and request.headers.get('HX-History-Restore-Request','').lower()!='true':
+            response=render(request,'tpa/transaction/_workspace.html',workflow_context)
+            response['HX-Retarget']='#transaction-workspace'
+            response['HX-Reswap']='outerHTML'
+            response['HX-Push-Url']=workflow_context['step_url']
+            patch_vary_headers(response,['HX-Request','HX-History-Restore-Request'])
+            return response
+        if workflow_context['step_redirected']:
+            return redirect(workflow_context['step_url'])
+        context.update(workflow_context)
         context['embedded_workflow']=True
         context['ticket']=ticket
     response=render(request,'tickets/detail.html',context)
-    patch_vary_headers(response,['HX-Request'])
+    patch_vary_headers(response,['HX-Request','HX-History-Restore-Request'])
     return response
 
 
@@ -423,6 +430,7 @@ def add_comment(request, reference):
         else:
             recipients = list(ticket.assignees.all())
 
+        recipients.extend(tag.user for tag in ticket.tagged_participants.filter(is_active=True).select_related("user"))
         recipients = [
             user
             for user in recipients
@@ -827,6 +835,7 @@ def assign_ticket(request, reference):
     form = TicketAssignmentForm(request.POST, ticket=ticket, user=request.user)
     if not form.is_valid():
         return HttpResponse("Select authorized organizations, groups and staff members.",status=400)
+    before={"primary":ticket.assignee_id,"users":list(ticket.assignees.values_list("pk",flat=True)),"groups":list(ticket.groups.values_list("pk",flat=True))}
     users, groups = list(form.cleaned_data["users"]), list(form.cleaned_data["groups"])
     if form.cleaned_data["replace_existing"]:
         ticket.assignees.set(users); ticket.groups.set(groups)
@@ -834,10 +843,10 @@ def assign_ticket(request, reference):
         ticket.assignees.add(*users); ticket.groups.add(*groups)
     ticket.assignee = ticket.assignees.order_by("first_name", "email").first()
     ticket.save(update_fields=["assignee", "updated_at"])
-    TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type="assignment", summary="Ticket assignment updated", details={"users": [user.email for user in ticket.assignees.all()], "groups": [group.name for group in ticket.groups.all()]})
+    TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type="assignment", summary="Ticket assignment updated", details={"before":before,"after":{"primary":ticket.assignee_id,"users":[user.pk for user in ticket.assignees.all()],"groups":[group.pk for group in ticket.groups.all()]}})
     notify_users(list(ticket.assignees.all()), ticket=ticket, kind="assignment", title=f"Ticket assigned: {ticket.reference}", body=ticket.subject, send_email_message=ticket.category.send_update_email)
     messages.success(request, "Ticket assignment was updated.")
-    return redirect("portal:ticket_detail", reference=reference)
+    return participant_response(request,ticket)
 
 
 @login_required
@@ -857,7 +866,7 @@ def unassign_ticket(request, reference):
         ticket.groups.clear()
     TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type="unassigned", summary=f"Unassigned {target}")
     messages.success(request, f"{target.title()} assignment removed.")
-    return redirect("portal:ticket_detail", reference=reference)
+    return participant_response(request,ticket)
 
 
 @login_required
@@ -886,7 +895,7 @@ def share_ticket(request, reference):
     notify_users([share.recipient], ticket=ticket, kind="info", title=f"Ticket shared with you: {ticket.reference}", body=link, send_email_message=ticket.category.send_update_email)
     TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type="shared", summary=f"Shared with {share.recipient.email}")
     messages.success(request, f"Secure link created for {share.recipient.email}: {link}")
-    return redirect("portal:ticket_detail", reference=reference)
+    return participant_response(request,ticket)
 
 
 @login_required
@@ -1036,12 +1045,12 @@ def cancel_ticket_approval(request,reference,approval_id):
 def assignment_options(request,reference):
     ticket=get_object_or_404(TicketAccessPolicy.visible_queryset(request.user),reference=reference)
     if not TicketAccessPolicy.can_assign(request.user,ticket):return HttpResponse('Assignment permission is required.',status=403)
-    return render(request,'tickets/partials/assignment_fields.html',{'ticket':ticket,'assignment_form':TicketAssignmentForm(ticket=ticket,user=request.user,initial=request.GET)})
+    return render(request,'tickets/partials/assignment_fields.html',{'ticket':ticket,'assignment_form':TicketAssignmentForm(ticket=ticket,user=request.user,initial=request.GET.dict())})
 
 @login_required
 def create_request(request):
     from apps.tpa.models import MemberTransaction
-    from apps.tpa.services.access import can_create_endorsement,can_create_policy_enrollment
+    from apps.tpa.services.access import can_create_policy_enrollment
     if request.method=='POST' and request.POST.get('request_type')=='task':return redirect('tasks:create')
     form=UnifiedRequestForm(request.POST if request.method=='POST' else None,user=request.user,initial=request.GET.dict())
     if request.method=='POST' and form.is_valid():
@@ -1050,11 +1059,12 @@ def create_request(request):
             if not can_create_policy_enrollment(request.user):return HttpResponse('Enrollment permission is required.',status=403)
             request.session['policy_request_context']={'product':data['product'].pk,'policy_type':data['policy_type'],'organization':data['organization'].pk if data.get('organization') else None}
             return redirect('tpa:policy_enrollment_create')
-        if kind=='endorsement' and not can_create_endorsement(request.user):return HttpResponse('Endorsement permission is required.',status=403)
+        if kind=='claim' and not (request.user.is_superuser or request.user.has_perm('tickets.add_ticket')):return HttpResponse('Claim creation permission is required.',status=403)
+        if kind=='endorsement':
+            from apps.tpa.services.access import can_create_for_policy
+            if not can_create_for_policy(request.user,data['policy'],project.workflow_type):return HttpResponse('Endorsement permission is required for this policy.',status=403)
         if kind=='endorsement' and project.workflow_type in MemberTransaction.Type.values:
             policy=data['policy']
-            from apps.tpa.services.access import can_create_for_policy
-            if not can_create_for_policy(request.user,policy,project.workflow_type):return HttpResponse('Endorsement permission is required for this policy.',status=403)
             tx=MemberTransaction.objects.create(policy=policy,organization=policy.organization,insurer=policy.insurance_company,requester=request.user,requester_organization=policy.organization,transaction_type=project.workflow_type,effective_date=data['effective_date'],metadata={'workflow_project_id':project.pk},physical_card_required=policy.physical_card_required and project.workflow_type=='MEMBER_ADD')
             if tx.transaction_type=='POLICY_CANCEL':
                 from apps.tpa.services.member_selection import populate_policy_cancellation

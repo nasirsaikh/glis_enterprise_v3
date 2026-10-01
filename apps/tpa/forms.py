@@ -47,6 +47,7 @@ class TransactionForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.user=user
         if user:
             self.fields["policy"].queryset = (
                 visible_policies(user)
@@ -95,6 +96,10 @@ class TransactionForm(forms.ModelForm):
     def clean(self):
         data = super().clean()
         tx_type = data.get("transaction_type")
+        if data.get('policy') and tx_type and not self.instance.pk:
+            from .services.access import can_create_for_policy
+            if not can_create_for_policy(self.user,data['policy'],tx_type):self.add_error('policy','Creation permission is required for this policy.')
+
         if tx_type in {
             MemberTransaction.Type.MEMBER_DELETE,
             MemberTransaction.Type.POLICY_CANCEL,

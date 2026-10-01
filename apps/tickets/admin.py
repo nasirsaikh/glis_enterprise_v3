@@ -28,6 +28,8 @@ from .models import (
     TicketEscalation,
     TicketEvent,
     TicketShare,
+    TicketOrganization,
+    TicketTaggedUser,
 )
 
 
@@ -535,8 +537,49 @@ class AttachmentInline(JSONTabularInline):
 # ============================================================
 
 
+class ScopedTicketAdminMixin:
+    def get_queryset(self, request):
+        from services.access import TicketAccessPolicy
+        from django.db.models import Q
+        qs=super().get_queryset(request)
+        if request.user.is_superuser:return qs
+        ids=TicketAccessPolicy.visible_queryset(request.user).values('pk')
+        name=self.model._meta.model_name
+        if name=='ticket':return qs.filter(pk__in=ids)
+        if name=='relatedticket':return qs.filter(source_id__in=ids,target_id__in=ids)
+        if name=='savedticketview':return qs.filter(user=request.user)
+        if name=='notification':return qs.filter(Q(ticket_id__in=ids)|Q(ticket__isnull=True),user=request.user)
+        return qs.filter(ticket_id__in=ids)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        from services.access import TicketAccessPolicy
+        from services.tenancy import visible_users, visible_organizations
+        from apps.tpa.models import Policy
+        from apps.tpa.services.access import visible_policies
+        related=db_field.remote_field.model
+        if related is Ticket:kwargs['queryset']=TicketAccessPolicy.visible_queryset(request.user)
+        elif related._meta.label_lower=='auth.user':kwargs['queryset']=visible_users(request.user)
+        elif related._meta.label_lower=='accounts.organization':kwargs['queryset']=visible_organizations(request.user)
+        elif related is Policy:kwargs['queryset']=visible_policies(request.user)
+        return super().formfield_for_foreignkey(db_field,request,**kwargs)
+
+    def get_form(self, request, obj=None, **kwargs):
+        from services.tenancy import assignable_groups, assignable_users, visible_support_groups
+        form=super().get_form(request,obj,**kwargs)
+        if self.model is not Ticket:return form
+        class ScopedForm(form):
+            def __init__(self, *args, **form_kwargs):
+                super().__init__(*args,**form_kwargs)
+                if obj:
+                    for name in ['assignee','assignees']:
+                        if name in self.fields:self.fields[name].queryset=assignable_users(request.user,obj)
+                if 'groups' in self.fields:self.fields['groups'].queryset=assignable_groups(request.user,obj) if obj else visible_support_groups(request.user)
+                if obj and hasattr(obj,'tpa_transaction') and 'status' in self.fields:self.fields['status'].disabled=True
+        return ScopedForm
+
+
 @admin.register(Ticket)
-class TicketAdmin(JSONModelAdmin):
+class TicketAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
 
     list_display = (
         "reference",
@@ -727,7 +770,18 @@ class SLAEscalationRuleAdmin(JSONModelAdmin):
 
 
 @admin.register(TicketApproval)
-class TicketApprovalAdmin(JSONModelAdmin):
+class TicketApprovalAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
+
+    # Decisions must go through the shared service so the assigned actor,
+    # audit ledger and linked domain state are updated together.
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
     list_display = (
         "ticket",
@@ -755,7 +809,7 @@ class TicketApprovalAdmin(JSONModelAdmin):
 
 
 @admin.register(Notification)
-class NotificationAdmin(JSONModelAdmin):
+class NotificationAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
 
     list_display = (
         "created_at",
@@ -795,7 +849,7 @@ class FormDataSourceAdmin(JSONModelAdmin):
 
 
 @admin.register(TicketDynamicData)
-class TicketDynamicDataAdmin(JSONModelAdmin):
+class TicketDynamicDataAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
     pass
 
 
@@ -805,7 +859,7 @@ class TicketDynamicDataAdmin(JSONModelAdmin):
 
 
 @admin.register(TicketEvent)
-class TicketEventAdmin(JSONModelAdmin):
+class TicketEventAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
     pass
 
 
@@ -815,7 +869,7 @@ class TicketEventAdmin(JSONModelAdmin):
 
 
 @admin.register(RelatedTicket)
-class RelatedTicketAdmin(JSONModelAdmin):
+class RelatedTicketAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
     pass
 
 
@@ -825,7 +879,7 @@ class RelatedTicketAdmin(JSONModelAdmin):
 
 
 @admin.register(SavedTicketView)
-class SavedTicketViewAdmin(JSONModelAdmin):
+class SavedTicketViewAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
     pass
 
 
@@ -835,7 +889,7 @@ class SavedTicketViewAdmin(JSONModelAdmin):
 
 
 @admin.register(TicketShare)
-class TicketShareAdmin(JSONModelAdmin):
+class TicketShareAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
     pass
 
 
@@ -845,5 +899,18 @@ class TicketShareAdmin(JSONModelAdmin):
 
 
 @admin.register(TicketEscalation)
-class TicketEscalationAdmin(JSONModelAdmin):
+class TicketEscalationAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
     pass
+
+@admin.register(TicketOrganization)
+class TicketOrganizationAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
+    list_display=('ticket','organization','relationship_type','can_view','can_edit','can_assign','can_approve')
+    list_filter=('relationship_type','organization')
+
+@admin.register(TicketTaggedUser)
+class TicketTaggedUserAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
+    list_display=('ticket','user','tagged_by','is_active')
+    readonly_fields=('tagged_by',)
+    def save_model(self, request, obj, form, change):
+        obj.tagged_by=request.user
+        super().save_model(request,obj,form,change)

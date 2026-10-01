@@ -2747,3 +2747,154 @@ msgstr "رعاية متصلة"
 
 msgid "Every request, traceable"
 msgstr "كل طلب قابل للتتبع"
+
+msgid "Organization"
+msgstr "المؤسسة"
+
+msgid "Organizations"
+msgstr "المؤسسات"
+
+msgid "All organizations"
+msgstr "جميع المؤسسات"
+
+msgid "Service Tickets"
+msgstr "تذاكر الخدمات"
+
+msgid "Endorsements"
+msgstr "ملاحق التأمين"
+
+msgid "Tasks"
+msgstr "المهام"
+
+msgid "Other"
+msgstr "أخرى"
+
+msgid "All"
+msgstr "الكل"
+
+msgid "Create Request"
+msgstr "إنشاء طلب"
+
+msgid "Request Type"
+msgstr "نوع الطلب"
+
+msgid "Project / Process"
+msgstr "المشروع / الإجراء"
+
+msgid "Category / Request"
+msgstr "الفئة / الطلب"
+
+msgid "Policy Type"
+msgstr "نوع وثيقة التأمين"
+
+msgid "Effective Date"
+msgstr "تاريخ السريان"
+
+msgid "Continue to create a task with the existing task workflow."
+msgstr "تابع لإنشاء مهمة من خلال مسار المهام الحالي."
+
+msgid "Tag Users"
+msgstr "إضافة مشاركين"
+
+msgid "Tag"
+msgstr "إضافة مشارك"
+
+msgid "Untag"
+msgstr "إزالة المشارك"
+
+msgid "Request Approval"
+msgstr "طلب الموافقة"
+
+msgid "Cancel approval"
+msgstr "إلغاء طلب الموافقة"
+
+msgid "Individual approval"
+msgstr "موافقة فردية"
+
+msgid "Release"
+msgstr "التخلي عن الإسناد"
+
+msgid "Support Group"
+msgstr "فريق الدعم"
+
+msgid "Users"
+msgstr "المستخدمون"
+
+msgid "Groups"
+msgstr "الفرق"
+
+msgid "All authorized organizations"
+msgstr "جميع المؤسسات المصرح بها"
+
+msgid "All authorized groups"
+msgstr "جميع الفرق المصرح بها"
+
+msgid ""
+"Choose an organization and support group participating in this request."
+msgstr "اختر مؤسسة وفريق دعم مشاركين في هذا الطلب."
+
+msgid "Processing Organization"
+msgstr "مؤسسة المعالجة"
+
+msgid "System"
+msgstr "النظام"
+
+msgid "Requests"
+msgstr "الطلبات"
+
+msgid "Search, filter and act on requests you are permitted to access."
+msgstr "ابحث عن الطلبات المصرح لك بالوصول إليها وصنفها وعالجها."
+
+msgid "Policy & Benefit Plans"
+msgstr "الوثيقة وخطط المنافع"
+
+msgid "Intake & Correction"
+msgstr "استقبال البيانات وتصحيحها"
+
+msgid "Validation"
+msgstr "التحقق"
+
+msgid "Approval"
+msgstr "الموافقة"
+
+msgid "TPA Processing"
+msgstr "المعالجة لدى مسؤول الطرف الثالث"
+
+msgid "Card Dispatch"
+msgstr "إرسال البطاقات"
+
+msgid "Complete"
+msgstr "مكتمل"
+
+msgid "Policy & Routing"
+msgstr "الوثيقة والتوجيه"
+
+msgid "Period & Rules"
+msgstr "الفترة والقواعد"
+
+msgid "Benefit Plans & Create"
+msgstr "خطط المنافع والإنشاء"
+
+msgid "organization"
+msgstr "المؤسسة"
+
+msgid "Organization / Policy"
+msgstr "المؤسسة / الوثيقة"
+
+msgid "All organization types"
+msgstr "جميع أنواع المؤسسات"
+
+msgid "Pending"
+msgstr "قيد الانتظار"
+
+msgid "Cancelled"
+msgstr "ملغى"
+
+msgid "Approver"
+msgstr "الموافق"
+
+msgid "Note"
+msgstr "الملاحظة"
+
+msgid "User"
+msgstr "المستخدم"

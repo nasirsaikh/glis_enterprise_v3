@@ -8,9 +8,12 @@ from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 
 from .models import AccountPolicy, UserProfile
+from apps.tickets.models import SupportGroup
 
 
 class OrganizationUserCreationForm(UserCreationForm):
+    support_groups = forms.ModelMultipleChoiceField(queryset=SupportGroup.objects.none(),required=False,
+        widget=FilteredSelectMultiple("support groups",is_stacked=False))
     organizations = forms.ModelMultipleChoiceField(
         queryset=Organization.objects.filter(is_active=True).order_by("name_en"),
         required=False,
@@ -20,6 +23,8 @@ class OrganizationUserCreationForm(UserCreationForm):
 
 
 class OrganizationUserChangeForm(UserChangeForm):
+    support_groups = forms.ModelMultipleChoiceField(queryset=SupportGroup.objects.none(),required=False,
+        widget=FilteredSelectMultiple("support groups",is_stacked=False))
     organizations = forms.ModelMultipleChoiceField(
         queryset=Organization.objects.filter(is_active=True).order_by("name_en"),
         required=False,
@@ -33,6 +38,7 @@ class OrganizationUserChangeForm(UserChangeForm):
             profile = getattr(self.instance, "profile", None)
             if profile:
                 self.fields["organizations"].initial = profile.organizations.all()
+            self.fields["support_groups"].initial=self.instance.support_groups.all()
 
 
 User = get_user_model()
@@ -47,20 +53,47 @@ class PortalUserAdmin(DjangoUserAdmin):
     add_form = OrganizationUserCreationForm
     form = OrganizationUserChangeForm
     fieldsets = DjangoUserAdmin.fieldsets + (
-        ("Organizations", {"fields": ("organizations",)}),
+        ("Organizations", {"fields": ("organizations","support_groups")}),
     )
     add_fieldsets = DjangoUserAdmin.add_fieldsets + (
-        ("Organizations", {"fields": ("organizations",)}),
+        ("Organizations", {"fields": ("organizations","support_groups")}),
     )
+
+    def get_queryset(self, request):
+        from services.tenancy import visible_users
+        return super().get_queryset(request).filter(pk__in=visible_users(request.user).values('pk'))
+
+    def get_form(self, request, obj=None, **kwargs):
+        from services.tenancy import visible_organizations,visible_support_groups
+        base=super().get_form(request,obj,**kwargs)
+        class ScopedForm(base):
+            def __init__(self,*args,**form_kwargs):
+                super().__init__(*args,**form_kwargs)
+                self.fields['organizations'].queryset=visible_organizations(request.user)
+                self.fields['support_groups'].queryset=visible_support_groups(request.user)
+        return ScopedForm
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         if "organizations" in form.cleaned_data:
             obj.profile.organizations.set(form.cleaned_data["organizations"])
+        if "support_groups" in form.cleaned_data:obj.support_groups.set(form.cleaned_data["support_groups"])
 
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        from services.tenancy import visible_users
+        return super().get_queryset(request).filter(user_id__in=visible_users(request.user).values('pk'))
+    def formfield_for_foreignkey(self,db_field,request,**kwargs):
+        from services.tenancy import visible_users
+        if db_field.remote_field.model is User:kwargs['queryset']=visible_users(request.user)
+        return super().formfield_for_foreignkey(db_field,request,**kwargs)
+    def formfield_for_manytomany(self,db_field,request,**kwargs):
+        from services.tenancy import visible_organizations
+        if db_field.remote_field.model is Organization:kwargs['queryset']=visible_organizations(request.user)
+        return super().formfield_for_manytomany(db_field,request,**kwargs)
+
     list_display = (
         "user",
         "role",
@@ -183,6 +216,23 @@ class OrganizationAdmin(admin.ModelAdmin):
     list_filter = ('organization_type','is_active')
     search_fields = ('code','name_en','name_ar','commercial_registration')
     autocomplete_fields = ('organization_type','parent_organization')
+    readonly_fields = ('related_users','related_groups','related_policies','related_tickets')
+    @admin.display(description='Linked users')
+    def related_users(self,obj):
+        return ', '.join(obj.user_profiles.values_list('user__username',flat=True)[:50]) or '—'
+    @admin.display(description='Support groups')
+    def related_groups(self,obj):
+        return ', '.join(obj.support_groups.values_list('name',flat=True)[:50]) or '—'
+    @admin.display(description='Policy count')
+    def related_policies(self,obj):return obj.policies.count()
+    @admin.display(description='Ticket count')
+    def related_tickets(self,obj):return obj.tickets.count()
+    def formfield_for_foreignkey(self,db_field,request,**kwargs):
+        if db_field.name=='parent_organization':
+            from services.tenancy import visible_organizations
+            kwargs['queryset']=visible_organizations(request.user)
+        return super().formfield_for_foreignkey(db_field,request,**kwargs)
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:return qs

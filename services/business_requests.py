@@ -45,8 +45,8 @@ def create_business_request(*, workflow_type, policy, requester, organization=No
 def attach_organizations(ticket):
     """Reuse the same participation records for portal, email and domain intake."""
     if ticket.organization_id:
-        TicketOrganization.objects.get_or_create(ticket=ticket,organization=ticket.organization,relationship_type='owner',defaults={'is_primary':True})
+        TicketOrganization.objects.get_or_create(ticket=ticket,organization=ticket.organization,relationship_type='owner',defaults={'is_primary':True,'can_edit':True,'can_assign':True})
     if ticket.policy_id:
-        TicketOrganization.objects.get_or_create(ticket=ticket,organization=ticket.policy.insurance_company,relationship_type='insurer')
+        TicketOrganization.objects.get_or_create(ticket=ticket,organization=ticket.policy.insurance_company,relationship_type='insurer',defaults={'can_approve':True})
         for organization in ticket.policy.workflow_organizations.filter(is_active=True,organization_type__is_active=True):
-            TicketOrganization.objects.get_or_create(ticket=ticket,organization=organization,relationship_type='processing')
+            TicketOrganization.objects.get_or_create(ticket=ticket,organization=organization,relationship_type='processing',defaults={'can_edit':True,'can_assign':True})

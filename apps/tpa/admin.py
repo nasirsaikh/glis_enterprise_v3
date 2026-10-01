@@ -37,7 +37,7 @@ from .models import (
 
 class ScopedBusinessAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
-        from .services.access import visible_policies, visible_transactions
+        from .services.access import visible_policies, visible_transactions, visible_inbound_emails
         from services.tenancy import organization_ids
         qs=super().get_queryset(request)
         if request.user.is_superuser:return qs
@@ -51,6 +51,8 @@ class ScopedBusinessAdmin(admin.ModelAdmin):
             'inboundemailattachment':'inbound_email__id__in',
         }
         name=self.model._meta.model_name
+        if name=='policy':return qs.filter(pk__in=policies)
+        if name=='inboundemail':return qs.filter(pk__in=visible_inbound_emails(request.user).values('pk'))
         if name=='membertransaction':return qs.filter(pk__in=transactions)
         if name=='member':return qs.filter(organization_id__in=organization_ids(request.user))
         if name in {'policyaccess','tpaemailauthority'}:return qs.filter(organization_id__in=organization_ids(request.user))
@@ -172,7 +174,7 @@ class TransactionAdmin(ScopedBusinessAdmin):
     )
     list_filter = ("transaction_type", "source", "status", "stp_eligible", "refund_basis")
     search_fields = ("reference", "policy__policy_number", "ticket__reference")
-    readonly_fields = ("reference", "submitted_at", "processed_at", "approved_at")
+    readonly_fields = ("reference", "ticket", "submitted_at", "processed_at", "approved_at")
 
 
 @admin.register(MemberAction)

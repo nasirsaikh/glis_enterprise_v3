@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const {chromium} = require("playwright");
 
 let browser;
-before(async () => { browser = await chromium.launch({headless: true}); });
+before(async () => { browser = await chromium.launch({headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined, args: ["--no-sandbox"]}); });
 after(async () => { await browser?.close(); });
 
 const css = paths => paths.map(path => fs.readFileSync("static/css/" + path, "utf8")).join("\n");

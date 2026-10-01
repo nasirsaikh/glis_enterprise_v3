@@ -28,7 +28,7 @@ def can_access_tpa(user):
         return True
     if PolicyAccess.objects.filter(user=user, active=True, can_view=True).exists():
         return True
-    return MemberTransaction.objects.filter(requester=user).exists()
+    return visible_transactions(user).exists()
 
 
 def can_create_policy_enrollment(user):
@@ -86,7 +86,8 @@ def can_approve_tpa_transaction(user, tx):
         return False
     if not visible_transactions(user).filter(pk=tx.pk).exists():
         return False
-    if user.is_superuser or user.has_perm("tpa.configure_tpa") or user.has_perm("tpa.approve_endorsement"):
+    from services.access import organization_allows
+    if user.is_superuser or user.has_perm("tpa.configure_tpa") or (user.has_perm("tpa.approve_endorsement") and organization_allows(user,tx.ticket,"can_approve")):
         return True
     return PolicyAccess.objects.filter(
         user=user, policy=tx.policy, active=True, can_approve=True
@@ -98,7 +99,8 @@ def can_process_tpa_transaction(user, tx):
         return False
     if not visible_transactions(user).filter(pk=tx.pk).exists():
         return False
-    if user.is_superuser or user.has_perm("tpa.configure_tpa") or user.has_perm("tpa.process_endorsement"):
+    from services.access import organization_allows
+    if user.is_superuser or user.has_perm("tpa.configure_tpa") or (user.has_perm("tpa.process_endorsement") and organization_allows(user,tx.ticket,"can_edit")):
         return True
     return PolicyAccess.objects.filter(
         user=user, policy=tx.policy, active=True, can_process=True

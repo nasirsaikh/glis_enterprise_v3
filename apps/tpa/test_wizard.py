@@ -326,7 +326,7 @@ class TransactionWizardTests(TestCase):
         tx = self.tx()
         self.member(tx)
         response = self.post("transaction_submit", tx, htmx=False)
-        self.assertRedirects(response, reverse("tpa:transaction_detail", args=[tx.reference]) + "?step=validation")
+        self.assertRedirects(response, reverse("portal:ticket_detail", args=[tx.ticket.reference]) + "?step=validation")
 
     def test_enrollment_creation_has_three_steps_and_htmx_errors(self):
         url = reverse("tpa:policy_enrollment_create")

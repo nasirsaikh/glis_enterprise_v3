@@ -62,7 +62,7 @@ def member_rows_from_html(html):
                 headers = candidate
                 continue
             if headers and len(cells) == len(headers) and any(cells):
-                row = {key: value for key, value in zip(headers, cells) if key in fields}
+                row = {key: value for key, value in zip(headers, cells) if key}
                 if any(row.get(key) for key in ("employee_id", "member_id", "national_id", "passport_number", "first_name", "full_name")):
                     result.append(row)
     return result

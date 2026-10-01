@@ -589,6 +589,8 @@ def process_source_bundle(tx, documents, actor=None):
                     except Exception as exc:
                         recovery_warnings.append(f"Recovery mapping: {exc}")
             if mapping_error:
+                if recovery_warnings:
+                    raise RuntimeError(f"{mapping_error}. Local OCR recovery: " + "; ".join(recovery_warnings)) from mapping_error
                 raise mapping_error
             missing = missing_member_fields(mapped, tx.transaction_type)
             recovery_warnings.extend(str(value) for value in mapped.get("warnings", []))
@@ -659,12 +661,12 @@ def process_source_bundle(tx, documents, actor=None):
                 )
         except Exception as exc:
             for document in documents:
-                if document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME", "OUTLOOK_MSG", "LOCAL_OCR_RECOVERY"}:
+                if Path(document.original_name).suffix.lower() not in {".csv", ".xlsx", ".xls"}:
+                    previous_error = document.processing_error
+                    prefix = "Document OCR succeeded but member JSON mapping failed" if document.processed else "Document extraction/recovery and member mapping failed"
                     document.processing_state = SourceDocument.State.REVIEW
                     document.processed = False
-                    document.processing_error = (
-                        f"Document OCR succeeded but member JSON mapping failed: {exc}"
-                    )
+                    document.processing_error = "\n".join(filter(None, [previous_error, f"{prefix}: {exc}"]))
                     document.save(
                         update_fields=[
                             "processing_state",

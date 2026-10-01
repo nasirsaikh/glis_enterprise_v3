@@ -39,7 +39,7 @@ def _normalize(row):
         "principal_member_id",
         "tpa_member_id",
     ):
-        if key in (row or {}) and row.get(key) not in (None, ""):
+        if key in (row or {}) and row.get(key) not in (None, "") and normalized.get(key) in (None, ""):
             normalized[key] = str(row.get(key)).strip()
     return normalized
 

@@ -1,4 +1,5 @@
 import json
+import hashlib
 import tempfile
 from datetime import date
 from unittest.mock import patch
@@ -15,7 +16,7 @@ from django.utils import timezone
 from apps.ai.models import AIProviderConfig
 from apps.job_center.models import QueuedJob
 from apps.job_center.jobs.tpa_jobs import reprocess_tpa_inbound_email
-from apps.job_center.services.queue_worker import execute_queued_job
+from apps.job_center.services.queue_worker import claim_next_job, execute_queued_job
 from .models import InboundEmail, InboundEmailAttachment, MemberAction, MemberTransaction, Policy, SourceDocument, TPAOrganization
 from .services.ai_intake import extract_email_payload, process_inbound_email, _add_ai_members, _process_attachments
 from .services.email_reprocessing import REPROCESS_QUEUED, queue_email_reprocessing
@@ -67,7 +68,7 @@ class InboundEmailAdminTests(TestCase):
         self.assertEqual(self.email.processing_stage,REPROCESS_QUEUED)
         self.assertTrue(LogEntry.objects.filter(object_id=str(self.email.pk),change_message__contains="Queued email reprocessing").exists())
 
-    def test_single_email_save_and_reprocess_saves_edits_before_queueing(self):
+    def change_data(self):
         url=reverse("admin:tpa_inboundemail_change",args=[self.email.pk])
         response=self.client.get(url)
         self.assertContains(response,'name="_reprocess"')
@@ -76,10 +77,24 @@ class InboundEmailAdminTests(TestCase):
         received=self.email.received_at
         data.pop("received_at",None)
         data.update({"received_at_0":received.strftime("%Y-%m-%d"),"received_at_1":received.strftime("%H:%M:%S"),"body_text":"Updated evidence","_reprocess":"1","attachments-TOTAL_FORMS":"0","attachments-INITIAL_FORMS":"0","attachments-MIN_NUM_FORMS":"0","attachments-MAX_NUM_FORMS":"1000"})
+        return url,data
+
+    def test_single_email_save_and_reprocess_saves_edits_before_queueing(self):
+        url,data=self.change_data()
         response=self.client.post(url,data)
         self.assertEqual(response.status_code,302)
         self.email.refresh_from_db()
         self.assertEqual(self.email.body_text,"Updated evidence")
+        self.assertEqual(QueuedJob.objects.count(),1)
+
+    def test_save_and_reprocess_hashes_new_admin_attachments(self):
+        url,data=self.change_data()
+        data.update({"attachments-TOTAL_FORMS":"1","attachments-0-original_name":"id.png","attachments-0-file":SimpleUploadedFile("id.png",b"fixture",content_type="image/png")})
+        response=self.client.post(url,data)
+        self.assertEqual(response.status_code,302)
+        attachment=self.email.attachments.get()
+        self.assertEqual(attachment.sha256,hashlib.sha256(b"fixture").hexdigest())
+        self.assertEqual(attachment.size,len(b"fixture"))
         self.assertEqual(QueuedJob.objects.count(),1)
 
     def test_duplicate_click_does_not_queue_twice_and_cancelled_job_can_be_retried(self):
@@ -119,6 +134,7 @@ class InboundEmailAdminTests(TestCase):
     def test_permissions_are_checked_again_when_queued_job_starts(self):
         job=queue_email_reprocessing(self.email,self.staff)
         self.staff.is_active=False;self.staff.save(update_fields=["is_active"])
+        job=claim_next_job()
         execute_queued_job(job)
         job.refresh_from_db();self.email.refresh_from_db()
         self.assertEqual(job.status,QueuedJob.Status.FAILED)

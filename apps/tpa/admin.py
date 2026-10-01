@@ -1,3 +1,6 @@
+import hashlib
+import mimetypes
+
 from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect
@@ -249,6 +252,34 @@ class InboundEmailAdmin(admin.ModelAdmin):
         return super().get_queryset(request).filter(
             pk__in=visible_inbound_emails(request.user).values("pk")
         )
+
+    def save_formset(self, request, form, formset, change):
+        if formset.model is not InboundEmailAttachment:
+            return super().save_formset(request, form, formset, change)
+        attachments = formset.save(commit=False)
+        for deleted in formset.deleted_objects:
+            deleted.delete()
+        for attachment in attachments:
+            attachment.file.open("rb")
+            try:
+                digest = hashlib.sha256()
+                for chunk in attachment.file.chunks():
+                    digest.update(chunk)
+                new_hash = digest.hexdigest()
+                if attachment.sha256 != new_hash:
+                    attachment.processing_state = InboundEmailAttachment.State.RECEIVED
+                    attachment.processing_error = ""
+                    attachment.extracted_payload = {}
+                attachment.sha256 = new_hash
+                attachment.size = attachment.file.size
+                attachment.content_type = (
+                    getattr(attachment.file.file, "content_type", "")
+                    or mimetypes.guess_type(attachment.original_name)[0] or "application/octet-stream"
+                )
+                attachment.save()
+            finally:
+                attachment.file.close()
+        formset.save_m2m()
 
     @admin.action(description="Reprocess selected emails", permissions=["change"])
     def reprocess_selected_emails(self, request, queryset):

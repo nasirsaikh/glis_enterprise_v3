@@ -40,8 +40,18 @@ class MemberEvidence(BaseModel):
 
 class MemberBundle(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    members: list[MemberEvidence] = Field(max_length=2000)
+    # Keep generation schema simple for Ollama/llama.cpp. Enforce the
+    # operational row limit after generation so JSON-schema grammar
+    # compilation does not expand a 2000-item repetition.
+    members: list[MemberEvidence] = Field(default_factory=list)
     confidence: float | None = Field(default=None, ge=0, le=100)
+
+    @field_validator("members")
+    @classmethod
+    def validate_member_limit(cls, value):
+        if len(value) > 2000:
+            raise ValueError("A maximum of 2000 member records can be processed at once.")
+        return value
 
 
 class EmailEvidence(MemberBundle):

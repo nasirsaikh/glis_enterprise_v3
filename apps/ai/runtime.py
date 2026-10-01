@@ -13,15 +13,29 @@ def _secret(config):
 
 
 def _json_from_text(text):
-    text = (text or "").strip()
-    if text.startswith("~~~"):
-        text = re.sub(r"^~~~(?:json)?\s*", "", text, flags=re.I)
-        text = re.sub(r"\s*~~~$", "", text)
-    start = text.find("{")
-    end = text.rfind("}")
-    if start >= 0 and end > start:
-        text = text[start : end + 1]
-    return json.loads(text)
+    text = re.sub(r"<think>.*?</think>", "", text or "", flags=re.S).strip()
+    decoder = json.JSONDecoder()
+    match = re.search(r"[\[{]", text)
+    if match:
+        value, _ = decoder.raw_decode(text[match.start():])
+        if isinstance(value, (dict, list)):
+            return value
+    raise ValueError("AI response did not contain a complete JSON object or array.")
+
+
+def _ollama_result(response, model):
+    try:
+        data = response.json()
+    except ValueError:
+        data = {"error": response.text[:1000]}
+    error = data.get("error") if isinstance(data, dict) else None
+    if response.is_error or error:
+        detail = str(error or response.text[:1000])
+        hint = ""
+        if "token repeat limit" in detail.lower():
+            hint = " The OCR runner stopped repeating tokens; local OCR recovery will be used for documents. Check the Ollama/GLM-OCR version if this persists."
+        raise RuntimeError(f"Ollama model '{model}' returned HTTP {response.status_code}: {detail}{hint}")
+    return data
 
 
 def _mock_json(user_prompt):
@@ -130,20 +144,15 @@ def generate_json(config, *, system_prompt, user_prompt, images=None, response_s
             # schemas can be rejected by some Ollama/llama.cpp versions even
             # though the model itself is healthy. Retry in JSON mode while
             # retaining the schema instructions in the system prompt.
-            if response.status_code == 400 and response_schema:
+            schema_error = any(word in response.text.lower() for word in ("schema", "grammar", "format"))
+            if response_schema and (response.status_code in {400, 422} or (response.status_code == 500 and schema_error)):
                 fallback_body = {**body, "format": "json"}
                 response = client.post(f"{endpoint}/api/chat", json=fallback_body)
-
-            if response.is_error:
-                try:
-                    detail = response.json()
-                except Exception:
-                    detail = response.text
-                raise RuntimeError(
-                    f"Ollama returned HTTP {response.status_code}: {detail}"
-                )
-
-            raw = (response.json().get("message") or {}).get("content", "")
+                if response.status_code in {400, 422} and any(word in response.text.lower() for word in ("grammar", "format", "json")):
+                    fallback_body.pop("format", None)
+                    response = client.post(f"{endpoint}/api/chat", json=fallback_body)
+            result = _ollama_result(response, config.model_name)
+            raw = (result.get("message") or {}).get("content", "")
         payload = _json_from_text(raw)
 
     elif provider in {"openai", "openai_compatible"}:
@@ -246,44 +255,37 @@ def generate_text(config, *, system_prompt, user_prompt, images=None):
     if provider == "ollama":
         endpoint = _endpoint(config, "http://127.0.0.1:11434")
         runtime_options = dict(config.runtime_options or {})
-        keep_alive = runtime_options.pop("keep_alive", "15m")
+        keep_alive = runtime_options.pop("keep_alive", 0 if images else "15m")
+        api = runtime_options.pop("ollama_api", "chat")
         options = {
             "temperature": float(config.temperature or 0),
             **runtime_options,
         }
+        user_message = {"role": "user", "content": user_prompt}
         if images:
-            body = {
-                "model": config.model_name,
-                "stream": False,
-                "prompt": user_prompt,
-                "images": [
-                    base64.b64encode(item["bytes"]).decode("ascii")
-                    for item in images
-                ],
-                "options": options,
-                "keep_alive": keep_alive,
-            }
-            if system_prompt:
-                body["system"] = system_prompt
-            with httpx.Client(timeout=timeout) as client:
-                response = client.post(f"{endpoint}/api/generate", json=body)
-                response.raise_for_status()
-                raw = response.json().get("response", "")
-        else:
-            body = {
-                "model": config.model_name,
-                "stream": False,
-                "messages": [
-                    *([{"role": "system", "content": system_prompt}] if system_prompt else []),
-                    {"role": "user", "content": user_prompt},
-                ],
-                "options": options,
-                "keep_alive": keep_alive,
-            }
-            with httpx.Client(timeout=timeout) as client:
-                response = client.post(f"{endpoint}/api/chat", json=body)
-                response.raise_for_status()
-                raw = (response.json().get("message") or {}).get("content", "")
+            user_message["images"] = [base64.b64encode(item["bytes"]).decode("ascii") for item in images]
+            options.setdefault("num_predict", 4096)
+        body = {
+            "model": config.model_name, "stream": False,
+            "messages": [
+                *([{"role": "system", "content": system_prompt}] if system_prompt else []),
+                user_message,
+            ],
+            "options": options, "keep_alive": keep_alive,
+        }
+        generate_body = {
+            "model": config.model_name, "stream": False, "prompt": user_prompt,
+            "options": options, "keep_alive": keep_alive,
+            **({"system": system_prompt} if system_prompt else {}),
+            **({"images": user_message["images"]} if images else {}),
+        }
+        with httpx.Client(timeout=timeout) as client:
+            url = f"{endpoint}/api/generate" if api == "generate" else f"{endpoint}/api/chat"
+            response = client.post(url, json=generate_body if api == "generate" else body)
+            if api != "generate" and response.status_code in {404, 405} and "model" not in response.text.lower():
+                response = client.post(f"{endpoint}/api/generate", json=generate_body)
+            result = _ollama_result(response, config.model_name)
+            raw = (result.get("message") or {}).get("content") or result.get("response", "")
 
     elif provider in {"openai", "openai_compatible"}:
         default = "https://api.openai.com/v1" if provider == "openai" else ""

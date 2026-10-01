@@ -1,0 +1,14 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block submit_buttons_bottom %}
+  {% if can_reprocess_email %}
+    <div class="submit-row">
+      <input type="submit" name="_reprocess" value="{% translate 'Save and reprocess' %}">
+      <p class="help">{% translate "Save changes and reprocess the email body and all attachments in the background. Existing corrections are preserved." %}</p>
+    </div>
+  {% elif email_reprocess_unavailable_reason %}
+    <p class="help">{{ email_reprocess_unavailable_reason }}</p>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

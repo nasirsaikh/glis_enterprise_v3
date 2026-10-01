@@ -131,11 +131,17 @@ def normalize_ai_payload(payload, *, field_aliases=None, require_members=True):
         "source_references": list(payload.get("source_references") or []),
         "members": [canonical_member(row, field_aliases) for row in payload["members"]],
     }
+    normalized["members"] = [
+        row for row in normalized["members"]
+        if any(value not in (None, "") for key, value in row.items() if key != "confidence")
+    ]
     return EmailEvidence.model_validate(normalized).model_dump(mode="json")
 
 
 def select_provider(*, vision=None, sensitive=False, capability=None):
     qs = AIProviderConfig.objects.filter(is_active=True)
+    if vision is False:
+        qs = qs.exclude(model_name__icontains="glm-ocr")
     if vision is True:
         qs = qs.filter(supports_vision=True)
     elif vision is False:

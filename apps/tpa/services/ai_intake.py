@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 import os
+import json
 
 from django.core.files import File
 from django.db import transaction
@@ -22,7 +23,9 @@ from ..models import (
 from .authority import sender_is_authorized
 from .access import visible_policies
 from .document_intake import process_source_bundle
-from .extraction import normalize_ai_payload, select_profile, select_provider
+from .email_reprocessing import validate_email_reprocessing
+from .email_evidence import member_rows_from_html
+from .extraction import canonical_member, normalize_ai_payload, select_profile, select_provider
 from .intake import import_member_spreadsheet
 from .member_merge import merge_member_rows
 from .prompts import profile_guidance
@@ -139,6 +142,8 @@ def _email_prompt(email, hints):
         "Attachment names: " + ", ".join(email.attachments.values_list("original_name", flat=True)) + "\n\n"
         "Email body:\n"
         f"{email.body_text or ''}"
+        + "\n\nMember table records (preserve empty cells and identifiers):\n"
+        + json.dumps(member_rows_from_html(email.body_html), ensure_ascii=False)
     )
 
 
@@ -223,7 +228,9 @@ def extract_email_payload(email, actor=None, *, profile_override=None):
                 pk=hinted_provider_id,
                 is_active=True,
                 allow_sensitive_data=True,
+                supports_vision=False,
             )
+            .exclude(model_name__icontains="glm-ocr")
             .order_by("priority", "id")
             .first()
         )
@@ -236,12 +243,14 @@ def extract_email_payload(email, actor=None, *, profile_override=None):
                 provider = None
 
     provider = provider or select_provider(
+        vision=False,
         sensitive=True,
         capability="email_extraction",
     )
     if not provider:
         raise RuntimeError(
-            "No active AI provider allows sensitive data and has the email_extraction capability."
+            "No active text AI provider allows sensitive data and has the email_extraction capability. "
+            "Use a text model such as qwen2.5:7b with Supports vision disabled; GLM-OCR is only for document OCR."
         )
 
     hinted_policy = _resolve_policy({}, hints, email)
@@ -277,6 +286,9 @@ def extract_email_payload(email, actor=None, *, profile_override=None):
                     response_schema=EmailEvidence.model_json_schema())
                 duration_ms += extra_duration
                 normalized = normalize_ai_payload(raw, field_aliases=profile.field_aliases, require_members=False)
+        table_rows = member_rows_from_html(email.body_html)
+        if table_rows:
+            normalized["members"] = [canonical_member(row, profile.field_aliases if profile else None) for row in table_rows]
         _log_interaction(
             actor=actor,
             provider=provider,
@@ -393,76 +405,49 @@ def _process_image_attachment(tx, email, attachment, actor, hints):
     )
 
 
-def _process_attachments(tx, email, actor):
+def _process_attachments(tx, email, actor, *, reprocess=False):
     documents = []
     attachment_map = {}
 
     for attachment in email.attachments.all().order_by("pk"):
         existing = tx.source_documents.filter(source_hash=attachment.sha256).first()
-        if existing:
-            if existing.processed and existing.processing_state == SourceDocument.State.PROCESSED:
-                attachment.processing_state = InboundEmailAttachment.State.PROCESSED
-                attachment.extracted_payload = existing.extracted_payload
-                attachment.processing_error = ""
-                attachment.save(
-                    update_fields=[
-                        "processing_state",
-                        "extracted_payload",
-                        "processing_error",
-                        "updated_at",
-                    ]
-                )
-                continue
-
-            # Reprocess must retry an existing RECEIVED/REVIEW/FAILED source
-            # instead of skipping it forever just because the hash already exists.
-            existing.processing_state = SourceDocument.State.RECEIVED
-            existing.processed = False
-            existing.processing_error = ""
-            existing.save(
-                update_fields=[
-                    "processing_state",
-                    "processed",
-                    "processing_error",
-                    "updated_at",
-                ]
-            )
-            attachment.processing_state = InboundEmailAttachment.State.PROCESSING
+        if existing and not reprocess and existing.processed and existing.processing_state == SourceDocument.State.PROCESSED:
+            attachment.processing_state = InboundEmailAttachment.State.PROCESSED
+            attachment.extracted_payload = existing.extracted_payload
             attachment.processing_error = ""
-            attachment.save(
-                update_fields=[
-                    "processing_state",
-                    "processing_error",
-                    "updated_at",
-                ]
-            )
-            documents.append(existing)
-            attachment_map[existing.pk] = attachment
+            attachment.save(update_fields=[
+                "processing_state", "extracted_payload", "processing_error", "updated_at",
+            ])
             continue
 
-        ticket_attachment = _copy_attachment_to_ticket(tx, attachment, actor)
-        source = SourceDocument(
-            transaction=tx,
-            ticket_attachment=ticket_attachment,
-            original_name=attachment.original_name,
-            content_type=attachment.content_type or "",
-            size=attachment.size,
-            document_kind="EMAIL_ATTACHMENT",
-            processing_state=SourceDocument.State.RECEIVED,
-            processed=False,
-            source_hash=attachment.sha256,
-            uploaded_by=actor,
-        )
-        attachment.file.open("rb")
-        try:
-            source.file.save(
-                attachment.original_name,
-                File(attachment.file),
-                save=False,
+        if existing:
+            source = existing
+            source.processed = False
+            source.save(update_fields=["processed", "updated_at"])
+        else:
+            ticket_attachment = _copy_attachment_to_ticket(tx, attachment, actor)
+            source = SourceDocument(
+                transaction=tx,
+                ticket_attachment=ticket_attachment,
+                original_name=attachment.original_name,
+                content_type=attachment.content_type or "",
+                size=attachment.size,
+                document_kind="EMAIL_ATTACHMENT",
+                processing_state=SourceDocument.State.RECEIVED,
+                processed=False,
+                source_hash=attachment.sha256,
+                uploaded_by=actor,
             )
-            source.save()
-        finally:
-            attachment.file.close()
+            attachment.file.open("rb")
+            try:
+                source.file.save(
+                    attachment.original_name,
+                    File(attachment.file),
+                    save=False,
+                )
+                source.save()
+            finally:
+                attachment.file.close()
 
         attachment.processing_state = InboundEmailAttachment.State.PROCESSING
         attachment.processing_error = ""
@@ -548,21 +533,26 @@ def _normalize_refund_basis(value):
     return aliases.get(normalized, MemberTransaction.RefundBasis.NONE)
 
 
-def process_inbound_email(email, actor):
-    if email.transaction_id and email.processing_state == InboundEmail.State.PROCESSED:
-        return email.transaction
-
-    email.processing_state = InboundEmail.State.PROCESSING
-    email.processing_stage = "CLASSIFICATION"
-    email.processing_error = ""
-    email.save(
-        update_fields=[
-            "processing_state",
-            "processing_stage",
-            "processing_error",
-            "updated_at",
-        ]
-    )
+def process_inbound_email(email, actor, *, force=False):
+    # Claim the latest record so concurrent admin/scheduler requests cannot
+    # both start extraction or create an endorsement for the same email.
+    with transaction.atomic():
+        InboundEmail.objects.select_for_update().get(pk=email.pk)
+        email.refresh_from_db()
+        if not force and email.transaction_id and email.processing_state == InboundEmail.State.PROCESSED:
+            return email.transaction
+        if force:
+            validate_email_reprocessing(email, actor)
+        if email.processing_state == InboundEmail.State.PROCESSING:
+            raise ValueError("This email is already being processed.")
+        email.processing_state = InboundEmail.State.PROCESSING
+        email.processing_stage = "CLASSIFICATION"
+        email.processing_error = ""
+        email.processed_at = None
+        email.save(update_fields=[
+            "processing_state", "processing_stage", "processing_error",
+            "processed_at", "updated_at",
+        ])
 
     try:
         payload, provider, profile, raw_ai_output = extract_email_payload(
@@ -779,7 +769,15 @@ def process_inbound_email(email, actor):
 
         with transaction.atomic():
             if email.transaction_id:
-                tx = email.transaction
+                tx = MemberTransaction.objects.select_for_update().get(pk=email.transaction_id)
+                email.transaction = tx
+                if force:
+                    validate_email_reprocessing(email, actor)
+                    if tx.policy_id != policy.pk or tx.transaction_type != transaction_type:
+                        raise ValueError(
+                            "The extracted policy or endorsement type differs from the linked "
+                            "endorsement. Correct the email processing hints before retrying."
+                        )
             else:
                 requester = (
                     authority.user
@@ -841,8 +839,10 @@ def process_inbound_email(email, actor):
                     TransactionEvent(
                         transaction=tx,
                         actor=actor,
-                        event_type="office365_email_received" if email.provider == "office365_graph" else "email_received",
-                        summary=f"Inbound email received: {email.subject or '(No subject)'}",
+                        event_type=("email_reprocessed" if force else (
+                            "office365_email_received" if email.provider == "office365_graph" else "email_received"
+                        )),
+                        summary=f"Inbound email {'reprocessed' if force else 'received'}: {email.subject or '(No subject)'}",
                         details={
                             "inbound_email_id": email.pk,
                             "provider": email.provider,
@@ -875,7 +875,7 @@ def process_inbound_email(email, actor):
 
         email.processing_stage = "ATTACHMENT_EXTRACTION"
         email.save(update_fields=["processing_stage", "updated_at"])
-        _process_attachments(tx, email, actor)
+        _process_attachments(tx, email, actor, reprocess=force)
 
         email.processing_stage = "VALIDATION"
         email.save(update_fields=["processing_stage", "updated_at"])

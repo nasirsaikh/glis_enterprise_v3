@@ -1,4 +1,16 @@
-from django.contrib import admin
+import hashlib
+import mimetypes
+
+from django.contrib import admin, messages
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponseRedirect
+
+from .services.access import visible_inbound_emails
+from .services.email_reprocessing import (
+    email_reprocessing_pending,
+    queue_email_reprocessing,
+    validate_email_reprocessing,
+)
 
 from .models import (
     BenefitPlan,
@@ -193,6 +205,8 @@ class InboundEmailAttachmentInline(admin.TabularInline):
 
 @admin.register(InboundEmail)
 class InboundEmailAdmin(admin.ModelAdmin):
+    change_form_template = "admin/tpa/inboundemail/change_form.html"
+    actions = ("reprocess_selected_emails",)
     list_display = (
         "received_at",
         "sender",
@@ -201,6 +215,7 @@ class InboundEmailAdmin(admin.ModelAdmin):
         "mailbox",
         "classification",
         "processing_state",
+        "processing_stage",
         "ai_provider_name",
         "ai_model_name",
         "ai_confidence",
@@ -219,6 +234,9 @@ class InboundEmailAdmin(admin.ModelAdmin):
         "transaction__reference",
     )
     readonly_fields = (
+        "transaction",
+        "processing_state",
+        "processing_stage",
         "raw_ai_output",
         "ai_extracted_payload",
         "ai_provider_name",
@@ -229,6 +247,98 @@ class InboundEmailAdmin(admin.ModelAdmin):
         "processed_at",
     )
     inlines = (InboundEmailAttachmentInline,)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(
+            pk__in=visible_inbound_emails(request.user).values("pk")
+        )
+
+    def save_formset(self, request, form, formset, change):
+        if formset.model is not InboundEmailAttachment:
+            return super().save_formset(request, form, formset, change)
+        attachments = formset.save(commit=False)
+        for deleted in formset.deleted_objects:
+            deleted.delete()
+        for attachment in attachments:
+            attachment.file.open("rb")
+            try:
+                digest = hashlib.sha256()
+                for chunk in attachment.file.chunks():
+                    digest.update(chunk)
+                new_hash = digest.hexdigest()
+                if attachment.sha256 != new_hash:
+                    attachment.processing_state = InboundEmailAttachment.State.RECEIVED
+                    attachment.processing_error = ""
+                    attachment.extracted_payload = {}
+                attachment.sha256 = new_hash
+                attachment.size = attachment.file.size
+                attachment.content_type = (
+                    getattr(attachment.file.file, "content_type", "")
+                    or mimetypes.guess_type(attachment.original_name)[0] or "application/octet-stream"
+                )
+                attachment.save()
+            finally:
+                attachment.file.close()
+        formset.save_m2m()
+
+    @admin.action(description="Reprocess selected emails", permissions=["change"])
+    def reprocess_selected_emails(self, request, queryset):
+        queued = 0
+        failures = []
+        for email in queryset:
+            try:
+                if not self.has_change_permission(request, email):
+                    raise PermissionDenied("Inbound email change permission is required.")
+                job = queue_email_reprocessing(email, request.user)
+            except (PermissionDenied, ValueError) as exc:
+                failures.append(f"Email #{email.pk}: {exc}")
+                continue
+            self.log_change(request, email, f"Queued email reprocessing (job #{job.pk}).")
+            queued += 1
+        if queued:
+            self.message_user(
+                request,
+                f"{queued} email(s) queued for reprocessing. Refresh the list to see processing status and errors.",
+                messages.SUCCESS,
+            )
+        if failures:
+            self.message_user(
+                request,
+                f"{len(failures)} email(s) could not be queued. " + " ".join(failures[:5]),
+                messages.WARNING,
+            )
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        context = {**(extra_context or {}), "can_reprocess_email": False}
+        email = self.get_object(request, object_id)
+        if email is not None and self.has_change_permission(request, email):
+            try:
+                validate_email_reprocessing(email, request.user)
+                if email.processing_state == InboundEmail.State.PROCESSING:
+                    raise ValueError("This email is already being processed.")
+                if email_reprocessing_pending(email):
+                    raise ValueError("This email is queued for reprocessing. Refresh to see the result.")
+            except (PermissionDenied, ValueError) as exc:
+                context["email_reprocess_unavailable_reason"] = str(exc)
+            else:
+                context["can_reprocess_email"] = True
+        return super().change_view(request, object_id, form_url, context)
+
+    def response_change(self, request, obj):
+        if "_reprocess" in request.POST:
+            try:
+                job = queue_email_reprocessing(obj, request.user)
+            except (PermissionDenied, ValueError) as exc:
+                self.message_user(request, f"Email saved. Reprocessing was not queued: {exc}", messages.WARNING)
+            else:
+                self.log_change(request, obj, f"Queued email reprocessing (job #{job.pk}).")
+                self.message_user(
+                    request,
+                    f"Email saved and queued for reprocessing (job #{job.pk}). Refresh to see processing status and errors.",
+                    messages.SUCCESS,
+                )
+            return HttpResponseRedirect(request.path)
+        return super().response_change(request, obj)
 
 
 @admin.register(InboundEmailAttachment)

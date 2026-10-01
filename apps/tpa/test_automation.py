@@ -256,7 +256,7 @@ class TPAAutomationTests(TestCase):
         self.assertEqual(get.call_count, 2)
 
     @patch("apps.tpa.services.ai_intake.extract_email_payload")
-    def test_email_classification_without_confidence_goes_to_review(self, extract_payload):
+    def test_email_classification_without_confidence_still_checks_sender_authority(self, extract_payload):
         provider = MagicMock()
         provider.name = "Test Provider"
         provider.provider = "mock"
@@ -287,8 +287,8 @@ class TPAAutomationTests(TestCase):
 
         self.assertIsNone(result)
         email.refresh_from_db()
-        self.assertEqual(email.processing_state, InboundEmail.State.REVIEW)
-        self.assertIn("incomplete", email.processing_error.lower())
+        self.assertEqual(email.processing_state, InboundEmail.State.UNAUTHORIZED)
+        self.assertEqual(email.processing_stage, "SENDER_AUTHORITY")
         self.assertEqual(email.ai_provider_name, "Test Provider")
         self.assertEqual(email.ai_model_name, "test-model")
         self.assertIsNone(email.transaction_id)

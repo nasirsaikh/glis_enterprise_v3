@@ -39,7 +39,7 @@ def _normalize(row):
         "principal_member_id",
         "tpa_member_id",
     ):
-        if key in (row or {}) and row.get(key) not in (None, ""):
+        if key in (row or {}) and row.get(key) not in (None, "") and normalized.get(key) in (None, ""):
             normalized[key] = str(row.get(key)).strip()
     return normalized
 
@@ -51,7 +51,16 @@ def _matches(action, normalized):
         right = str(normalized.get(field) or "").strip().lower()
         if left and right and left == right:
             return True
-    return False
+    # Names and DOB can identify a repeated extraction without an ID. Never
+    # use this fallback when the available identifiers disagree.
+    if any(current.get(field) and normalized.get(field) for field in IDENTIFIER_FIELDS):
+        return False
+    fields = ("first_name", "last_name", "date_of_birth")
+    return all(
+        str(current.get(field) or "").strip()
+        and str(current.get(field)).strip().casefold() == str(normalized.get(field) or "").strip().casefold()
+        for field in fields
+    )
 
 
 def merge_member_rows(

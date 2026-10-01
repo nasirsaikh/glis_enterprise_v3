@@ -40,10 +40,10 @@
         </p>
         <div
           class="mt-4 space-y-4 [&_input]:w-full [&_input]:rounded-xl [&_input]:border [&_input]:border-base-300 [&_input]:bg-base-100 [&_input]:px-4 [&_input]:py-3">
-          {% for field in password_form %}<label class="fieldset"><span class="fieldset-legend">{{ field.label}}</span>
+          {% for field in password_form %}<label class="fieldset"><span class="fieldset-legend">{{ field.label }}</span>
             {{ field }}{{ field.errors }}{% if field.help_text %}<span
-              class="label text-xs text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}</label>{% endfor%}</div>
-              <button class="btn btn-outline mt-5 w-full rounded-full" type="submit">{% translate "Update password"%}</button>
+              class="label text-xs text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}</label>{% endfor %}</div>
+              <button class="btn btn-outline mt-5 w-full rounded-full" type="submit">{% translate "Update password" %}</button>
       </div>
     </form>
     </div>

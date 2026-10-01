@@ -693,7 +693,7 @@ class TPACoreTests(TestCase):
             provider=AIProviderConfig.Provider.MOCK,
             model_name="mock",
             allow_sensitive_data=True,
-            supports_vision=True,
+            supports_vision=False,
             task_capabilities=["email_extraction", "document_extraction"],
             priority=1,
             is_active=True,

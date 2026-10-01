@@ -709,7 +709,8 @@ class InboundEmailForm(forms.ModelForm):
             for provider in AIProviderConfig.objects.filter(
                 is_active=True,
                 allow_sensitive_data=True,
-            ).order_by("priority", "id")
+                supports_vision=False,
+            ).exclude(model_name__icontains="glm-ocr").order_by("priority", "id")
             if "email_extraction"
             in {
                 str(item).strip().lower()
@@ -776,18 +777,18 @@ class SourceBundleUploadForm(forms.Form):
         widget=MultipleFileInput(
             attrs={
                 "multiple": True,
-                "accept": ".eml,.csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp",
+                "accept": ".eml,.msg,.csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.webp",
                 "class": "file-input file-input-bordered file-input-sm w-full",
             }
         ),
-        help_text="Upload EML, Excel/CSV, PDF, passport/ID images or multiple front/back evidence files.",
+        help_text="Upload EML/Outlook MSG, Excel/CSV, PDF, passport/ID images or multiple front/back evidence files.",
     )
 
     def clean_source_files(self):
         files = self.cleaned_data.get("source_files") or []
         if len(files) > 20:
             raise forms.ValidationError("Upload a maximum of 20 source files at one time.")
-        allowed = {".eml", ".csv", ".xlsx", ".xls", ".pdf", ".png", ".jpg", ".jpeg", ".webp"}
+        allowed = {".eml", ".msg", ".csv", ".xlsx", ".xls", ".pdf", ".png", ".jpg", ".jpeg", ".webp"}
         for uploaded in files:
             suffix = "." + uploaded.name.lower().rsplit(".", 1)[-1] if "." in uploaded.name else ""
             if suffix not in allowed:

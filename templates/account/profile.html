@@ -1,14 +1,54 @@
 {% extends 'base_portal.html' %}{% load i18n %}{% block title %}{% translate "Profile & security" %}{% endblock %}
 {% block content %}
 <div class="space-y-5">
-  <section class="card rounded-[1.5rem] border border-base-300 bg-base-100 p-6 shadow-sm" data-reveal><span class="badge badge-primary badge-soft mb-3"><i class="bi bi-person-gear me-1"></i>{% translate "Account" %}</span><h1 class="text-3xl font-black tracking-[-.04em] sm:text-4xl">{% translate "Profile & security" %}</h1><p class="mt-2 text-base-content/55">{% translate "Manage your personal information, avatar, preferences and password." %}</p></section>
-  <div class="grid gap-5 xl:grid-cols-[1.35fr_.65fr]">
-    <form class="card border border-base-300 bg-base-100 shadow-sm" method="post" enctype="multipart/form-data" data-reveal>{% csrf_token %}<input type="hidden" name="action" value="profile"><div class="card-body p-5 sm:p-7">
-      <div class="mb-6 flex items-center gap-4">{% if user.profile.avatar %}<div class="avatar"><div class="w-20 rounded-[1.4rem]"><img src="{{ user.profile.avatar.url }}" alt=""></div></div>{% else %}<div class="avatar avatar-placeholder"><div class="w-20 rounded-[1.4rem] bg-primary text-primary-content"><span class="text-2xl font-black">{{ user.first_name|default:user.email|slice:":1"|upper }}</span></div></div>{% endif %}<div><h2 class="text-2xl font-black">{{ user.get_full_name|default:user.email }}</h2><p class="text-sm text-base-content/45">{{ user.profile.get_role_display }}</p></div></div>
-      <div class="grid gap-3 md:grid-cols-3">{% for field in form %}{% if field.field.widget.input_type == 'checkbox' %}<label class="flex items-center gap-3 rounded-2xl border border-base-300 bg-base-200/40 p-2">{{ field }}<span><strong class="block text-sm">{{ field.label }}</strong>{% if field.help_text %}<small class="text-base-content/45">{{ field.help_text|safe }}</small>{% endif %}</span></label>{% else %}<label class="fieldset {% if field.name == 'bio' or field.name == 'avatar' %}md:col-span-3{% endif %}"><span class="fieldset-legend">{{ field.label }}</span>{{ field }}{% if field.help_text %}<span class="label text-xs text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}{{ field.errors }}</label>{% endif %}{% endfor %}</div>
-      <div class="mt-6 flex justify-end"><button class="btn btn-primary rounded-full" type="submit"><i class="bi bi-check2"></i>{% translate "Save profile" %}</button></div>
-    </div></form>
-    <form class="card border border-base-300 bg-base-100 shadow-sm" method="post" action="{% url 'accounts:change_password' %}" data-reveal>{% csrf_token %}<div class="card-body p-5 sm:p-6"><span class="grid h-12 w-12 place-items-center rounded-2xl bg-primary/12 text-primary"><i class="bi bi-shield-lock text-xl"></i></span><h2 class="card-title mt-3">{% translate "Change password" %}</h2><p class="text-sm text-base-content/50">{% translate "Use a strong password that you do not reuse elsewhere." %}</p><div class="mt-4 space-y-4 [&_input]:w-full [&_input]:rounded-xl [&_input]:border [&_input]:border-base-300 [&_input]:bg-base-100 [&_input]:px-4 [&_input]:py-3">{% for field in password_form %}<label class="fieldset"><span class="fieldset-legend">{{ field.label }}</span>{{ field }}{{ field.errors }}{% if field.help_text %}<span class="label text-xs text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}</label>{% endfor %}</div><button class="btn btn-outline mt-5 w-full rounded-full" type="submit">{% translate "Update password" %}</button></div></form>
+  
+  <div class="row">
+    <div class="col-md-6">
+ <form class="card border border-base-300 bg-base-100 shadow-sm" method="post" enctype="multipart/form-data"
+      data-reveal>{% csrf_token %}<input type="hidden" name="action" value="profile">
+      <div class="card-body p-5 sm:p-7">
+        <div class="mb-6 flex items-center gap-4">{% if user.profile.avatar %}<div class="avatar">
+            <div class="w-20 rounded-[1.4rem]"><img src="{{ user.profile.avatar.url }}" alt=""></div>
+          </div>{% else %}<div class="avatar avatar-placeholder">
+            <div class="w-20 rounded-[1.4rem] bg-primary text-primary-content">
+              <span class="text-2xl font-black">{{ user.first_name|default:user.email|slice:":1"|upper }}</span></div>
+          </div>{% endif %}<div>
+            <h2 class="text-2xl font-black">{{ user.get_full_name|default:user.email }}</h2>
+            <p class="text-sm text-base-content/45">{{ user.profile.get_role_display }}</p>
+          </div>
+        </div>
+        <div class="grid gap-3 md:grid-cols-3">{% for field in form %}{% if field.field.widget.input_type == 'checkbox' %}
+          <label class="flex items-center gap-3 rounded-2xl border border-base-300 bg-base-200/40 p-2">{{ field }}<span>
+            <strong class="block text-sm">{{ field.label }}</strong>{% if field.help_text %}<small
+                class="text-base-content/45">{{ field.help_text|safe }}</small>{% endif %}</span></label>{% else %}
+                <label class="fieldset {% if field.name == 'bio' or field.name == 'avatar' %}md:col-span-3{% endif %}"><span
+              class="fieldset-legend">{{ field.label }}</span>{{ field }}{% if field.help_text %}<span
+              class="label text-xs text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}{{ field.errors }}
+            </label>{% endif %}{% endfor %}</div>
+        <div class="mt-6 flex justify-end"><button class="btn btn-primary rounded-full" type="submit"><i
+              class="bi bi-check2"></i>{% translate "Save profile" %}</button></div>
+      </div>
+    </form>
+    </div>
+    <div class="col-md-6">
+   <form class="card border border-base-300 bg-base-100 shadow-sm" method="post"
+      action="{% url 'accounts:change_password' %}" data-reveal>{% csrf_token %}<div class="card-body p-5 sm:p-6"><span
+          class="grid h-12 w-12 place-items-center rounded-2xl bg-primary/12 text-primary"><i
+            class="bi bi-shield-lock text-xl"></i></span>
+        <h2 class="card-title mt-3">{% translate "Change password" %}</h2>
+        <p class="text-sm text-base-content/50">{% translate "Use a strong password that you do not reuse elsewhere." %}
+        </p>
+        <div
+          class="mt-4 space-y-4 [&_input]:w-full [&_input]:rounded-xl [&_input]:border [&_input]:border-base-300 [&_input]:bg-base-100 [&_input]:px-4 [&_input]:py-3">
+          {% for field in password_form %}<label class="fieldset"><span class="fieldset-legend">{{ field.label}}</span>
+            {{ field }}{{ field.errors }}{% if field.help_text %}<span
+              class="label text-xs text-base-content/45">{{ field.help_text|safe }}</span>{% endif %}</label>{% endfor%}</div>
+              <button class="btn btn-outline mt-5 w-full rounded-full" type="submit">{% translate "Update password"%}</button>
+      </div>
+    </form>
+    </div>
+   
+ 
   </div>
 </div>
 {% endblock %}

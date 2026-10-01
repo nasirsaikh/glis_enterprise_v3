@@ -2,8 +2,6 @@ import csv
 import hashlib
 import io
 import mimetypes
-from email import policy as email_policy
-from email.parser import BytesParser
 from pathlib import Path
 
 from django.core.exceptions import ValidationError
@@ -16,6 +14,7 @@ from .extraction import canonical_member, normalize_ai_payload, select_profile, 
 from .intake import normalize_member_row
 from .member_merge import merge_member_rows
 from .prompts import profile_guidance
+from .email_evidence import member_rows_from_html, read_email_evidence
 from .schemas import MemberBundle, missing_member_fields, merge_recovered_payload
 from .document_fallback import docling_text
 
@@ -30,6 +29,7 @@ SUPPORTED_EXTENSIONS = {
     ".jpeg",
     ".webp",
     ".eml",
+    ".msg",
 }
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
@@ -183,15 +183,15 @@ def _map_evidence_text(tx, evidence_text, actor=None):
     )
     system_prompt = _system_prompt(profile)
     user_prompt = _member_prompt(tx, evidence_text)
-    payload, duration_ms = generate_json(
-        provider,
-        system_prompt=system_prompt,
-        user_prompt=user_prompt,
-        response_schema=MemberBundle.model_json_schema(),
-    )
-
+    duration_ms = 0
     try:
+        payload, duration_ms = generate_json(
+            provider, system_prompt=system_prompt, user_prompt=user_prompt,
+            response_schema=MemberBundle.model_json_schema(),
+        )
         normalized = normalize_ai_payload(payload, field_aliases=profile.field_aliases if profile else None)
+        if not normalized["members"]:
+            raise ValueError("The mapper returned no populated member fields.")
     except (TypeError, ValueError) as first_error:
         retry_prompt = (
             user_prompt
@@ -214,6 +214,8 @@ def _map_evidence_text(tx, evidence_text, actor=None):
         duration_ms += retry_duration
         try:
             normalized = normalize_ai_payload(retry_payload, field_aliases=profile.field_aliases if profile else None)
+            if not normalized["members"]:
+                raise ValueError("The mapper returned no populated member fields.")
         except (TypeError, ValueError) as retry_error:
             received_keys = (
                 ", ".join(sorted(str(key) for key in retry_payload.keys()))
@@ -257,14 +259,15 @@ def _ocr_image(tx, content, mime_type):
         raise RuntimeError(
             "No active vision AI provider allows sensitive data and has document_extraction capability."
         )
+    is_glm_ocr = "glm-ocr" in (provider.model_name or "").lower()
     text, duration_ms = generate_text(
         provider,
-        system_prompt=(
+        system_prompt="" if is_glm_ocr else (
             "Transcribe the visible insurance document faithfully. Preserve labels, values, "
             "names, identifiers, dates, numbers, MRZ lines and table relationships. "
             "Do not infer missing values and do not return JSON."
         ),
-        user_prompt=(
+        user_prompt="Text Recognition:" if is_glm_ocr else (
             "Text Recognition: return concise OCR text only. This document may be one page "
             "of a multi-file member evidence bundle."
         ),
@@ -405,67 +408,52 @@ def process_source_bundle(tx, documents, actor=None):
                 document.processing_state = SourceDocument.State.PROCESSED
                 document.processed = True
 
-            elif suffix == ".eml":
-                message = BytesParser(policy=email_policy.default).parsebytes(content)
-                chunks = []
-                if message.is_multipart():
-                    for part in message.walk():
-                        if part.get_content_disposition() == "attachment":
-                            continue
-                        if part.get_content_type() in {"text/plain", "text/html"}:
-                            try:
-                                value = part.get_content()
-                            except Exception:
-                                value = ""
-                            if value:
-                                chunks.append(str(value))
-                else:
-                    try:
-                        chunks.append(str(message.get_content()))
-                    except Exception:
-                        chunks.append(content.decode("utf-8", errors="replace"))
-                text = "\n\n".join(chunks)
-                evidence.append(
-                    f"--- SOURCE EMAIL: {document.original_name} ---\n{text}"
-                )
-                document.extraction_method = "EMAIL_MIME"
+            elif suffix in {".eml", ".msg"}:
+                message = read_email_evidence(document.original_name, content)
+                text = message["body_text"]
+                table_rows = member_rows_from_html(message["body_html"])
+                attachments = message["attachments"]
+                structured_attachment = any(Path(item["name"]).suffix.lower() in {".csv", ".xlsx", ".xls"} for item in attachments)
+                if table_rows:
+                    created_actions.extend(_create_actions(
+                        tx, table_rows, source=f"email_table:{document.pk}",
+                    ))
+                elif not structured_attachment:
+                    evidence.append(f"--- SOURCE EMAIL: {document.original_name} ---\n{text}")
+                document.extraction_method = "OUTLOOK_MSG" if suffix == ".msg" else "EMAIL_MIME"
                 document.extracted_payload = {
-                    "email_subject": str(message.get("Subject") or ""),
-                    "email_from": str(message.get("From") or ""),
-                    "email_to": str(message.get("To") or ""),
-                    "body_text": text,
+                    "email_subject": message["subject"], "email_from": message["sender"],
+                    "email_to": message["recipient"], "body_text": text,
+                    "body_members": table_rows,
+                    "attachments": [item["name"] for item in attachments],
                 }
                 document.processing_state = SourceDocument.State.PROCESSED
                 document.processed = True
-
-                for part in message.iter_attachments():
-                    raw = part.get_payload(decode=True) or b""
+                for item in attachments:
+                    raw, name = item["content"], item["name"]
                     if not raw:
                         continue
-                    name = str(part.get_filename() or "attachment")
                     inner_suffix = Path(name).suffix.lower()
                     if inner_suffix in {".csv", ".xlsx", ".xls"}:
-                        rows = _structured_rows(name, raw)
-                        actions = _create_actions(
-                            tx,
-                            rows,
-                            confidence=100,
-                            source=f"eml:{document.pk}:{name}",
-                        )
-                        created_actions.extend(actions)
-                    elif inner_suffix == ".pdf":
+                        created_actions.extend(_create_actions(
+                            tx, _structured_rows(name, raw), confidence=100,
+                            source=f"email_attachment:{document.pk}:{name}",
+                        ))
+                    elif inner_suffix in {".pdf", ".png", ".jpg", ".jpeg", ".webp"}:
                         recovery_sources.append((document, name, raw))
-                        inner_text, _, _ = _pdf_text_or_ocr(tx, raw)
-                        evidence.append(f"--- EMAIL ATTACHMENT: {name} ---\n{inner_text}")
-                    elif inner_suffix in {".png", ".jpg", ".jpeg", ".webp"}:
-                        recovery_sources.append((document, name, raw))
-                        inner_text, provider, _ = _ocr_image(
-                            tx,
-                            raw,
-                            part.get_content_type() or "image/jpeg",
-                        )
-                        ai_provider = provider
-                        evidence.append(f"--- EMAIL ATTACHMENT: {name} ---\n{inner_text}")
+                        try:
+                            if inner_suffix == ".pdf":
+                                inner_text, _, _ = _pdf_text_or_ocr(tx, raw)
+                            else:
+                                inner_text, provider, _ = _ocr_image(
+                                    tx, raw, item["content_type"] or mimetypes.guess_type(name)[0] or "image/jpeg",
+                                )
+                                ai_provider = provider
+                            evidence.append(f"--- EMAIL ATTACHMENT: {name} ---\n{inner_text}")
+                        except Exception as exc:
+                            document.processing_state = SourceDocument.State.REVIEW
+                            document.processed = False
+                            document.processing_error = f"{name}: {exc}"
 
             elif suffix == ".pdf":
                 text, method, pages = _pdf_text_or_ocr(tx, content)
@@ -608,7 +596,7 @@ def process_source_bundle(tx, documents, actor=None):
                 raise ValueError("No member data could be extracted; add readable evidence or enter the member manually.")
             for document in documents:
                 if document.pk in recovered_documents:
-                    document.extraction_method = "DOCLING_RECOVERY"
+                    document.extraction_method = "LOCAL_OCR_RECOVERY"
                     document.processed = True
                     document.processing_state = SourceDocument.State.PROCESSED
                     document.processing_error = ""
@@ -631,7 +619,7 @@ def process_source_bundle(tx, documents, actor=None):
             for document in documents:
                 if (
                     document.processed
-                    and document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME", "DOCLING_RECOVERY"}
+                    and document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME", "OUTLOOK_MSG", "LOCAL_OCR_RECOVERY"}
                 ):
                     payload = dict(document.extracted_payload or {})
                     payload["bundle_members_created"] = len(actions)
@@ -671,7 +659,7 @@ def process_source_bundle(tx, documents, actor=None):
                 )
         except Exception as exc:
             for document in documents:
-                if document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME", "DOCLING_RECOVERY"}:
+                if document.extraction_method in {"PDF_TEXT", "PDF_VISION_OCR", "VISION_OCR", "EMAIL_MIME", "OUTLOOK_MSG", "LOCAL_OCR_RECOVERY"}:
                     document.processing_state = SourceDocument.State.REVIEW
                     document.processed = False
                     document.processing_error = (

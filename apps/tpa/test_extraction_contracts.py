@@ -40,6 +40,9 @@ class ExtractionContractTests(SimpleTestCase):
     def test_ollama_receives_pydantic_json_schema(self, client_factory):
         config = AIProviderConfig(name="Schema", provider="ollama", model_name="qwen2.5:7b")
         response = MagicMock()
+        response.is_error = False
+        response.status_code = 200
+        response.text = ""
         response.json.return_value = {"message": {"content": '{"members":[]}'}}
         client = client_factory.return_value.__enter__.return_value
         client.post.return_value = response
@@ -95,7 +98,7 @@ class DocumentRecoveryTests(TestCase):
         self.assertEqual(actions[0].corrected_data["national_id"], "001234")
         self.assertEqual(actions[0].corrected_data["date_of_birth"], "1990-01-01")
         self.document.refresh_from_db()
-        self.assertEqual(self.document.extraction_method, "DOCLING_RECOVERY")
+        self.assertEqual(self.document.extraction_method, "LOCAL_OCR_RECOVERY")
         self.assertEqual(self.document.processing_state, SourceDocument.State.PROCESSED)
 
     @patch("apps.tpa.services.document_intake.docling_text", side_effect=RuntimeError("No readable text"))

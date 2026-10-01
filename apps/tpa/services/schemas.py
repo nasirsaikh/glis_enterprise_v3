@@ -94,7 +94,10 @@ def missing_member_fields(payload, transaction_type=None):
 
 def merge_recovered_payload(original, recovered):
     """Recover missing facts only when evidence has an unambiguous identity match."""
-    rows = [dict(row) for row in original.get("members", [])]
+    rows = [
+        dict(row) for row in original.get("members", [])
+        if any(value not in (None, "") for key, value in row.items() if key != "confidence")
+    ]
     if not rows:
         return recovered
     identity_keys = ("national_id", "passport_number", "employee_id", "member_id", "tpa_member_id")

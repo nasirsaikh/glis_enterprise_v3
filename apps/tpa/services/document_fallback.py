@@ -1,12 +1,14 @@
 """Local full-page OCR recovery; no document is sent to a hosted service."""
 import io
 import tempfile
+import shutil
+import subprocess
 from pathlib import Path
 
 from django.conf import settings
 
 
-def docling_text(name, content):
+def _docling_text(name, content):
     if not getattr(settings, "TPA_DOCLING_FALLBACK_ENABLED", True):
         raise RuntimeError("Docling recovery is disabled in backend settings.")
     try:
@@ -47,3 +49,52 @@ def docling_text(name, content):
         if not text:
             raise RuntimeError("Docling could not recover readable text.")
         return text
+
+
+def _tesseract_text(name, content):
+    command = getattr(settings, "TPA_TESSERACT_CMD", "") or shutil.which("tesseract")
+    if not command:
+        raise RuntimeError("Tesseract is not installed; install it or configure TPA_TESSERACT_CMD for an optional OCR fallback.")
+    from PIL import Image, ImageOps
+    with tempfile.TemporaryDirectory(prefix="glis-tesseract-") as directory:
+        paths = []
+        if Path(name).suffix.lower() == ".pdf":
+            import fitz
+            with fitz.open(stream=content, filetype="pdf") as pdf:
+                if len(pdf) > getattr(settings, "TPA_DOCLING_MAX_PAGES", 50):
+                    raise ValueError("The PDF exceeds the configured OCR page limit.")
+                for number, page in enumerate(pdf):
+                    path = Path(directory) / f"page-{number}.png"
+                    page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False).save(str(path))
+                    paths.append(path)
+        else:
+            path = Path(directory) / "image.png"
+            with Image.open(io.BytesIO(content)) as image:
+                ImageOps.exif_transpose(image).convert("RGB").save(path)
+            paths.append(path)
+        languages = subprocess.run([command, "--list-langs"], capture_output=True, text=True, timeout=15, check=True).stdout
+        lang = "eng+ara" if "ara" in languages.splitlines() else "eng"
+        text = []
+        for path in paths:
+            result = subprocess.run(
+                [command, str(path), "stdout", "-l", lang, "--psm", "12"],
+                capture_output=True, text=True, encoding="utf-8", errors="replace",
+                timeout=float(getattr(settings, "TPA_DOCLING_TIMEOUT", 180)), check=True,
+            )
+            if result.stdout.strip():
+                text.append(result.stdout.strip())
+        if not text:
+            raise RuntimeError("Tesseract could not recover readable text.")
+        return "\n\n".join(text)
+
+
+def docling_text(name, content):
+    if not getattr(settings, "TPA_DOCLING_FALLBACK_ENABLED", True):
+        raise RuntimeError("Local OCR recovery is disabled in backend settings.")
+    try:
+        return _docling_text(name, content)
+    except Exception as docling_error:
+        try:
+            return _tesseract_text(name, content)
+        except Exception as tesseract_error:
+            raise RuntimeError(f"Local OCR recovery failed. Docling: {docling_error}; Tesseract: {tesseract_error}") from docling_error

@@ -220,10 +220,6 @@ class PolicyEnrollmentForm(forms.Form):
         label="Organization",
         help_text="Organizations are assigned globally to your user account.",
     )
-    insurance_company = forms.ModelChoiceField(
-        queryset=Organization.objects.none(),
-        label="Insurance Company",
-    )
     policy_number = forms.CharField(max_length=80)
     policy_name = forms.CharField(max_length=180)
     start_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
@@ -279,11 +275,6 @@ class PolicyEnrollmentForm(forms.Form):
                 "No eligible organization is assigned to your user account. "
                 "Ask an administrator to update your user organizations."
             )
-
-        self.fields["insurance_company"].queryset = Organization.objects.filter(
-            organization_type=Organization.Type.INSURER,
-            is_active=True,
-        ).order_by("name_en")
 
 
         for field in self.fields.values():

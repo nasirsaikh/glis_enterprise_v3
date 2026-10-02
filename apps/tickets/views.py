@@ -48,26 +48,46 @@ def sanitize_rich_text(value):
 
 
 def _apply_ticket_filters(qs, data):
+    def selected(name):
+        value = data.get(name)
+        if not value:
+            return []
+        return [value] if isinstance(value, (str, int)) or hasattr(value, "_meta") else list(value)
+
     if data.get("q"):
         term = data["q"]
         qs = qs.filter(Q(reference__icontains=term) | Q(subject__icontains=term) | Q(description__icontains=term) | Q(requester__email__icontains=term))
-    for key in ("status", "priority", "project", "category", "product", "approval_state"):
-        if data.get(key):
-            qs = qs.filter(**{key: data[key]})
-    if data.get("organization"):
+    for key in ("status", "priority", "project", "category", "product", "approval_state", "policy", "requester", "visibility", "sla_policy"):
+        if selected(key):
+            qs = qs.filter(**{key + "__in": selected(key)})
+    if selected("organization"):
         qs = qs.filter(
-            Q(organization=data["organization"]) | Q(organization_participants__organization=data["organization"],organization_participants__can_view=True) | Q(organization__isnull=True,requester__profile__organizations=data["organization"])
+            Q(organization__in=selected("organization")) | Q(organization_participants__organization__in=selected("organization"),organization_participants__can_view=True) | Q(organization__isnull=True,requester__profile__organizations__in=selected("organization"))
         ).distinct()
-    if data.get("sla") == "overdue":
-        qs = qs.filter(resolution_due_at__lt=timezone.now()).exclude(status__in=[Ticket.Status.RESOLVED, Ticket.Status.CLOSED])
-    elif data.get("sla") == "at_risk":
-        qs = qs.filter(resolution_due_at__range=(timezone.now(), timezone.now() + timedelta(hours=2))).exclude(status__in=[Ticket.Status.RESOLVED, Ticket.Status.CLOSED])
-    if data.get("group"):
-        qs = qs.filter(groups=data["group"]).distinct()
-    if data.get("assignee"):
-        qs = qs.filter(Q(assignee=data["assignee"]) | Q(assignees=data["assignee"])).distinct()
-    if data.get("request_type"):
-        qs = qs.filter(project__request_type=data["request_type"])
+    if selected("organization_type"):
+        qs = qs.filter(Q(organization__organization_type__in=selected("organization_type")) | Q(organization_participants__organization__organization_type__in=selected("organization_type"), organization_participants__can_view=True) | Q(organization__isnull=True, requester__profile__organizations__organization_type__in=selected("organization_type"))).distinct()
+    if selected("sla"):
+        now = timezone.now()
+        active = ~Q(status__in=[Ticket.Status.CLOSED, Ticket.Status.RESOLVED, Ticket.Status.PENDING_CUSTOMER])
+        sla_conditions = {
+            "overdue": active & Q(resolution_due_at__lt=now),
+            "at_risk": active & Q(resolution_due_at__gte=now, resolution_due_at__lt=now + timedelta(hours=2)),
+            "healthy": active & (Q(resolution_due_at__isnull=True) | Q(resolution_due_at__gte=now + timedelta(hours=2))),
+            "paused": Q(status=Ticket.Status.PENDING_CUSTOMER),
+            "resolved": Q(status=Ticket.Status.RESOLVED), "closed": Q(status=Ticket.Status.CLOSED),
+        }
+        condition = Q(pk__in=[])
+        for state in selected("sla"):
+            condition |= sla_conditions[state]
+        qs = qs.filter(condition)
+    if selected("group"):
+        qs = qs.filter(groups__in=selected("group")).distinct()
+    if selected("assignee"):
+        qs = qs.filter(Q(assignee__in=selected("assignee")) | Q(assignees__in=selected("assignee"))).distinct()
+    if selected("approver"):
+        qs = qs.filter(approvals__approver__in=selected("approver")).distinct()
+    if selected("request_type"):
+        qs = qs.filter(project__request_type__in=selected("request_type"))
     if data.get("date_from"):
         qs = qs.filter(created_at__date__gte=data["date_from"])
     if data.get("date_to"):

@@ -13,3 +13,14 @@
 .glis-select-group, .glis-select-empty { padding: .4rem .5rem; font-size: .8rem; opacity: .7; }
 .glis-select-group { font-weight: 700; }
 body:not(.glis-portal-app):not(.glis-public-app) .glis-searchable-select { max-width: 40rem; display: inline-block; }
+.glis-searchable-select > .glis-multiselect { width: 100%; }
+.glis-multiselect .glis-select-control { text-align: start !important; }
+.glis-multiselect-menu { display: none; position: fixed !important; inset: auto; overflow-y: auto; padding: .35rem; border: 1px solid var(--bs-border-color); border-radius: .5rem; background: var(--bs-body-bg); color: var(--bs-body-color); box-shadow: 0 .5rem 1rem #0002; }
+.glis-multiselect-menu.show { display: block; }
+.glis-multiselect-menu .multiselect-filter { position: sticky; top: -.35rem; background: var(--bs-body-bg); z-index: 1; }
+.glis-multiselect-menu .multiselect-filter > input.multiselect-search { margin: 0; padding: .25rem .5rem; border: 1px solid var(--bs-border-color); border-radius: .3rem; background: var(--bs-body-bg); color: var(--bs-body-color); }
+.glis-multiselect-menu .multiselect-option, .glis-multiselect-menu .multiselect-all { white-space: normal; font-size: .875rem; border-radius: .25rem; }
+.glis-multiselect-menu .multiselect-option.active, .glis-multiselect-menu .multiselect-all.active { background: var(--bs-primary-bg-subtle); color: var(--bs-primary-text-emphasis); }
+.glis-multiselect-menu .multiselect-option:hover, .glis-multiselect-menu .multiselect-all:hover, .glis-multiselect-menu .multiselect-option:focus, .glis-multiselect-menu .multiselect-all:focus { background: var(--bs-tertiary-bg) !important; color: var(--bs-body-color); }
+.glis-multiselect-menu .form-check { text-align: start; padding-inline: 1.5rem .25rem; }
+.glis-multiselect-menu .form-check-input { float: none; margin-inline: -1.4rem .35rem; }

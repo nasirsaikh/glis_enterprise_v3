@@ -1,12 +1,12 @@
-from apps.accounts.models import Organization
+from apps.accounts.models import Organization, OrganizationType
 from django import forms
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from apps.ai.models import default_questions
-from apps.core.widgets import CheckboxSelectMultiple, RadioSelect
-from .models import Category, Product, Project, SupportGroup, Ticket, TicketComment
+from apps.core.widgets import RadioSelect
+from .models import Category, Product, Project, SupportGroup, Ticket, TicketComment, SLAPolicy, TicketOrganization
 from services.tenancy import organization_ids, visible_support_groups, visible_users, visible_organizations, assignable_groups, assignable_users, taggable_users, available_approvers
 from apps.tpa.models import Policy
 from .services.access import accessible_categories,accessible_products,accessible_projects
@@ -218,12 +218,12 @@ class TicketAssignmentForm(forms.Form):
     users = forms.ModelMultipleChoiceField(
         required=False,
         queryset=get_user_model().objects.none(),
-        widget=CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
+        widget=forms.SelectMultiple(attrs={"class": "form-select w-100"}),
     )
     groups = forms.ModelMultipleChoiceField(
         required=False,
         queryset=SupportGroup.objects.none(),
-        widget=CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
+        widget=forms.SelectMultiple(attrs={"class": "form-select w-100"}),
     )
     replace_existing = forms.BooleanField(
         required=False,
@@ -312,9 +312,63 @@ class DashboardFilterForm(TicketFilterForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, user=user, **kwargs)
-        self.fields["product"].queryset = accessible_products(user)
-        self.fields["group"].queryset = visible_support_groups(user)
-        self.fields["assignee"].queryset = visible_users(user)
+        from services.access import TicketAccessPolicy
+        from apps.tpa.services.access import visible_policies
+
+        authenticated = bool(user and user.is_authenticated)
+        visible = TicketAccessPolicy.visible_queryset(user).order_by() if authenticated else Ticket.objects.none()
+        # Start again from the visible IDs so membership joins do not narrow
+        # the other participants/options on a visible request.
+        requests = Ticket.objects.filter(pk__in=visible.values("pk"))
+        projects = self.fields["project"].queryset
+        categories = self.fields["category"].queryset
+
+        def options(model, allowed, existing, ordering):
+            return model.objects.filter(Q(pk__in=allowed.order_by().values("pk")) | Q(pk__in=existing)).distinct().order_by(*ordering)
+
+        def multiple_models(name, queryset, label, placeholder):
+            self.fields[name] = forms.ModelMultipleChoiceField(required=False, queryset=queryset, label=label,
+                widget=forms.SelectMultiple(attrs={"class": "form-select w-100", "data-placeholder": placeholder}))
+
+        project_options = options(Project, projects, requests.values("project_id"), ("name_en", "pk"))
+        category_options = options(Category, categories, requests.values("category_id"), ("name_en", "pk"))
+        products = accessible_products(user) if authenticated else Product.objects.none()
+        multiple_models("project", project_options, _("Projects"), _("All projects"))
+        multiple_models("product", options(Product, products, requests.values("product_id"), ("name_en", "pk")), _("Products"), _("All products"))
+        multiple_models("category", category_options, _("Categories / subcategories"), _("All categories"))
+        organizations = Organization.objects.filter(
+            Q(pk__in=visible_organizations(user).values("pk")) | Q(pk__in=requests.values("organization_id"))
+            | Q(pk__in=TicketOrganization.objects.filter(ticket__in=requests, can_view=True).values("organization_id"))
+        ).distinct().order_by("name_en", "pk")
+        multiple_models("organization", organizations, _("Organizations"), _("All organizations"))
+        multiple_models("organization_type", OrganizationType.objects.filter(code__in=organizations.values("organization_type_id")), _("Organization types"), _("All organization types"))
+        policies = visible_policies(user) if authenticated else Policy.objects.none()
+        multiple_models("policy", options(Policy, policies, requests.values("policy_id"), ("policy_number", "pk")), _("Policies"), _("All policies"))
+        multiple_models("group", options(SupportGroup, visible_support_groups(user), requests.values("groups__pk"), ("name", "pk")), _("Support groups"), _("All support groups"))
+        users = visible_users(user)
+        User = get_user_model()
+        assignees = User.objects.filter(Q(pk__in=users.values("pk")) | Q(pk__in=requests.values("assignee_id")) | Q(pk__in=requests.values("assignees__pk"))).distinct().order_by("first_name", "last_name", "username")
+        multiple_models("assignee", assignees, _("Assignees"), _("All assignees"))
+        multiple_models("requester", options(User, users, requests.values("requester_id"), ("first_name", "last_name", "username")), _("Requesters"), _("All requesters"))
+        multiple_models("approver", options(User, users, requests.values("approvals__approver_id"), ("first_name", "last_name", "username")), _("Approvers"), _("All approvers"))
+        sla_policies = SLAPolicy.objects.filter(is_active=True).filter(Q(project__in=project_options) | Q(category__in=category_options))
+        multiple_models("sla_policy", options(SLAPolicy, sla_policies, requests.values("sla_policy_id"), ("name", "pk")), _("SLA policies"), _("All SLA policies"))
+        for name in ("assignee", "requester", "approver"):
+            self.fields[name].label_from_instance = lambda person: f"{person.get_full_name() or person.username}" + (f" ({person.email})" if person.email else "")
+
+        request_types = set(project_options.values_list("request_type", flat=True))
+        choice_specs = {
+            "status": (Ticket.Status.choices, _("Statuses"), _("All statuses")),
+            "priority": (Ticket.Priority.choices, _("Priorities"), _("All priorities")),
+            "request_type": ([(value, label) for value, label in Project.RequestType.choices if value in request_types], _("Request types"), _("All request types")),
+            "approval_state": (Ticket._meta.get_field("approval_state").choices, _("Approval states"), _("All approval states")),
+            "visibility": (Ticket._meta.get_field("visibility").choices, _("Visibility"), _("All visibility levels")),
+            "sla": ([("healthy", _("Healthy")), ("at_risk", _("At risk")), ("overdue", _("Overdue")), ("paused", _("Paused")), ("resolved", _("Resolved")), ("closed", _("Closed"))], _("SLA states"), _("All SLA states")),
+        }
+        for name, (choices, label, placeholder) in choice_specs.items():
+            self.fields[name] = forms.MultipleChoiceField(required=False, choices=choices, label=label,
+                widget=forms.SelectMultiple(attrs={"class": "form-select w-100", "data-placeholder": placeholder}))
+        self.order_fields(["q", "project", "status", "request_type", "product", "category", "priority", "organization", "organization_type", "policy", "requester", "assignee", "group", "approver", "approval_state", "visibility", "sla", "sla_policy", "date_from", "date_to"])
         for field in self.fields.values():
             field.widget.attrs["form"] = "dashboard-filter-form"
 

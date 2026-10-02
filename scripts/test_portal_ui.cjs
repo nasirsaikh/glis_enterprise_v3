@@ -280,6 +280,89 @@ test("Vanna renders ApexCharts, preserves null values and cleans up charts on ne
 
 const searchableJS = fs.readFileSync('static/js/searchable-selects.js', 'utf8');
 const selectCSS = css(['searchable-selects.css']);
+const multiselectJS = fs.readFileSync('static/vendor/bootstrap-multiselect/bootstrap-multiselect.bundle.js', 'utf8');
+const multiselectCSS = fs.readFileSync('static/vendor/bootstrap-multiselect/bootstrap-multiselect.css', 'utf8');
+const dashboardFiltersJS = fs.readFileSync('static/js/dashboard-filters.js', 'utf8');
+
+async function multiselectFixture(body, viewport) {
+  const page = await fixture(body, portalCSS + multiselectCSS + selectCSS, viewport);
+  page.on('pageerror', error => console.error(error.stack));
+  await page.addScriptTag({content: multiselectJS});
+  await page.addScriptTag({content: dashboardFiltersJS});
+  await page.addScriptTag({content: searchableJS});
+  return page;
+}
+
+test('Bootstrap multiselect searches, selects filtered results and preserves native values and globals', async () => {
+  const page = await fixture('<body><form><label>Members<select name="members" multiple data-placeholder="All members"><option value="1">Amina</option><option value="2">Sara</option><option value="3">Sam</option><option value="4" disabled>Sam disabled</option></select></label><button type="reset">Reset</button></form></body>', portalCSS + multiselectCSS + selectCSS);
+  const errors=[]; page.on('pageerror', error => errors.push(error.message));
+  try {
+    await page.addScriptTag({content: multiselectJS});
+    await page.evaluate(() => {window.previousJQuery = window.jQuery = window.glisJQuery; window.previousDollar = window.$ = window.glisJQuery; window.changes=0; document.querySelector('select').addEventListener('change',()=>window.changes++);});
+    await page.addScriptTag({content: multiselectJS});
+    await page.addScriptTag({content: searchableJS});
+    assert.equal(await page.evaluate(() => window.jQuery === window.previousJQuery && window.$ === window.previousDollar), true);
+    await page.getByRole('button', {name:'Members: All members'}).click();
+    await page.getByRole('checkbox', {name:'Amina',exact:true}).check();
+    await page.getByRole('searchbox', {name:'Search options'}).fill('sa');
+    await page.waitForFunction(() => document.querySelector('.multiselect-option').style.display === 'none');
+    await page.getByRole('checkbox', {name:/Select all results/}).check();
+    assert.deepEqual(await page.evaluate(()=>new FormData(document.querySelector('form')).getAll('members')), ['1','2','3']);
+    assert.equal(await page.getByRole('checkbox', {name:'Sam disabled',exact:true}).isDisabled(), true);
+    assert.equal(await page.evaluate(()=>window.changes),2);
+    await page.getByRole('searchbox', {name:'Search options'}).press('Escape');
+    await page.getByRole('button', {name:'Reset',exact:true}).click();
+    await page.getByRole('button', {name:'Members: All members'}).waitFor();
+    assert.deepEqual(await page.evaluate(()=>new FormData(document.querySelector('form')).getAll('members')), []);
+    assert.deepEqual(errors, []);
+  } finally {await page.close();}
+});
+
+test('advanced filter mirrors share selections and checkbox menus fit mobile RTL modals', async () => {
+  const page=await multiselectFixture('<body class="glis-portal-app"><form id="dashboard-filter-form"><label>Projects<select id="id_project" name="project" multiple data-placeholder="All projects"><option value="1">Medical</option><option value="2">Motor</option></select></label></form><button data-bs-toggle="modal" data-bs-target="#advanced">Advanced</button><div class="modal fade" id="advanced" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><label>Projects<div data-filter-mirror="id_project"></div></label><label>Statuses<select name="status" multiple form="dashboard-filter-form"><option value="open">Open</option><option value="closed">Closed</option></select></label></div><div class="modal-footer"><button data-bs-dismiss="modal" type="button">Close</button></div></div></div></div></body>', {width:390,height:844});
+  const errors=[]; page.on('pageerror',error=>errors.push(error.message));
+  try {
+    await transition(page,'#advanced','shown.bs.modal',()=>page.getByRole('button',{name:'Advanced',exact:true}).click());
+    for(const direction of ['ltr','rtl']) {
+      await page.evaluate(direction=>{document.documentElement.dir=direction; document.documentElement.dataset.bsTheme='dark';},direction);
+      assert.equal(await page.locator('#advanced .multiselect').first().evaluate(button=>getComputedStyle(button).textAlign),'start');
+      await page.locator('#advanced .multiselect').first().click();
+      const menu=await page.locator('.glis-multiselect-menu.show').boundingBox();
+      assert.ok(menu.x >= 0 && menu.x + menu.width <= 391);
+      await page.getByRole('checkbox',{name:'Motor',exact:true}).setChecked(direction==='ltr');
+      await page.getByRole('searchbox',{name:'Search options'}).press('Escape');
+      assert.deepEqual(await page.evaluate(()=>new FormData(document.querySelector('form')).getAll('project')), direction==='ltr'?['2']:[]);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    }
+    await page.locator('#advanced .multiselect').last().click();
+    await page.getByRole('checkbox',{name:'Open',exact:true}).check();
+    assert.deepEqual(await page.evaluate(()=>new FormData(document.querySelector('form')).getAll('status')),['open']);
+    await page.getByRole('searchbox',{name:'Search options'}).press('Escape');
+    await transition(page,'#advanced','hidden.bs.modal',()=>page.getByRole('button',{name:'Close',exact:true}).click());
+    assert.equal(await page.locator('.glis-multiselect-menu.show').count(),0);
+    assert.deepEqual(errors,[]);
+  } finally {await page.close();}
+});
+
+test('Bootstrap multiselect validates required choices and rebuilds after HTMX option and workspace changes',async()=>{
+  const page=await multiselectFixture('<body><main><form><label>Approvers<select name="approvers" multiple required><option value="1">First approver</option><option value="2">Second approver</option></select></label><button type="submit">Save</button></form></main></body>');
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  try {
+    await page.getByRole('button',{name:'Save',exact:true}).click();
+    assert.equal(await page.locator('.multiselect').getAttribute('aria-invalid'),'true');
+    await page.getByRole('checkbox',{name:'First approver',exact:true}).check();
+    assert.equal(await page.locator('form').evaluate(form=>form.checkValidity()),true);
+    await page.getByRole('searchbox',{name:'Search options'}).press('Escape');
+    await page.evaluate(()=>{const select=document.querySelector('select');select.innerHTML='<option value="3">Replacement approver</option>';document.dispatchEvent(new CustomEvent('htmx:afterSwap',{detail:{target:select}}));});
+    await page.locator('.multiselect').click();
+    await page.getByRole('checkbox',{name:'Replacement approver',exact:true}).check();
+    assert.deepEqual(await page.evaluate(()=>new FormData(document.querySelector('form')).getAll('approvers')),['3']);
+    await page.evaluate(()=>{const target=document.querySelector('main');document.dispatchEvent(new CustomEvent('htmx:beforeSwap',{detail:{target}}));target.innerHTML='<select name="other" multiple><option value="x">Other choice</option></select>';document.dispatchEvent(new CustomEvent('htmx:afterSwap',{detail:{target}}));});
+    assert.equal(await page.locator('.glis-multiselect-menu.show').count(),0);
+    assert.equal(await page.locator('.multiselect').count(),1);
+    assert.deepEqual(errors,[]);
+  } finally {await page.close();}
+});
 
 test('searchable selects preserve values, labels and dependent HTMX changes', async () => {
   const page = await fixture('<body><form><label for="project">Project</label><select class="form-select" id="project" name="project" hx-get="/products"><option value="">All projects</option><option value="medical">Medical approvals</option><option value="motor">Motor claims</option><option value="disabled" disabled>Motor archived</option></select></form></body>', portalCSS + selectCSS);

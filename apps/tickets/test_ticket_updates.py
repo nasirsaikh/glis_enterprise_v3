@@ -12,7 +12,7 @@ from django.utils import timezone
 from services.access import TicketAccessPolicy
 from services.ticket_lifecycle import close_ticket, reopen_ticket
 from services.ticket_workflow import current_approval_sequence, decide_approval, initialize_approval_workflow, resubmit_approval
-from .forms import TicketCommentForm
+from .forms import DashboardFilterForm, TicketCommentForm
 from .models import ApprovalStep, ApprovalWorkflow, Category, Product, Project, SupportGroup, Ticket, TicketComment, TicketEvent, TicketTaggedUser
 
 
@@ -226,6 +226,81 @@ class TicketUpdateTests(TestCase):
         self.assertContains(self.client.get(self.url('ticket_detail', ticket)), 'src="/media/avatars/profile.png"', count=5)
         ticket.assignees.add(self.creator)
         self.assertContains(self.client.get(reverse('portal:ticket_list')), 'src="/media/avatars/profile.png"', count=2)
+
+    def test_dashboard_includes_visible_historical_values_without_foreign_options(self):
+        from django.contrib.auth.models import Group
+        from apps.accounts.models import Organization
+        ticket = self.ticket()
+        ticket.assignee = self.agent
+        ticket.assignees.add(self.agent)
+        organization = Organization.objects.create(code='VISIBLE-HISTORY', name_en='Historical organization', organization_type_id='CORPORATE', is_active=False)
+        ticket.organization = organization
+        ticket.save()
+        for item in (self.project, self.product, self.category, self.work):
+            item.is_active = False
+            item.save()
+        role = Group.objects.create(name='Foreign catalogue')
+        foreign_project = Project.objects.create(code='FOREIGN-OPT', name_en='Foreign project')
+        foreign_product = Product.objects.create(project=foreign_project, code='FOREIGN', name_en='Foreign product')
+        foreign_category = Category.objects.create(product=foreign_product, code='FOREIGN', name_en='Foreign category')
+        foreign_category.allowed_groups.add(role)
+        foreign_user = get_user_model().objects.create_user('foreign-options-user')
+        foreign_group = SupportGroup.objects.create(code='FOREIGN-OPT', name='Foreign group')
+        Ticket.objects.create(project=foreign_project, product=foreign_product, category=foreign_category, requester=foreign_user, subject='Foreign hidden request')
+        form = DashboardFilterForm(user=self.observer)
+        for field, value in [('project', self.project), ('product', self.product), ('category', self.category), ('group', self.work), ('assignee', self.agent), ('requester', self.creator), ('approver', self.approver1), ('organization', organization)]:
+            self.assertIn(value, form.fields[field].queryset, field)
+        for field, value in [('project', foreign_project), ('product', foreign_product), ('category', foreign_category), ('group', foreign_group), ('assignee', foreign_user)]:
+            self.assertNotIn(value, form.fields[field].queryset, field)
+        invalid = DashboardFilterForm({'project': [foreign_project.pk]}, user=self.observer)
+        self.assertFalse(invalid.is_valid())
+        self.client.force_login(self.observer)
+        response = self.client.get(reverse('portal:dashboard'), {'project': self.project.pk, 'group': self.work.pk, 'assignee': self.agent.pk, 'organization_type': organization.organization_type.pk})
+        self.assertEqual(list(response.context['recent_tickets']), [ticket])
+
+    def test_dashboard_multiple_values_combine_with_or_and_filter_fields_with_and(self):
+        first = self.ticket(approval=False)
+        second = self.ticket(approval=False)
+        second.status = Ticket.Status.OPEN
+        second.priority = Ticket.Priority.HIGH
+        second.save()
+        self.ticket(approval=False)
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse('portal:dashboard'), {'status': ['open', 'in_progress'], 'priority': ['high'], 'requester': [self.creator.pk]})
+        self.assertEqual(list(response.context['recent_tickets']), [second])
+        self.assertEqual(response.context['metrics']['open'], 1)
+        self.assertEqual(response.context['chart_data']['status'], [{'status': 'open', 'total': 1}])
+        response = self.client.get(reverse('portal:dashboard'), {'q': first.reference, 'status': ['open', 'in_progress'], 'priority': ['medium', 'high']})
+        self.assertEqual(list(response.context['recent_tickets']), [first])
+
+    def test_dashboard_policy_approver_and_all_sla_states_are_filterable(self):
+        from apps.accounts.models import Organization
+        from apps.tpa.models import Policy
+        ticket = self.ticket()
+        organization = Organization.objects.create(code='FILTER-POLICY', name_en='Policy owner', organization_type_id='CORPORATE')
+        insurer = Organization.objects.create(code='FILTER-INSURER', name_en='Policy insurer', organization_type_id='INSURER')
+        today = timezone.localdate()
+        policy = Policy.objects.create(policy_number='FILTER-VISIBLE', organization=organization, insurance_company=insurer, start_date=today, expiry_date=today + timedelta(days=365))
+        foreign_policy = Policy.objects.create(policy_number='FILTER-FOREIGN', organization=organization, insurance_company=insurer, start_date=today, expiry_date=today + timedelta(days=365))
+        ticket.policy = policy
+        ticket.resolution_due_at = timezone.now() - timedelta(hours=1)
+        ticket.status = Ticket.Status.PENDING_CUSTOMER
+        ticket.save()
+        form = DashboardFilterForm(user=self.observer)
+        self.assertIn(policy, form.fields['policy'].queryset)
+        self.assertNotIn(foreign_policy, form.fields['policy'].queryset)
+        self.client.force_login(self.observer)
+        scoped = self.client.get(reverse('portal:dashboard'), {'policy': [policy.pk], 'visibility': ['standard']})
+        self.assertEqual(list(scoped.context['recent_tickets']), [ticket])
+        self.client.force_login(self.admin)
+        paused = self.client.get(reverse('portal:dashboard'), {'approver': [self.approver1.pk], 'sla': ['paused']})
+        self.assertEqual(list(paused.context['recent_tickets']), [ticket])
+        overdue = self.client.get(reverse('portal:dashboard'), {'sla': ['overdue']})
+        self.assertEqual(list(overdue.context['recent_tickets']), [])
+        fields = paused.context['filter_form'].fields
+        for name in ('policy', 'requester', 'approver', 'organization_type', 'visibility', 'sla_policy'):
+            self.assertIn(name, fields)
+        self.assertEqual(fields['status'].widget.allow_multiple_selected, True)
 
 
 class LinkedApprovalRecoveryTests(TestCase):

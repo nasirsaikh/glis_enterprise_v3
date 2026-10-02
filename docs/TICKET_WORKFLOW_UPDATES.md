@@ -38,4 +38,19 @@ User avatars display uploaded profile photos, with initials as a fallback. Rich-
 
 The dashboard shows all seven KPIs in one row, which scrolls horizontally on narrow screens. Quick filters and the advanced filter modal apply consistently to KPIs, charts, recent tickets and the attention list while preserving the user's ticket scope.
 
+Advanced filters include projects, products, categories/subcategories, request types,
+statuses, priorities, organizations/types, policies, requesters, assignees, support
+groups, approvers, approval states, visibility, all six SLA states, SLA policies
+and creation dates. Lookup options combine accessible configuration with values
+on visible requests, including historical/inactive records. Unrelated private
+requests do not contribute options. Multiple values within one filter are ORed;
+different filters are ANDed. Quick project/status controls and their modal copies
+share the same selection and submit each value once.
+
+Portal multi-selects use locally bundled Bootstrap Multiselect v2.0.0 with search,
+checkboxes and **Select all results** (which applies to the current search).
+Assignments, task tags and dynamic multiselect fields use the same control. The
+private jQuery instance preserves existing Django/CMS globals; native values,
+required-field validation and HTMX events remain intact.
+
 Job Center admin status badges and registered handlers use argument-safe Django HTML formatting compatible with Django 6.1.

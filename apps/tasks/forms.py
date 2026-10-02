@@ -1,7 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from apps.core.widgets import CheckboxSelectMultiple
 
 from apps.tickets.models import Category, Product, Project, Ticket
 from apps.tickets.services.access import accessible_categories, accessible_products, accessible_projects
@@ -34,7 +33,7 @@ class TaskForm(forms.ModelForm):
             "category": forms.Select(attrs={"class": "form-select w-100"}),
             "priority": forms.Select(attrs={"class": "form-select w-100"}),
             "owner": forms.Select(attrs={"class": "form-select w-100"}),
-            "tagged_users": CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
+            "tagged_users": forms.SelectMultiple(attrs={"class": "form-select w-100"}),
             "due_date": forms.DateInput(attrs={"class": "form-control w-100", "type": "date"}),
         }
 

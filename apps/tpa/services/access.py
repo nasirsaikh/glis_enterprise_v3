@@ -76,6 +76,9 @@ def can_create_for_policy(user, policy, transaction_type):
 
 
 def can_edit_tpa_intake(user, tx):
+    from apps.tickets.models import Ticket
+    if tx.ticket_id and Ticket.objects.filter(pk=tx.ticket_id, status=Ticket.Status.CLOSED).exists():
+        return False
     if not visible_transactions(user).filter(pk=tx.pk).exists():
         return False
     return can_create_for_policy(user,tx.policy,tx.transaction_type)
@@ -202,7 +205,7 @@ def visible_shared_internal_messages(user, tx):
 
     qs = (
         TransactionQueryMessage.objects.select_related(
-            "sender",
+            "sender__profile",
             "ticket_comment",
             "query",
             "query__transaction",
@@ -225,7 +228,7 @@ def visible_transaction_queries(user, tx):
         "ticket", "raised_by", "resolved_by", "transaction"
     ).prefetch_related(
         "selected_participants",
-        "messages__sender",
+        "messages__sender__profile",
         "messages__ticket_comment",
         "messages__ticket_comment__attachments",
     )

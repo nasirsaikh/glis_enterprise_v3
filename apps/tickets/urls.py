@@ -5,6 +5,9 @@ from . import document_views
 urlpatterns = [
     path('requests/new/',views.create_request,name='create_request'),
     path('tickets/<str:reference>/release/',views.release_ticket,name='release_ticket'),
+    path('tickets/<str:reference>/close/',views.close_ticket,name='close_ticket'),
+    path('tickets/<str:reference>/reopen/',views.reopen_ticket,name='reopen_ticket'),
+    path('tickets/<str:reference>/approval/resubmit/',views.resubmit_ticket_approval,name='resubmit_ticket_approval'),
     path('tickets/<str:reference>/tag/',views.tag_ticket_user,name='tag_ticket_user'),
     path('tickets/<str:reference>/approval/request/',views.request_ticket_approval,name='request_ticket_approval'),
     path('tickets/<str:reference>/approval/<int:approval_id>/cancel/',views.cancel_ticket_approval,name='cancel_ticket_approval'),

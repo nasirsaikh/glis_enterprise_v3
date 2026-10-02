@@ -1,0 +1,10 @@
+{% load i18n %}
+<article class="ticket-activity d-flex align-items-start gap-2 py-3 border-bottom border-body" data-ticket-event="{{ event.event_type }}">
+  {% include 'components/avatar.html' with person=event.actor %}
+  <div class="flex-grow-1 glis-min-width-0">
+    <div class="d-flex flex-wrap align-items-center gap-2 small"><strong>{% if event.actor %}{{ event.actor.get_full_name|default:event.actor.username }}{% else %}{% translate "System" %}{% endif %}</strong><span class="badge text-bg-light border">{% translate "Activity" %}</span><time class="text-body-secondary">{{ event.created_at|date:'d M Y, h:i A' }}</time></div>
+    <p class="my-1 small">{{ event.summary }}</p>
+    {% if event.details.note %}<p class="mb-1 small text-body-secondary glis-whitespace-pre-line">{{ event.details.note }}</p>{% endif %}
+    {% if event.display_details %}<details class="small text-body-secondary"><summary>{% translate "Activity details" %}</summary><pre class="mt-2 p-2 bg-body-tertiary rounded-2 text-wrap">{{ event.display_details }}</pre></details>{% endif %}
+  </div>
+</article>

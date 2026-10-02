@@ -277,3 +277,120 @@ test("Vanna renders ApexCharts, preserves null values and cleans up charts on ne
     assert.deepEqual(errors, []);
   } finally { await page.close(); }
 });
+
+const searchableJS = fs.readFileSync('static/js/searchable-selects.js', 'utf8');
+const selectCSS = css(['searchable-selects.css']);
+
+test('searchable selects preserve values, labels and dependent HTMX changes', async () => {
+  const page = await fixture('<body><form><label for="project">Project</label><select class="form-select" id="project" name="project" hx-get="/products"><option value="">All projects</option><option value="medical">Medical approvals</option><option value="motor">Motor claims</option><option value="disabled" disabled>Motor archived</option></select></form></body>', portalCSS + selectCSS);
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  try {
+    await page.addScriptTag({content: searchableJS});
+    await page.evaluate(() => { window.changeCount = 0; document.querySelector('select').addEventListener('change', () => window.changeCount++); });
+    await page.getByRole('button', {name: 'Project: All projects'}).click();
+    await page.getByRole('combobox', {name: 'Search options'}).fill('motor');
+    assert.equal(await page.getByRole('option').count(), 2);
+    await page.getByRole('combobox').press('ArrowDown'); await page.getByRole('combobox').press('Enter');
+    assert.equal(await page.locator('select').inputValue(), 'motor');
+    assert.equal(await page.evaluate(() => new FormData(document.querySelector('form')).get('project')), 'motor');
+    assert.equal(await page.evaluate(() => window.changeCount), 1);
+    assert.equal(await page.locator('select').getAttribute('hx-get'), '/products');
+    await page.evaluate(() => {
+      const select = document.querySelector('select'); select.innerHTML = '<option value="new">New dependent choice</option><option value="other">Other choice</option>';
+      document.dispatchEvent(new CustomEvent('htmx:afterSwap', {detail: {target: select}}));
+    });
+    await page.getByRole('button', {name: 'Project: New dependent choice'}).waitFor();
+    await page.getByRole('button', {name: 'Project: New dependent choice'}).click();
+    await page.getByRole('combobox').press('Escape');
+    assert.equal(await page.locator('.glis-select-menu:visible').count(), 0);
+    assert.deepEqual(errors, []);
+  } finally { await page.close(); }
+});
+
+test('searchable multiple choices, disabled controls and reset retain native form behavior', async () => {
+  const page = await fixture('<body><form><label>Members<select name="members" multiple><option value="1">Amina</option><option value="2">Nasir</option><option value="3">Sara</option></select></label><label>Unavailable<select name="locked" disabled><option>Locked</option></select></label><button type="reset">Reset</button></form></body>', portalCSS + selectCSS);
+  try {
+    await page.addScriptTag({content: searchableJS});
+    await page.locator('.glis-select-control').first().click();
+    await page.getByRole('option', {name: 'Amina', exact: true}).click();
+    await page.getByRole('option', {name: 'Sara', exact: true}).click();
+    assert.deepEqual(await page.evaluate(() => new FormData(document.querySelector('form')).getAll('members')), ['1','3']);
+    assert.equal(await page.locator('.glis-select-control').nth(1).isDisabled(), true);
+    await page.getByRole('combobox').press('Escape');
+    await page.getByRole('button', {name: 'Reset', exact: true}).click();
+    await page.waitForFunction(() => document.querySelector('.glis-select-control').textContent === 'Amina');
+    assert.deepEqual(await page.evaluate(() => new FormData(document.querySelector('form')).getAll('members')), []);
+  } finally { await page.close(); }
+});
+
+test('searchable choices stay inside mobile viewports and modal form submissions', async () => {
+  const page = await fixture('<body class="glis-portal-app"><form id="filters"></form><button class="btn" data-bs-toggle="modal" data-bs-target="#filters-modal">Advanced filters</button><div class="modal fade" id="filters-modal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><label>Category<select name="category" form="filters"><option value="">All categories</option><option value="health">Health insurance</option><option value="motor">Motor claims</option></select></label></div><div class="modal-footer"><button data-bs-dismiss="modal" type="button">Close</button></div></div></div></div></body>', portalCSS + selectCSS, {width: 390, height: 844});
+  try {
+    await page.addScriptTag({content: searchableJS});
+    await transition(page, '#filters-modal', 'shown.bs.modal', () => page.getByRole('button', {name: 'Advanced filters'}).click());
+    for (const direction of ['ltr','rtl']) {
+      await page.evaluate(direction => { document.documentElement.dir = direction; document.documentElement.dataset.bsTheme = 'dark'; }, direction);
+      await page.locator('.glis-select-control').click();
+      await page.getByRole('combobox').fill('motor');
+      const menu = await page.locator('.glis-select-menu:visible').boundingBox();
+      assert.ok(menu.x >= 0 && menu.x + menu.width <= 391);
+      await page.getByRole('combobox').press('Enter');
+      assert.equal(await page.evaluate(() => new FormData(document.querySelector('form')).get('category')), 'motor');
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    }
+    await transition(page, '#filters-modal', 'hidden.bs.modal', () => page.getByRole('button', {name: 'Close', exact: true}).click());
+    assert.equal(await page.locator('.glis-select-menu:visible').count(), 0);
+  } finally { await page.close(); }
+});
+
+test('required searchable fields remain validatable and HTMX replacement cleans menus', async () => {
+  const page = await fixture('<body><main><form><label>Policy<select name="policy" required><option value="">Choose policy</option><option value="1">Policy one</option></select></label><button type="submit">Save</button></form></main></body>', portalCSS + selectCSS);
+  try {
+    await page.addScriptTag({content: searchableJS});
+    await page.getByRole('button', {name: 'Save'}).click();
+    assert.equal(await page.locator('.glis-select-control').getAttribute('aria-invalid'), 'true');
+    assert.equal(await page.getByRole('combobox').isVisible(), true);
+    await page.getByRole('option', {name: 'Policy one', exact: true}).click();
+    assert.equal(await page.locator('form').evaluate(form => form.checkValidity()), true);
+    await page.locator('.glis-select-control').click();
+    await page.evaluate(() => {
+      document.dispatchEvent(new CustomEvent('htmx:beforeSwap', {detail: {target: document.querySelector('main')}}));
+      document.querySelector('main').innerHTML = '<select name="replacement"><option>Replacement choice</option></select>';
+      document.dispatchEvent(new CustomEvent('htmx:afterSwap', {detail: {target: document.querySelector('main')}}));
+    });
+    assert.equal(await page.locator('.glis-select-menu').count(), 0);
+    assert.equal(await page.locator('.glis-select-control').count(), 1);
+  } finally { await page.close(); }
+});
+
+test('comment editors expand and resize while preserving submitted rich text', async () => {
+  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><section class="ticket-conversation"><form><label for="message">Message</label><textarea id="message" class="richtext-source" name="body"><p>Existing note</p></textarea></form></section></main></body>');
+  try {
+    await page.evaluate(() => { window.glisThemeStorage = {get: () => 'light', set: () => {}}; });
+    await page.addScriptTag({content: portalJS});
+    await page.evaluate(() => document.dispatchEvent(new Event('DOMContentLoaded')));
+    const editor = page.locator('.richtext-canvas');
+    const initial = (await editor.boundingBox()).height;
+    await editor.fill('Additional evidence and requested dates');
+    const expectedContent = await editor.evaluate(el => el.innerHTML);
+    await page.getByRole('button', {name: 'Expand editor', exact: true}).click();
+    assert.ok((await editor.boundingBox()).height > initial + 100);
+    assert.equal(await page.getByRole('button', {name: 'Collapse editor'}).getAttribute('aria-expanded'), 'true');
+    assert.equal(await editor.evaluate(el => getComputedStyle(el).resize), 'vertical');
+    await page.getByRole('button', {name: 'Collapse editor'}).click();
+    assert.ok(Math.abs((await editor.boundingBox()).height - initial) < 2);
+    assert.equal(await page.locator('textarea').inputValue(), expectedContent);
+  } finally { await page.close(); }
+});
+
+test('all dashboard KPIs stay in one scrollable row without expanding the page', async () => {
+  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><div class="portal-dashboard"><section class="portal-metrics">'+Array.from({length:7}, (_,i)=>'<article class="portal-metric"><strong class="portal-metric__value">'+i+'</strong><span>Metric '+i+'</span></article>').join('')+'</section></div></main></body>');
+  try {
+    for (const width of [1440, 1280, 390]) {
+      await page.setViewportSize({width,height:900});
+      const tops = await page.locator('.portal-metric').evaluateAll(items=>items.map(item=>item.getBoundingClientRect().top));
+      assert.ok(tops.every(top=>Math.abs(top-tops[0])<2));
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth), true);
+    }
+  } finally { await page.close(); }
+});

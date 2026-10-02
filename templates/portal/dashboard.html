@@ -29,6 +29,30 @@
     </div>
   </section>
 
+  <section class="card border border-body shadow-sm dashboard-filters" aria-label="{% translate 'Dashboard filters' %}">
+    <div class="card-body p-3">
+      {% include 'components/form_errors.html' with form=filter_form %}
+      <form id="dashboard-filter-form" method="get" action="{% url 'portal:dashboard' %}" class="d-flex flex-wrap align-items-end gap-2">
+        <label class="glis-field dashboard-filter-search"><span class="form-label">{% translate 'Search' %}</span>{{ filter_form.q }}</label>
+        <label class="glis-field dashboard-filter-choice"><span class="form-label">{% translate 'Project' %}</span>{{ filter_form.project }}</label>
+        <label class="glis-field dashboard-filter-choice"><span class="form-label">{% translate 'Status' %}</span>{{ filter_form.status }}</label>
+        <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-funnel"></i>{% translate 'Apply' %}</button>
+        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#dashboard-advanced-filters" aria-label="{% translate 'Advanced filters' %}"><i class="bi bi-sliders" aria-hidden="true"></i>{% translate 'Advanced filters' %}</button>
+        <a class="btn btn-light btn-sm" href="{% url 'portal:dashboard' %}">{% translate 'Reset' %}</a>
+      </form>
+      <p class="small text-body-secondary mb-0 mt-2">{% translate 'Filters apply to all KPIs, charts and ticket lists below.' %}</p>
+    </div>
+  </section>
+  <div class="modal fade" id="dashboard-advanced-filters" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+      <div class="modal-header"><h2 class="modal-title fs-5">{% translate 'Advanced dashboard filters' %}</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button></div>
+      <div class="modal-body"><div class="row g-3">
+        {% for field in filter_form %}{% if field.name != 'q' and field.name != 'project' and field.name != 'status' %}<div class="col-12 col-md-6"><label class="glis-field"><span class="form-label">{{ field.label }}</span>{{ field }}{{ field.errors }}</label></div>{% endif %}{% endfor %}
+      </div></div>
+      <div class="modal-footer"><button class="btn btn-light" type="button" data-bs-dismiss="modal">{% translate 'Cancel' %}</button><button class="btn btn-primary" type="submit" form="dashboard-filter-form">{% translate 'Apply filters' %}</button></div>
+    </div></div>
+  </div>
+
   <section class="portal-metrics" aria-label="{% translate 'Key metrics' %}">
     <article class="portal-metric" data-tone="green">
       <div class="portal-metric__top"><span class="portal-metric__icon"><i class="bi bi-inbox"></i></span><span class="portal-metric__label">{% translate "Open tickets" %}</span></div>
@@ -50,13 +74,9 @@
       <strong class="portal-metric__value">{{ metrics.resolved_month }}</strong>
       <span class="portal-metric__note">{% translate "This month" %}</span>
     </article>
-  </section>
-
-  <section class="portal-service-levels" aria-label="{% translate 'Service levels' %}">
-    <div class="portal-service-levels__intro"><span class="portal-section-kicker">{% translate "Service levels" %}</span><strong>{% translate "Response & resolution" %}</strong></div>
-    <div class="portal-service-stat"><span class="portal-service-stat__icon"><i class="bi bi-reply"></i></span><span><small>{% translate "First response" %}</small><strong>{{ metrics.first_response_tat }}<em>h</em></strong></span><span class="portal-service-stat__caption">{% translate "Average TAT" %}</span></div>
-    <div class="portal-service-stat"><span class="portal-service-stat__icon"><i class="bi bi-stopwatch"></i></span><span><small>{% translate "Resolution TAT" %}</small><strong>{{ metrics.resolution_tat }}<em>h</em></strong></span><span class="portal-service-stat__caption">{% translate "Average TAT" %}</span></div>
-    <div class="portal-service-stat"><span class="portal-service-stat__icon"><i class="bi bi-bullseye"></i></span><span><small>{% translate "SLA attainment" %}</small><strong>{{ metrics.sla_attainment }}<em>%</em></strong></span><span class="portal-service-stat__caption">{% translate "Within target" %}</span></div>
+    <article class="portal-metric" data-tone="blue"><div class="portal-metric__top"><span class="portal-metric__icon"><i class="bi bi-reply"></i></span><span class="portal-metric__label">{% translate "First response" %}</span></div><strong class="portal-metric__value">{{ metrics.first_response_tat }}<small> h</small></strong><span class="portal-metric__note">{% translate "Average TAT" %}</span></article>
+    <article class="portal-metric" data-tone="violet"><div class="portal-metric__top"><span class="portal-metric__icon"><i class="bi bi-stopwatch"></i></span><span class="portal-metric__label">{% translate "Resolution TAT" %}</span></div><strong class="portal-metric__value">{{ metrics.resolution_tat }}<small> h</small></strong><span class="portal-metric__note">{% translate "Average TAT" %}</span></article>
+    <article class="portal-metric" data-tone="green"><div class="portal-metric__top"><span class="portal-metric__icon"><i class="bi bi-bullseye"></i></span><span class="portal-metric__label">{% translate "SLA attainment" %}</span></div><strong class="portal-metric__value">{{ metrics.sla_attainment }}<small>%</small></strong><span class="portal-metric__note">{% translate "Within target" %}</span></article>
   </section>
 
   <section class="portal-dashboard-section" aria-labelledby="portal-insights-title">

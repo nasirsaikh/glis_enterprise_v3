@@ -30,7 +30,7 @@ def email_reprocessing_pending(email):
     ).exists()
 
 
-def validate_email_reprocessing(email, actor):
+def validate_email_reprocessing(email, actor, *, check_processing=False):
     if not (
         actor and actor.is_authenticated and actor.is_active and actor.is_staff
         and actor.has_perm("tpa.change_inboundemail")
@@ -38,6 +38,8 @@ def validate_email_reprocessing(email, actor):
         raise PermissionDenied("Inbound email change permission is required.")
     if not visible_inbound_emails(actor).filter(pk=email.pk).exists():
         raise PermissionDenied("This email is outside your authorized organizations.")
+    if check_processing and email.processing_state == InboundEmail.State.PROCESSING:
+        raise ValueError("This email is already being processed.")
     if not email.transaction_id:
         if email.ticket_id:
             raise ValueError("This email already belongs to a ticket. Continue in the ticket workspace.")
@@ -45,8 +47,6 @@ def validate_email_reprocessing(email, actor):
             raise PermissionDenied("TPA transaction creation permission is required.")
         return
     tx = email.transaction
-    if not can_edit_tpa_intake(actor, tx):
-        raise PermissionDenied("You have read-only access to this endorsement.")
     if (
         tx.status not in REPROCESSABLE_STATUSES or tx.processed_at
         or tx.member_actions.filter(processed_at__isnull=False).exists()
@@ -55,6 +55,8 @@ def validate_email_reprocessing(email, actor):
             f"Endorsement {tx.reference} has left intake ({tx.get_status_display()}). "
             "Reprocessing is available only during intake and correction."
         )
+    if not can_edit_tpa_intake(actor, tx):
+        raise PermissionDenied("You have read-only access to this endorsement. Reopen a paused ticket before reprocessing.")
 
 
 def queue_email_reprocessing(email, actor):
@@ -66,9 +68,7 @@ def queue_email_reprocessing(email, actor):
             email.transaction = MemberTransaction.objects.select_for_update().get(
                 pk=email.transaction_id
             )
-        validate_email_reprocessing(email, actor)
-        if email.processing_state == InboundEmail.State.PROCESSING:
-            raise ValueError("This email is already being processed.")
+        validate_email_reprocessing(email, actor, check_processing=True)
         if email_reprocessing_pending(email):
             raise ValueError("This email is already queued for reprocessing.")
         job = enqueue(

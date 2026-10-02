@@ -777,7 +777,7 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
         from apps.tickets.views import ticket_detail
         return ticket_detail(request,tx.ticket.reference)
 
-    if request.method == "GET" and tx.status == tx.Status.PENDING_APPROVAL and tx.ticket_id:
+    if request.method == "GET" and tx.status == tx.Status.PENDING_APPROVAL and tx.ticket_id and tx.ticket.status != "closed":
         tx = sync_from_ticket_approval(tx, actor=request.user)
 
     wizard = get_transaction_wizard(
@@ -1143,6 +1143,9 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
             and context["can_tpa_process"])
     )
     context.update(form_overrides)
+    if tx.ticket_id and tx.ticket.status == "closed":
+        for key in ("can_edit_intake", "can_submit_intake", "can_edit_details", "can_delete_draft", "can_validate", "can_approve", "can_process", "can_tpa_process", "can_raise_query"):
+            context[key] = False
     if embedded:
         return context
     response = render(

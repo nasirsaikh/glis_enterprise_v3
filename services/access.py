@@ -15,7 +15,7 @@ def organization_allows(user, ticket, capability):
 class TicketAccessPolicy:
     @staticmethod
     def visible_queryset(user):
-        qs = Ticket.objects.select_related("requester", "assignee", "project", "product", "category", "sla_policy").prefetch_related("groups", "assignees")
+        qs = Ticket.objects.select_related("requester__profile", "assignee__profile", "project", "product", "category", "sla_policy").prefetch_related("groups", "assignees__profile")
         if not user.is_authenticated:
             return qs.none()
         return scope_tickets(qs, user).exclude(task_item__is_deleted=True)
@@ -35,6 +35,44 @@ class TicketAccessPolicy:
         if ticket.groups.filter(members=user, is_active=True, can_edit_group_tickets=True).exists():
             return True
         return ticket.requester_id == user.id and ticket.status == Ticket.Status.NEW
+
+    @staticmethod
+    def is_requester_team(user, ticket):
+        if not TicketAccessPolicy.can_view(user, ticket):
+            return False
+        if user.is_superuser or ticket.requester_id == user.pk:
+            return True
+        from apps.tickets.models import SupportGroup
+        return SupportGroup.objects.filter(
+            Q(members=ticket.requester_id) | Q(managers=ticket.requester_id), is_active=True,
+        ).filter(Q(members=user) | Q(managers=user)).exists()
+
+    @staticmethod
+    def can_comment(user, ticket):
+        if not TicketAccessPolicy.can_view(user, ticket) or ticket.status == Ticket.Status.CLOSED:
+            return False
+        if ticket.approval_state in {"pending", "rejected", "needs_info"}:
+            return TicketAccessPolicy.is_requester_team(user, ticket)
+        return True
+
+    @staticmethod
+    def can_close(user, ticket):
+        if not TicketAccessPolicy.can_view(user, ticket) or ticket.status == Ticket.Status.CLOSED:
+            return False
+        if ticket.approval_state in {"pending", "rejected", "needs_info"}:
+            return TicketAccessPolicy.is_requester_team(user, ticket)
+        return TicketAccessPolicy.is_requester_team(user, ticket) or TicketAccessPolicy.can_edit(user, ticket)
+
+    @staticmethod
+    def can_reopen(user, ticket):
+        from services.ticket_lifecycle import within_reopen_period
+        return within_reopen_period(ticket) and (
+            TicketAccessPolicy.is_requester_team(user, ticket) or TicketAccessPolicy.can_edit(user, ticket)
+        )
+
+    @staticmethod
+    def can_resubmit_approval(user, ticket):
+        return ticket.status != Ticket.Status.CLOSED and ticket.approval_state in {"rejected", "needs_info"} and TicketAccessPolicy.is_requester_team(user, ticket)
 
     @staticmethod
     def can_take_over(user, ticket):

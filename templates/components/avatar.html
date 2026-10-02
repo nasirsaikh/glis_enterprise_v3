@@ -1,0 +1,5 @@
+<span class="glis-avatar"><span class="{{ size_class|default:'glis-w-9' }} rounded-pill bg-primary text-white">
+  {% if person.profile.avatar %}<img src="{{ person.profile.avatar.url }}" alt="{{ person.get_full_name|default:person.username }}" loading="lazy">
+  {% elif person %}<span class="small fw-bold">{{ person.first_name|default:person.email|default:person.username|slice:':1'|upper }}</span>
+  {% else %}<i class="bi bi-activity" aria-hidden="true"></i>{% endif %}
+</span></span>

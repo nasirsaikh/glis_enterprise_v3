@@ -19,6 +19,7 @@
   <link href="{% static 'css/portal-compact.css' %}" rel="stylesheet" type="text/css">
   <link href="{% static 'css/style.css' %}?v=1.97-glis-1" rel="stylesheet">
 {% block extra_head %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'css/searchable-selects.css' %}">
 </head>
 
 <body class="glis-portal-app min-vh-100 bg-body-tertiary text-body"
@@ -29,6 +30,7 @@
       data-sidebar-mode="{{ user.profile.sidebar_mode|default:'mini' }}"
       data-user-theme="{{ user.profile.theme|default:'system' }}"
       data-user-name="{{ user.get_full_name|default:user.email }}"
+      data-user-avatar="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% endif %}"
       data-user-initial="{{ user.first_name|default:user.email|slice:':1'|upper }}">
 
   <a class="glis-skip-link visually-hidden-focusable" href="#portal-main">{% translate "Skip to content" %}</a>
@@ -256,6 +258,7 @@
   <script src="https://cdn.jsdelivr.net/npm/apexcharts" defer></script>
   <script src="{% static 'js/bootstrap.bundle.min.js' %}?v=5.3.2" defer></script>
   <script src="{% static 'js/main.js' %}?v=1.97-glis-1" defer></script>
+  <script src="{% static 'js/searchable-selects.js' %}" defer></script>
   <script src="{% static 'js/portal.js' %}" defer></script>
   <script src="{% static 'js/portal-tables.js' %}" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.15.8/dist/cdn.min.js" defer></script>

@@ -125,5 +125,5 @@ def get_transaction_wizard(tx, user, requested_step=None):
         "step_number": index + 1,
         "step_url": selected["url"],
         "step_redirected": bool(requested_step and selected["key"] != requested_step),
-        "transaction_closed": tx.status in CLOSED_STATUSES,
+        "transaction_closed": tx.status in CLOSED_STATUSES or bool(tx.ticket_id and tx.ticket.status == "closed"),
     }

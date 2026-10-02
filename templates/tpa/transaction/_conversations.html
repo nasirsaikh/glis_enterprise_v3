@@ -19,6 +19,7 @@
             <div class="mt-2 glis-max-h-80 glis-stack-3 overflow-y-auto rounded-3 bg-body p-2">
               {% for msg in q.visible_messages %}
               <div class="glis-message {% if msg.sender_id == request.user.id %}glis-message-end{% else %}glis-message-start{% endif %}">
+                <div class="glis-message-avatar">{% include 'components/avatar.html' with person=msg.sender %}</div>
                 <div class="glis-message-header glis-text-xs">{{ msg.sender.get_full_name|default:msg.sender.username }} · {{ msg.created_at|date:"d-M-Y H:i" }} {% if msg.audience == "INSURER_TPA_INTERNAL" %}<span class="badge text-bg-secondary glis-badge-small">{% translate "Internal" %}</span>{% endif %}</div>
                 <div class="glis-message-bubble {% if msg.kind == 'QUERY' %}glis-message-warning{% endif %}">{{ msg.ticket_comment.body|safe }}</div>
                 {% if msg.ticket_comment.attachments.all %}
@@ -69,6 +70,7 @@
           <div class="alert alert-info py-2"><i aria-hidden="true" class="bi bi-shield-lock"></i><span>{% translate "Only the specific message text explicitly shared with you is visible. The insurer/TPA internal thread, internal attachments and internal metadata remain private." %}</span></div>
           {% for msg in shared_internal_messages %}
           <div class="glis-message glis-message-start">
+            <div class="glis-message-avatar">{% include 'components/avatar.html' with person=msg.sender %}</div>
             <div class="glis-message-header glis-text-xs">
               {{ msg.sender.get_full_name|default:msg.sender.username }}
               · {{ msg.shared_with_client_at|date:"d-M-Y H:i" }}

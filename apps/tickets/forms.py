@@ -160,7 +160,7 @@ class TicketCommentForm(forms.ModelForm):
             "body": forms.Textarea(
                 attrs={
                     "class": "form-control w-100 richtext-source",
-                    "rows": 3,
+                    "rows": 6,
                     "placeholder": "Write an update…",
                 }
             ),
@@ -176,11 +176,23 @@ class TicketCommentForm(forms.ModelForm):
                 }
             ),
         }
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, ticket=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["body"].required = False
         self.fields["body"].widget.attrs.pop("required", None)
-        self.fields["status"].required = True        
+        self.fields["status"].required = False
+        choices = [("", _("Keep current status"))]
+        if ticket and user:
+            from services.access import TicketAccessPolicy
+            if TicketAccessPolicy.can_edit(user, ticket) and ticket.approval_state not in {"pending", "rejected", "needs_info"} and not hasattr(ticket, "tpa_transaction"):
+                choices += [(value, label) for value, label in Ticket.Status.choices if value not in {Ticket.Status.NEW, Ticket.Status.CLOSED}]
+            if TicketAccessPolicy.can_close(user, ticket):
+                choices.append((Ticket.Status.CLOSED, _("Close ticket")))
+            if not TicketAccessPolicy.can_view_internal_notes(user, ticket):
+                self.fields.pop("is_internal", None)
+        else:
+            choices += [(value, label) for value, label in Ticket.Status.choices if value != Ticket.Status.NEW]
+        self.fields["status"].choices = choices
 
 class TicketEditForm(forms.ModelForm):
     class Meta:
@@ -195,7 +207,7 @@ class TicketEditForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if self.instance.pk and hasattr(self.instance,'tpa_transaction'):
+        if self.instance.pk and (hasattr(self.instance,'tpa_transaction') or self.instance.status == Ticket.Status.CLOSED or self.instance.approval_state in {'pending','rejected','needs_info'}):
             self.fields['status'].disabled=True
         if user and not (user.is_superuser or user.has_perm("tickets.change_ticket")):
             self.fields.pop("priority", None)
@@ -249,8 +261,18 @@ class TicketShareForm(forms.Form):
 
 
 class TicketApprovalDecisionForm(forms.Form):
-    decision = forms.ChoiceField(choices=[("approve", _("Approve")), ("reject", _("Reject"))], widget=RadioSelect(attrs={"class": "form-check-input"}))
+    decision = forms.ChoiceField(choices=[("approve", _("Approve")), ("reject", _("Reject")), ("needs_info", _("Request additional information"))], widget=RadioSelect(attrs={"class": "form-check-input"}))
     note = forms.CharField(required=False, max_length=2000, widget=forms.Textarea(attrs={"class": "form-control w-100", "rows": 3}))
+
+    def clean(self):
+        data = super().clean()
+        if data.get("decision") in {"reject", "needs_info"} and not data.get("note", "").strip():
+            self.add_error("note", _("Explain the rejection or information required."))
+        return data
+
+
+class TicketApprovalResubmitForm(forms.Form):
+    note = forms.CharField(max_length=2000, label=_("Response to the approver"), widget=forms.Textarea(attrs={"class": "form-control w-100", "rows": 4}))
 
 
 class TicketFilterForm(forms.Form):
@@ -277,6 +299,30 @@ class TicketFilterForm(forms.Form):
         elif not user.is_superuser:
             organizations = organizations.filter(pk__in=organization_ids(user))
         self.fields["organization"].queryset = organizations.order_by("organization_type", "name_en")
+
+
+class DashboardFilterForm(TicketFilterForm):
+    product = forms.ModelChoiceField(required=False, queryset=Product.objects.none(), empty_label=_("All products"), widget=forms.Select(attrs={"class": "form-select w-100"}))
+    group = forms.ModelChoiceField(required=False, queryset=SupportGroup.objects.none(), empty_label=_("All support groups"), widget=forms.Select(attrs={"class": "form-select w-100"}))
+    assignee = forms.ModelChoiceField(required=False, queryset=get_user_model().objects.none(), empty_label=_("All assignees"), widget=forms.Select(attrs={"class": "form-select w-100"}))
+    request_type = forms.ChoiceField(required=False, choices=[("", _("All request types")), *Project.RequestType.choices], widget=forms.Select(attrs={"class": "form-select w-100"}))
+    approval_state = forms.ChoiceField(required=False, choices=[("", _("All approval states")), *Ticket._meta.get_field("approval_state").choices], widget=forms.Select(attrs={"class": "form-select w-100"}))
+    date_from = forms.DateField(required=False, label=_("Created from"), widget=forms.DateInput(attrs={"type": "date", "class": "form-control w-100"}))
+    date_to = forms.DateField(required=False, label=_("Created through"), widget=forms.DateInput(attrs={"type": "date", "class": "form-control w-100"}))
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, user=user, **kwargs)
+        self.fields["product"].queryset = accessible_products(user)
+        self.fields["group"].queryset = visible_support_groups(user)
+        self.fields["assignee"].queryset = visible_users(user)
+        for field in self.fields.values():
+            field.widget.attrs["form"] = "dashboard-filter-form"
+
+    def clean(self):
+        data = super().clean()
+        if data.get("date_from") and data.get("date_to") and data["date_from"] > data["date_to"]:
+            self.add_error("date_to", _("The end date must be on or after the start date."))
+        return data
 
 
 class TicketParticipantForm(forms.Form):

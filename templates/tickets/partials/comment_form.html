@@ -6,41 +6,36 @@
         hx-target="#comment-list" hx-swap="beforeend" hx-disabled-elt="#comment-submit-button"
         hx-indicator="#comment-submit-spinner">
     {% csrf_token %}
-    <label class="glis-field"><span class="form-label">{% translate "Message" %} *</span>{{ comment_form.body }}</label>
+    <div class="glis-field"><label class="form-label" for="{{ comment_form.body.id_for_label }}">{% translate "Message" %} *</label>{{ comment_form.body }}</div>
 
     <div class="composer-options">
-    <label class="glis-field">{{ comment_form.status }}</label>
+    <label class="glis-field"><span class="form-label">{% translate "Status" %}</span>{{ comment_form.status }}</label>
     {% if comment_form.is_internal %}
     <label class="d-flex align-items-start gap-2 rounded-3 border border-body bg-body-tertiary p-2">
       {{ comment_form.is_internal }}
-      <span data-bs-toggle="tooltip" data-bs-placement="top" data-bs-custom-class="custom-tooltip" data-bs-title="{% translate "Internal notes are visible only to authorized staff." %}"><strong class="d-block small">{% translate "Internal note" %}</strong>
+      <span data-bs-toggle="tooltip" data-bs-placement="top" data-bs-custom-class="custom-tooltip" data-bs-title="{% translate "Internal notes are visible only to authorized staff." %}"><strong class="d-block small">{% translate "Internal note" %}</strong></span>
   
     </label>
     {% endif %}
     </div>
 
-    {% if ticket.category.comment_attachment_required %}
     <div>
-      <span class="mb-2 d-block small fw-semibold"><i class="bi bi-paperclip me-1"></i>{% translate "Documents" %} *</span>
-      <div id="comment-dropzone" data-dropzone class="glis-cursor-pointer rounded-4 border glis-border-dashed border-body bg-body-tertiary p-4 text-center" role="button" tabindex="0">
+      <span class="mb-2 d-block small fw-semibold"><i class="bi bi-paperclip me-1"></i>{% translate "Documents" %}{% if ticket.category.comment_attachment_required %} *{% else %} ({% translate "optional" %}){% endif %}</span>
+      <div id="comment-dropzone" data-dropzone data-ready="true" class="glis-cursor-pointer rounded-4 border glis-border-dashed border-body bg-body-tertiary p-3 text-center" role="button" tabindex="0">
         
         <i class="bi bi-cloud-arrow-up mb-2 d-block fs-3 text-primary"></i>
         <strong class="d-block">{% translate "Drag & drop documents here" %}</strong>
         <span class="mt-1 d-block small text-body-secondary">{% translate "or click to select documents" %}</span>
         <div class="mt-2 glis-text-xs lh-base text-body-secondary">{% translate "Maximum" %} {{ ticket.category.comment_attachment_max_size_mb }} MB {% translate "per file" %} · {% translate "Maximum" %} {{ ticket.category.comment_attachment_max_count }} {% translate "files" %}<br>{% translate "Allowed" %}: {{ ticket.category.comment_attachment_extensions }}</div>
-        <input id="comment-attachments" type="file" name="attachments" class="d-none" multiple>
+        <input id="comment-attachments" type="file" name="attachments" class="d-none" multiple accept="{{ ticket.category.comment_attachment_extensions_list|join:',' }}">
       </div>
       <div id="comment-selected-files" class="mt-2 glis-stack-2"></div>
     </div>
-    {% else %}
-
-    {% endif %}
 
     <div class="d-flex justify-content-end"><button id="comment-submit-button" class="btn btn-primary rounded-pill" type="submit"><span id="comment-submit-spinner" class="htmx-indicator spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><i class="bi bi-send"></i>{% translate "Post Comment" %}</button></div>
   </form>
 </div>
 
-{% if ticket.category.comment_attachment_required %}
 <script>
 (function () {
   const form = document.getElementById("ticket-comment-form");
@@ -125,22 +120,3 @@
   });
 })();
 </script>
-{% else %}
-<script>
-(function () {
-  const form = document.getElementById("ticket-comment-form");
-  if (!form) return;
-  document.body.addEventListener("ticketCommentPosted", function () {
-    const errorContainer = document.getElementById("comment-form-errors");
-    if (errorContainer) errorContainer.innerHTML = "";
-    form.reset();
-    const editorField = form.querySelector('[name="body"]');
-    if (!editorField) return;
-    editorField.value = "";
-    editorField.dispatchEvent(new Event("input", { bubbles: true }));
-    const richEditor = editorField.nextElementSibling?.querySelector?.(".richtext-canvas");
-    if (richEditor) richEditor.innerHTML = "";
-  });
-})();
-</script>
-{% endif %}

@@ -37,3 +37,8 @@ html[dir="rtl"] .glis-switch:checked { background-position: left center; }
  .glis-tilt { transform: none !important; }
  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+/* Editors keep their contents when enlarged and can also be resized by dragging. */
+.richtext-editor .richtext-canvas { min-height: 12rem; height: 14rem; resize: vertical; overflow: auto; }
+.richtext-editor.is-expanded .richtext-canvas { height: min(65vh, 42rem); }
+.richtext-editor .richtext-canvas:focus { outline: 2px solid var(--bs-primary); outline-offset: -2px; }
+.ticket-activity pre { max-height: 20rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }

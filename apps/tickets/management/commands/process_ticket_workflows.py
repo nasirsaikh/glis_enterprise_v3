@@ -37,8 +37,9 @@ class Command(BaseCommand):
         resolved = Ticket.objects.filter(status=Ticket.Status.RESOLVED, resolved_at__isnull=False).select_related("category", "requester")
         for ticket in resolved:
             if ticket.resolved_at + timedelta(days=ticket.category.auto_close_days) <= now:
+                ticket.resume_status = Ticket.Status.OPEN
                 ticket.status, ticket.closed_at = Ticket.Status.CLOSED, now
-                ticket.save(update_fields=["status", "closed_at", "updated_at"])
+                ticket.save(update_fields=["status", "resume_status", "closed_at", "updated_at"])
                 TicketEvent.objects.create(ticket=ticket, event_type="auto_closed", summary=f"Automatically closed after {ticket.category.auto_close_days} days")
                 notify_users([ticket.requester], ticket=ticket, kind="update", title=f"Ticket automatically closed: {ticket.reference}", body=f"Reopening is allowed for {ticket.category.reopen_allowed_days} days.", send_email_message=ticket.category.send_update_email)
                 auto_closed += 1

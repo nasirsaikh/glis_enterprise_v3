@@ -39,11 +39,12 @@ def _event(tx, actor, event_type, summary, details=None):
         closed = tx.status in {tx.Status.COMPLETED, tx.Status.PROCESSED, tx.Status.CANCELLED, tx.Status.REJECTED}
         ticket.status = Ticket.Status.CLOSED if closed else Ticket.Status.PENDING_CUSTOMER if tx.status in {tx.Status.NEEDS_INFORMATION,tx.Status.TPA_QUERY} else Ticket.Status.NEW if tx.status in {tx.Status.DRAFT,tx.Status.EXTRACTING} else Ticket.Status.IN_PROGRESS
         if closed:
+            ticket.resume_status = ticket.resume_status or Ticket.Status.IN_PROGRESS
             ticket.resolved_at = ticket.resolved_at or tx.processed_at or timezone.now()
             ticket.closed_at = ticket.closed_at or timezone.now()
         if actor and actor.pk != ticket.requester_id and not ticket.first_responded_at:
             ticket.first_responded_at = timezone.now()
-        ticket.save(update_fields=['status','resolved_at','closed_at','first_responded_at','updated_at'])
+        ticket.save(update_fields=['status','resume_status','resolved_at','closed_at','first_responded_at','updated_at'])
         TicketEvent.objects.create(
             ticket=tx.ticket,
             actor=actor,
@@ -109,8 +110,13 @@ def _data(action):
     }
 
 
+def ensure_active_ticket(tx):
+    if tx.ticket_id and Ticket.objects.select_for_update().get(pk=tx.ticket_id).status == Ticket.Status.CLOSED:
+        raise ValueError("Reopen the linked ticket before continuing this workflow.")
+
+
 def lock_approval_transaction(tx):
-    Ticket.objects.select_for_update().get(pk=tx.ticket_id)
+    ensure_active_ticket(tx)
     MemberTransaction.objects.select_for_update().get(pk=tx.pk)
     tx.refresh_from_db()
 
@@ -161,6 +167,9 @@ def reject_transaction(tx, actor, reason):
 
 @transaction.atomic
 def dispatch_to_tpa(tx, actor=None):
+    ensure_active_ticket(tx)
+    if tx.ticket_id and Ticket.objects.filter(pk=tx.ticket_id, approval_state__in=["pending", "rejected", "needs_info"]).exists():
+        raise ValueError("Resolve the linked ticket approval before dispatch to TPA.")
     if tx.status not in {tx.Status.APPROVED, tx.Status.AUTO_APPROVED}:
         raise ValueError("Transaction must be approved before dispatch to TPA.")
     tx.status = tx.Status.SENT_TO_TPA
@@ -189,6 +198,7 @@ def dispatch_to_tpa(tx, actor=None):
 
 @transaction.atomic
 def start_tpa_processing(tx, actor):
+    ensure_active_ticket(tx)
     if tx.status != tx.Status.SENT_TO_TPA:
         raise ValueError("Transaction is not waiting for TPA processing.")
     if not can_process_tpa_transaction(actor, tx):
@@ -251,6 +261,7 @@ def validated_tpa_values(
 
 @transaction.atomic
 def update_tpa_action(action, actor, **values):
+    ensure_active_ticket(action.transaction)
     tx = MemberTransaction.objects.select_for_update().get(pk=action.transaction_id)
     if tx.status != tx.Status.TPA_IN_PROGRESS:
         raise ValueError("TPA member processing is available only while TPA processing is in progress.")
@@ -304,6 +315,7 @@ def raise_transaction_query(
     audience=TransactionQuery.Audience.CLIENT_VISIBLE,
     selected_participant_ids=None,
 ):
+    ensure_active_ticket(tx)
     if purpose == TransactionQuery.Purpose.APPROVAL:
         if tx.status != tx.Status.PENDING_APPROVAL:
             raise ValueError("Approval discussion is available only while approval is pending.")
@@ -405,6 +417,7 @@ def raise_tpa_query(tx, actor, subject, message, *, audience=None):
 
 @transaction.atomic
 def post_query_message(query, actor, message, *, kind=None, audience=None):
+    ensure_active_ticket(query.transaction)
     if query.status != TransactionQuery.Status.OPEN:
         raise ValueError("This query is already resolved.")
     tx = query.transaction
@@ -494,6 +507,7 @@ def post_query_message(query, actor, message, *, kind=None, audience=None):
 
 @transaction.atomic
 def share_query_message_with_client(query_message, actor):
+    ensure_active_ticket(query_message.query.transaction)
     tx = query_message.query.transaction
     if not (
         actor.is_superuser
@@ -533,6 +547,7 @@ def share_query_message_with_client(query_message, actor):
 
 @transaction.atomic
 def resolve_tpa_query(query, actor):
+    ensure_active_ticket(query.transaction)
     tx = query.transaction
     if query.status != TransactionQuery.Status.OPEN:
         return tx
@@ -595,6 +610,7 @@ def resolve_tpa_query(query, actor):
 
 @transaction.atomic
 def complete_tpa_transaction(tx, actor):
+    ensure_active_ticket(tx)
     if tx.status != tx.Status.TPA_IN_PROGRESS:
         raise ValueError("Transaction must be in TPA processing before completion.")
     if not can_process_tpa_transaction(actor, tx):
@@ -673,6 +689,7 @@ def update_card_dispatch(
     remarks="",
     proof_attachment=None,
 ):
+    ensure_active_ticket(tx)
     if tx.status != tx.Status.CARD_DISPATCH:
         raise ValueError("Card dispatch is not active for this transaction.")
     if not can_process_tpa_transaction(actor, tx):
@@ -724,6 +741,7 @@ def update_card_dispatch(
 
 @transaction.atomic
 def run_validation(tx, actor=None):
+    ensure_active_ticket(tx)
     validate_transaction(tx)
     tx.refresh_from_db()
 
@@ -748,7 +766,7 @@ def run_validation(tx, actor=None):
     if tx.ticket_id and tx.ticket.approval_state == "rejected":
         tx.status = tx.Status.REJECTED
         tx.rejection_reason = "Linked GLIS ticket approval was rejected."
-    elif tx.ticket_id and tx.ticket.approval_state == "pending":
+    elif tx.ticket_id and tx.ticket.approval_state in {"pending", "needs_info"}:
         tx.status = tx.Status.PENDING_APPROVAL
     elif tx.ticket_id and tx.ticket.approval_state == 'approved':
         tx.status = tx.Status.APPROVED
@@ -797,7 +815,7 @@ def approve_transaction(tx, actor):
         raise ValueError("Resolve the open approval query before approving the transaction.")
     if tx.ticket_id:
         tx.ticket.refresh_from_db(fields=["approval_state"])
-        if tx.ticket.approval_state == "pending":
+        if tx.ticket.approval_state in {"pending", "needs_info"}:
             raise ValueError("Complete the linked GLIS ticket approval first.")
         if tx.ticket.approval_state == "rejected":
             raise ValueError("The linked GLIS ticket approval was rejected.")
@@ -1106,6 +1124,7 @@ def _process_reactivation(tx, action):
 
 @transaction.atomic
 def process_transaction(tx, actor):
+    ensure_active_ticket(tx)
     original_status = tx.status
     if tx.status not in {tx.Status.TPA_IN_PROGRESS, tx.Status.CARD_DISPATCH}:
         raise ValueError(

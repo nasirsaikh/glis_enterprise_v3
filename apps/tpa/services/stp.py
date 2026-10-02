@@ -18,7 +18,7 @@ def evaluate_stp(tx):
         ):
             blockers.append("LOW_AI_CONFIDENCE")
 
-    if tx.ticket_id and tx.ticket.approval_state == "pending":
+    if tx.ticket_id and tx.ticket.approval_state in {"pending", "needs_info", "rejected"}:
         blockers.append("APPROVAL_REQUIRED")
 
     tx.stp_blockers = sorted(set(blockers))

@@ -526,11 +526,24 @@
       source.dataset.editorReady = "true";
       source.hidden = true;
       const wrapper = document.createElement("div");
-      wrapper.className = "card overflow-hidden border border-body bg-body shadow-sm";
-      wrapper.innerHTML = '<div class="d-flex flex-wrap align-items-center gap-1 border-bottom border-body bg-body-tertiary p-2"><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="bold" title="Bold" aria-label="Bold"><i class="bi bi-type-bold"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i class="bi bi-type-italic"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="underline" title="Underline" aria-label="Underline"><i class="bi bi-type-underline"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bullets"><i class="bi bi-list-ul"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list"><i class="bi bi-list-ol"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="createLink" title="Link" aria-label="Insert link"><i class="bi bi-link-45deg"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-image-button title="Upload image" aria-label="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span class="badge bg-body-secondary text-body-secondary glis-badge-small ms-2">Paste or upload images</span></div><div class="richtext-canvas form-control w-100 rounded-0 border-0 bg-body p-3" style="min-height:10rem;overflow:auto" contenteditable="true" role="textbox" aria-multiline="true"></div>';
+      wrapper.className = "card richtext-editor overflow-hidden border border-body bg-body shadow-sm";
+      wrapper.innerHTML = '<div class="d-flex flex-wrap align-items-center gap-1 border-bottom border-body bg-body-tertiary p-2"><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="bold" title="Bold" aria-label="Bold"><i class="bi bi-type-bold"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i class="bi bi-type-italic"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="underline" title="Underline" aria-label="Underline"><i class="bi bi-type-underline"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bullets"><i class="bi bi-list-ul"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list"><i class="bi bi-list-ol"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="createLink" title="Link" aria-label="Insert link"><i class="bi bi-link-45deg"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-image-button title="Upload image" aria-label="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span class="badge bg-body-secondary text-body-secondary glis-badge-small ms-2">Paste or upload images</span><button type="button" class="btn btn-light btn-sm ms-auto" data-expand-editor aria-expanded="false">Expand editor</button></div><div class="richtext-canvas form-control w-100 rounded-0 border-0 bg-body p-3" style="overflow:auto" contenteditable="true" role="textbox" aria-multiline="true"></div>';
       source.insertAdjacentElement("afterend", wrapper);
       const editor = wrapper.querySelector(".richtext-canvas");
       editor.innerHTML = source.value || "";
+      editor.id = `${source.id || "richtext"}-editor`;
+      const sourceLabel = source.id && document.querySelector(`label[for="${source.id}"]`);
+      if (sourceLabel) sourceLabel.htmlFor = editor.id;
+      editor.setAttribute("aria-label", sourceLabel?.textContent?.trim() || "Message");
+      const expandButton = wrapper.querySelector("[data-expand-editor]");
+      expandButton.textContent = root.lang === "ar" ? "توسيع المحرر" : "Expand editor";
+      expandButton.setAttribute("aria-controls", editor.id);
+      expandButton.addEventListener("click", () => {
+        const expanded = wrapper.classList.toggle("is-expanded");
+        editor.style.height = "";
+        expandButton.setAttribute("aria-expanded", String(expanded));
+        expandButton.textContent = root.lang === "ar" ? (expanded ? "تصغير المحرر" : "توسيع المحرر") : (expanded ? "Collapse editor" : "Expand editor");
+      });
       const sync = () => { source.value = editor.innerHTML; source.dispatchEvent(new Event("change", {bubbles: true})); };
       editor.addEventListener("input", sync);
       editor.addEventListener("blur", sync);
@@ -597,7 +610,11 @@
       const initial = document.createElement("span");
       initial.className = "small fw-bold";
       initial.textContent = currentUserInitial;
-      circle.appendChild(initial);
+      const avatarURL = document.body.dataset.userAvatar;
+      if (avatarURL) {
+        const photo = document.createElement("img"); photo.src = avatarURL; photo.alt = currentUserName;
+        circle.appendChild(photo);
+      } else circle.appendChild(initial);
       image.appendChild(circle);
       return image;
     };

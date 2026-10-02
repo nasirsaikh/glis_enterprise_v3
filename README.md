@@ -232,6 +232,8 @@ Authorization is enforced server-side. Hiding a menu item is never considered su
 
 The ticket platform is the workflow backbone used directly by service operations and indirectly by TPA transactions and recurring tasks.
 
+Category settings now distinguish attachments required at creation from those required in comments. Reopening follows the category's allowed days and restores the saved workflow step. Approval queries/rejections can be addressed and resubmitted by the creator or their support team; comments and recorded activities share a chronological conversation. See [Ticket workflow updates](docs/TICKET_WORKFLOW_UPDATES.md) for configuration and upgrade commands.
+
 ## Ticket capabilities
 
 - project → product → category hierarchy;

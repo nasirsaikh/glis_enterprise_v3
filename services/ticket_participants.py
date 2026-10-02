@@ -49,7 +49,7 @@ def tag_user(ticket,actor,user,*,active=True):
         tag=TicketTaggedUser.objects.filter(ticket=ticket,user=user,is_active=True).first()
         if not tag:raise ValueError('This user is not an active tagged participant.')
         tag.is_active=False;tag.save(update_fields=['is_active','updated_at'])
-    event(ticket,actor,'user_tagged' if active else 'user_untagged','Ticket participants updated',{'active':not active},{'user':user.pk,'active':active})
+    event(ticket,actor,'user_tagged' if active else 'user_untagged',f"{'Tagged' if active else 'Untagged'} {user.get_full_name() or user.username}",{'active':not active},{'user':user.pk,'active':active})
     return tag
 
 @transaction.atomic
@@ -57,11 +57,12 @@ def request_approval(ticket,actor,approver,note=''):
     ticket=Ticket.objects.select_for_update().get(pk=ticket.pk)
     if not TicketAccessPolicy.can_share(actor,ticket):raise PermissionError('Approval request permission is required.')
     if ticket.status in {Ticket.Status.CLOSED,Ticket.Status.RESOLVED}:raise ValueError('A completed request cannot request approval.')
+    if ticket.approval_state in {'rejected','needs_info'}:raise ValueError('Resubmit the outstanding query or rejection before requesting another approval.')
     if not available_approvers(actor,ticket).filter(pk=approver.pk).exists():raise PermissionError('Select an authorized approver.')
     approval,created=TicketApproval.objects.get_or_create(ticket=ticket,step=None,approver=approver,status='pending',defaults={'requested_by':actor,'note':note})
     if created:
         ticket.approval_state='pending';ticket.save(update_fields=['approval_state','updated_at'])
-        event(ticket,actor,'approval_requested','Approval requested',{}, {'approval':approval.pk,'approver':approver.pk,'note':note})
+        event(ticket,actor,'approval_requested',f'Approval requested from {approver.get_full_name() or approver.username}',{}, {'approval':approval.pk,'approver':approver.pk,'note':note})
         notify_users([approver],ticket=ticket,kind='approval',title=f'Approval required: {ticket.reference}',body=note,send_email_message=ticket.category.send_update_email)
     return approval
 
@@ -73,7 +74,7 @@ def cancel_approval(approval,actor):
     if not TicketAccessPolicy.can_view(actor,ticket) or (approval.requested_by_id!=actor.pk and not actor.is_superuser):raise PermissionError('Only the requester can cancel this approval.')
     approval.status,approval.decided_at='cancelled',timezone.now();approval.save(update_fields=['status','decided_at','updated_at'])
     statuses=set(ticket.approvals.values_list('status',flat=True))
-    ticket.approval_state='rejected' if 'rejected' in statuses else 'pending' if 'pending' in statuses else 'approved' if 'approved' in statuses else 'not_required'
+    ticket.approval_state='rejected' if 'rejected' in statuses else 'needs_info' if 'needs_info' in statuses else 'pending' if 'pending' in statuses else 'approved' if 'approved' in statuses else 'not_required'
     ticket.save(update_fields=['approval_state','updated_at'])
-    event(ticket,actor,'approval_cancelled','Approval cancelled',{'status':'pending'},{'approval':approval.pk,'status':'cancelled'})
+    event(ticket,actor,'approval_cancelled',f'Approval request cancelled for {approval.approver.get_full_name() or approval.approver.username}',{'status':'pending'},{'approval':approval.pk,'status':'cancelled'})
     notify_users([approval.approver],ticket=ticket,kind='approval',title=f'Approval cancelled: {ticket.reference}')

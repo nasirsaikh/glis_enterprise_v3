@@ -1,7 +1,10 @@
 {% extends "admin/base.html" %}
+{% load static %}
 
 {% block extrahead %}
 {{ block.super }}
+<link rel="stylesheet" href="{% static 'css/searchable-selects.css' %}">
+<script src="{% static 'js/searchable-selects.js' %}" defer></script>
 <style>
     /* Force Django CMS / Admin redirect and select widgets to full width */
     .field-redirect select, 

@@ -122,12 +122,13 @@ class Category(TimeStampedModel, LocalizedModelMixin):
     default_user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, related_name="default_categories", on_delete=models.SET_NULL)
     ai_enabled = models.BooleanField(default=True)
     required_documents = models.JSONField(default=list, blank=True, help_text="Admin-driven attachment definitions used by the ticket form.")
-    comment_attachment_required = models.BooleanField(default=False,help_text="Enable and require attachments when posting comments for this category.",)
+    creation_attachment_required = models.BooleanField(default=False, verbose_name="Attachment required during ticket creation", help_text="Require at least one attachment when submitting a new ticket. Named document requirements still apply.")
+    comment_attachment_required = models.BooleanField(default=False, verbose_name="Attachment required during comments", help_text="Require at least one attachment for each comment. Attachments remain optional when disabled.")
     comment_attachment_max_size_mb = models.PositiveIntegerField(default=5,help_text=("Maximum size in MB for each file uploaded ""with a ticket comment."),)    
     comment_attachment_max_count = models.PositiveIntegerField(default=5,help_text=("Maximum number of files allowed per comment."),)
     comment_attachment_extensions = models.CharField(max_length=500,default="pdf,jpg,jpeg,png,doc,docx,xls,xlsx",help_text=("Comma-separated allowed file extensions. ""Example: pdf,jpg,jpeg,png,doc,docx,xls,xlsx"),)
     auto_close_days = models.PositiveSmallIntegerField(default=7)
-    reopen_allowed_days = models.PositiveSmallIntegerField(default=14)
+    reopen_allowed_days = models.PositiveSmallIntegerField(default=14, help_text="Days after closure during which a ticket can be reopened. Set to 0 to disable reopening.")
     send_initial_email = models.BooleanField(default=True)
     send_update_email = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
@@ -309,9 +310,10 @@ class Ticket(TimeStampedModel):
     first_responded_at = models.DateTimeField(null=True, blank=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
     closed_at = models.DateTimeField(null=True, blank=True)
+    resume_status = models.CharField(max_length=24, choices=Status.choices, blank=True, help_text="Status to restore when reopening a paused ticket.")
     ai_summary = models.TextField(blank=True)
     ai_recommendations = models.JSONField(default=dict, blank=True)
-    approval_state = models.CharField(max_length=20, default="not_required", choices=[("not_required", "Not required"), ("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected")], db_index=True)
+    approval_state = models.CharField(max_length=20, default="not_required", choices=[("not_required", "Not required"), ("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected"), ("needs_info", "Additional information required")], db_index=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -552,7 +554,7 @@ class TicketApproval(TimeStampedModel):
     step = models.ForeignKey(ApprovalStep, null=True, blank=True, related_name="ticket_approvals", on_delete=models.PROTECT)
     requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="requested_ticket_approvals")
     approver = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="ticket_approvals", on_delete=models.PROTECT)
-    status = models.CharField(max_length=20, default="pending", choices=[("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected"), ("skipped", "Skipped"), ("cancelled", "Cancelled")])
+    status = models.CharField(max_length=20, default="pending", choices=[("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected"), ("needs_info", "Additional information required"), ("skipped", "Skipped"), ("cancelled", "Cancelled")])
     decided_at = models.DateTimeField(null=True, blank=True)
     note = models.TextField(blank=True)
 

@@ -30,6 +30,7 @@ from .forms import (
     TicketApprovalDecisionForm, TicketAssignmentForm, TicketCommentForm,
     TicketCreateStep1Form, TicketEditForm, TicketFilterForm, TicketIntakeForm,
     TicketReviewForm, TicketShareForm, UnifiedRequestForm, TicketParticipantForm, TicketApprovalRequestForm,
+    TicketApprovalResubmitForm, DashboardFilterForm,
 )
 from .models import (
     Category, DynamicForm, Notification, Product, Project, SLAPolicy, SupportGroup,
@@ -50,7 +51,7 @@ def _apply_ticket_filters(qs, data):
     if data.get("q"):
         term = data["q"]
         qs = qs.filter(Q(reference__icontains=term) | Q(subject__icontains=term) | Q(description__icontains=term) | Q(requester__email__icontains=term))
-    for key in ("status", "priority", "project", "category"):
+    for key in ("status", "priority", "project", "category", "product", "approval_state"):
         if data.get(key):
             qs = qs.filter(**{key: data[key]})
     if data.get("organization"):
@@ -60,7 +61,17 @@ def _apply_ticket_filters(qs, data):
     if data.get("sla") == "overdue":
         qs = qs.filter(resolution_due_at__lt=timezone.now()).exclude(status__in=[Ticket.Status.RESOLVED, Ticket.Status.CLOSED])
     elif data.get("sla") == "at_risk":
-        qs = qs.filter(resolution_due_at__range=(timezone.now(), timezone.now() + timedelta(hours=2)))
+        qs = qs.filter(resolution_due_at__range=(timezone.now(), timezone.now() + timedelta(hours=2))).exclude(status__in=[Ticket.Status.RESOLVED, Ticket.Status.CLOSED])
+    if data.get("group"):
+        qs = qs.filter(groups=data["group"]).distinct()
+    if data.get("assignee"):
+        qs = qs.filter(Q(assignee=data["assignee"]) | Q(assignees=data["assignee"])).distinct()
+    if data.get("request_type"):
+        qs = qs.filter(project__request_type=data["request_type"])
+    if data.get("date_from"):
+        qs = qs.filter(created_at__date__gte=data["date_from"])
+    if data.get("date_to"):
+        qs = qs.filter(created_at__date__lte=data["date_to"])
     return qs
 
 
@@ -76,7 +87,9 @@ def _jsonable(value):
     return value
 
 
-def _validate_wizard_attachments(request, specs, form):
+def _validate_wizard_attachments(request, specs, form, category=None):
+    if category and category.creation_attachment_required and not any(request.FILES.getlist(item.get("name", "")) for item in specs):
+        form.add_error(None, "Please attach at least one document when creating this ticket.")
     for spec in specs:
         uploads = request.FILES.getlist(spec.get("name", ""))
         minimum = int(spec.get("min_count", 1 if spec.get("required") else 0))
@@ -87,6 +100,8 @@ def _validate_wizard_attachments(request, specs, form):
             form.add_error(None, spec.get("max_count_message") or f"No more than {maximum} files are allowed for {spec.get('label')}.")
         allowed = {ext.lower() for ext in spec.get("allowed_extensions", [])}
         for upload in uploads:
+            if upload.size <= 0:
+                form.add_error(None, f"{upload.name}: the uploaded file is empty.")
             if allowed and Path(upload.name).suffix.lower() not in allowed:
                 form.add_error(None, spec.get("invalid_type_message") or f"{upload.name} has an unsupported file type.")
             if upload.size > int(spec.get("max_size_mb", 10)) * 1024 * 1024:
@@ -96,6 +111,11 @@ def _validate_wizard_attachments(request, specs, form):
 @login_required
 def dashboard(request):
     qs = TicketAccessPolicy.visible_queryset(request.user)
+    form = DashboardFilterForm(request.GET, user=request.user)
+    if form.is_valid():
+        qs = _apply_ticket_filters(qs, form.cleaned_data)
+    else:
+        qs = qs.none()
     now = timezone.now()
     resolved_month = qs.filter(resolved_at__year=now.year, resolved_at__month=now.month).count()
     open_qs = qs.exclude(status__in=[Ticket.Status.RESOLVED, Ticket.Status.CLOSED])
@@ -113,11 +133,11 @@ def dashboard(request):
         "resolution_tat": round(resolution_tat.total_seconds() / 3600, 1) if resolution_tat else 0,
         "sla_attainment": round((sla_met / resolved_with_sla_count) * 100, 1) if resolved_with_sla_count else 100,
     }
-    by_status = list(qs.values("status").annotate(total=Count("id")).order_by("status"))
-    by_priority = list(qs.values("priority").annotate(total=Count("id")).order_by("priority"))
-    by_category = list(qs.values(label=F("category__name_en")).annotate(total=Count("id")).order_by("-total")[:10])
-    by_product = list(qs.values(label=F("product__name_en")).annotate(total=Count("id")).order_by("-total")[:10])
-    by_project = list(qs.values(label=F("project__name_en")).annotate(total=Count("id")).order_by("-total")[:10])
+    by_status = list(qs.values("status").annotate(total=Count("id", distinct=True)).order_by("status"))
+    by_priority = list(qs.values("priority").annotate(total=Count("id", distinct=True)).order_by("priority"))
+    by_category = list(qs.values(label=F("category__name_en")).annotate(total=Count("id", distinct=True)).order_by("-total")[:10])
+    by_product = list(qs.values(label=F("product__name_en")).annotate(total=Count("id", distinct=True)).order_by("-total")[:10])
+    by_project = list(qs.values(label=F("project__name_en")).annotate(total=Count("id", distinct=True)).order_by("-total")[:10])
     by_assignee = list(
         qs.values("assignees__first_name", "assignees__last_name", "assignees__email")
         .annotate(total=Count("id", distinct=True))
@@ -128,9 +148,9 @@ def dashboard(request):
             value for value in (row.get("assignees__first_name"), row.get("assignees__last_name")) if value
         ).strip()
         row["label"] = full_name or row.get("assignees__email") or "Unassigned"
-    daily_open = list(qs.filter(created_at__gte=now - timedelta(days=13)).annotate(day=TruncDate("created_at")).values("day").annotate(total=Count("id")).order_by("day"))
+    daily_open = list(qs.filter(created_at__gte=now - timedelta(days=13)).annotate(day=TruncDate("created_at")).values("day").annotate(total=Count("id", distinct=True)).order_by("day"))
     chart_data = {"status": by_status, "priority": by_priority, "category": by_category, "product": by_product, "project": by_project, "assignee": by_assignee, "daily_open": daily_open}
-    return render(request, "portal/dashboard.html", {"metrics": metrics, "chart_data": chart_data, "recent_tickets": qs[:7], "attention": qs.filter(Q(priority="critical") | Q(resolution_due_at__lt=now + timedelta(hours=2)))[:6]})
+    return render(request, "portal/dashboard.html", {"filter_form": form, "metrics": metrics, "chart_data": chart_data, "recent_tickets": qs[:7], "attention": open_qs.filter(Q(priority="critical") | Q(resolution_due_at__lt=now + timedelta(hours=2)))[:6]})
 
 
 @login_required
@@ -182,7 +202,7 @@ def ticket_list(request):
 @login_required
 def ticket_detail(request, reference):
     ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user), reference=reference)
-    comments = (ticket.comments.select_related("author").prefetch_related("attachments"))    
+    comments = ticket.comments.select_related("author__profile").prefetch_related("attachments")
     if not TicketAccessPolicy.can_view_internal_notes(request.user, ticket):
         comments = comments.filter(is_internal=False)
     dynamic_values = getattr(ticket, "dynamic_data", None)
@@ -193,8 +213,31 @@ def ticket_detail(request, reference):
                 dynamic_values[key] = "••••••"
     current_sequence = current_approval_sequence(ticket)
     actionable_approvals = ticket.approvals.filter(Q(step__isnull=True) | Q(step__sequence=current_sequence), approver=request.user, status="pending").select_related("step")
+    if ticket.status == Ticket.Status.CLOSED or ticket.approval_state != "pending":
+        actionable_approvals = actionable_approvals.none()
+    events = list(ticket.events.select_related("actor__profile").exclude(event_type="comment"))
+    if not TicketAccessPolicy.can_view_internal_notes(request.user, ticket):
+        events = [event for event in events if not event.details.get("is_internal")]
+    conversation = [{"comment": comment, "created_at": comment.created_at, "pk": comment.pk} for comment in comments]
+    can_view_sensitive = TicketAccessPolicy.can_view_sensitive(request.user, ticket)
+    for event in events:
+        if can_view_sensitive:
+            event.display_details = json.dumps(event.details, indent=2, ensure_ascii=False) if event.details else ""
+        else:
+            safe_details = {key: value for key, value in event.details.items() if key in {"note", "previous_note", "step", "approval_state", "status_from", "status_to", "changed_fields", "attachment_count"}}
+            event.display_details = json.dumps(safe_details, indent=2, ensure_ascii=False) if safe_details else ""
+        conversation.append({"event": event, "created_at": event.created_at, "pk": event.pk})
+    conversation.sort(key=lambda item: (item["created_at"], item["pk"], bool(item.get("event"))))
+    from services.ticket_lifecycle import reopen_deadline
     context = {
-        "ticket": ticket, "comments": comments, "comment_form": TicketCommentForm(),
+        "ticket": ticket, "comments": comments, "conversation": conversation, "ticket_recent_events": events[:5],
+        "comment_form": TicketCommentForm(ticket=ticket, user=request.user),
+        "can_comment": TicketAccessPolicy.can_comment(request.user, ticket),
+        "can_close": TicketAccessPolicy.can_close(request.user, ticket),
+        "can_reopen": TicketAccessPolicy.can_reopen(request.user, ticket),
+        "reopen_deadline": reopen_deadline(ticket),
+        "can_resubmit_approval": TicketAccessPolicy.can_resubmit_approval(request.user, ticket),
+        "approval_resubmit_form": TicketApprovalResubmitForm(),
         "dynamic_values": dynamic_values, "can_edit": TicketAccessPolicy.can_edit(request.user, ticket),
         "can_view_sensitive": TicketAccessPolicy.can_view_sensitive(request.user, ticket),
         "can_take_over": TicketAccessPolicy.can_take_over(request.user, ticket),
@@ -261,14 +304,7 @@ def _validate_comment_attachments(ticket, uploads):
 
     errors = []
 
-    # Upload completely disabled for this category.
-    if not category.comment_attachment_required:
-        if uploads:
-            errors.append("File upload is disabled for this category.")
-        return errors
-
-    # Attachment enabled AND required.
-    if not uploads:
+    if category.comment_attachment_required and not uploads:
         errors.append("Please attach at least one document.")
         return errors
 
@@ -310,10 +346,20 @@ def _validate_comment_attachments(ticket, uploads):
 @transaction.atomic
 def add_comment(request, reference):
     ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user),reference=reference,)
+    ticket = Ticket.objects.select_for_update().select_related("category").get(pk=ticket.pk)
+    if not TicketAccessPolicy.can_comment(request.user, ticket):
+        return HttpResponse("Comments are limited to the creator and their team while approval is outstanding. Closed tickets must be reopened first.", status=403)
+    if request.POST.get("is_internal") and not TicketAccessPolicy.can_view_internal_notes(request.user, ticket):
+        return HttpResponse("Internal notes are restricted.", status=403)
     status = request.POST.get('status')
-    if status and status != ticket.status and (not TicketAccessPolicy.can_edit(request.user,ticket) or hasattr(ticket,'tpa_transaction')):
+    if status and status != ticket.status and status != Ticket.Status.CLOSED and (not TicketAccessPolicy.can_edit(request.user,ticket) or hasattr(ticket,'tpa_transaction') or ticket.approval_state in {"pending", "rejected", "needs_info"}):
         return HttpResponse('Use the authorized workflow action to change status.',status=403)
-    form = TicketCommentForm(request.POST)
+    if status == Ticket.Status.CLOSED and not TicketAccessPolicy.can_close(request.user, ticket):
+        return HttpResponse("You cannot close this ticket.", status=403)
+    form_data = request.POST.copy()
+    if status == ticket.status:
+        form_data["status"] = ""
+    form = TicketCommentForm(form_data, ticket=ticket, user=request.user)
     uploads = list(request.FILES.getlist("attachments"))
     def htmx_error_response():
         response = render(
@@ -366,24 +412,17 @@ def add_comment(request, reference):
     comment.body = sanitize_rich_text(comment.body)
     if selected_status:
         comment.status = selected_status
+    status_changed = bool(selected_status and selected_status != ticket.status)
+    if status_changed:
+        from services.ticket_lifecycle import update_status
+        try:
+            update_status(ticket, selected_status, request.user)
+        except PermissionError as exc:
+            return HttpResponse(str(exc), status=403)
+        except ValueError as exc:
+            return HttpResponse(str(exc), status=409)
+    comment.status = ticket.status
     comment.save()
-
-    status_changed = False
-    if selected_status and selected_status != ticket.status:
-        status_changed = True
-        ticket.status = selected_status
-        if selected_status == Ticket.Status.RESOLVED:
-            ticket.resolved_at = timezone.now()
-            ticket.closed_at = None
-        elif selected_status == Ticket.Status.CLOSED:
-            ticket.closed_at = timezone.now()
-            if not ticket.resolved_at:
-                ticket.resolved_at = timezone.now()
-
-        else:
-            ticket.resolved_at = None
-            ticket.closed_at = None
-        ticket.save()
     # ---------------------------------------------------------
     # Comment-specific attachments
     # ---------------------------------------------------------
@@ -521,6 +560,7 @@ def _render_ticket_wizard(request, template, context):
 
 
 @login_required
+@transaction.atomic
 def create_ticket(request, step=1):
     if step not in {1, 2, 3, 4}:
         raise Http404
@@ -588,10 +628,13 @@ def create_ticket(request, step=1):
     attachment_specs = list(schema.get("attachments", {}).get("items", []))
     configured_names = {item.get("name") for item in attachment_specs}
     attachment_specs.extend(item for item in category.required_documents if item.get("name") not in configured_names)
+    attachment_specs.append({"name": "creation_attachments", "label": "Supporting documents", "required": False, "multiple": True,
+        "max_size_mb": category.comment_attachment_max_size_mb, "max_count": category.comment_attachment_max_count,
+        "allowed_extensions": category.comment_attachment_extensions_list})
     review_valid = False
     if request.method == "POST":
         review_valid = form.is_valid()
-        _validate_wizard_attachments(request, attachment_specs, form)
+        _validate_wizard_attachments(request, attachment_specs, form, category)
         review_valid = review_valid and not form.errors
     if request.method == "POST" and review_valid:
         selection = wizard["selection"]
@@ -787,36 +830,38 @@ def export_tickets(request):
 
 
 @login_required
+@transaction.atomic
 def edit_ticket(request, reference):
     ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user), reference=reference)
+    ticket = Ticket.objects.select_for_update().select_related("category").get(pk=ticket.pk)
     if not TicketAccessPolicy.can_edit(request.user, ticket):
         return HttpResponse("Take over this ticket before editing it.", status=403)
     original_status = ticket.status
+    before = {name: getattr(ticket, name) for name in ("subject", "description", "priority", "status")}
     form = TicketEditForm(request.POST or None, instance=ticket, user=request.user)
     dynamic = getattr(ticket, "dynamic_data", None)
     schema = dynamic.form_version.schema if dynamic and dynamic.form_version else {"fields": []}
     dynamic_form = DynamicTicketForm(request.POST or None, schema=schema, user=request.user, initial=dynamic.values if dynamic else {})
     if request.method == "POST" and form.is_valid() and dynamic_form.is_valid():
         updated = form.save(commit=False)
-        if original_status == Ticket.Status.CLOSED and updated.status != Ticket.Status.CLOSED:
-            allowed_until = ticket.closed_at + timedelta(days=ticket.category.reopen_allowed_days) if ticket.closed_at else timezone.now()
-            if timezone.now() > allowed_until:
-                form.add_error("status", "The administrator-defined reopen period has expired.")
-            else:
-                ticket.closed_at = None
-                ticket.resolved_at = None
-                TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type="reopened", summary="Ticket reopened")
+        desired_status = updated.status
+        updated.status = original_status
+        if desired_status != original_status:
+            from services.ticket_lifecycle import update_status
+            try:
+                update_status(updated, desired_status, request.user)
+            except (PermissionError, ValueError) as exc:
+                form.add_error("status", str(exc))
         if not form.errors:
             updated.description = sanitize_rich_text(updated.description)
-            if updated.status == Ticket.Status.RESOLVED and not ticket.resolved_at:
-                updated.resolved_at = timezone.now()
-            if updated.status == Ticket.Status.CLOSED and not ticket.closed_at:
-                updated.closed_at = timezone.now()
             updated.save()
             if dynamic:
                 dynamic.values = _jsonable(dynamic_form.cleaned_data)
                 dynamic.save(update_fields=["values", "updated_at"])
-            TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type="edited", summary="Ticket details updated", details={"status_from": original_status, "status_to": updated.status})
+            changed = [name for name in before if before[name] != getattr(updated, name)]
+            if dynamic and dynamic_form.changed_data:
+                changed.extend(dynamic_form.changed_data)
+            TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type="edited", summary="Ticket details updated", details={"status_from": original_status, "status_to": updated.status, "changed_fields": changed})
             AuditLog.record(request=request, action="ticket.edit", instance=ticket, summary=f"Updated {ticket.reference}")
             notify_users([ticket.requester], ticket=ticket, kind="update", title=f"Ticket updated: {ticket.reference}", body=ticket.subject, send_email_message=ticket.category.send_update_email)
             messages.success(request, "Ticket changes were saved.")
@@ -910,8 +955,8 @@ def decide_ticket_approval(request, reference, approval_id):
     ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user), reference=reference)
     approval = get_object_or_404(TicketApproval.objects.select_related("ticket", "step"), pk=approval_id, ticket=ticket)
     form = TicketApprovalDecisionForm(request.POST)
-    if not form.is_valid():return HttpResponse('Select an approval decision.',status=400)
-    try:decide_approval(approval,approved=form.cleaned_data['decision']=='approve',note=form.cleaned_data['note'],actor=request.user)
+    if not form.is_valid():return HttpResponse(" ".join(str(error) for errors in form.errors.values() for error in errors),status=400)
+    try:decide_approval(approval,decision=form.cleaned_data['decision'],note=form.cleaned_data['note'],actor=request.user)
     except PermissionError as exc:return HttpResponse(str(exc),status=403)
     except ValueError as exc:return HttpResponse(str(exc),status=409)
     return participant_response(request,ticket)
@@ -986,6 +1031,51 @@ def participant_response(request,ticket):
     if request.headers.get('HX-Request','').lower()=='true':
         response=HttpResponse(status=204);response['HX-Redirect']=reverse('portal:ticket_detail',args=[ticket.reference]);return response
     return redirect('portal:ticket_detail',reference=ticket.reference)
+
+
+@login_required
+@require_POST
+def close_ticket(request, reference):
+    from services.ticket_lifecycle import close_ticket as close
+    ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user), reference=reference)
+    try:
+        close(ticket, request.user)
+    except PermissionError as exc:
+        return HttpResponse(str(exc), status=403)
+    except ValueError as exc:
+        return HttpResponse(str(exc), status=409)
+    return participant_response(request, ticket)
+
+
+@login_required
+@require_POST
+def reopen_ticket(request, reference):
+    from services.ticket_lifecycle import reopen_ticket as reopen
+    ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user), reference=reference)
+    try:
+        reopen(ticket, request.user)
+    except PermissionError as exc:
+        return HttpResponse(str(exc), status=403)
+    except ValueError as exc:
+        return HttpResponse(str(exc), status=409)
+    return participant_response(request, ticket)
+
+
+@login_required
+@require_POST
+def resubmit_ticket_approval(request, reference):
+    from services.ticket_workflow import resubmit_approval
+    ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user), reference=reference)
+    form = TicketApprovalResubmitForm(request.POST)
+    if not form.is_valid():
+        return HttpResponse("Describe how the query or rejection has been addressed (maximum 2000 characters).", status=400)
+    try:
+        resubmit_approval(ticket, actor=request.user, note=form.cleaned_data["note"])
+    except PermissionError as exc:
+        return HttpResponse(str(exc), status=403)
+    except ValueError as exc:
+        return HttpResponse(str(exc), status=409)
+    return participant_response(request, ticket)
 
 @login_required
 @require_POST

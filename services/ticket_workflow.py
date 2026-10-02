@@ -48,6 +48,8 @@ def initialize_approval_workflow(ticket):
             created.append(approval)
     ticket.approval_state = "pending" if created else "not_required"
     ticket.save(update_fields=["approval_state", "updated_at"])
+    if created:
+        TicketEvent.objects.create(ticket=ticket, actor=ticket.requester, event_type="approval_started", summary=f"Approval workflow started: {workflow.name}", details={"workflow": workflow.pk, "approvals": [item.pk for item in created]})
     first_sequence = min((item.step.sequence for item in created), default=None)
     first_users = [item.approver for item in created if item.step.sequence == first_sequence]
     notify_users(first_users, ticket=ticket, kind="approval", title=f"Approval required: {ticket.reference}", body=ticket.subject, send_email_message=ticket.category.send_initial_email)
@@ -55,12 +57,12 @@ def initialize_approval_workflow(ticket):
 
 
 def current_approval_sequence(ticket):
-    pending = ticket.approvals.filter(status="pending", step__isnull=False).select_related("step").order_by("step__sequence")
+    pending = ticket.approvals.filter(status__in=["pending", "rejected", "needs_info"], step__isnull=False).select_related("step").order_by("step__sequence")
     return pending.first().step.sequence if pending.exists() else None
 
 
 @transaction.atomic
-def decide_approval(approval, *, approved, note, actor):
+def decide_approval(approval, *, approved=None, decision=None, note, actor):
     ticket = Ticket.objects.select_for_update().get(pk=approval.ticket_id)
     approval = TicketApproval.objects.select_for_update().select_related('step').get(pk=approval.pk)
     from services.access import TicketAccessPolicy
@@ -68,30 +70,41 @@ def decide_approval(approval, *, approved, note, actor):
         raise PermissionError('You cannot access this ticket.')
     if approval.approver_id != actor.pk:
         raise PermissionError("This approval is assigned to another user.")
+    decision = decision or ("approve" if approved else "reject")
+    if decision not in {"approve", "reject", "needs_info"}:
+        raise ValueError("Select a valid approval decision.")
+    if ticket.status == Ticket.Status.CLOSED:
+        raise ValueError("Reopen this ticket before acting on its approval.")
+    if ticket.approval_state != "pending":
+        raise ValueError("The creator must resubmit the outstanding query or rejection first.")
+    if decision == "needs_info" and not note.strip():
+        raise ValueError("Explain the additional information required.")
+    status = {"approve": "approved", "reject": "rejected", "needs_info": "needs_info"}[decision]
     if approval.step_id is None:
         if approval.status != 'pending':
             raise ValueError('This approval has already been decided.')
-        approval.status = 'approved' if approved else 'rejected'
+        approval.status = status
         approval.note, approval.decided_at = note, timezone.now()
         approval.save(update_fields=['status','note','decided_at','updated_at'])
         statuses = set(ticket.approvals.values_list('status',flat=True))
-        ticket.approval_state = 'rejected' if 'rejected' in statuses else 'pending' if 'pending' in statuses else 'approved'
+        ticket.approval_state = 'rejected' if 'rejected' in statuses else 'needs_info' if 'needs_info' in statuses else 'pending' if 'pending' in statuses else 'approved'
         ticket.save(update_fields=['approval_state','updated_at'])
         TicketEvent.objects.create(ticket=ticket,actor=actor,event_type='approval_decided',summary=f'Approval {approval.status}',details={'approval':approval.pk,'before':'pending','after':approval.status,'note':note})
-        notify_users([approval.requested_by,ticket.requester],ticket=ticket,kind='approval',title=f'Approval {approval.status}: {ticket.reference}',body=note,send_email_message=ticket.category.send_update_email)
+        recipients = [approval.requested_by, *requester_team_users(ticket)] if decision != 'approve' else [approval.requested_by, ticket.requester]
+        notify_users(recipients,ticket=ticket,kind='approval',title=f'Approval {approval.get_status_display()}: {ticket.reference}',body=note,send_email_message=ticket.category.send_update_email)
         sync_domain_approval(ticket,actor)
         return approval
     current = current_approval_sequence(ticket)
     if current is None or approval.step.sequence != current or approval.status != "pending":
         raise ValueError("This approval step is not currently actionable.")
-    approval.status = "approved" if approved else "rejected"
+    approval.status = status
     approval.note, approval.decided_at = note, timezone.now()
     approval.save(update_fields=["status", "note", "decided_at", "updated_at"])
-    TicketEvent.objects.create(ticket=ticket, actor=actor, event_type="approval", summary=f"{approval.step.name}: {approval.get_status_display()}")
-    if not approved and approval.step.rejection_ends_workflow:
-        ticket.approval_state = "rejected"
+    TicketEvent.objects.create(ticket=ticket, actor=actor, event_type="approval", summary=f"{approval.step.name}: {approval.get_status_display()}", details={"approval": approval.pk, "step": approval.step.sequence, "before": "pending", "after": status, "note": note})
+    if decision != "approve":
+        ticket.approval_state = status
         ticket.save(update_fields=["approval_state", "updated_at"])
-        notify_users([ticket.requester], ticket=ticket, kind="approval", title=f"Approval rejected: {ticket.reference}", body=note)
+        notify_users(requester_team_users(ticket), ticket=ticket, kind="approval", title=f"Approval {approval.get_status_display()}: {ticket.reference}", body=note, send_email_message=ticket.category.send_update_email)
         sync_domain_approval(ticket,actor)
         return approval
     step_items = ticket.approvals.filter(step=approval.step)
@@ -117,6 +130,44 @@ def sync_domain_approval(ticket, actor):
     tx = MemberTransaction.objects.filter(ticket=ticket,status=MemberTransaction.Status.PENDING_APPROVAL).first()
     if tx:
         sync_from_ticket_approval(tx,actor=actor)
+
+
+def requester_team_users(ticket):
+    from django.contrib.auth import get_user_model
+    from django.db.models import Q
+    from apps.tickets.models import SupportGroup
+    from services.access import TicketAccessPolicy
+    groups = SupportGroup.objects.filter(Q(members=ticket.requester) | Q(managers=ticket.requester), is_active=True)
+    users = get_user_model().objects.filter(Q(pk=ticket.requester_id) | Q(support_groups__in=groups) | Q(managed_support_groups__in=groups), is_active=True).distinct()
+    return [user for user in users if TicketAccessPolicy.can_view(user, ticket)]
+
+
+@transaction.atomic
+def resubmit_approval(ticket, *, actor, note):
+    from services.access import TicketAccessPolicy
+    ticket = Ticket.objects.select_for_update().get(pk=ticket.pk)
+    if not TicketAccessPolicy.can_resubmit_approval(actor, ticket):
+        raise PermissionError("Only the creator and their team can resubmit an open approval query or rejection.")
+    if not note.strip():
+        raise ValueError("Describe how the query or rejection has been addressed.")
+    blocked = list(ticket.approvals.select_for_update().filter(status__in=["rejected", "needs_info"]).select_related("step", "approver"))
+    if not blocked:
+        raise ValueError("There is no outstanding approval query or rejection.")
+    for approval in blocked:
+        TicketEvent.objects.create(ticket=ticket, actor=actor, event_type="approval_resubmitted", summary=f"Approval resubmitted to {approval.approver.get_full_name() or approval.approver.username}",
+            details={"approval": approval.pk, "step": approval.step.sequence if approval.step_id else None, "before": approval.status, "after": "pending", "previous_note": approval.note, "note": note})
+        approval.status, approval.note, approval.decided_at = "pending", "", None
+        approval.save(update_fields=["status", "note", "decided_at", "updated_at"])
+    ticket.approval_state = "pending"
+    ticket.save(update_fields=["approval_state", "updated_at"])
+    # A linked endorsement rejected by the ticket approver resumes approval.
+    from apps.tpa.models import MemberTransaction
+    tx = MemberTransaction.objects.filter(ticket=ticket, status=MemberTransaction.Status.REJECTED, rejection_reason="Linked GLIS ticket approval was rejected.").first()
+    if tx:
+        tx.status, tx.rejection_reason = MemberTransaction.Status.PENDING_APPROVAL, ""
+        tx.save(update_fields=["status", "rejection_reason", "updated_at"])
+    notify_users([approval.approver for approval in blocked], ticket=ticket, kind="approval", title=f"Approval resubmitted: {ticket.reference}", body=note, send_email_message=ticket.category.send_update_email)
+    return ticket
 
 
 @transaction.atomic

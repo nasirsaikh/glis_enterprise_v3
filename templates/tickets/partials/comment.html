@@ -1,9 +1,7 @@
 {% load i18n %}
 <article class="glis-message {% if comment.author_id == request.user.id %}glis-message-end{% else %}glis-message-start{% endif %} py-1">
   <div class="glis-message-avatar glis-avatar">
-    <div class="glis-w-9 rounded-pill {% if comment.author_id == request.user.id %}bg-primary text-white{% else %}bg-secondary text-white{% endif %}">
-      <span class="glis-text-xs fw-bold">{{ comment.author.first_name|first|default:comment.author.email|first|upper }}</span>
-    </div>
+    {% include 'components/avatar.html' with person=comment.author %}
   </div>
   <div class="glis-message-header">
     <strong>{{ comment.author.get_full_name|default:comment.author.email }}</strong>
@@ -20,5 +18,5 @@
     </ul>
     {% endif %}
   </div>
-  <div class="glis-message-footer opacity-50">{{ comment.get_status_display }} · {% translate "Sent" %} {{ comment.created_at|date:"h:i A" }}</div>
+  <div class="glis-message-footer opacity-50">{% if comment.status %}{{ comment.get_status_display }} · {% endif %}{% translate "Sent" %} {{ comment.created_at|date:"h:i A" }}</div>
 </article>

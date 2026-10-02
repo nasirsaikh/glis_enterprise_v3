@@ -208,7 +208,10 @@ class CategoryAdmin(JSONModelAdmin):
         "default_group",
         "default_user",
         "approval_workflow",
+        "creation_attachment_required",
+        "comment_attachment_required",
         "auto_close_days",
+        "reopen_allowed_days",
         "is_active",
     )
 
@@ -574,12 +577,30 @@ class ScopedTicketAdminMixin:
                     for name in ['assignee','assignees']:
                         if name in self.fields:self.fields[name].queryset=assignable_users(request.user,obj)
                 if 'groups' in self.fields:self.fields['groups'].queryset=assignable_groups(request.user,obj) if obj else visible_support_groups(request.user)
-                if obj and hasattr(obj,'tpa_transaction') and 'status' in self.fields:self.fields['status'].disabled=True
+                if obj and obj.status != Ticket.Status.NEW and 'status' in self.fields:
+                    self.fields['status'].choices = [(value, label) for value, label in self.fields['status'].choices if value != Ticket.Status.NEW]
+                if obj and 'status' in self.fields and (hasattr(obj,'tpa_transaction') or obj.status == 'closed' or obj.approval_state in {'pending','rejected','needs_info'}):self.fields['status'].disabled=True
         return ScopedForm
 
 
 @admin.register(Ticket)
 class TicketAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            previous = Ticket.objects.get(pk=obj.pk)
+            desired = obj.status
+            obj.status = previous.status
+            if desired != previous.status:
+                from services.ticket_lifecycle import update_status
+                update_status(obj, desired, request.user)
+        super().save_model(request, obj, form, change)
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        TicketEvent.objects.create(ticket=form.instance, actor=request.user,
+            event_type='admin_edited' if change else 'created', summary='Ticket updated in administration' if change else 'Ticket created in administration',
+            details={'changed_fields': form.changed_data})
 
     list_display = (
         "reference",
@@ -621,6 +642,8 @@ class TicketAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
         "updated_at",
         "ai_summary",
         "ai_recommendations",
+        "resume_status",
+        "approval_state",
     )
 
     inlines = [
@@ -774,14 +797,14 @@ class TicketApprovalAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
 
     # Decisions must go through the shared service so the assigned actor,
     # audit ledger and linked domain state are updated together.
-    # def has_add_permission(self, request):
-    #     return False
+    def has_add_permission(self, request):
+        return False
 
-    # def has_change_permission(self, request, obj=None):
-    #     return False
+    def has_change_permission(self, request, obj=None):
+        return False
 
-    # def has_delete_permission(self, request, obj=None):
-    #     return False
+    def has_delete_permission(self, request, obj=None):
+        return False
 
     list_display = (
         "ticket",

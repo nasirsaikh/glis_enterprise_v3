@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.shortcuts import redirect
 from django.urls import path, reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
 from .forms import ScheduledJobForm
 from .models import JobExecution, ScheduledJob, SchedulerLock,QueuedJob
@@ -98,19 +98,17 @@ class ScheduledJobAdmin(admin.ModelAdmin):
         names = sorted(get_registered_jobs().keys())
         if not names:
             return "No handlers registered."
-        return format_html(
-            "<br>".join("<code>{}</code>".format(name) for name in names)
-        )
+        return format_html_join("", "<code>{}</code><br>", ((name,) for name in names))
     registered_handlers.short_description = "Registered Python handlers"
 
     def status_badge(self, obj):
         status = obj.last_status or "Never run"
         if status == JobExecution.Status.SUCCESS:
-            return format_html('<strong style="color:#198754">● Success</strong>')
+            return format_html('<strong style="color:#198754">● {}</strong>', "Success")
         if status in {JobExecution.Status.FAILED, JobExecution.Status.TIMEOUT}:
             return format_html('<strong style="color:#dc3545">● {}</strong>', status.title())
         if status == JobExecution.Status.RUNNING:
-            return format_html('<strong style="color:#0d6efd">● Running</strong>')
+            return format_html('<strong style="color:#0d6efd">● {}</strong>', "Running")
         return status
     status_badge.short_description = "Status"
 
@@ -234,11 +232,11 @@ class JobExecutionAdmin(admin.ModelAdmin):
 
     def status_badge(self, obj):
         if obj.status == JobExecution.Status.SUCCESS:
-            return format_html('<strong style="color:#198754">● Success</strong>')
+            return format_html('<strong style="color:#198754">● {}</strong>', "Success")
         if obj.status in {JobExecution.Status.FAILED, JobExecution.Status.TIMEOUT}:
             return format_html('<strong style="color:#dc3545">● {}</strong>', obj.status.title())
         if obj.status == JobExecution.Status.RUNNING:
-            return format_html('<strong style="color:#0d6efd">● Running</strong>')
+            return format_html('<strong style="color:#0d6efd">● {}</strong>', "Running")
         return obj.status
     status_badge.short_description = "Status"
 

@@ -653,7 +653,7 @@ def policy_enrollment_create(request):
         1,
     )
     if request.method == "POST" and uses_formset and (
-        plan_formset.non_form_errors() or any(plan_form.errors for plan_form in plan_formset.forms)
+        plan_formset.non_form_errors() or any(plan_formset.errors)
     ):
         initial_step = 3
     context = {
@@ -1082,6 +1082,7 @@ def transaction_detail(request, reference, *, selected_step=None, form_overrides
         ),
         "valid_count": valid_count,
         "warning_count": warning_count,
+        "success_count": success_count,
         "error_count": error_count,
         "success_rate": success_rate,
         "quality_chart": quality_chart,

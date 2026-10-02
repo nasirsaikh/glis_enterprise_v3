@@ -131,8 +131,8 @@
 
           {% if requires_source_intake %}
           <div class="nav nav-tabs" role="tablist">
-            <button class="nav-link {% if not error_count %}active{% endif %}" id="matrix-validated-tab" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#matrix-validated" aria-controls="matrix-validated" aria-selected="{% if not error_count %}true{% else %}false{% endif %}">{% translate 'Validated' %}</button>
-            <button class="nav-link {% if error_count %}active{% endif %}" id="matrix-errors-tab" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#matrix-errors" aria-controls="matrix-errors" aria-selected="{% if error_count %}true{% else %}false{% endif %}">{% translate 'Errors / Needs Correction' %}</button>
+            <button class="nav-link {% if not error_count %}active{% endif %}" id="matrix-validated-tab" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#matrix-validated" aria-controls="matrix-validated" aria-selected="{% if not error_count %}true{% else %}false{% endif %}">{% translate 'Validated' %} <span class="badge text-bg-success ms-1" data-intake-success-count>{{ success_count }}</span></button>
+            <button class="nav-link {% if error_count %}active{% endif %}" id="matrix-errors-tab" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#matrix-errors" aria-controls="matrix-errors" aria-selected="{% if error_count %}true{% else %}false{% endif %}">{% translate 'Errors / Needs Correction' %} <span class="badge text-bg-danger ms-1" data-intake-error-count>{{ error_count }}</span></button>
           </div>
           <div class="tab-content">
             <div id="matrix-validated" role="tabpanel" aria-labelledby="matrix-validated-tab" tabindex="0" class="tab-pane {% if not error_count %}show active{% endif %} border-body bg-body p-2">

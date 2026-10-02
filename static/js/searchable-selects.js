@@ -1,14 +1,46 @@
 /* Progressive enhancement: native select values and HTMX change events remain authoritative. */
 (() => {
   "use strict";
+  // HTMX can replay script tags and restore previously enhanced markup.
+  // Keep one owner for every native select throughout the page lifecycle.
+  if (window.glisSearchableSelects) { window.glisSearchableSelects.init(); return; }
   const widgets = new Map();
   const words = (en, ar) => document.documentElement.lang === "ar" ? ar : en;
   let sequence = 0;
   let active = null;
+  const nativeStyles = {display: 'block', position: 'absolute', width: '1px', height: '1px', 'min-width': '0', 'min-height': '0', opacity: '0', 'pointer-events': 'none', 'clip-path': 'inset(50%)', padding: '0', border: '0'};
+
+  function hideNative(select) {
+    if (!select.hasAttribute('data-glis-native-state')) {
+      select.dataset.glisNativeState = JSON.stringify({styles: Object.keys(nativeStyles).map(name => [name, select.style.getPropertyValue(name), select.style.getPropertyPriority(name)]), tabindex: select.getAttribute('tabindex'), ariaHidden: select.getAttribute('aria-hidden')});
+    }
+    if (!select.classList.contains('glis-select-native')) select.classList.add('glis-select-native');
+    // Do not depend on a cached stylesheet to hide the original control.
+    for (const [name, value] of Object.entries(nativeStyles)) {
+      if (select.style.getPropertyValue(name) !== value || select.style.getPropertyPriority(name) !== 'important') select.style.setProperty(name, value, 'important');
+    }
+    select.tabIndex = -1; select.setAttribute('aria-hidden', 'true');
+  }
+  function restoreNative(select) {
+    const raw = select.getAttribute('data-glis-native-state');
+    if (raw) {
+      const state = JSON.parse(raw);
+      for (const [name, value, priority] of state.styles) {
+        if (value) select.style.setProperty(name, value, priority); else select.style.removeProperty(name);
+      }
+      for (const [name, value] of [['tabindex', state.tabindex], ['aria-hidden', state.ariaHidden]]) {
+        if (value === null) select.removeAttribute(name); else select.setAttribute(name, value);
+      }
+      select.removeAttribute('data-glis-native-state');
+    } else {
+      select.style.removeProperty('display'); select.removeAttribute('tabindex'); select.removeAttribute('aria-hidden');
+    }
+    select.classList.remove('glis-select-native');
+  }
 
   function enhanceMultiple(select) {
     const $ = window.glisJQuery;
-    const oldTabIndex = select.getAttribute('tabindex');
+    const listeners = new AbortController();
     let instance, dropdown, menu, control, observer, signature;
     const boundControls = new WeakSet(), boundMenus = new WeakSet();
     const optionSignature = () => JSON.stringify([...select.options].map(option => [option.value, option.textContent, option.disabled, option.hidden, option.parentElement.label, option.parentElement.disabled]));
@@ -22,6 +54,7 @@
       select.dispatchEvent(new Event('input', {bubbles: true}));
       select.dispatchEvent(new Event('change', {bubbles: true}));
     };
+    hideNative(select);
     $(select).multiselect({
       buttonContainer: '<div class="btn-group glis-multiselect" />',
       buttonClass: 'form-select glis-select-control', buttonWidth: '100%', buttonTextAlignment: 'left', numberDisplayed: 2,
@@ -37,7 +70,7 @@
     instance = $(select).data('multiselect');
     const wrapper = select.closest('.multiselect-native-select');
     wrapper.classList.add('glis-searchable-select');
-    select.tabIndex = -1; select.setAttribute('aria-hidden', 'true');
+    hideNative(select);
 
     function position() {
       if (!menu.classList.contains('show')) return;
@@ -51,6 +84,7 @@
       menu.style.zIndex = select.closest('.modal') ? '1065' : '1035';
     }
     function refresh() {
+      hideNative(select);
       const current = optionSignature();
       if (signature !== undefined && signature !== current) {
         close(); dropdown.dispose(); instance.rebuild(); bindMenu();
@@ -115,24 +149,24 @@
     const widget = {select, wrapper, get menu() {return menu;}, get control() {return control;}, refresh, position, close, destroy() {
       close(); observer.disconnect(); dropdown.dispose(); instance.destroy(); widgets.delete(select);
       if (wrapper.isConnected) wrapper.replaceWith(...wrapper.childNodes);
-      select.removeAttribute('aria-hidden');
-      if (oldTabIndex === null) select.removeAttribute('tabindex'); else select.setAttribute('tabindex', oldTabIndex);
+      listeners.abort(); restoreNative(select);
     }};
     widgets.set(select, widget); bindMenu(); refresh();
-    select.addEventListener('change', refresh);
-    select.addEventListener('invalid', event => {event.preventDefault(); control.setAttribute('aria-invalid', 'true'); open();});
-    select.form?.addEventListener('reset', () => setTimeout(refresh));
+    select.addEventListener('change', refresh, {signal: listeners.signal});
+    select.addEventListener('invalid', event => {event.preventDefault(); control.setAttribute('aria-invalid', 'true'); open();}, {signal: listeners.signal});
+    select.form?.addEventListener('reset', () => setTimeout(() => {if (!listeners.signal.aborted) refresh();}), {signal: listeners.signal});
     for (const node of select.labels) node.addEventListener('click', event => {
       if (event.target.closest('button, input, a, .glis-multiselect-menu')) return;
       event.preventDefault(); control.focus();
-    });
+    }, {signal: listeners.signal});
     observer = new MutationObserver(refresh);
     observer.observe(select, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['disabled', 'hidden', 'selected', 'label', 'required']});
   }
 
   function enhance(select) {
-    if (widgets.has(select) || select.matches('[data-no-search], .admin-autocomplete, .selectfilter, .selectfilterstacked') || select.closest('.selector, #empty-form, .empty-form') || select.id.includes('__prefix__')) return;
+    if (widgets.has(select) || select.matches('[data-no-search], .admin-autocomplete, .selectfilter, .selectfilterstacked') || select.closest('.selector, #empty-form, .empty-form, .htmx-settling') || select.id.includes('__prefix__')) return;
     if (select.multiple && window.glisJQuery?.fn.multiselect && window.bootstrap?.Dropdown) { enhanceMultiple(select); return; }
+    const listeners = new AbortController();
     const wrapper = document.createElement('div');
     wrapper.className = 'glis-searchable-select';
     const control = document.createElement('button');
@@ -141,10 +175,7 @@
     control.setAttribute('aria-haspopup', 'listbox');
     control.setAttribute('aria-expanded', 'false');
     select.before(wrapper); wrapper.append(select, control);
-    select.classList.add('glis-select-native');
-    const oldTabIndex = select.getAttribute('tabindex');
-    select.tabIndex = -1;
-    select.setAttribute('aria-hidden', 'true');
+    hideNative(select);
 
     const menu = document.createElement('div');
     menu.className = 'glis-select-menu'; menu.hidden = true;
@@ -167,6 +198,7 @@
     }).join(' ') || select.getAttribute('aria-label') || select.name || words('Select', 'اختر');
 
     function refresh() {
+      hideNative(select);
       const values = [...select.selectedOptions].map(option => option.textContent.trim());
       control.textContent = values.join(', ') || select.options[0]?.textContent || words('Select', 'اختر');
       control.disabled = select.disabled;
@@ -247,8 +279,7 @@
       // An outerHTML HTMX swap can replace the native select inside this
       // wrapper. Unwrap its replacement as well as removing the old button.
       if (wrapper.isConnected) wrapper.replaceWith(...wrapper.childNodes);
-      select.classList.remove('glis-select-native'); select.removeAttribute('aria-hidden');
-      if (oldTabIndex === null) select.removeAttribute('tabindex'); else select.setAttribute('tabindex', oldTabIndex);
+      listeners.abort(); restoreNative(select);
     }};
     widgets.set(select, widget);
     control.addEventListener('click', () => menu.hidden ? open() : close());
@@ -265,30 +296,57 @@
         if (options.length) options[focused < 0 ? 0 : focused].click();
       }
     });
-    select.addEventListener('change', refresh);
-    select.addEventListener('invalid', event => { event.preventDefault(); control.setAttribute('aria-invalid', 'true'); open(); });
-    select.form?.addEventListener('reset', () => setTimeout(refresh));
+    select.addEventListener('change', refresh, {signal: listeners.signal});
+    select.addEventListener('invalid', event => { event.preventDefault(); control.setAttribute('aria-invalid', 'true'); open(); }, {signal: listeners.signal});
+    select.form?.addEventListener('reset', () => setTimeout(() => {if (!listeners.signal.aborted) refresh();}), {signal: listeners.signal});
     for (const label of select.labels) label.addEventListener('click', event => {
       if (event.target.closest('button, input, a, .glis-select-menu')) return;
       event.preventDefault(); control.focus();
-    });
+    }, {signal: listeners.signal});
     const observer = new MutationObserver(() => { refresh(); if (!menu.hidden) render(); });
     observer.observe(select, {subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['disabled', 'hidden', 'selected', 'label', 'required']});
     refresh();
   }
   function init(scope = document) {
     for (const [select, widget] of widgets) if (!select.isConnected) widget.destroy();
+    for (const wrapper of document.querySelectorAll('.glis-searchable-select')) {
+      if ([...widgets.values()].some(widget => widget.wrapper === wrapper)) continue;
+      // Cached history or cloned modal HTML has buttons but no live handlers.
+      const selects = [...wrapper.querySelectorAll('select')];
+      for (const select of selects) {
+        const menuId = wrapper.querySelector('[aria-controls]')?.getAttribute('aria-controls');
+        const menu = menuId && document.getElementById(menuId)?.closest('.glis-select-menu, .glis-multiselect-menu');
+        if (menu && ![...widgets.values()].some(widget => widget.menu === menu)) menu.remove();
+        restoreNative(select);
+      }
+      wrapper.replaceWith(...selects);
+    }
     if (scope.matches?.('select')) enhance(scope);
     scope.querySelectorAll?.('select').forEach(enhance);
     for (const widget of widgets.values()) widget.refresh();
   }
+  window.glisSearchableSelects = {init};
   document.addEventListener('pointerdown', event => {
     if (active && !active.wrapper.contains(event.target) && !active.menu.contains(event.target)) active.close();
   });
   window.addEventListener('resize', () => active?.position());
   document.addEventListener('scroll', () => active?.position(), true);
-  document.addEventListener('htmx:beforeSwap', () => active?.close());
-  for (const event of ['htmx:afterSwap', 'htmx:load', 'glis:theme', 'formset:added']) document.addEventListener(event, () => init());
+  document.addEventListener('htmx:beforeSwap', event => {
+    active?.close();
+    if (!event.detail.shouldSwap) return;
+    for (const widget of [...widgets.values()]) {
+      if (event.detail.target?.contains(widget.select)) widget.destroy();
+    }
+  });
+  // HTMX temporarily copies old classes/styles, then restores the server HTML
+  // while settling. Wait for that restoration before hiding a new native field.
+  for (const event of ['htmx:afterSwap', 'htmx:afterSettle', 'htmx:load', 'htmx:historyRestore', 'glis:theme', 'formset:added']) document.addEventListener(event, () => init());
+  document.addEventListener('htmx:beforeHistorySave', () => {
+    for (const widget of [...widgets.values()]) widget.destroy();
+    // HTMX takes its snapshot synchronously after this event.
+    queueMicrotask(() => init());
+  });
+  document.addEventListener('shown.bs.modal', () => init());
   document.addEventListener('hide.bs.modal', () => active?.close());
   document.addEventListener('DOMContentLoaded', () => init());
   if (document.readyState !== 'loading') init();

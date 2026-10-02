@@ -2,7 +2,6 @@
 <div id="{{ creation_form_id }}" class="card tpa-wizard-card" data-transaction-wizard data-initial-step="{{ creation_initial_step }}">
   <form method="post" action="{{ creation_url }}" hx-post="{{ creation_url }}" hx-target="#{{ creation_form_id }}" hx-swap="outerHTML" data-processing-form novalidate>
     {% csrf_token %}
-    <noscript><style>[data-transaction-wizard] [data-wizard-step][hidden]{display:block!important}[data-transaction-wizard] [data-wizard-submit][hidden]{display:inline-flex!important}[data-wizard-next],[data-wizard-prev]{display:none!important}</style></noscript>
     <div class="card-body">
       <h2 class="card-title">{% translate "Policy setup" %} · <span data-wizard-current>1</span> / {{ creation_steps|length }}</h2>
       <div class="workflow-step-scroll"><ol class="workflow-progress workflow-progress-horizontal workflow-steps" aria-label="{% translate 'Policy setup steps' %}">{% for step in creation_steps %}<li class="workflow-progress-step" data-wizard-indicator="{{ forloop.counter }}">{{ step.label }}</li>{% endfor %}</ol></div>

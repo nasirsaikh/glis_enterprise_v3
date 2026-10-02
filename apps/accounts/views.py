@@ -18,6 +18,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from .models import PasswordResetChallenge
 from django.contrib.auth.views import PasswordResetConfirmView
+from .widgets import OneTimeCodeWidget
 
 
 class EligiblePasswordResetConfirmView(PasswordResetConfirmView):
@@ -35,8 +36,30 @@ class ResetRequestForm(forms.Form):
     method = forms.ChoiceField(choices=[('link','Email reset link'),('otp','Email one-time code (OTP)')], initial='link', widget=forms.RadioSelect)
 
 
+class OneTimeCodeField(forms.MultiValueField):
+    def __init__(self, **kwargs):
+        super().__init__(fields=[forms.RegexField(r'^[0-9]$') for _ in range(6)],
+                         widget=OneTimeCodeWidget(), **kwargs)
+
+    def compress(self, data_list):
+        return ''.join(data_list)
+
+
 class ResetCodeForm(forms.Form):
-    code = forms.RegexField(r'^\d{6}$', label='One-time code', widget=forms.TextInput(attrs={'class':'form-control','inputmode':'numeric','autocomplete':'one-time-code','maxlength':6}))
+    code = OneTimeCodeField(label='One-time code')
+
+
+def _locked_reset_challenge(request):
+    from uuid import UUID
+    from django.contrib.auth import get_user_model
+    try:
+        challenge_id = UUID(request.session.get('password_reset_challenge', ''))
+    except (ValueError, TypeError):
+        return None
+    challenge = PasswordResetChallenge.objects.select_for_update().filter(pk=challenge_id, method='otp').first()
+    if challenge and challenge.user_id:
+        challenge.user = get_user_model().objects.select_for_update().get(pk=challenge.user_id)
+    return challenge
 
 
 @never_cache
@@ -52,41 +75,51 @@ def password_reset_request(request):
 
 
 @never_cache
-@sensitive_post_parameters('code','new_password1','new_password2')
+@sensitive_post_parameters()
 @require_http_methods(['GET','POST'])
 def password_reset_otp(request):
     from .password_reset import challenge_valid, otp_code
-    from uuid import UUID
-    try: challenge_id=UUID(request.session.get('password_reset_challenge',''))
-    except (ValueError, TypeError):challenge_id=None
-    code_form=ResetCodeForm(request.POST or None)
+    code_form = ResetCodeForm(request.POST if request.method == 'POST' else None)
     with transaction.atomic():
-        challenge=PasswordResetChallenge.objects.select_for_update().filter(pk=challenge_id,method='otp').first()
-        user=None
-        if challenge and challenge.user_id:
-            from django.contrib.auth import get_user_model
-            user=get_user_model().objects.select_for_update().get(pk=challenge.user_id)
-            challenge.user=user
-        # Until the code is verified, even password validation must avoid
-        # revealing whether an account (or a matching username) exists.
-        password_form=_style_password_form(SetPasswordForm(None,request.POST or None))
-        if request.method=='POST' and code_form.is_valid():
-            valid=challenge_valid(challenge,request) and constant_time_compare(code_form.cleaned_data['code'],otp_code(challenge))
+        challenge = _locked_reset_challenge(request)
+        if challenge_valid(challenge, request) and challenge.verified_at:
+            return redirect('accounts:password_reset_otp_password')
+        if request.method == 'POST' and code_form.is_valid():
+            valid = challenge_valid(challenge, request) and constant_time_compare(code_form.cleaned_data['code'], otp_code(challenge))
             if not valid:
                 if challenge and not challenge.consumed_at:
-                    challenge.attempts=min(5,challenge.attempts+1)
-                    challenge.save(update_fields=['attempts','updated_at'])
-                code_form.add_error('code','The code is invalid or expired. Request a new code to continue.')
+                    challenge.attempts = min(5, challenge.attempts + 1)
+                    challenge.save(update_fields=['attempts', 'updated_at'])
+                code_form.add_error('code', 'The code is invalid or expired. Request a new code to continue.')
             else:
-                password_form=_style_password_form(SetPasswordForm(user,request.POST))
-                if password_form.is_valid():
-                    password_form.save()
-                    challenge.consumed_at=timezone.now()
-                    challenge.save(update_fields=['consumed_at','updated_at'])
-                    request.session.pop('password_reset_challenge',None)
-                    request.session.cycle_key()
-                    return redirect('accounts:password_reset_complete')
-    return render(request,'account/reset_otp.html',{'code_form':code_form,'password_form':password_form})
+                from .password_reset import digest
+                request.session.cycle_key()
+                challenge.verified_at = timezone.now()
+                challenge.session_digest = digest('session', request.session.session_key)
+                challenge.save(update_fields=['verified_at', 'session_digest', 'updated_at'])
+                return redirect('accounts:password_reset_otp_password')
+    return render(request, 'account/reset_otp.html', {'code_form': code_form})
+
+
+@never_cache
+@sensitive_post_parameters('new_password1', 'new_password2')
+@require_http_methods(['GET', 'POST'])
+def password_reset_otp_password(request):
+    from .password_reset import challenge_valid
+    with transaction.atomic():
+        challenge = _locked_reset_challenge(request)
+        if not challenge_valid(challenge, request) or not challenge.verified_at:
+            messages.error(request, 'The code is invalid or expired. Request a new code to continue.')
+            return redirect('accounts:password_reset_otp')
+        form = _style_password_form(SetPasswordForm(challenge.user, request.POST if request.method == 'POST' else None))
+        if request.method == 'POST' and form.is_valid():
+            form.save()
+            challenge.consumed_at = timezone.now()
+            challenge.save(update_fields=['consumed_at', 'updated_at'])
+            request.session.pop('password_reset_challenge', None)
+            request.session.cycle_key()
+            return redirect('accounts:password_reset_complete')
+    return render(request, 'account/reset_otp_password.html', {'password_form': form})
 
 
 def _style_password_form(form):

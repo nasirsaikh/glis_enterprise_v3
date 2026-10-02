@@ -29,9 +29,17 @@ class PasswordRecoveryTests(TestCase):
     def challenge(self, client=None):
         return PasswordResetChallenge.objects.get(pk=(client or self.client).session['password_reset_challenge'])
 
+    def verify_otp(self, challenge, code=None, client=None, **extra):
+        data = {f'code_{index}': digit for index, digit in enumerate(code or otp_code(challenge))}
+        return (client or self.client).post(reverse('accounts:password_reset_otp'), {**data, **extra})
+
     def confirm_otp(self, challenge, code=None, client=None):
-        return (client or self.client).post(reverse('accounts:password_reset_otp'), {
-            'code': code or otp_code(challenge), 'new_password1': 'ReplacementPass!5247', 'new_password2': 'ReplacementPass!5247',
+        client = client or self.client
+        response = self.verify_otp(challenge, code, client)
+        if response.status_code != 302:
+            return response
+        return client.post(reverse('accounts:password_reset_otp_password'), {
+            'new_password1': 'ReplacementPass!5247', 'new_password2': 'ReplacementPass!5247',
         })
 
     def test_login_and_legacy_reset_url_offer_both_choices(self):
@@ -63,8 +71,9 @@ class PasswordRecoveryTests(TestCase):
 
     def test_invalid_password_preserves_valid_code_for_retry(self):
         self.request_reset(); challenge = self.challenge()
-        response = self.client.post(reverse('accounts:password_reset_otp'), {
-            'code': otp_code(challenge), 'new_password1': 'ReplacementPass!5247', 'new_password2': 'Mismatch!5738',
+        self.assertRedirects(self.verify_otp(challenge), reverse('accounts:password_reset_otp_password'))
+        response = self.client.post(reverse('accounts:password_reset_otp_password'), {
+            'new_password1': 'ReplacementPass!5247', 'new_password2': 'Mismatch!5738',
         })
         self.assertContains(response, 'password fields')
         challenge.refresh_from_db(); self.assertIsNone(challenge.consumed_at)
@@ -73,17 +82,65 @@ class PasswordRecoveryTests(TestCase):
     def test_invalid_code_does_not_expose_account_specific_password_errors(self):
         self.request_reset(); challenge = self.challenge()
         wrong = '000001' if otp_code(challenge) == '000000' else '000000'
-        response = self.client.post(reverse('accounts:password_reset_otp'), {
-            'code': wrong, 'new_password1': self.user.username, 'new_password2': self.user.username,
-        })
+        response = self.verify_otp(challenge, wrong, new_password1=self.user.username, new_password2=self.user.username)
         self.assertContains(response, 'invalid or expired')
         self.assertNotContains(response, 'too similar to the username')
-        self.assertIsNone(response.context['password_form'].user)
-        response = self.client.post(reverse('accounts:password_reset_otp'), {
-            'code': otp_code(challenge), 'new_password1': self.user.username, 'new_password2': self.user.username,
+        self.assertNotIn('password_form', response.context)
+        self.assertNotContains(response, 'name="new_password1"')
+        self.assertRedirects(self.verify_otp(challenge), reverse('accounts:password_reset_otp_password'))
+        response = self.client.post(reverse('accounts:password_reset_otp_password'), {
+            'new_password1': self.user.username, 'new_password2': self.user.username,
         })
         self.assertContains(response, 'too similar to the username')
         challenge.refresh_from_db(); self.assertIsNone(challenge.consumed_at)
+
+    def test_six_digit_boxes_verify_before_any_password_fields_or_change(self):
+        self.request_reset(); challenge = self.challenge()
+        response = self.client.get(reverse('accounts:password_reset_otp'))
+        for index in range(6):
+            self.assertContains(response, f'name="code_{index}"', count=1)
+        self.assertNotContains(response, 'name="new_password1"')
+        self.assertContains(response, 'Verify code')
+        session_key = self.client.session.session_key
+        response = self.verify_otp(challenge, new_password1='ReplacementPass!5247', new_password2='ReplacementPass!5247')
+        self.assertRedirects(response, reverse('accounts:password_reset_otp_password'))
+        self.user.refresh_from_db(); challenge.refresh_from_db()
+        self.assertTrue(self.user.check_password('OriginalPass!8739'))
+        self.assertIsNotNone(challenge.verified_at)
+        self.assertIsNone(challenge.consumed_at)
+        self.assertNotEqual(session_key, self.client.session.session_key)
+        self.assertContains(self.client.get(reverse('accounts:password_reset_otp_password')), 'name="new_password1"')
+
+    def test_password_step_cannot_be_bypassed_with_a_code_or_forged_session_flag(self):
+        self.request_reset(); challenge = self.challenge()
+        session = self.client.session; session['password_reset_verified'] = True; session.save()
+        for method in (self.client.get, self.client.post):
+            response = method(reverse('accounts:password_reset_otp_password'), {
+                'code': otp_code(challenge), 'new_password1': 'ReplacementPass!5247', 'new_password2': 'ReplacementPass!5247',
+            })
+            self.assertRedirects(response, reverse('accounts:password_reset_otp'))
+        self.user.refresh_from_db(); self.assertTrue(self.user.check_password('OriginalPass!8739'))
+
+    def test_verified_challenge_still_requires_same_session_and_live_account(self):
+        self.request_reset(); challenge = self.challenge(); self.verify_otp(challenge)
+        other = Client(); session = other.session
+        session['password_reset_challenge'] = str(challenge.pk); session.save()
+        response = other.post(reverse('accounts:password_reset_otp_password'), {
+            'new_password1': 'ReplacementPass!5247', 'new_password2': 'ReplacementPass!5247',
+        })
+        self.assertRedirects(response, reverse('accounts:password_reset_otp'))
+        self.user.profile.is_locked = True; self.user.profile.save()
+        self.assertRedirects(self.client.get(reverse('accounts:password_reset_otp_password')), reverse('accounts:password_reset_otp'))
+        self.user.refresh_from_db(); self.assertTrue(self.user.check_password('OriginalPass!8739'))
+
+    def test_verified_challenge_expiry_blocks_password_change(self):
+        self.request_reset(); challenge = self.challenge(); self.verify_otp(challenge)
+        PasswordResetChallenge.objects.filter(pk=challenge.pk).update(expires_at=timezone.now()-timedelta(seconds=1))
+        response = self.client.post(reverse('accounts:password_reset_otp_password'), {
+            'new_password1': 'ReplacementPass!5247', 'new_password2': 'ReplacementPass!5247',
+        })
+        self.assertRedirects(response, reverse('accounts:password_reset_otp'))
+        self.user.refresh_from_db(); self.assertTrue(self.user.check_password('OriginalPass!8739'))
 
     def test_code_expires_and_five_failed_guesses_block_correct_code(self):
         self.request_reset(); challenge = self.challenge()

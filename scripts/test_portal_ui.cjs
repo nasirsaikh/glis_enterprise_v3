@@ -282,6 +282,122 @@ const searchableJS = fs.readFileSync('static/js/searchable-selects.js', 'utf8');
 const selectCSS = css(['searchable-selects.css']);
 const multiselectJS = fs.readFileSync('static/vendor/bootstrap-multiselect/bootstrap-multiselect.bundle.js', 'utf8');
 const multiselectCSS = fs.readFileSync('static/vendor/bootstrap-multiselect/bootstrap-multiselect.css', 'utf8');
+
+test('selects wait for HTMX settling and remain hidden when server attributes return', async () => {
+  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><form><label>Plan<select class="form-select" id="plan" name="plan"><option value="gold">Gold</option><option value="silver">Silver</option></select></label></form></main></body>', portalCSS + selectCSS);
+  try {
+    await page.addScriptTag({content: searchableJS});
+    for (let count = 0; count < 4; count++) {
+      await page.evaluate(() => {
+        const target = document.querySelector('select');
+        document.dispatchEvent(new CustomEvent('htmx:beforeSwap', {detail:{target, shouldSwap:true}}));
+        target.outerHTML = '<select class="form-select htmx-settling" id="plan" name="plan"><option value="gold">Gold</option><option value="silver" selected>Silver</option></select>';
+        document.dispatchEvent(new CustomEvent('htmx:afterSwap', {detail:{target:document.getElementById('plan')}}));
+      });
+      assert.equal(await page.locator('.glis-select-control').count(), 0);
+      await page.evaluate(() => {
+        const target = document.getElementById('plan'); target.className='form-select'; target.removeAttribute('style');
+        document.dispatchEvent(new CustomEvent('htmx:afterSettle', {detail:{target}}));
+      });
+      assert.equal(await page.locator('.glis-select-control').count(), 1);
+      assert.equal(await page.locator('select').evaluate(select => getComputedStyle(select).opacity), '0');
+      assert.ok((await page.locator('select').boundingBox()).height <= 1);
+      assert.equal(await page.evaluate(() => new FormData(document.querySelector('form')).get('plan')), 'silver');
+    }
+    await page.getByRole('button', {name:'Plan: Silver', exact:true}).click();
+    await page.getByRole('option', {name:'Gold', exact:true}).click();
+    assert.equal(await page.locator('select').inputValue(), 'gold');
+  } finally { await page.close(); }
+});
+
+test('script replay, modal reopen and enhanced history snapshots keep one control per select', async () => {
+  const page = await multiselectFixture('<body><main id="workspace"><button data-bs-toggle="modal" data-bs-target="#edit">Edit</button><div class="modal fade" id="edit" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><form><label>Plan<select class="form-select" name="plan"><option value="gold" selected>Gold</option></select></label><label>Users<select name="users" multiple><option value="1" selected>Amina</option><option value="2">Sara</option></select></label><button type="button" data-bs-dismiss="modal">Close</button></form></div></div></div></div></main></body>');
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  try {
+    await page.addScriptTag({content: searchableJS});
+    for (let count=0; count<3; count++) {
+      await transition(page, '#edit', 'shown.bs.modal', () => page.getByRole('button', {name:'Edit',exact:true}).click());
+      assert.equal(await page.locator('.glis-select-control').count(), 2);
+      assert.deepEqual(await page.locator('select').evaluateAll(selects => selects.map(select => getComputedStyle(select).opacity)), ['0','0']);
+      await transition(page, '#edit', 'hidden.bs.modal', () => page.getByRole('button', {name:'Close',exact:true}).click());
+      await page.evaluate(() => {
+        const workspace=document.getElementById('workspace');
+        // Older cached pages contain generated wrappers and buttons.
+        const snapshot=workspace.innerHTML; workspace.innerHTML=snapshot;
+        document.dispatchEvent(new CustomEvent('htmx:historyRestore'));
+      });
+      assert.equal(await page.locator('.glis-searchable-select').count(), 2);
+    }
+    const cleanSnapshot=await page.evaluate(() => {
+      document.dispatchEvent(new CustomEvent('htmx:beforeHistorySave',{detail:{historyElt:document.getElementById('workspace')}}));
+      return document.getElementById('workspace').innerHTML;
+    });
+    assert.ok(!cleanSnapshot.includes('glis-select-control'));
+    await page.waitForFunction(() => document.querySelectorAll('.glis-select-control').length === 2);
+    await transition(page, '#edit', 'shown.bs.modal', () => page.getByRole('button', {name:'Edit',exact:true}).click());
+    await page.getByRole('button', {name:/Users:/}).click();
+    await page.getByRole('checkbox', {name:'Sara',exact:true}).check();
+    assert.deepEqual(await page.evaluate(() => new FormData(document.querySelector('form')).getAll('users')), ['1','2']);
+    assert.deepEqual(errors, []);
+  } finally { await page.close(); }
+});
+
+test('six OTP boxes support paste, single digits, Arabic digits and keyboard correction', async () => {
+  const boxes=Array.from({length:6},(_,i)=>`<input class="form-control otp-digit text-center" name="code_${i}" maxlength="1" aria-label="Code digit ${i+1}">`).join('');
+  const page=await fixture('<body><main class="p-4"><form><fieldset><legend>One-time code</legend><div class="d-flex gap-2" dir="ltr" data-otp-input>'+boxes+'</div></fieldset><button>Verify code</button></form></main></body>', publicCSS, {width:390,height:844});
+  try {
+    await page.addScriptTag({content:fs.readFileSync('static/js/password-reset.js','utf8')});
+    await page.locator('[name=code_0]').pressSequentially('123456');
+    assert.deepEqual(await page.locator('[data-otp-input] input').evaluateAll(fields => fields.map(field => field.value)), ['1','2','3','4','5','6']);
+    await page.locator('[name=code_5]').press('Backspace');
+    await page.locator('[name=code_5]').press('Backspace');
+    assert.equal(await page.locator('[name=code_4]').evaluate(field => field===document.activeElement), true);
+    await page.locator('[name=code_0]').evaluate(field => {
+      const data=new DataTransfer(); data.setData('text','٠١٢٣٤٥'); field.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,clipboardData:data}));
+    });
+    assert.deepEqual(await page.locator('[data-otp-input] input').evaluateAll(fields => fields.map(field => field.value)), ['0','1','2','3','4','5']);
+    await page.locator('[name=code_5]').press('ArrowLeft');
+    assert.equal(await page.locator('[name=code_4]').evaluate(field => field===document.activeElement), true);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth<=innerWidth), true);
+  } finally { await page.close(); }
+});
+
+test('comment history and collapsed message editor stay within 200 pixels', async () => {
+  const page=await fixture('<body class="glis-portal-app"><main id="portal-main"><section class="ticket-conversation"><div id="comment-list">'+Array.from({length:30},()=>'<p>Recorded ticket activity</p>').join('')+'</div><form><textarea class="richtext-source" name="body" rows="5"></textarea></form></section></main></body>');
+  try {
+    await page.evaluate(() => {window.glisThemeStorage={get:()=> 'light',set:()=>{}};});
+    await page.addScriptTag({content:portalJS}); await page.evaluate(() => document.dispatchEvent(new Event('DOMContentLoaded')));
+    assert.equal(await page.locator('#comment-list').evaluate(list => getComputedStyle(list).maxHeight), '200px');
+    await page.locator('.richtext-canvas').evaluate(editor => editor.style.height='350px');
+    assert.ok((await page.locator('.richtext-canvas').boundingBox()).height<=200);
+    await page.getByRole('button',{name:'Expand editor',exact:true}).click();
+    assert.ok((await page.locator('.richtext-canvas').boundingBox()).height>200);
+  } finally { await page.close(); }
+});
+
+test('policy wizard and plan buttons rebind after history restoration without exposing other steps', async () => {
+  const form='<main id="workspace"><div data-transaction-wizard data-initial-step="1"><form><span data-wizard-current></span><section data-wizard-step="1"><input name="policy_number" value="NEW-1" required></section><section data-wizard-step="2" hidden><input name="currency" value="OMR"></section><section data-wizard-step="3" hidden><div data-benefit-plan-formset data-prefix="plans"><input name="plans-TOTAL_FORMS" value="1" type="hidden"><div data-plan-list><div data-plan-row><input name="plans-0-code" value="GOLD"><input name="plans-0-DELETE" type="hidden"><button type="button" data-remove-plan>Remove</button></div></div><template data-plan-empty-form><div data-plan-row><input name="plans-__prefix__-code"><input name="plans-__prefix__-DELETE" type="hidden"><button type="button" data-remove-plan>Remove</button></div></template><button type="button" data-add-plan>Add benefit plan</button></div></section><button type="button" data-wizard-prev hidden>Previous</button><button type="button" data-wizard-next>Next</button><button data-wizard-submit hidden>Create</button></form></div></main>';
+  const page=await fixture('<body>'+form+'</body>',portalCSS+css(['tpa-wizard.css']));
+  try {
+    await page.addScriptTag({content:tpaJS});
+    await page.getByRole('button',{name:'Next',exact:true}).click();
+    assert.equal(await page.locator('[data-wizard-step]:visible').getAttribute('data-wizard-step'),'2');
+    await page.evaluate(()=>{const workspace=document.getElementById('workspace');workspace.innerHTML=workspace.innerHTML;document.dispatchEvent(new CustomEvent('htmx:historyRestore'));});
+    assert.equal(await page.locator('[data-wizard-step]:visible').count(),1);
+    await page.getByRole('button',{name:'Previous',exact:true}).click();
+    assert.equal(await page.locator('[data-wizard-step]:visible').getAttribute('data-wizard-step'),'1');
+    await page.getByRole('button',{name:'Next',exact:true}).click();await page.getByRole('button',{name:'Next',exact:true}).click();
+    assert.equal(await page.locator('[data-wizard-step]:visible').getAttribute('data-wizard-step'),'3');
+    await page.getByRole('button',{name:'Add benefit plan',exact:true}).click();
+    assert.equal(await page.locator('[data-plan-row]:visible').count(),2);
+    await page.locator('[data-plan-row]:visible').last().evaluate(row=>{const amount=document.createElement('input');amount.type='number';amount.min='0';amount.value='-1';row.append(amount);});
+    await page.getByRole('button',{name:'Remove',exact:true}).last().click();
+    assert.equal(await page.locator('[data-plan-row]:visible').count(),1);
+    await page.locator('form').evaluate(form=>{form.noValidate=true;form.addEventListener('submit',event=>{window.wizardBlocked=event.defaultPrevented;event.preventDefault();});});
+    await page.getByRole('button',{name:'Create',exact:true}).click();
+    assert.equal(await page.evaluate(()=>window.wizardBlocked),false);
+  } finally {await page.close();}
+});
 const dashboardFiltersJS = fs.readFileSync('static/js/dashboard-filters.js', 'utf8');
 const ticketLiveJS = fs.readFileSync('static/js/ticket-live.js', 'utf8');
 

@@ -344,9 +344,38 @@ class TransactionWizardTests(TestCase):
         response = self.client.get(url)
         self.assertContains(response, 'data-transaction-wizard')
         self.assertEqual(response.content.count(b'data-wizard-step='), 3)
+        self.assertContains(response, '<noscript>')
         response = self.client.post(url, {"policy_number": "WIZARD-1"}, HTTP_HX_REQUEST="true")
         self.assertNotContains(response, "<!doctype html>")
         self.assertContains(response, "already exists")
+        self.assertNotContains(response, '<noscript>')
+        self.assertNotContains(response, 'display:block!important')
+
+    def test_intake_tab_counts_match_valid_warning_and_error_rows(self):
+        tx = self.tx()
+        for number, status in enumerate(('VALID', 'WARNING', 'ERROR', 'ERROR'), 1):
+            MemberAction.objects.create(transaction=tx, action=tx.transaction_type,
+                                       row_number=number, validation_status=status)
+        response = self.get(tx, 'intake', HTTP_HX_REQUEST='true')
+        self.assertEqual(response.context['success_count'], 2)
+        self.assertEqual(response.context['error_count'], 2)
+        self.assertContains(response, 'data-intake-success-count>2</span>')
+        self.assertContains(response, 'data-intake-error-count>2</span>')
+
+    def test_deleted_empty_plan_does_not_move_policy_error_to_plan_step(self):
+        response = self.client.post(reverse('tpa:policy_enrollment_create'), {
+            'organization': self.organization.pk, 'insurance_company': self.insurer.pk,
+            'policy_number': self.policy.policy_number, 'policy_name': 'Initial setup',
+            'start_date': '2026-01-01', 'expiry_date': '2026-12-31', 'currency': 'OMR',
+            'allowed_backdating_days': '30', 'plans-TOTAL_FORMS': '2', 'plans-INITIAL_FORMS': '1',
+            'plans-0-code': 'GOLD', 'plans-0-name': 'Gold', 'plans-0-annual_premium': '0.000',
+            'plans-0-is_active': 'on', 'plans-1-code': '', 'plans-1-name': '', 'plans-1-DELETE': 'on',
+        }, HTTP_HX_REQUEST='true')
+        self.assertEqual(response.context['creation_initial_step'], 1)
+        self.assertContains(response, 'A policy with this number already exists.')
+        self.assertTrue(response.context['plan_formset'].is_valid())
+        self.assertContains(response, 'data-plan-row hidden')
+        self.assertNotContains(response, '<noscript>')
 
     def test_previous_next_linking_does_not_call_workflow_services(self):
         tx = self.tx("pending_approval")

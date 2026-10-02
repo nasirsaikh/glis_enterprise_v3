@@ -181,4 +181,5 @@ class PasswordResetChallenge(TimeStampedModel):
     password_stamp = models.CharField(max_length=64, blank=True)
     expires_at = models.DateTimeField(db_index=True)
     attempts = models.PositiveSmallIntegerField(default=0)
+    verified_at = models.DateTimeField(null=True, blank=True)
     consumed_at = models.DateTimeField(null=True, blank=True)

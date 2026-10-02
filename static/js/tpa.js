@@ -353,12 +353,14 @@
 
 
 (() => {
+  const initializedWizards = new WeakSet();
   const setupTransactionWizard = (scope = document) => {
     const roots = [];
     if (scope.matches?.("[data-transaction-wizard]")) roots.push(scope);
     roots.push(...(scope.querySelectorAll?.("[data-transaction-wizard]") || []));
     roots.forEach((wizard) => {
-      if (wizard.dataset.wizardReady === "true") return;
+      if (initializedWizards.has(wizard)) return;
+      initializedWizards.add(wizard);
       wizard.dataset.wizardReady = "true";
       const form = wizard.querySelector("form");
       const steps = Array.from(wizard.querySelectorAll("[data-wizard-step]"));
@@ -408,6 +410,7 @@
       };
       const showStep = (index) => {
         activeStep = Math.max(0, Math.min(steps.length - 1, index));
+        wizard.dataset.initialStep = String(activeStep + 1);
         steps.forEach((step, stepIndex) => {
           step.hidden = stepIndex !== activeStep;
           step.setAttribute("aria-hidden", String(stepIndex !== activeStep));
@@ -426,7 +429,7 @@
         if (submit) submit.hidden = activeStep !== steps.length - 1;
         updateSummary();
       };
-      const firstInvalidField = (step) => Array.from(step.querySelectorAll("input, select, textarea")).find((field) => field.willValidate && !field.checkValidity());
+      const firstInvalidField = (step) => Array.from(step.querySelectorAll("input, select, textarea")).find((field) => !field.closest('[data-plan-row][hidden]') && field.willValidate && !field.checkValidity());
       const validateStep = (index) => {
         const invalid = firstInvalidField(steps[index]);
         if (!invalid) return true;
@@ -460,16 +463,19 @@
   document.addEventListener("DOMContentLoaded", () => setupTransactionWizard());
   setupTransactionWizard();
   document.body?.addEventListener("htmx:afterSwap", (event) => setupTransactionWizard(document.getElementById(event.detail.target?.id) || event.target));
+  document.addEventListener("htmx:historyRestore", () => setupTransactionWizard());
 })();
 
 
 (() => {
+  const initializedPlanFormsets = new WeakSet();
   const setupBenefitPlanFormsets = (scope = document) => {
     const roots = [];
     if (scope.matches?.("[data-benefit-plan-formset]")) roots.push(scope);
     roots.push(...(scope.querySelectorAll?.("[data-benefit-plan-formset]") || []));
     roots.forEach((root) => {
-      if (root.dataset.planReady === "true") return;
+      if (initializedPlanFormsets.has(root)) return;
+      initializedPlanFormsets.add(root);
       root.dataset.planReady = "true";
       const prefix = root.dataset.prefix || "plans";
       const list = root.querySelector("[data-plan-list]");
@@ -497,7 +503,10 @@
           renumber();
         });
       };
-      list.querySelectorAll("[data-plan-row]").forEach(bindRemove);
+      list.querySelectorAll("[data-plan-row]").forEach(row => {
+        if (row.hidden) row.querySelectorAll("input,select,textarea").forEach(control => {control.required = false;});
+        bindRemove(row);
+      });
       root.querySelector("[data-add-plan]")?.addEventListener("click", () => {
         const index = Number(total.value || 0);
         const holder = document.createElement("div");
@@ -519,4 +528,5 @@
   document.body?.addEventListener("htmx:afterSwap", (event) =>
     setupBenefitPlanFormsets(document.getElementById(event.detail.target?.id) || event.target)
   );
+  document.addEventListener("htmx:historyRestore", () => setupBenefitPlanFormsets());
 })();

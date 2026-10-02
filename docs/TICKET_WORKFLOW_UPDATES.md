@@ -36,6 +36,10 @@ Native selects gain an in-menu search field with keyboard support, including dep
 
 User avatars display uploaded profile photos, with initials as a fallback. Rich-text editors support Expand/Collapse and vertical resizing without clearing the draft.
 
+Search controls initialize after HTMX finishes restoring field attributes, and
+replayed scripts, modal reopening and cached history reuse a single control per
+select. Refreshed assets include version identifiers to clear older cached files.
+
 The dashboard shows all seven KPIs in one row, which scrolls horizontally on narrow screens. Quick filters and the advanced filter modal apply consistently to KPIs, charts, recent tickets and the attention list while preserving the user's ticket scope.
 
 Advanced filters include projects, products, categories/subcategories, request types,
@@ -82,9 +86,19 @@ without a revision remain supported.
 
 Source files accumulate across separate browse/drop actions. The selected list
 shows filenames, sizes and Remove buttons. The editor starts with five rows and
-supports Expand/Collapse and vertical resizing. Vanna uses the same editor and
+supports Expand/Collapse and vertical resizing. Ticket comment history scrolls
+within 200px; the collapsed message editor is also capped at 200px and can expand.
+Vanna uses the same editor and
 submits readable question text. Task watchers and ticket tags support searchable
 selection of multiple users. Replaced dependent selects remove the old control.
+
+The intake **Validated** and **Errors / Needs Correction** tabs display their
+success and error row counts. Success includes valid rows and rows with warnings.
+Policy creation shows **Policy & Routing**, **Period & Rules**, and **Benefit
+Plans & Create** one step at a time. A validation error returns to its relevant
+step and retains the entered values and benefit plan controls.
+Removed benefit-plan rows stay hidden and do not affect validation or the step
+chosen for remaining errors.
 
 **Parent / Principal** does not ask for a parent. Spouse, child and other dependents
 must select an existing principal on the policy or a principal row already in the
@@ -102,13 +116,17 @@ The provider network opens in a large, scrollable modal with its existing filter
 **Forgot password** offers an **Email reset link** or **Email one-time code (OTP)**.
 Links use Django's expiring, single-use password reset tokens. The six-digit OTP
 expires after 10 minutes, is bound to the requesting session, permits five failed
-attempts and is consumed after a successful password reset. A password change or
+attempts and is consumed after a successful password reset. Enter the code in six
+single-digit boxes first; **Verify code** opens the separate password-change step
+only after successful server verification. Pasting the full code and keyboard
+navigation are supported. The verified step remains bound to the session and
+original code expiry. A password change or
 account lock invalidates outstanding recovery attempts. Both methods use common
 request throttling and generic responses for unknown/ineligible addresses.
 Security recovery email is independent of activity-email preferences and category
 flags. Successful recovery returns to sign-in without automatically signing in.
 
-Deploy accounts migration `0007` and tickets migration `0011`, refresh static files
+Deploy accounts migrations through `0008` and tickets migration `0011`, refresh static files
 and restart Django. Set `SITE_URL` to the real public origin, configure the existing
 SMTP settings and keep Job Center enabled: its queue worker delivers ticket and
 recovery emails. The account profile administration now exposes **Is locked**,

@@ -4,7 +4,7 @@
   {% if plan_formset.non_form_errors %}<div class="alert alert-danger py-2">{{ plan_formset.non_form_errors }}</div>{% endif %}
   <div class="glis-stack-3" data-plan-list>
     {% for plan_form in plan_formset %}
-    <div class="compact-plan-row" data-plan-row>
+    <div class="compact-plan-row" data-plan-row {% if plan_form.DELETE.value %}hidden{% endif %}>
       {{ plan_form.DELETE.as_hidden }}
       {% for field in plan_form.visible_fields %}{% if field.name != "DELETE" %}
       {% if field.name == "is_active" %}<label class="plan-active">{{ field }} {{ field.label }}</label>
@@ -27,5 +27,5 @@
       <span data-plan-number hidden></span>
     </div>
   </template>
-  <div class="d-flex justify-content-end"><button class="btn btn-outline-secondary btn-sm" type="button" data-add-plan><i class="bi bi-plus-lg"></i>{% translate "Add benefit plan" %}</button></div>
+  <div class="d-flex justify-content-end"><button class="btn btn-outline-secondary btn-sm" type="button" data-add-plan><i class="bi bi-plus-lg" aria-hidden="true"></i>{% translate "Add benefit plan" %}</button></div>
 </div>

@@ -2,7 +2,9 @@
 {% load static i18n %}
 
 {% block extra_head %}{{ block.super }}
-  <link href="{% static 'css/tpa-wizard.css' %}" rel="stylesheet" type="text/css">
+  <link href="{% static 'css/tpa-wizard.css' %}?v=20261002-2" rel="stylesheet" type="text/css">
+  {# Keep the no-JavaScript fallback out of fragments parsed by HTMX. #}
+  <noscript><style>[data-transaction-wizard] [data-wizard-step][hidden]{display:block!important}[data-transaction-wizard] [data-wizard-submit][hidden]{display:inline-flex!important}[data-wizard-next],[data-wizard-prev]{display:none!important}</style></noscript>
 {% endblock %}
 
 {% block content %}
@@ -13,5 +15,5 @@
 
 {% block extra_js %}
   {{ block.super }}
-  <script src="{% static 'js/tpa.js' %}"></script>
+  <script src="{% static 'js/tpa.js' %}?v=20261002-2"></script>
 {% endblock %}

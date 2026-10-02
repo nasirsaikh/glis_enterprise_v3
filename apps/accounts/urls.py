@@ -6,6 +6,7 @@ from django.urls import reverse_lazy
 urlpatterns = [
     path('password/reset/',views.password_reset_request,name='password_reset_request'),
     path('password/reset/otp/',views.password_reset_otp,name='password_reset_otp'),
+    path('password/reset/otp/password/',views.password_reset_otp_password,name='password_reset_otp_password'),
     path('password/reset/confirm/<uidb64>/<token>/',views.EligiblePasswordResetConfirmView.as_view(template_name='account/reset_confirm.html',success_url=reverse_lazy('accounts:password_reset_complete')),name='password_reset_confirm'),
     path('password/reset/complete/',auth_views.PasswordResetCompleteView.as_view(template_name='account/reset_complete.html'),name='password_reset_complete'),
     path("profile/", views.profile, name="profile"),

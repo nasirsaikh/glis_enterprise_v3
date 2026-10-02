@@ -1,3 +1,16 @@
-{% extends 'base_public.html' %}{% load i18n %}
-{% block title %}{% translate 'Reset with an email code' %} · GLIS{% endblock %}
-{% block content %}<section class="py-5 px-3"><div class="mx-auto glis-max-lg card shadow-sm"><div class="card-body p-4"><h1 class="fs-4">{% translate 'Reset with an email code' %}</h1><p>{% translate 'If an eligible account exists, a six-digit code was sent. It expires after 10 minutes. You have five attempts.' %}</p><form method="post" class="d-grid gap-3">{% csrf_token %}{{ code_form.non_field_errors }}{{ password_form.non_field_errors }}{% for field in code_form %}<div><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}</div>{% endfor %}{% for field in password_form %}<div><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{{ field.errors }}{% if field.help_text %}<div class="small text-body-secondary">{{ field.help_text|safe }}</div>{% endif %}</div>{% endfor %}<button class="btn btn-primary" type="submit">{% translate 'Reset password' %}</button></form><a class="mt-3" href="{% url 'accounts:password_reset_request' %}">{% translate 'Request a new code or use an email link' %}</a></div></div></section>{% endblock %}
+{% extends 'base_public.html' %}{% load i18n static %}
+{% block title %}{% translate 'Verify your email code' %} · GLIS{% endblock %}
+{% block extra_js %}{{ block.super }}<script src="{% static 'js/password-reset.js' %}?v=20261002-2" defer></script>{% endblock %}
+{% block content %}
+<section class="py-5 px-3"><div class="mx-auto glis-max-lg card shadow-sm"><div class="card-body p-4">
+  <div class="small text-body-secondary mb-2">{% translate 'Step 1 of 2 · Verify code' %}</div>
+  <h1 class="fs-4">{% translate 'Verify your email code' %}</h1>
+  <p>{% translate 'If an eligible account exists, a six-digit code was sent. It expires after 10 minutes. You have five attempts.' %}</p>
+  <form method="post" class="d-grid gap-3">
+    {% csrf_token %}{{ code_form.non_field_errors }}
+    <fieldset><legend class="form-label">{{ code_form.code.label }}</legend>{{ code_form.code }}{{ code_form.code.errors }}</fieldset>
+    <button class="btn btn-primary" type="submit">{% translate 'Verify code' %}</button>
+  </form>
+  <a class="mt-3" href="{% url 'accounts:password_reset_request' %}">{% translate 'Request a new code or use an email link' %}</a>
+</div></div></section>
+{% endblock %}

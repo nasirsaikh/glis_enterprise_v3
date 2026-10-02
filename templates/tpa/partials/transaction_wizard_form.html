@@ -2,7 +2,6 @@
 <div id="transaction-wizard-shell" class="card tpa-wizard-card" data-transaction-wizard data-initial-step="{% if form.policy.errors or form.transaction_type.errors %}1{% elif form.effective_date.errors or form.refund_basis.errors or form.expected_reactivation_date.errors %}2{% elif form.remarks.errors or form.non_field_errors %}3{% else %}1{% endif %}">
   <form id="transaction-wizard-form" method="post" action="{% url 'tpa:transaction_create' %}" hx-post="{% url 'tpa:transaction_create' %}" hx-target="#transaction-wizard-shell" hx-swap="outerHTML" data-processing-form novalidate>
     {% csrf_token %}
-    <noscript><style>[data-transaction-wizard] [data-wizard-step][hidden]{display:block!important}[data-wizard-submit][hidden]{display:inline-flex!important}[data-wizard-next],[data-wizard-prev]{display:none!important}</style></noscript>
     <div class="tpa-wizard-card__head">
       <div><span class="tpa-wizard-eyebrow">{% translate "Endorsement setup" %}</span><h2>{% translate "Request details" %}</h2><p>{% translate "Complete each step, then review your request before creating it." %}</p></div>
       <span class="tpa-wizard-step-count"><span data-wizard-current>1</span><span aria-hidden="true">/</span>3</span>

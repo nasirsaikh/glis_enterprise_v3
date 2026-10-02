@@ -38,7 +38,7 @@
 .ticket-conversation .rich-content :is(p,ul,ol) { margin-block: .25rem; }
 .ticket-conversation .rich-content img { max-width: 100%; height: auto; border-radius: .6rem; }
 .ticket-conversation .rich-content table { display: block; max-width: 100%; overflow-x: auto; }
-.ticket-conversation #comment-list { max-height: 60vh; overflow-y: auto; overscroll-behavior: contain; padding: .85rem; }
+.ticket-conversation #comment-list { max-height: 200px; overflow-y: auto; overscroll-behavior: contain; padding: .85rem; }
 .ticket-conversation #comment-composer > div { padding: .85rem; }
 .ticket-conversation .composer-options { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
 .ticket-conversation .composer-options .glis-field { width: 12rem; }
@@ -46,6 +46,7 @@
 .ticket-conversation .richtext-editor [contenteditable] { min-height: 12rem; max-height: none; resize: vertical; overflow-y: auto; }
 .glis-portal-app #portal-main .richtext-editor .richtext-canvas { min-height: var(--glis-editor-height, 9rem) !important; height: var(--glis-editor-height, 9rem); flex-shrink: 0; }
 .glis-portal-app #portal-main .richtext-editor.is-expanded .richtext-canvas { height: min(65vh, 42rem); }
+.ticket-conversation .richtext-editor:not(.is-expanded) .richtext-canvas { max-height: 200px; }
 .portal-dashboard .portal-metrics { display: flex; flex-wrap: nowrap; overflow-x: auto; max-width: 100%; min-width: 0; padding-bottom: .25rem; }
 .portal-dashboard .portal-metric { flex: 1 0 8.5rem; min-width: 0; }
 .portal-dashboard .portal-metric__top { gap: .4rem; }

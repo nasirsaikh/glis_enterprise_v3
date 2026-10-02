@@ -91,7 +91,6 @@ class Command(BaseCommand):
             policy_number=f"DEMO-MED-{year}",
             defaults={
                 "organization": organization,
-                "insurance_company": insurer,
                 "policy_name": f"Demo Corporate Medical {year}",
                 "start_date": date(year, 1, 1),
                 "expiry_date": date(year, 12, 31),

@@ -480,7 +480,7 @@ def policy_enrollment_list(request):
     if query:
         policies = policies.filter(
             models.Q(policy_number__icontains=query) | models.Q(policy_name__icontains=query)
-            | models.Q(organization__name_en__icontains=query) | models.Q(insurance_company__name_en__icontains=query)
+            | models.Q(organization__name_en__icontains=query)
         )
     pagination = table_page(request, policies.order_by("-created_at", "-pk"))
     rows = []
@@ -561,7 +561,6 @@ def policy_enrollment_create(request):
             with transaction.atomic():
                 policy = Policy.objects.create(
                     organization=form.cleaned_data["organization"],
-                    insurance_company=form.cleaned_data["insurance_company"],
                     product=form.cleaned_data.get("product"),
                     product_type=form.cleaned_data["product"].code if form.cleaned_data.get("product") else "MEDICAL",
                     policy_type=form.cleaned_data.get("policy_type", "GROUP_MEDICAL"),
@@ -604,7 +603,7 @@ def policy_enrollment_create(request):
                 )
                 tx = MemberTransaction.objects.create(
                     organization=policy.organization,
-                    insurer=policy.insurance_company,
+                    insurer=policy.organization,
                     policy=policy,
                     transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT,
                     source=MemberTransaction.Source.PORTAL,
@@ -733,7 +732,7 @@ def transaction_create(request):
         tx = form.save(commit=False)
         _require_intake_edit(request.user, tx)
         tx.organization = tx.policy.organization
-        tx.insurer = tx.policy.insurance_company
+        tx.insurer = tx.policy.organization
         tx.requester = request.user
         tx.physical_card_required = (
             tx.policy.physical_card_required

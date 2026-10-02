@@ -111,7 +111,7 @@ def can_process_tpa_transaction(user, tx):
 
 
 def visible_policies(user):
-    qs = scope_policies(Policy.objects.select_related("organization", "insurance_company"), user)
+    qs = scope_policies(Policy.objects.select_related("organization"), user)
     if not user.is_authenticated:
         return qs.none()
     if user.is_superuser or any(user.has_perm(code) for code in (*TPA_ENTRY_PERMISSIONS, "tpa.view_policy")):

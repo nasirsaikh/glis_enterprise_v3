@@ -874,7 +874,7 @@ def process_inbound_email(email, actor, *, force=False):
                 )
                 tx = MemberTransaction.objects.create(
                     organization=policy.organization,
-                    insurer=policy.insurance_company,
+                    insurer=(authority.organization if authority is not None else policy.organization),
                     policy=policy,
                     transaction_type=transaction_type,
                     classification=classification or transaction_type,

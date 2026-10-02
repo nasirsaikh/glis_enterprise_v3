@@ -1190,7 +1190,7 @@ def create_request(request):
             if not can_create_for_policy(request.user,data['policy'],project.workflow_type):return HttpResponse('Endorsement permission is required for this policy.',status=403)
         if kind=='endorsement' and project.workflow_type in MemberTransaction.Type.values:
             policy=data['policy']
-            tx=MemberTransaction.objects.create(policy=policy,organization=policy.organization,insurer=policy.insurance_company,requester=request.user,requester_organization=policy.organization,transaction_type=project.workflow_type,effective_date=data['effective_date'],metadata={'workflow_project_id':project.pk},physical_card_required=policy.physical_card_required and project.workflow_type=='MEMBER_ADD')
+            tx=MemberTransaction.objects.create(policy=policy,organization=policy.organization,insurer=policy.organization,requester=request.user,requester_organization=policy.organization,transaction_type=project.workflow_type,effective_date=data['effective_date'],metadata={'workflow_project_id':project.pk},physical_card_required=policy.physical_card_required and project.workflow_type=='MEMBER_ADD')
             if tx.transaction_type=='POLICY_CANCEL':
                 from apps.tpa.services.member_selection import populate_policy_cancellation
                 populate_policy_cancellation(tx)

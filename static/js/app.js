@@ -445,6 +445,16 @@
     scope.querySelectorAll("[data-dropzone]:not([data-ready]), .upload-item:not([data-ready])").forEach((zone) => {
       zone.dataset.ready = "true";
       const input = zone.querySelector('input[type="file"]');
+      if (!input) return;
+      const summary = zone.querySelector("[data-file-summary]");
+      const renderFiles = () => {
+        if (!summary) return;
+        const files = Array.from(input.files || []);
+        summary.textContent = files.length
+          ? files.map(file => file.name).join(", ")
+          : "Choose or drop files";
+      };
+      input.addEventListener("change", renderFiles);
       zone.addEventListener("click", (event) => { if (zone.matches("[data-dropzone]") && !event.target.closest("button")) input.click(); });
       ["dragenter", "dragover"].forEach(name => zone.addEventListener(name, event => { event.preventDefault(); zone.classList.add("is-dragging"); }));
       ["dragleave", "drop"].forEach(name => zone.addEventListener(name, event => { event.preventDefault(); zone.classList.remove("is-dragging"); }));

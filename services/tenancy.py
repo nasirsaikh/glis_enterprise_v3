@@ -90,7 +90,6 @@ def scope_policies(queryset, user):
         organizations__is_active=True,organizations__organization_type__is_active=True).values_list('organizations__pk',flat=True))
     scope = (
         Q(organization_id__in=organizations)
-        | Q(insurance_company_id__in=organizations)
         | Q(workflow_organizations__pk__in=organizations)
     )
     # A PolicyAccess grant is an explicit organization assignment for legacy

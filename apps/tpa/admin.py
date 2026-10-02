@@ -103,7 +103,6 @@ class PolicyAdmin(ScopedBusinessAdmin):
     list_display = (
         "policy_number",
         "organization",
-        "insurance_company",
         "status",
         "start_date",
         "expiry_date",

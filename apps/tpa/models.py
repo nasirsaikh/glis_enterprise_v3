@@ -13,7 +13,6 @@ class Policy(TimeStampedModel):
         related_name="policies",
         on_delete=models.PROTECT,
     )
-    insurance_company=models.ForeignKey(Organization, related_name="insured_policies", on_delete=models.PROTECT, limit_choices_to={"organization_type":"INSURER"})
     policy_number=models.CharField(max_length=80, unique=True, db_index=True)
     policy_name=models.CharField(max_length=180, blank=True)
     start_date=models.DateField()

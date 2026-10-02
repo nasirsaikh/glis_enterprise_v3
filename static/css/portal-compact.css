@@ -44,7 +44,7 @@
 .ticket-conversation .composer-options .glis-field { width: 12rem; }
 .ticket-conversation #comment-dropzone { padding: .75rem; border-radius: .75rem; }
 .ticket-conversation .richtext-editor [contenteditable] { min-height: 12rem; max-height: none; resize: vertical; overflow-y: auto; }
-.glis-portal-app #portal-main .richtext-editor .richtext-canvas { min-height: 12rem; height: 14rem; flex-shrink: 0; }
+.glis-portal-app #portal-main .richtext-editor .richtext-canvas { min-height: var(--glis-editor-height, 9rem) !important; height: var(--glis-editor-height, 9rem); flex-shrink: 0; }
 .glis-portal-app #portal-main .richtext-editor.is-expanded .richtext-canvas { height: min(65vh, 42rem); }
 .portal-dashboard .portal-metrics { display: flex; flex-wrap: nowrap; overflow-x: auto; max-width: 100%; min-width: 0; padding-bottom: .25rem; }
 .portal-dashboard .portal-metric { flex: 1 0 8.5rem; min-width: 0; }

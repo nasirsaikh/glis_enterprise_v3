@@ -5,7 +5,7 @@
           {% if tx.status == "rejected" %}
           <div class="alert alert-danger" role="alert"><div><strong>{% translate "Approval rejected" %}</strong><p>{{ tx.rejection_reason }}</p></div></div>
           {% elif tx.stp_eligible and tx.status != "pending_approval" %}
-          <div class="alert alert-success py-2"><i aria-hidden="true" class="bi bi-lightning-charge"></i><div><strong>{% translate "Auto Approved by STP" %}</strong><div class="glis-text-xs">{% translate "No manual approval action is required for this case." %}</div></div></div>
+          <div class="alert alert-success py-2"><i aria-hidden="true" class="bi bi-lightning-charge"></i><div><strong>{% translate "Auto approved by System" %}</strong><div class="glis-text-xs">{% translate "No manual approval action is required for this case." %}</div></div></div>
           {% elif tx.status == "pending_approval" %}
           <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div><strong>{% translate "Manual approval required" %}</strong><div class="glis-text-xs opacity-50">{% if ticket_approval_pending %}{% translate "The linked GLIS approval workflow is pending." %}{% else %}{% translate "An authorized approver can approve, reject or open a discussion." %}{% endif %}</div></div>
@@ -28,7 +28,7 @@
             {% endif %}
           </div>
           {% else %}
-          <div class="alert alert-success py-2"><i aria-hidden="true" class="bi bi-check-circle"></i><span>{% translate "Approval completed" %} · {{ tx.approved_at|date:"d-M-Y H:i"|default:"—" }}</span></div>
+          <div class="alert alert-success py-2"><i aria-hidden="true" class="bi bi-check-circle"></i><span>{% translate "Approval completed" %} · {% if tx.approved_by_id %}{{ tx.approved_by.get_full_name|default:tx.approved_by.username }}{% elif tx.approved_at %}{% translate 'Auto approved by System' %}{% endif %} · {{ tx.approved_at|date:"d-M-Y H:i"|default:"—" }}</span></div>
           {% endif %}
           <dl class="d-grid glis-grid-2 gap-2 small"><div><dt class="opacity-50">{% translate "Approver" %}</dt><dd>{{ approver_name }}</dd></div><div><dt class="opacity-50">{% translate "Premium adjustment" %}</dt><dd>{{ tx.currency }} {{ tx.premium_adjustment }}</dd></div></dl>
           {% if approval_events %}<ul class="list-group list-group-flush">{% for event in approval_events %}<li class="list-group-item d-flex align-items-start gap-3"><span>{{ event.summary }}</span><time class="glis-text-xs opacity-50">{{ event.created_at|date:"d-M-Y H:i" }}</time></li>{% endfor %}</ul>{% endif %}

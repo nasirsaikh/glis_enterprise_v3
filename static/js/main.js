@@ -127,6 +127,12 @@
   document.addEventListener("DOMContentLoaded", () => init());
 
   // Safe Bootstrap toast API: messages are text, never HTML.
+  document.addEventListener('click', event => {
+    const link = event.target.closest('a[href="#network-providers"]');
+    const modal = document.getElementById('networkProvidersModal');
+    if (link && modal) { event.preventDefault(); bootstrap.Modal.getOrCreateInstance(modal).show(); }
+  });
+
   window.showToast = (message, type = "info", duration = 4000) => {
     let container = document.getElementById("glis-toast-container");
     if (!container) {

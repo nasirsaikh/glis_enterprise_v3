@@ -114,6 +114,7 @@
     }
     const widget = {select, wrapper, get menu() {return menu;}, get control() {return control;}, refresh, position, close, destroy() {
       close(); observer.disconnect(); dropdown.dispose(); instance.destroy(); widgets.delete(select);
+      if (wrapper.isConnected) wrapper.replaceWith(...wrapper.childNodes);
       select.removeAttribute('aria-hidden');
       if (oldTabIndex === null) select.removeAttribute('tabindex'); else select.setAttribute('tabindex', oldTabIndex);
     }};
@@ -242,6 +243,10 @@
     }
     const widget = {select, wrapper, menu, control, refresh, position, close, destroy() {
       close(); observer.disconnect(); menu.remove(); widgets.delete(select);
+      control.remove();
+      // An outerHTML HTMX swap can replace the native select inside this
+      // wrapper. Unwrap its replacement as well as removing the old button.
+      if (wrapper.isConnected) wrapper.replaceWith(...wrapper.childNodes);
       select.classList.remove('glis-select-native'); select.removeAttribute('aria-hidden');
       if (oldTabIndex === null) select.removeAttribute('tabindex'); else select.setAttribute('tabindex', oldTabIndex);
     }};

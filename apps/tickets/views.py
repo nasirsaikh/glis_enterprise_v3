@@ -47,6 +47,16 @@ def sanitize_rich_text(value):
     return re.sub(r'src=("|\')data:(?!image/(?:png|jpeg|gif|webp);base64,).*?\1', 'src=""', cleaned, flags=re.I)
 
 
+@login_required
+@require_GET
+def ticket_updates(request, reference):
+    ticket = get_object_or_404(TicketAccessPolicy.visible_queryset(request.user), reference=reference)
+    response = JsonResponse({'reference':ticket.reference, 'revision':ticket.revision,
+                             'status':ticket.get_status_display(), 'approval_state':ticket.get_approval_state_display()})
+    response['Cache-Control'] = 'no-store'
+    return response
+
+
 def _apply_ticket_filters(qs, data):
     def selected(name):
         value = data.get(name)
@@ -236,8 +246,8 @@ def ticket_detail(request, reference):
     if ticket.status == Ticket.Status.CLOSED or ticket.approval_state != "pending":
         actionable_approvals = actionable_approvals.none()
     events = list(ticket.events.select_related("actor__profile").exclude(event_type="comment"))
-    if not TicketAccessPolicy.can_view_internal_notes(request.user, ticket):
-        events = [event for event in events if not event.details.get("is_internal")]
+    from services.ticket_notifications import event_visible
+    events = [event for event in events if event_visible(event, request.user)]
     conversation = [{"comment": comment, "created_at": comment.created_at, "pk": comment.pk} for comment in comments]
     can_view_sensitive = TicketAccessPolicy.can_view_sensitive(request.user, ticket)
     for event in events:
@@ -1114,14 +1124,19 @@ def tag_ticket_user(request,reference):
     if not TicketAccessPolicy.can_share(request.user,ticket):return HttpResponse('Participant management permission is required.',status=403)
     active=request.POST.get('action')!='untag'
     if active:
-        form=TicketParticipantForm(request.POST,ticket=ticket,user=request.user)
+        data=request.POST.copy()
+        if 'users' not in data and data.get('user'):data.setlist('users',data.getlist('user'))
+        form=TicketParticipantForm(data,ticket=ticket,user=request.user)
         if not form.is_valid():return HttpResponse('Select an authorized user.',status=400)
-        target=form.cleaned_data['user']
+        targets=list(form.cleaned_data['users'])
     else:
         value=request.POST.get('user','')
         if not value.isdigit():return HttpResponse('Select an active tagged user.',status=400)
         target=get_object_or_404(ticket.tagged_users.filter(ticket_tags__ticket=ticket,ticket_tags__is_active=True),pk=value)
-    try:tag_user(ticket,request.user,target,active=active)
+        targets=[target]
+    try:
+        with transaction.atomic():
+            for target in targets:tag_user(ticket,request.user,target,active=active)
     except PermissionError as exc:return HttpResponse(str(exc),status=403)
     except ValueError as exc:return HttpResponse(str(exc),status=400)
     return participant_response(request,ticket)

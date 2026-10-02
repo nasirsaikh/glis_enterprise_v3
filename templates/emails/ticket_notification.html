@@ -117,6 +117,12 @@
     </tr>
     {% endif %}
 
+    {% if process_flow %}
+    <tr><td style="padding:24px 40px 0"><h2 style="font-size:16px">Process flow</h2><table width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #DADFE2;font-size:13px"><tr><th align="left">Step</th><th align="left">Status</th><th align="left">Responsible</th></tr>{% for step in process_flow %}<tr><td>{{ step.name }}</td><td>{{ step.status }}</td><td>{{ step.by }}</td></tr>{% endfor %}</table></td></tr>
+    {% endif %}
+    {% if activity_history %}
+    <tr><td style="padding:24px 40px 0"><h2 style="font-size:16px">Activity and action history</h2>{% for activity in activity_history %}<div style="border-bottom:1px solid #ECEFF0;padding:10px 0;font-size:13px;line-height:1.6"><div style="color:#6A747B">{{ activity.at|date:'d M Y, H:i' }} · {{ activity.actor }}</div><strong>{{ activity.action }}</strong>{% if activity.detail %}<div style="white-space:pre-wrap;word-break:break-word">{{ activity.detail|linebreaksbr }}</div>{% endif %}</div>{% endfor %}</td></tr>
+    {% endif %}
     {% if link %}
     <tr>
       <td style="padding:28px 40px 0;">

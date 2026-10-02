@@ -530,7 +530,10 @@
       wrapper.innerHTML = '<div class="d-flex flex-wrap align-items-center gap-1 border-bottom border-body bg-body-tertiary p-2"><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="bold" title="Bold" aria-label="Bold"><i class="bi bi-type-bold"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="italic" title="Italic" aria-label="Italic"><i class="bi bi-type-italic"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="underline" title="Underline" aria-label="Underline"><i class="bi bi-type-underline"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bullets"><i class="bi bi-list-ul"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list"><i class="bi bi-list-ol"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-cmd="createLink" title="Link" aria-label="Insert link"><i class="bi bi-link-45deg"></i></button><button class="btn btn-light btn-sm glis-btn-icon" type="button" data-image-button title="Upload image" aria-label="Upload image"><i class="bi bi-image"></i></button><input type="file" hidden data-image-input accept="image/png,image/jpeg,image/gif,image/webp"><span class="badge bg-body-secondary text-body-secondary glis-badge-small ms-2">Paste or upload images</span><button type="button" class="btn btn-light btn-sm ms-auto" data-expand-editor aria-expanded="false">Expand editor</button></div><div class="richtext-canvas form-control w-100 rounded-0 border-0 bg-body p-3" style="overflow:auto" contenteditable="true" role="textbox" aria-multiline="true"></div>';
       source.insertAdjacentElement("afterend", wrapper);
       const editor = wrapper.querySelector(".richtext-canvas");
-      editor.innerHTML = source.value || "";
+      const plainText = source.dataset.editorFormat === 'text';
+      if (plainText) wrapper.querySelectorAll('[data-image-button], [data-image-input], .glis-badge-small').forEach(control => control.remove());
+      if (plainText) editor.textContent = source.value || ''; else editor.innerHTML = source.value || "";
+      wrapper.style.setProperty('--glis-editor-height', `${Math.max(5, Number(source.rows || 5)) * 24 + 24}px`);
       editor.id = `${source.id || "richtext"}-editor`;
       const sourceLabel = source.id && document.querySelector(`label[for="${source.id}"]`);
       if (sourceLabel) sourceLabel.htmlFor = editor.id;
@@ -544,15 +547,17 @@
         expandButton.setAttribute("aria-expanded", String(expanded));
         expandButton.textContent = root.lang === "ar" ? (expanded ? "تصغير المحرر" : "توسيع المحرر") : (expanded ? "Collapse editor" : "Expand editor");
       });
-      const sync = () => { source.value = editor.innerHTML; source.dispatchEvent(new Event("change", {bubbles: true})); };
+      const sync = () => { source.value = plainText ? editor.innerText : editor.innerHTML; source.dispatchEvent(new Event("change", {bubbles: true})); };
       editor.addEventListener("input", sync);
       editor.addEventListener("blur", sync);
       editor.addEventListener("paste", (event) => {
+        if (plainText) return;
         const image = Array.from(event.clipboardData.files || []).find(file => file.type.startsWith("image/"));
         if (image) { event.preventDefault(); insertImage(editor, image); }
       });
       editor.addEventListener("dragover", (event) => event.preventDefault());
       editor.addEventListener("drop", (event) => {
+        if (plainText) return;
         const image = Array.from(event.dataTransfer.files || []).find(file => file.type.startsWith("image/"));
         if (image) { event.preventDefault(); insertImage(editor, image); }
       });
@@ -562,8 +567,10 @@
         editor.focus(); document.execCommand(button.dataset.cmd, false, value); sync();
       }));
       const imageInput = wrapper.querySelector("[data-image-input]");
-      wrapper.querySelector("[data-image-button]").addEventListener("click", () => imageInput.click());
-      imageInput.addEventListener("change", () => { if (imageInput.files[0]) insertImage(editor, imageInput.files[0]); imageInput.value = ""; });
+      if (imageInput) {
+        wrapper.querySelector("[data-image-button]").addEventListener("click", () => imageInput.click());
+        imageInput.addEventListener("change", () => { if (imageInput.files[0]) insertImage(editor, imageInput.files[0]); imageInput.value = ""; });
+      }
       source.form?.addEventListener("submit", sync);
     });
   };
@@ -619,7 +626,9 @@
       return image;
     };
 
-    const bindPrompt = (button) => button.addEventListener("click", () => { question.value = button.dataset.vannaPrompt || button.textContent; question.focus(); });
+    const visibleQuestion = document.getElementById(`${question.id}-editor`) || question;
+    const setQuestion = value => { question.value = value; if (visibleQuestion !== question) visibleQuestion.textContent = value; };
+    const bindPrompt = (button) => button.addEventListener("click", () => { setQuestion(button.dataset.vannaPrompt || button.textContent); visibleQuestion.focus(); });
     document.querySelectorAll("[data-vanna-prompt]").forEach(bindPrompt);
     document.querySelectorAll("[data-auto-submit]").forEach(select => select.addEventListener("change", () => select.form.submit()));
 
@@ -824,8 +833,8 @@
       setActiveSession(session.id);
     };
     sessionList.addEventListener("click", event => { const item = event.target.closest("[data-session-id]"); if (item) loadSession(item.dataset.sessionId); });
-    document.getElementById("vanna-new-session")?.addEventListener("click", () => { setActiveSession(""); showWelcome(); question.focus(); });
-    question.addEventListener("keydown", event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); } });
+    document.getElementById("vanna-new-session")?.addEventListener("click", () => { setActiveSession(""); showWelcome(); visibleQuestion.focus(); });
+    visibleQuestion.addEventListener("keydown", event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); } });
 
 
     form.addEventListener("submit", async (event) => {
@@ -843,7 +852,7 @@
       send.disabled = true;
 
       addQuestion(text);
-      question.value = "";
+      setQuestion("");
 
       try {
         const response = await fetch(form.action, {
@@ -868,7 +877,7 @@
         error.classList.remove("d-none");
       } finally {
         send.disabled = false;
-        question.focus();
+        visibleQuestion.focus();
       }
     });
 

@@ -54,3 +54,62 @@ private jQuery instance preserves existing Django/CMS globals; native values,
 required-field validation and HTMX events remain intact.
 
 Job Center admin status badges and registered handlers use argument-safe Django HTML formatting compatible with Django 6.1.
+
+## Activity emails and live updates
+
+Each committed ticket activity queues an individual HTML email with a plain-text
+alternative, the visible comment/action history and the applicable process flow.
+Member corrections, evidence extraction and other TPA activities also enter the
+ticket ledger. API edits, assignments, comments and status actions use this ledger.
+Private notes and workflow discussions retain their recipient access rules.
+
+Category **Send initial email** controls creation and initial approval activity;
+**Send update email** controls later activities. Both settings are checked again
+when the queued job runs. Recipients include the requester and their active team, current assignees,
+assigned group members/managers, approvers, active tagged users, task watchers
+and unexpired share recipients who still have access. Users without an email,
+inactive/unapproved/locked accounts, expired guest accounts and users who opted
+out of activity email are excluded. Emails are addressed individually.
+
+The ticket, embedded TPA workspace and task edit form check for changes every two
+seconds while visible. Clean ticket pages refresh automatically. Open dialogs and
+unsaved forms display a reload notice and preserve the draft. Portal submissions
+carry a record revision; the server locks the ticket and rejects stale submissions
+with HTTP 409. Invalid forms do not create a new revision. Legacy integrations
+without a revision remain supported.
+
+## Intake and public-page controls
+
+Source files accumulate across separate browse/drop actions. The selected list
+shows filenames, sizes and Remove buttons. The editor starts with five rows and
+supports Expand/Collapse and vertical resizing. Vanna uses the same editor and
+submits readable question text. Task watchers and ticket tags support searchable
+selection of multiple users. Replaced dependent selects remove the old control.
+
+**Parent / Principal** does not ask for a parent. Spouse, child and other dependents
+must select an existing principal on the policy or a principal row already in the
+transaction, in both manual intake and correction. OCR, email and spreadsheet
+intake resolve active benefit plans by code, name, display label or database ID
+within the selected policy. Ambiguous or unmatched references require correction.
+
+Automatic approvals display **Auto approved by System**. The separate TPA new
+discussion form is hidden for requests linked to a ticket; existing discussion
+history remains accessible. Public CMS submenus use Bootstrap dropdown controls.
+The provider network opens in a large, scrollable modal with its existing filters.
+
+## Password recovery
+
+**Forgot password** offers an **Email reset link** or **Email one-time code (OTP)**.
+Links use Django's expiring, single-use password reset tokens. The six-digit OTP
+expires after 10 minutes, is bound to the requesting session, permits five failed
+attempts and is consumed after a successful password reset. A password change or
+account lock invalidates outstanding recovery attempts. Both methods use common
+request throttling and generic responses for unknown/ineligible addresses.
+Security recovery email is independent of activity-email preferences and category
+flags. Successful recovery returns to sign-in without automatically signing in.
+
+Deploy accounts migration `0007` and tickets migration `0011`, refresh static files
+and restart Django. Set `SITE_URL` to the real public origin, configure the existing
+SMTP settings and keep Job Center enabled: its queue worker delivers ticket and
+recovery emails. The account profile administration now exposes **Is locked**,
+which blocks sign-in, existing portal sessions, recovery and activity email.

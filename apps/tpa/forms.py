@@ -404,7 +404,7 @@ class MemberRowForm(forms.Form):
         required=True,
     )
     relationship = forms.ChoiceField(
-        choices=(("", "Select relationship"), *Member.Relationship.choices),
+        choices=(("", "Select relationship"), *((value, "Parent / Principal" if value == Member.Relationship.PRINCIPAL else label) for value, label in Member.Relationship.choices)),
         required=True,
     )
     principal_reference = forms.ChoiceField(

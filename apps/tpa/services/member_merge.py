@@ -80,7 +80,8 @@ def merge_member_rows(
     created_or_updated = []
 
     for index, row in enumerate(rows or []):
-        normalized = _normalize(row)
+        from .benefit_plans import resolve_member_plan
+        normalized = resolve_member_plan(tx.policy, _normalize(row))
         if not any(value not in (None, "") for value in normalized.values()):
             continue
 

@@ -160,7 +160,7 @@ class TicketCommentForm(forms.ModelForm):
             "body": forms.Textarea(
                 attrs={
                     "class": "form-control w-100 richtext-source",
-                    "rows": 6,
+                    "rows": 5,
                     "placeholder": "Write an update…",
                 }
             ),
@@ -380,10 +380,10 @@ class DashboardFilterForm(TicketFilterForm):
 
 
 class TicketParticipantForm(forms.Form):
-    user = forms.ModelChoiceField(queryset=get_user_model().objects.none(),widget=forms.Select(attrs={'class':'form-select w-100'}))
+    users = forms.ModelMultipleChoiceField(label=_("Users"),queryset=get_user_model().objects.none(),widget=forms.SelectMultiple(attrs={'class':'form-select w-100','data-placeholder':_('Select users to tag')}))
     def __init__(self,*args,ticket,user,**kwargs):
         super().__init__(*args,**kwargs)
-        self.fields['user'].queryset=taggable_users(user,ticket)
+        self.fields['users'].queryset=taggable_users(user,ticket)
 
 class TicketApprovalRequestForm(forms.Form):
     approver = forms.ModelChoiceField(queryset=get_user_model().objects.none(),widget=forms.Select(attrs={'class':'form-select w-100'}))

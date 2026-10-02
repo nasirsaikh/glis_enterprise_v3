@@ -1,3 +1,4 @@
+import uuid
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
@@ -138,6 +139,7 @@ class UserProfile(TimeStampedModel):
     sidebar_mode = models.CharField(max_length=10, choices=SidebarMode.choices, default=SidebarMode.MINI)
     is_external = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=True)
+    is_locked = models.BooleanField(default=False, help_text='Block sign-in and email notifications for this account.')
     guest_access_expires_at = models.DateTimeField(null=True, blank=True)
     email_notifications = models.BooleanField(default=True)
     browser_notifications = models.BooleanField(default=True)
@@ -167,3 +169,16 @@ class AccountPolicy(TimeStampedModel):
     def load(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class PasswordResetChallenge(TimeStampedModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
+    method = models.CharField(max_length=10, choices=[('link','Email link'),('otp','Email OTP')])
+    email_digest = models.CharField(max_length=64, db_index=True)
+    ip_digest = models.CharField(max_length=64, db_index=True)
+    session_digest = models.CharField(max_length=64)
+    password_stamp = models.CharField(max_length=64, blank=True)
+    expires_at = models.DateTimeField(db_index=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    consumed_at = models.DateTimeField(null=True, blank=True)

@@ -283,6 +283,164 @@ const selectCSS = css(['searchable-selects.css']);
 const multiselectJS = fs.readFileSync('static/vendor/bootstrap-multiselect/bootstrap-multiselect.bundle.js', 'utf8');
 const multiselectCSS = fs.readFileSync('static/vendor/bootstrap-multiselect/bootstrap-multiselect.css', 'utf8');
 const dashboardFiltersJS = fs.readFileSync('static/js/dashboard-filters.js', 'utf8');
+const ticketLiveJS = fs.readFileSync('static/js/ticket-live.js', 'utf8');
+
+test('repeated HTMX select replacements leave one control for each native select', async () => {
+  const page = await multiselectFixture('<body><form><label>Project<select id="project" name="project"><option value="">Choose</option><option value="1">Medical</option></select></label><label>Tag users<select id="users" name="users" multiple><option value="1">Amina</option><option value="2">Sara</option></select></label></form></body>');
+  try {
+    for (let iteration = 0; iteration < 4; iteration++) {
+      await page.evaluate(() => {
+        for (const id of ['project', 'users']) {
+          const target = document.getElementById(id);
+          document.dispatchEvent(new CustomEvent('htmx:beforeSwap', {detail: {target, shouldSwap: true}}));
+          target.outerHTML = id === 'project'
+            ? '<select id="project" name="project"><option value="">Choose</option><option value="2">Motor</option></select>'
+            : '<select id="users" name="users" multiple><option value="1">Amina</option><option value="2">Sara</option></select>';
+          document.dispatchEvent(new CustomEvent('htmx:afterSwap', {detail: {target: document.getElementById(id)}}));
+        }
+      });
+      assert.equal(await page.locator('select').count(), 2);
+      assert.equal(await page.locator('.glis-select-control').count(), 2);
+      assert.equal(await page.locator('.glis-searchable-select').count(), 2);
+    }
+    await page.getByRole('button', {name: 'Project: Choose'}).click();
+    await page.getByRole('option', {name: 'Motor', exact: true}).click();
+    await page.getByRole('button', {name: /Tag users:/}).click();
+    await page.getByRole('checkbox', {name: 'Amina', exact: true}).check();
+    await page.getByRole('checkbox', {name: 'Sara', exact: true}).check();
+    assert.deepEqual(await page.evaluate(() => [...new FormData(document.querySelector('form'))]), [['project','2'],['users','1'],['users','2']]);
+  } finally { await page.close(); }
+});
+
+test('source files accumulate across browse and drop, can be removed and reset', async () => {
+  const page = await fixture('<body><form><div data-tpa-dropzone><input type="file" multiple name="documents"><span data-tpa-file-count></span><div data-tpa-file-list></div></div><button type="reset">Reset files</button></form></body>');
+  try {
+    await page.addScriptTag({content: tpaJS});
+    const input = page.locator('input[type=file]');
+    await input.setInputFiles({name: 'first.csv', mimeType: 'text/csv', buffer: Buffer.from('first')});
+    await input.setInputFiles({name: 'second.pdf', mimeType: 'application/pdf', buffer: Buffer.from('second')});
+    await page.locator('[data-tpa-dropzone]').evaluate(zone => {
+      const transfer = new DataTransfer(); transfer.items.add(new File(['third'], 'third.png', {type:'image/png', lastModified:1}));
+      zone.dispatchEvent(new DragEvent('drop', {bubbles:true, dataTransfer:transfer}));
+      zone.dispatchEvent(new DragEvent('drop', {bubbles:true, dataTransfer:transfer}));
+    });
+    assert.deepEqual(await input.evaluate(field => [...field.files].map(file => file.name)), ['first.csv','second.pdf','third.png']);
+    assert.equal(await page.locator('[data-tpa-file-list] button').count(), 3);
+    await page.getByRole('button', {name: 'Remove second.pdf'}).click();
+    assert.deepEqual(await page.evaluate(() => new FormData(document.querySelector('form')).getAll('documents').map(file => file.name)), ['first.csv','third.png']);
+    await page.getByRole('button', {name: 'Reset files'}).click();
+    await page.waitForFunction(() => document.querySelector('[data-tpa-file-list]').childElementCount === 0);
+    assert.equal(await input.evaluate(field => field.files.length), 0);
+    assert.equal(await page.locator('[data-tpa-file-list] button').count(), 0);
+  } finally { await page.close(); }
+});
+
+test('Parent principal is hidden for the parent and required for a dependent', async () => {
+  const page = await fixture('<body><form><select name="relationship"><option value="PRINCIPAL">Parent / Principal</option><option value="CHILD">Child</option></select><fieldset><label>Parent Principal<select name="principal_reference"><option value="">Select</option><option value="1">Existing parent</option></select></label></fieldset></form></body>');
+  try {
+    await page.addScriptTag({content: tpaJS});
+    assert.equal(await page.locator('fieldset').isVisible(), false);
+    assert.equal(await page.locator('[name=principal_reference]').evaluate(field => field.required), false);
+    await page.locator('[name=relationship]').selectOption('CHILD');
+    assert.equal(await page.locator('fieldset').isVisible(), true);
+    assert.equal(await page.locator('[name=principal_reference]').evaluate(field => field.required), true);
+    await page.locator('[name=principal_reference]').selectOption('1');
+    await page.locator('[name=relationship]').selectOption('PRINCIPAL');
+    assert.equal(await page.locator('[name=principal_reference]').inputValue(), '');
+    assert.equal(await page.locator('fieldset').isVisible(), false);
+  } finally { await page.close(); }
+});
+
+test('five-row editors expand and analytics formatting submits readable text', async () => {
+  const page = await fixture('<body class="glis-portal-app"><main id="portal-main"><form><label for="question">Analytics question</label><textarea id="question" name="question" rows="5" class="richtext-source" data-editor-format="text"></textarea></form></main></body>');
+  try {
+    await page.evaluate(() => {window.glisThemeStorage = {get: () => 'light', set: () => {}};});
+    await page.addScriptTag({content: portalJS});
+    await page.evaluate(() => document.dispatchEvent(new Event('DOMContentLoaded')));
+    const editor = page.locator('.richtext-canvas');
+    const defaultHeight = (await editor.boundingBox()).height;
+    assert.ok(defaultHeight >= 140 && defaultHeight <= 180, 'Default editor fits five rows');
+    assert.equal(await page.locator('[data-image-button]').count(), 0);
+    await editor.fill('Show active policies');
+    await editor.evaluate(el => {el.innerHTML = '<b>Show active</b> policies'; el.dispatchEvent(new Event('input',{bubbles:true}));});
+    assert.equal(await page.evaluate(() => new FormData(document.querySelector('form')).get('question')), 'Show active policies');
+    await page.getByRole('button', {name:'Expand editor'}).click();
+    assert.ok((await editor.boundingBox()).height > defaultHeight * 2);
+    await page.getByRole('button', {name:'Collapse editor'}).click();
+    assert.equal((await editor.boundingBox()).height, defaultHeight);
+    await editor.evaluate(el => {el.style.height = '300px';});
+    assert.equal((await editor.boundingBox()).height, 300);
+  } finally { await page.close(); }
+});
+
+test('live changes preserve an unsaved draft and prevent stale submissions', async () => {
+  const page = await fixture('<body data-ticket-live data-ticket-reference="TEST-1" data-ticket-revision="4" data-ticket-updates-url="/updates/"><main id="portal-main"><form method="post"><textarea name="body">Original</textarea><input type="file" name="attachment"><button type="submit">Send</button></form></main><footer><form id="logout" method="post" action="/accounts/logout/"><button type="submit">Sign out</button></form></footer></body>');
+  try {
+    await page.evaluate(() => { window.feedRevision = 4; window.fetch = async () => ({ok:true,status:200,json:async()=>({revision:window.feedRevision})}); });
+    await page.addScriptTag({content: ticketLiveJS});
+    assert.equal(await page.locator('[name=ticket_revision]').inputValue(), '4');
+    await page.locator('textarea').fill('Unsaved draft');
+    await page.evaluate(() => {window.feedRevision=5; document.dispatchEvent(new Event('visibilitychange'));});
+    await page.getByRole('alert').waitFor();
+    assert.equal(await page.locator('textarea').inputValue(), 'Unsaved draft');
+    assert.equal(await page.getByRole('button', {name:'Send',exact:true}).isDisabled(), true);
+    assert.equal(await page.getByRole('button', {name:'Sign out',exact:true}).isDisabled(), false);
+    assert.equal(await page.locator('#logout [name=ticket_revision]').count(), 0);
+    assert.equal(await page.locator('#logout').evaluate(form => form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))), true);
+    assert.equal(await page.evaluate(() => {
+      const event = new Event('submit', {bubbles:true,cancelable:true}); return document.querySelector('form').dispatchEvent(event);
+    }), false);
+  } finally { await page.close(); }
+});
+
+test('own HTMX updates advance the live revision while stale responses preserve the draft', async () => {
+  const page = await fixture('<body data-ticket-live data-ticket-reference="TEST-1" data-ticket-revision="4" data-ticket-updates-url="/updates/"><main id="portal-main"><form method="post"><textarea name="body">Original</textarea><button type="submit">Send</button></form></main></body>');
+  try {
+    await page.evaluate(() => {window.fetch=async()=>({ok:true,status:200,json:async()=>({revision:5})});});
+    await page.addScriptTag({content: ticketLiveJS});
+    await page.locator('textarea').fill('Own saved comment');
+    await page.evaluate(() => {
+      const form = document.querySelector('form'), detail = {elt:form,verb:'post',parameters:{}};
+      document.dispatchEvent(new CustomEvent('htmx:configRequest',{detail})); window.sentRevision=detail.parameters.ticket_revision;
+      document.dispatchEvent(new CustomEvent('htmx:beforeRequest',{detail:{elt:form}}));
+      document.dispatchEvent(new CustomEvent('htmx:afterRequest',{detail:{elt:form,successful:true,xhr:{getResponseHeader:key=>key==='X-Ticket-Revision'?'5':null}}}));
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    assert.equal(await page.evaluate(() => window.sentRevision), '4');
+    assert.equal(await page.locator('[name=ticket_revision]').inputValue(), '5');
+    assert.equal(await page.getByRole('alert').count(), 0);
+    await page.locator('textarea').fill('Next unsaved comment');
+    await page.evaluate(() => document.dispatchEvent(new CustomEvent('htmx:afterRequest',{detail:{elt:document.querySelector('form'),successful:false,xhr:{getResponseHeader:key=>key==='X-Ticket-Stale'?'true':null,responseText:'Reload latest record before submitting.'}}})));
+    assert.equal(await page.locator('textarea').inputValue(), 'Next unsaved comment');
+    assert.equal(await page.getByRole('button', {name:'Send',exact:true}).isDisabled(), true);
+  } finally { await page.close(); }
+});
+
+test('live polling survives form replacement and cancelled HTMX requests', async () => {
+  const page = await fixture('<body data-ticket-live data-ticket-reference="TEST-1" data-ticket-revision="4" data-ticket-updates-url="/updates/"><main id="portal-main"><form method="post"><textarea name="body">Original</textarea><button type="submit">Send</button></form></main></body>');
+  try {
+    await page.evaluate(() => {window.feedRevision=5; window.fetch=async()=>({ok:true,status:200,json:async()=>({revision:window.feedRevision})});});
+    await page.addScriptTag({content: ticketLiveJS});
+    await page.evaluate(() => {
+      const form = document.querySelector('form'), xhr={getResponseHeader:key=>key==='X-Ticket-Revision'?'5':null};
+      document.dispatchEvent(new CustomEvent('htmx:beforeRequest',{detail:{elt:form,xhr}}));
+      form.outerHTML='<form method="post"><textarea name="body">Saved response</textarea><button type="submit">Send</button></form>';
+      document.dispatchEvent(new CustomEvent('htmx:afterSwap',{detail:{target:document.querySelector('form')}}));
+      document.dispatchEvent(new CustomEvent('htmx:afterRequest',{detail:{elt:form,xhr,successful:true}}));
+    });
+    assert.equal(await page.locator('[name=ticket_revision]').inputValue(), '5');
+    await page.locator('textarea').fill('Preserve new draft');
+    await page.evaluate(() => {
+      const form=document.querySelector('form');
+      const cancelled=new CustomEvent('htmx:beforeRequest',{cancelable:true,detail:{elt:form,xhr:{}}}); cancelled.preventDefault(); document.dispatchEvent(cancelled);
+      const xhr={}; document.dispatchEvent(new CustomEvent('htmx:beforeRequest',{detail:{elt:form,xhr}}));
+      document.dispatchEvent(new CustomEvent('htmx:sendAbort',{detail:{elt:form,xhr}}));
+      window.feedRevision=6; document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.getByRole('alert').waitFor();
+    assert.equal(await page.locator('textarea').inputValue(), 'Preserve new draft');
+  } finally { await page.close(); }
+});
 
 async function multiselectFixture(body, viewport) {
   const page = await fixture(body, portalCSS + multiselectCSS + selectCSS, viewport);

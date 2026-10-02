@@ -12,7 +12,14 @@ Date opened:   {{ ticket_created|date:"d M Y, H:i" }}{% endif %}
 {% endif %}{% if body %}
 Update:
 {{ body }}
-{% endif %}{% if link %}
+{% endif %}{% if process_flow %}
+Process flow
+{% for step in process_flow %}{{ step.name }}: {{ step.status }}{% if step.by %} — {{ step.by }}{% endif %}
+{% endfor %}{% endif %}{% if activity_history %}
+Activity and action history
+{% for activity in activity_history %}{{ activity.at|date:'d M Y, H:i' }} · {{ activity.actor }}: {{ activity.action }}
+{% if activity.detail %}{{ activity.detail }}
+{% endif %}{% endfor %}{% endif %}{% if link %}
 View request: {{ link }}
 {% endif %}
 Kind regards,

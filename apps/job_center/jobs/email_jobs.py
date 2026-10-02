@@ -92,9 +92,16 @@ def _ticket_context(ticket_id):
 
 
 @register_job("email.ticket_notification")
-def send_ticket_notification(recipient_ids, title, body="", ticket_id=None, kind="info", link=""):
+def send_ticket_notification(recipient_ids, title, body="", ticket_id=None, kind="info", link="", event_id=None, initial=False):
+    from services.ticket_notifications import email_enabled, event_visible, history_and_flow
+    from services.access import TicketAccessPolicy
+    ticket = Ticket.objects.select_related('category').filter(pk=ticket_id).first() if ticket_id else None
+    if ticket_id and (ticket is None or not (ticket.category.send_initial_email if initial else ticket.category.send_update_email)):
+        return {"success": True, "sent": 0}
     users = User.objects.filter(pk__in=recipient_ids, is_active=True).exclude(email="")
-    users = [u for u in users if getattr(u, "profile", None) is None or u.profile.email_notifications]
+    event = ticket.events.filter(pk=event_id).first() if ticket and event_id else None
+    users = [u for u in users if email_enabled(u) and (not ticket or TicketAccessPolicy.can_view(u, ticket))
+             and (not event or event_visible(event, u))]
     if not users:
         return {"success": True, "sent": 0}
 
@@ -114,7 +121,8 @@ def send_ticket_notification(recipient_ids, title, body="", ticket_id=None, kind
 
     sent, emails = 0, []
     for user in users:
-        context = {**base_context, "recipient_name": user.get_full_name() or user.get_username()}
+        context = {**base_context, "recipient_name": user.get_full_name() or user.get_username(),
+                   **(history_and_flow(ticket, user, through=event) if ticket else {})}
         text_body = render_to_string("emails/ticket_notification.txt", context)
         html_body = render_to_string("emails/ticket_notification.html", context)
 
@@ -133,3 +141,24 @@ def send_ticket_notification(recipient_ids, title, body="", ticket_id=None, kind
         emails.append(user.email)
 
     return {"success": True, "sent": sent, "recipients": emails, "ticket_id": ticket_id, "kind": kind}
+
+
+@register_job('email.ticket_activity')
+def send_ticket_activity(event_id):
+    from apps.tickets.models import TicketEvent
+    from services.ticket_notifications import INITIAL_EVENT_TYPES, activity_recipients
+    from django.urls import reverse
+    event = TicketEvent.objects.select_related('ticket__category', 'actor').filter(pk=event_id).first()
+    if not event:
+        return {'success': True, 'sent': 0}
+    ticket = event.ticket
+    recipients = activity_recipients(ticket, internal=bool(event.details.get('is_internal')))
+    return send_ticket_notification([u.pk for u in recipients], title=f'{ticket.reference}: {event.summary}',
+        ticket_id=ticket.pk, event_id=event.pk, initial=event.event_type in INITIAL_EVENT_TYPES,
+        link=reverse('portal:ticket_detail', args=[ticket.reference]), kind='approval' if 'approval' in event.event_type else 'info')
+
+
+@register_job('email.password_reset')
+def send_password_reset(challenge_id):
+    from apps.accounts.password_reset import deliver_reset
+    return deliver_reset(challenge_id)

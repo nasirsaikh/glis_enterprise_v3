@@ -26,6 +26,9 @@ def notify_users(users, *, ticket=None, kind="info", title, body="", send_email_
     notifications = [Notification(user=user, ticket=ticket, kind=kind, title=title, body=body[:500], link=link) for user in unique.values()]
     if notifications: Notification.objects.bulk_create(notifications)
     if not send_email_message: return
+    # Ticket activity is mailed once through its durable audit event. Existing
+    # callers retain their in-app notifications without a second email.
+    if ticket and ticket.events.exists(): return
     recipient_ids = [user.pk for user in unique.values() if user.email and (getattr(user, "profile", None) is None or user.profile.email_notifications)]
     if not recipient_ids: return
     payload = {"recipient_ids": recipient_ids, "ticket_id": ticket.pk if ticket else None, "title": title, "body": body, "kind": kind, "link": link}

@@ -287,6 +287,7 @@ class Ticket(TimeStampedModel):
         CRITICAL = "critical", "Critical"
 
     reference = models.CharField(max_length=80, unique=True, null=True, blank=True, editable=False)
+    revision = models.PositiveBigIntegerField(default=0, editable=False)
     organization = models.ForeignKey("accounts.Organization", null=True, blank=True, on_delete=models.PROTECT, related_name="tickets")
     policy = models.ForeignKey("tpa.Policy", null=True, blank=True, on_delete=models.PROTECT, related_name="tickets")
     tagged_users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="TicketTaggedUser", through_fields=("ticket", "user"), related_name="tagged_tickets", blank=True)

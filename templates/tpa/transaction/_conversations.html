@@ -1,5 +1,5 @@
 {% load i18n %}
-{% if query_history or can_raise_query %}
+{% if query_history %}
       <section class="card border border-body bg-body shadow-sm">
         <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 border-bottom border-body px-3 py-3 px-sm-4"><div><div class="mb-1 glis-text-xs fw-bold text-uppercase glis-letter-spacing text-primary">{% translate "Embedded discussion" %}</div><h2 class="fs-6 fw-bold">{% translate "CONVERSATIONS & QUERIES" %}</h2></div><i aria-hidden="true" class="bi bi-chat-dots text-primary"></i></div>
         <div class="card-body glis-stack-4">
@@ -39,7 +39,7 @@
           </div>
           {% endfor %}
 
-          {% if can_raise_query %}
+          {% if can_raise_query and not tx.ticket_id %}
           <details class="accordion-item glis-disclosure border border-body" {% if query_form_open %}open{% endif %}>
             <summary class="accordion-button small fw-bold">{% translate "Open New Discussion / Query" %}</summary>
             <div class="accordion-body">

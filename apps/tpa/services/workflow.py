@@ -5,7 +5,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.tickets.models import Notification, Ticket, TicketComment, TicketEvent
+from apps.tickets.models import Notification, Ticket, TicketComment
 
 from ..models import (
     CardDispatch,
@@ -45,13 +45,6 @@ def _event(tx, actor, event_type, summary, details=None):
         if actor and actor.pk != ticket.requester_id and not ticket.first_responded_at:
             ticket.first_responded_at = timezone.now()
         ticket.save(update_fields=['status','resume_status','resolved_at','closed_at','first_responded_at','updated_at'])
-        TicketEvent.objects.create(
-            ticket=tx.ticket,
-            actor=actor,
-            event_type=f"tpa_{event_type}",
-            summary=summary,
-            details={"transaction_reference": tx.reference, **(details or {})},
-        )
 
 
 def _clean_chat_html(value):
@@ -796,6 +789,8 @@ def run_validation(tx, actor=None):
         f"Validation completed: {tx.validation_score}% · {tx.get_status_display()}",
         {"stp_eligible": eligible, "stp_blockers": blockers},
     )
+    if tx.status == tx.Status.AUTO_APPROVED:
+        _event(tx, None, 'auto_approved', 'Auto approved by System')
     if tx.status in {tx.Status.AUTO_APPROVED, tx.Status.APPROVED}:
         return dispatch_to_tpa(tx, actor=actor)
     return tx
@@ -931,7 +926,8 @@ def _find_enrollment(tx, data, statuses=None):
 
 def _process_add(tx, action):
     data = _data(action)
-    plan = tx.policy.plans.get(code=data["plan_code"], is_active=True)
+    from .benefit_plans import resolve_benefit_plan
+    plan = resolve_benefit_plan(tx.policy, data['plan_code'])
     principal = _resolve_principal_member(tx, action, data)
     member = Member.objects.create(
         organization=tx.organization,

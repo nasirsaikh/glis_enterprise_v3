@@ -34,6 +34,7 @@
                 <strong class="glis-text-xs">{% translate "DROP SOURCE FILES OR BROWSE" %}</strong>
                 {{ source_upload_form.source_files }}
                 {{ source_upload_form.source_files.errors }}
+                <div data-tpa-file-list class="d-grid gap-2 text-start" aria-live="polite"></div>
                 <div data-tpa-file-count class="glis-text-xs fw-bold text-uppercase opacity-50">{% translate "No files selected" %}</div>
                 <div><button class="btn btn-primary btn-sm" type="submit"><i aria-hidden="true" class="bi bi-stars"></i>{% translate "Process Evidence" %}</button></div>
               </div>

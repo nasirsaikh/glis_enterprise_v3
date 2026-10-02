@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -610,6 +611,7 @@ def ticket_list_json(ticket):
             if getattr(ticket, "updated_at", None)
             else None
         ),
+        "revision": ticket.revision,
     }
 
 
@@ -692,7 +694,9 @@ def attachment_json(request, attachment):
     }
 
 
-def event_json(event):
+def event_json(event, user):
+    from services.access import TicketAccessPolicy
+    from services.ticket_notifications import activity_details
     return {
         "id": event.pk,
         "ticket_id": event.ticket_id,
@@ -703,17 +707,8 @@ def event_json(event):
             None,
         ),
 
-        "description": getattr(
-            event,
-            "description",
-            None,
-        ),
-
-        "data": getattr(
-            event,
-            "data",
-            None,
-        ),
+        "description": event.summary,
+        "data": event.details if TicketAccessPolicy.can_view_sensitive(user, event.ticket) else json.loads(activity_details(event, user) or '{}'),
 
         "created_at": (
             event.created_at.isoformat()
@@ -1972,6 +1967,9 @@ def tickets(request):
                     pk__in=group_ids
                 )
             )
+        TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type='created', summary='Ticket created through API')
+        from services.ticket_workflow import initialize_approval_workflow
+        initialize_approval_workflow(ticket)
 
     return Response(
         {
@@ -1997,6 +1995,7 @@ def tickets(request):
     ]
 )
 @permission_classes([IsAuthenticated])
+@transaction.atomic
 def ticket_detail(
     request,
     ticket_id,
@@ -2038,12 +2037,21 @@ def ticket_detail(
         })
 
     if request.method == "PATCH":
+        from services.access import TicketAccessPolicy
+        from services.ticket_lifecycle import update_status
+        if not TicketAccessPolicy.can_edit(request.user, ticket):
+            return Response({'success': False, 'detail': 'Ticket editing permission is required.'}, status=403)
+        ticket = Ticket.objects.select_for_update().get(pk=ticket.pk)
+        if 'status' in request.data:
+            try:
+                update_status(ticket, request.data['status'], request.user)
+            except (PermissionError, ValueError) as exc:
+                return Response({'success': False, 'detail': str(exc)}, status=403 if isinstance(exc, PermissionError) else 409)
 
         editable_fields = (
             "subject",
             "description",
             "priority",
-            "status",
             "visibility",
             "is_sensitive",
         )
@@ -2075,6 +2083,8 @@ def ticket_detail(
                     else []
                 )
             )
+            TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type='edited', summary='Ticket details updated through API', details={'changed_fields': changed})
+        ticket.refresh_from_db(fields=['revision'])
 
     data = ticket_list_json(
         ticket
@@ -2186,6 +2196,12 @@ def ticket_comments(
             ],
         })
 
+    from services.access import TicketAccessPolicy
+    if not TicketAccessPolicy.can_comment(request.user, ticket):
+        return Response({'success': False, 'detail': 'Comment permission is required at this workflow step.'}, status=403)
+    if ticket.category.comment_attachment_required:
+        return Response({'success': False, 'detail': 'Submit the required comment attachments through the portal.'}, status=400)
+
     body = (
         request.data.get(
             "body",
@@ -2233,6 +2249,9 @@ def ticket_comments(
     comment = TicketComment.objects.create(
         **values
     )
+    TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type='comment',
+        summary='Internal note added' if comment.is_internal else 'Comment added',
+        details={'comment_id': comment.pk, 'is_internal': comment.is_internal})
 
     return Response(
         {
@@ -2434,6 +2453,8 @@ def ticket_attachments(
             **values
         )
     )
+    TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type='attachment_added',
+        summary=f'Attachment added: {upload.name}', details={'attachment_count': 1})
 
     return Response(
         {
@@ -2482,12 +2503,10 @@ def ticket_events(
         .order_by("-created_at")
     )
 
+    from services.ticket_notifications import event_visible
     return Response({
         "success": True,
-        "data": [
-            event_json(obj)
-            for obj in queryset
-        ],
+        "data": [event_json(obj, request.user) for obj in queryset if event_visible(obj, request.user)],
     })
 
 
@@ -2574,8 +2593,12 @@ def ticket_assign(
             status=status.HTTP_404_NOT_FOUND,
         )
 
+    previous_assignee = ticket.assignee_id
     ticket.assignee = assignee
     ticket.save()
+    TicketEvent.objects.create(ticket=ticket, actor=request.user, event_type='assignment',
+        summary=f'Ticket assigned to {assignee.get_full_name() or assignee.username}',
+        details={'before': previous_assignee, 'after': assignee.pk})
 
     return Response({
         "success": True,
@@ -2599,6 +2622,7 @@ def ticket_assign(
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@transaction.atomic
 def ticket_status(
     request,
     ticket_id,
@@ -2668,8 +2692,12 @@ def ticket_status(
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-    ticket.status = new_status
-    ticket.save()
+    from services.ticket_lifecycle import update_status
+    ticket = Ticket.objects.select_for_update().get(pk=ticket.pk)
+    try:
+        update_status(ticket, new_status, request.user)
+    except (PermissionError, ValueError) as exc:
+        return Response({'success': False, 'detail': str(exc)}, status=403 if isinstance(exc, PermissionError) else 409)
 
     return Response({
         "success": True,

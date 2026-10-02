@@ -729,6 +729,9 @@ def process_inbound_email(email, actor, *, force=False):
 
         hints = email.processing_hints or {}
         policy = _resolve_policy(payload, hints, email)
+        if policy and payload.get('members'):
+            from .benefit_plans import resolve_member_plan
+            payload['members'] = [resolve_member_plan(policy, row) for row in payload['members']]
         if not policy:
             email.processing_state = InboundEmail.State.REVIEW
             email.processing_stage = "POLICY_MATCH"

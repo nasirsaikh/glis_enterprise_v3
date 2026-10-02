@@ -243,10 +243,10 @@
       const principalField = principalSelect?.closest("fieldset");
       if (!principalField) return;
       const sync = () => {
-        const needed = relationship.value && relationship.value !== "PRINCIPAL";
+        const needed = relationship.value && !["PRINCIPAL", "PARENT"].includes(relationship.value);
         principalField.hidden = !needed;
         principalSelect.required = Boolean(needed);
-        if (!needed) principalSelect.value = "";
+        if (!needed && principalSelect.value) { principalSelect.value = ""; principalSelect.dispatchEvent(new Event('change', {bubbles:true})); }
       };
       if (relationship.dataset.tpaPrincipalReady !== "true") {
         relationship.dataset.tpaPrincipalReady = "true";
@@ -263,15 +263,32 @@
         zone.dataset.tpaReady = "true";
         const input = zone.querySelector('input[type="file"]');
         const count = zone.querySelector("[data-tpa-file-count]");
+        const list = zone.querySelector("[data-tpa-file-list]");
         if (!input) return;
+        let selected = Array.from(input.files || []);
 
         const update = () => {
-          const files = Array.from(input.files || []);
+          const transfer = new DataTransfer();
+          selected.forEach(file => transfer.items.add(file));
+          input.files = transfer.files;
+          const files = selected;
           if (count) {
             count.textContent = files.length
               ? `${files.length} file(s) selected`
               : "No files selected";
           }
+          list?.replaceChildren();
+          files.forEach((file, index) => {
+            const row = document.createElement('div'); row.className = 'd-flex align-items-center gap-2 rounded-3 border p-2 bg-body';
+            const name = document.createElement('span'); name.className = 'text-break flex-grow-1 small'; name.textContent = `${file.name} (${Math.ceil(file.size / 1024)} KB)`;
+            const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'btn btn-outline-danger btn-sm'; remove.textContent = document.documentElement.lang === 'ar' ? 'إزالة' : 'Remove'; remove.setAttribute('aria-label', `${remove.textContent} ${file.name}`);
+            remove.addEventListener('click', () => {selected.splice(index, 1); update();});
+            row.append(name, remove); list?.append(row);
+          });
+        };
+        const add = files => {
+          for (const file of files) if (!selected.some(item => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified)) selected.push(file);
+          update(); input.dispatchEvent(new Event('input', {bubbles:true}));
         };
 
         zone.addEventListener("click", (event) => {
@@ -294,13 +311,12 @@
 
         zone.addEventListener("drop", (event) => {
           if (event.dataTransfer?.files?.length) {
-            try {
-              input.files = event.dataTransfer.files;
-            } catch (_) {}
-            update();
+            add(Array.from(event.dataTransfer.files));
           }
         });
-        input.addEventListener("change", update);
+        input.addEventListener("change", () => add(Array.from(input.files || [])));
+        input.form?.addEventListener('reset', () => { selected = []; setTimeout(update); });
+        update();
       });
   };
 
@@ -322,7 +338,8 @@
     });
   };
 
-  document.addEventListener("DOMContentLoaded", () => init());
+  if (document.readyState === 'loading') document.addEventListener("DOMContentLoaded", () => init(), {once:true});
+  else init();
   document.addEventListener("glis:theme", () =>
     setTimeout(() => {
       renderTPACharts();

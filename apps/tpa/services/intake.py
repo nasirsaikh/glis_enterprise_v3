@@ -22,7 +22,7 @@ ALIASES = {
     "date_of_birth": ("date of birth", "dob", "birth date"),
     "gender": ("gender", "sex"),
     "relationship": ("relationship", "relation"),
-    "plan_code": ("plan code", "plan", "benefit plan"),
+    "plan_code": ("plan code", "plan", "benefit plan", "plan name", "benefit plan name", "plan id", "benefit plan id"),
     "national_id": ("national id", "civil id", "id number"),
     "passport_number": ("passport number", "passport", "passport no"),
     "principal_employee_id": (
@@ -71,7 +71,7 @@ def normalize_member_row(raw):
 
     relationship = result.get("relationship", "").upper()
     relation_map = {
-        "SELF": "PRINCIPAL", "EMPLOYEE": "PRINCIPAL", "MEMBER": "PRINCIPAL",
+        "SELF": "PRINCIPAL", "EMPLOYEE": "PRINCIPAL", "MEMBER": "PRINCIPAL", "PARENT": "PRINCIPAL",
         "HUSBAND": "SPOUSE", "WIFE": "SPOUSE", "SON": "CHILD", "DAUGHTER": "CHILD",
     }
     if relationship:
@@ -131,7 +131,8 @@ def import_member_spreadsheet(tx, uploaded_file, actor=None):
     last_row = tx.member_actions.order_by("-row_number").values_list("row_number", flat=True).first() or 0
     created = []
     for offset, raw in enumerate(raw_rows, start=1):
-        normalized = normalize_member_row(raw)
+        from .benefit_plans import resolve_member_plan
+        normalized = resolve_member_plan(tx.policy, normalize_member_row(raw))
         if not any(normalized.values()):
             continue
         created.append(MemberAction.objects.create(

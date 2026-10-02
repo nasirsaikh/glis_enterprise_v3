@@ -4,6 +4,8 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core import mail
+from django.db import transaction
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -53,6 +55,150 @@ class TicketUpdateTests(TestCase):
 
     def url(self, name, ticket):
         return reverse('portal:' + name, args=[ticket.reference])
+
+    def test_revision_feed_is_scoped_and_never_cached(self):
+        ticket = self.ticket(approval=False)
+        self.client.force_login(self.creator)
+        response = self.client.get(self.url('ticket_updates', ticket))
+        ticket.refresh_from_db()
+        self.assertEqual(response.json()['revision'], ticket.revision)
+        self.assertIn('no-store', response['Cache-Control'])
+        outsider = get_user_model().objects.create_user('live-outsider')
+        self.client.force_login(outsider)
+        self.assertEqual(self.client.get(self.url('ticket_updates', ticket)).status_code, 404)
+
+    def test_stale_comment_cannot_overwrite_newer_record(self):
+        ticket = self.ticket(approval=False); ticket.refresh_from_db()
+        original = ticket.revision
+        self.client.force_login(self.creator)
+        first = self.client.post(self.url('add_comment', ticket), {'body': 'First editor', 'ticket_revision': original})
+        self.assertEqual(first.status_code, 302)
+        self.assertGreater(int(first['X-Ticket-Revision']), original)
+        second = self.client.post(self.url('add_comment', ticket), {'body': 'Stale second editor', 'ticket_revision': original})
+        self.assertEqual(second.status_code, 409)
+        self.assertEqual(second['X-Ticket-Stale'], 'true')
+        self.assertEqual(list(ticket.comments.values_list('body', flat=True)), ['First editor'])
+
+    def test_guard_keeps_csrf_checks_and_rejects_invalid_revision(self):
+        from django.test import Client
+        ticket = self.ticket(approval=False); ticket.refresh_from_db()
+        checked = Client(enforce_csrf_checks=True); checked.force_login(self.creator)
+        self.assertEqual(checked.post(self.url('add_comment', ticket), {'body': 'Without CSRF', 'ticket_revision': ticket.revision}).status_code, 403)
+        self.client.force_login(self.creator)
+        self.assertEqual(self.client.post(self.url('add_comment', ticket), {'body': 'Bad token', 'ticket_revision': 'invalid'}).status_code, 409)
+        self.assertEqual(ticket.comments.count(), 0)
+
+    def test_failed_mutation_rolls_back_record_and_activity_email(self):
+        ticket = self.ticket(approval=False); ticket.refresh_from_db()
+        before = ticket.revision
+        self.category.send_update_email = True; self.category.save()
+        self.client.force_login(self.creator)
+        def interrupted_change(record, actor):
+            record.subject = 'Incomplete update'; record.save(update_fields=['subject'])
+            TicketEvent.objects.create(ticket=record, actor=actor, event_type='edited', summary='Incomplete update')
+            raise ValueError('The update could not complete.')
+        with patch('services.ticket_lifecycle.close_ticket', side_effect=interrupted_change), patch('apps.job_center.queue.enqueue') as enqueue, self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(self.url('close_ticket', ticket), {'ticket_revision': before})
+        self.assertEqual(response.status_code, 409)
+        ticket.refresh_from_db()
+        self.assertEqual(ticket.subject, 'Approval evidence')
+        self.assertEqual(ticket.revision, before)
+        self.assertFalse(ticket.events.filter(summary='Incomplete update').exists())
+        enqueue.assert_not_called()
+
+    def test_ticket_tagging_accepts_multiple_authorized_users_atomically(self):
+        ticket = self.ticket(approval=False)
+        self.work.members.add(self.peer, self.approver1)
+        self.client.force_login(self.admin)
+        response = self.client.post(self.url('tag_ticket_user', ticket), {'users': [self.peer.pk, self.agent.pk]})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(ticket.tagged_participants.filter(user=self.peer, is_active=True).exists())
+        self.assertTrue(ticket.tagged_participants.filter(user=self.agent, is_active=True).exists())
+        response = self.client.post(self.url('tag_ticket_user', ticket), {'users': [self.approver1.pk, 99999999]})
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(ticket.tagged_participants.filter(user=self.approver1).exists())
+
+    def test_committed_activity_enqueues_once_and_respects_category_flags(self):
+        ticket = self.ticket(approval=False)
+        with patch('apps.job_center.queue.enqueue') as enqueue, self.captureOnCommitCallbacks(execute=True):
+            TicketEvent.objects.create(ticket=ticket, actor=self.creator, event_type='created', summary='Initial request')
+            TicketEvent.objects.create(ticket=ticket, actor=self.creator, event_type='comment', summary='New comment')
+        enqueue.assert_not_called()
+        self.category.send_update_email = True; self.category.save()
+        with patch('apps.job_center.queue.enqueue') as enqueue, self.captureOnCommitCallbacks(execute=True):
+            TicketEvent.objects.create(ticket=ticket, actor=self.creator, event_type='created', summary='Initial disabled')
+            event = TicketEvent.objects.create(ticket=ticket, actor=self.creator, event_type='tag', summary='Participants changed')
+        enqueue.assert_called_once_with('email.ticket_activity', {'event_id': event.pk}, priority=3)
+        with patch('apps.job_center.queue.enqueue') as enqueue, self.captureOnCommitCallbacks(execute=True):
+            try:
+                with transaction.atomic():
+                    TicketEvent.objects.create(ticket=ticket, actor=self.creator, event_type='tag', summary='Rolled back')
+                    raise ValueError('Rollback')
+            except ValueError:
+                pass
+        enqueue.assert_not_called()
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_activity_email_history_flow_and_internal_visibility_are_personal(self):
+        from apps.job_center.jobs.email_jobs import send_ticket_activity
+        ticket = self.ticket()
+        self.category.send_update_email = True; self.category.save()
+        self.agent.email = 'agent@example.test'; self.agent.save()
+        self.work.can_view_internal_notes = True; self.work.save()
+        TicketComment.objects.create(ticket=ticket, author=self.creator, body='<p>Public evidence</p>')
+        TicketComment.objects.create(ticket=ticket, author=self.agent, body='<p>Private investigation</p>', is_internal=True)
+        event = TicketEvent.objects.create(ticket=ticket, actor=self.creator, event_type='comment', summary='Evidence added')
+        self.assertEqual(send_ticket_activity(event.pk)['sent'], 2)
+        by_recipient = {msg.to[0]: msg for msg in mail.outbox}
+        creator = by_recipient[self.creator.email]
+        handler = by_recipient[self.agent.email]
+        self.assertIn('Public evidence', creator.body)
+        self.assertNotIn('Private investigation', creator.body)
+        self.assertIn('Private investigation', handler.body)
+        self.assertIn('Review', creator.body)
+        self.assertIn('Authorize', creator.body)
+        self.assertTrue(all(len(msg.to) == 1 and not msg.cc and not msg.bcc for msg in mail.outbox))
+        self.assertIn('Public evidence', creator.alternatives[0].content)
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_deactivated_locked_unapproved_opted_out_and_expired_users_are_excluded(self):
+        from services.ticket_notifications import activity_recipients
+        ticket = self.ticket(approval=False)
+        for state in ('inactive', 'locked', 'unapproved', 'opted-out', 'expired'):
+            user = get_user_model().objects.create_user('mail-'+state, state+'@example.test')
+            TicketTaggedUser.objects.create(ticket=ticket, user=user, tagged_by=self.admin)
+            if state == 'inactive': user.is_active = False; user.save()
+            if state == 'locked': user.profile.is_locked = True
+            if state == 'unapproved': user.profile.is_approved = False
+            if state == 'opted-out': user.profile.email_notifications = False
+            if state == 'expired': user.profile.guest_access_expires_at = timezone.now()-timedelta(days=1)
+            user.profile.save()
+        self.assertEqual([u.pk for u in activity_recipients(ticket)], [self.creator.pk])
+
+    @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+    def test_task_watchers_receive_activity_and_delivery_rechecks_category(self):
+        from apps.tasks.models import Task
+        from apps.job_center.jobs.email_jobs import send_ticket_activity
+        from services.ticket_notifications import activity_recipients
+        ticket = self.ticket(approval=False)
+        self.peer.email = 'task-watcher@example.test'; self.peer.save()
+        self.team.members.remove(self.peer)
+        task = Task.objects.create(ticket=ticket, title='Watched task', project=self.project, product=self.product,
+            category=self.category, owner=self.creator, created_by=self.creator, due_date=timezone.localdate(), occurrence_date=timezone.localdate())
+        task.tagged_users.add(self.peer)
+        self.assertIn(self.peer.pk, [u.pk for u in activity_recipients(ticket)])
+        event = TicketEvent.objects.create(ticket=ticket, actor=self.creator, event_type='task_updated', summary='Task changed')
+        self.assertEqual(send_ticket_activity(event.pk)['sent'], 0)
+        self.category.send_update_email = True; self.category.save()
+        self.assertEqual(send_ticket_activity(event.pk)['sent'], 2)
+        self.category.send_update_email = False; self.category.save()
+        self.assertEqual(send_ticket_activity(event.pk)['sent'], 0)
+
+    def test_requester_team_receives_query_activity_when_they_can_view_ticket(self):
+        from services.ticket_notifications import activity_recipients
+        ticket = self.ticket()
+        self.peer.email = 'creator-team@example.test'; self.peer.save()
+        self.assertIn(self.peer.pk, [user.pk for user in activity_recipients(ticket)])
 
     def test_pending_comments_hidden_and_rejected_for_other_participants(self):
         ticket = self.ticket()

@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from ..models import Member, MemberAction, MemberPolicyEnrollment, Policy
 from .pricing import calculate_member_premium, calculate_member_refund
+from .intake import normalize_member_row
 
 
 NON_BYPASSABLE = {
@@ -115,6 +116,11 @@ def _find_suspended_enrollment(tx, data):
 def validate_action(action):
     tx = action.transaction
     data = _payload(action)
+    from .benefit_plans import resolve_member_plan
+    normalized = resolve_member_plan(tx.policy, {**data, **normalize_member_row(data)})
+    if normalized.get('plan_code') != data.get('plan_code') or normalized.get('relationship') != data.get('relationship'):
+        action.corrected_data = {**(action.corrected_data or {}), 'plan_code':normalized.get('plan_code'), 'relationship':normalized.get('relationship')}
+    data = normalized
     errors = []
     warnings = []
     for provenance in action.provenance or []:
@@ -497,6 +503,7 @@ def validate_action(action):
             "validation_status",
             "calculated_premium",
             "calculation_snapshot",
+            "corrected_data",
             "updated_at",
         ]
     )

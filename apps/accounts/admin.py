@@ -148,7 +148,7 @@ class UserProfileAdmin(admin.ModelAdmin):
                 )
             },
         ),
-        ("Access", {"fields": ("is_external", "is_approved", "guest_access_expires_at")}),
+        ("Access", {"fields": ("is_external", "is_approved", "is_locked", "guest_access_expires_at")}),
         (
             "Legacy",
             {

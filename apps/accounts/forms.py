@@ -11,6 +11,11 @@ class EmailOrUsernameAuthenticationForm(AuthenticationForm):
 
     error_messages = {"invalid_login": _("The email/username or password is incorrect. Check Caps Lock and try again."), "inactive": _("This account is inactive.")}
 
+    def confirm_login_allowed(self, user):
+        super().confirm_login_allowed(user)
+        if getattr(getattr(user, 'profile', None), 'is_locked', False):
+            raise forms.ValidationError(_('This account is locked. Contact an administrator.'), code='inactive')
+
     def clean(self):
         identifier = self.cleaned_data.get("username", "").strip()
         password = self.cleaned_data.get("password")

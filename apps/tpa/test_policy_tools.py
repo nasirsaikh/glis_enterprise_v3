@@ -52,6 +52,75 @@ class PolicyToolsTests(TestCase):
                             "gender": "Male", "relationship": "PRINCIPAL", "national_id": "00102", "plan_code": "GOLD", "effective_date": "2026-07-01"},
             validation_status="VALID", tpa_effective_date=date(2026, 7, 1), tpa_premium_amount=Decimal("10"), card_number="CARD-001")
 
+    def test_benefit_plan_references_resolve_code_name_id_and_display_label(self):
+        from .services.benefit_plans import resolve_benefit_plan
+        self.plan.name = 'Gold Family Plan'; self.plan.save()
+        for reference in ('GOLD', ' gold ', 'GOLD · Gold Family Plan', 'gold-family plan', str(self.plan.pk)):
+            with self.subTest(reference=reference):
+                self.assertEqual(resolve_benefit_plan(self.policy, reference), self.plan)
+
+    def test_benefit_plan_ambiguity_inactive_and_cross_policy_do_not_guess(self):
+        from .services.benefit_plans import resolve_benefit_plan
+        self.plan.name = 'Shared Plan'; self.plan.save()
+        BenefitPlan.objects.create(policy=self.policy, code='ALT', name='Shared Plan')
+        with self.assertRaisesRegex(ValueError, 'ambiguous'):
+            resolve_benefit_plan(self.policy, 'Shared Plan!')
+        BenefitPlan.objects.create(policy=self.policy, code='OLD', name='Old Plan', is_active=False)
+        other = Policy.objects.create(organization=self.organization, insurance_company=self.insurer, policy_number='PRIVATE-PLAN',
+            start_date=date(2026, 1, 1), expiry_date=date(2026, 12, 31))
+        BenefitPlan.objects.create(policy=other, code='PRIVATE', name='Private Plan')
+        for reference in ('Old Plan', 'Private Plan', 'does not exist'):
+            with self.assertRaises(ValueError): resolve_benefit_plan(self.policy, reference)
+        self.assertEqual(resolve_benefit_plan(self.policy, 'GOLD'), self.plan)
+
+    def test_extracted_plan_name_and_parent_alias_become_canonical_values(self):
+        from .services.member_merge import merge_member_rows
+        tx = self.tx()
+        self.plan.name = 'Gold Family Plan'; self.plan.save()
+        rows = merge_member_rows(tx, [{'First Name': 'Text', 'Last Name': 'Member', 'Benefit Plan Name': 'gold family plan',
+            'Relationship': 'Parent', 'Date of Birth': '1990-01-01'}], source='email:qa')
+        self.assertEqual(rows[0].corrected_data['plan_code'], 'GOLD')
+        self.assertEqual(rows[0].corrected_data['relationship'], 'PRINCIPAL')
+        self.assertEqual(rows[0].corrected_data['source_plan_reference'], 'gold family plan')
+
+    def test_existing_extracted_rows_are_normalized_during_validation(self):
+        from .services.validation import validate_action
+        row = self.row(self.tx())
+        self.plan.name = 'Gold Family Plan'; self.plan.save()
+        row.corrected_data.update(plan_code='gold family plan', relationship='Parent'); row.save()
+        validate_action(row); row.refresh_from_db()
+        self.assertEqual(row.corrected_data['plan_code'], 'GOLD')
+        self.assertEqual(row.corrected_data['relationship'], 'PRINCIPAL')
+        self.assertNotIn('INVALID_PLAN', [error['code'] for error in row.validation_errors])
+        self.assertNotIn('PARENT_PRINCIPAL_REQUIRED', [error['code'] for error in row.validation_errors])
+
+    def test_manual_and_correction_parent_requirements_use_existing_principal(self):
+        from .forms import MemberRowForm
+        tx = self.tx()
+        data = {'first_name': 'New', 'last_name': 'Member', 'date_of_birth': '1990-01-01', 'gender': 'Male',
+            'relationship': 'PRINCIPAL', 'plan_code': 'GOLD'}
+        parent = MemberRowForm(data, transaction=tx)
+        self.assertTrue(parent.is_valid(), parent.errors)
+        self.assertEqual(dict(parent.fields['relationship'].choices)['PRINCIPAL'], 'Parent / Principal')
+        dependent = MemberRowForm({**data, 'relationship': 'CHILD'}, transaction=tx)
+        self.assertFalse(dependent.is_valid()); self.assertIn('principal_reference', dependent.errors)
+        enrollment = self.member()
+        dependent = MemberRowForm({**data, 'relationship': 'CHILD', 'principal_reference': f'member:{enrollment.member_id}'}, transaction=tx)
+        self.assertTrue(dependent.is_valid(), dependent.errors)
+        self.assertEqual(dependent.cleaned_data['principal_member_id'], str(enrollment.member_id))
+
+    def test_member_correction_activity_reaches_ticket_and_email_queue(self):
+        from .models import TransactionEvent
+        tx = self.tx(); ticket = tx.ticket
+        ticket.category.send_update_email = True; ticket.category.save()
+        ticket.refresh_from_db(); before = ticket.revision
+        with patch('apps.job_center.queue.enqueue') as enqueue, self.captureOnCommitCallbacks(execute=True):
+            TransactionEvent.objects.create(transaction=tx, actor=self.editor, event_type='member_row_corrected',
+                summary='Member row 1 corrected', details={'action_id': 1})
+        event = ticket.events.get(event_type='tpa_member_row_corrected')
+        enqueue.assert_called_once_with('email.ticket_activity', {'event_id': event.pk}, priority=3)
+        ticket.refresh_from_db(); self.assertGreater(ticket.revision, before)
+
     def member(self, status="active", employee="1"):
         member = Member.objects.create(organization=self.organization, employee_id=employee, first_name="Roster", last_name="Member",
                                        date_of_birth=date(1990, 1, 1), gender="Male", relationship="PRINCIPAL")

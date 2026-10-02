@@ -94,6 +94,17 @@ class TransactionWizardTests(TestCase):
         self.assertNotContains(response, 'id="tpa-quality-chart"')
         self.assertNotContains(response, "Complete TPA Processing")
         self.assertContains(response, 'aria-current="step"')
+        self.assertContains(response, 'js/tpa.js', count=1)
+        self.assertContains(response, 'css/tpa-wizard.css', count=1)
+
+    def test_invalid_intake_form_keeps_revision_and_draft(self):
+        tx = self.tx(); ticket = tx.ticket; ticket.refresh_from_db()
+        revision = ticket.revision
+        response = self.post('transaction_add_member', tx, {'first_name': 'Keep this draft', 'ticket_revision': revision})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Keep this draft')
+        self.assertEqual(int(response['X-Ticket-Revision']), revision)
+        ticket.refresh_from_db(); self.assertEqual(ticket.revision, revision)
 
     def test_initial_enrollment_includes_policy_step(self):
         tx = self.tx(transaction_type=MemberTransaction.Type.NEW_POLICY_ENROLLMENT)

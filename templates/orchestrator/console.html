@@ -36,7 +36,7 @@
         {% csrf_token %}<input type="hidden" name="domain" value="{{ selected_domain.pk }}"><input type="hidden" name="session_id" id="vanna-session" value="{% if active_session %}{{ active_session.pk }}{% endif %}">
         <label class="visually-hidden" for="vanna-question">{% translate "What would you like to analyze?" %}</label>
         <div class="d-flex align-items-end gap-2 rounded-4 border border-body bg-body-tertiary p-2 shadow-lg">
-          <textarea class="form-control glis-min-h-16 glis-flex-fill glis-resize-none border-0 bg-transparent" id="vanna-question" name="question" rows="2" required placeholder="{% translate 'How can I help with your data?' %}"></textarea>
+          <div class="flex-grow-1 glis-min-width-0"><textarea class="form-control richtext-source" id="vanna-question" name="question" rows="5" data-editor-format="text" placeholder="{% translate 'How can I help with your data?' %}"></textarea></div>
           <button class="btn btn-primary glis-btn-icon rounded-circle flex-shrink-0" id="vanna-send" type="submit" title="{% translate 'Send question' %}"><i class="bi bi-arrow-up"></i></button>
         </div>
       </form>

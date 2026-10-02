@@ -1,6 +1,7 @@
 {% extends 'base_portal.html' %}
 {% load i18n static %}
 {% block title %}{{ ticket.reference }}{% endblock %}
+{% block extra_head %}{{ block.super }}{% if embedded_workflow %}<link href="{% static 'css/tpa-wizard.css' %}" rel="stylesheet">{% endif %}{% endblock %}
 {% block content %}
 <div class="glis-stack-5">
   <div class="glis-breadcrumbs small text-body-secondary"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li>{{ ticket.reference }}</li><li>{{ ticket.category }}</li></ul></div>
@@ -168,4 +169,4 @@
 {% endif %}
 {% include 'tickets/partials/participant_modals.html' %}
 {% endblock %}
-{% block extra_js %}<script src="{% static 'js/ticket-collaboration.js' %}" defer></script>{% endblock %}
+{% block extra_js %}{{ block.super }}<script src="{% static 'js/ticket-collaboration.js' %}" defer></script>{% if embedded_workflow %}<script src="{% static 'js/tpa.js' %}" defer></script>{% endif %}{% endblock %}

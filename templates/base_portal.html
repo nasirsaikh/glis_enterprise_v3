@@ -24,6 +24,8 @@
 </head>
 
 <body class="glis-portal-app min-vh-100 bg-body-tertiary text-body"
+      {% if ticket %}data-ticket-live data-ticket-reference="{{ ticket.reference }}" data-ticket-revision="{{ ticket.revision }}" data-ticket-updates-url="{% url 'portal:ticket_updates' ticket.reference %}"
+      {% elif tx.ticket_id %}data-ticket-live data-ticket-reference="{{ tx.ticket.reference }}" data-ticket-revision="{{ tx.ticket.revision }}" data-ticket-updates-url="{% url 'portal:ticket_updates' tx.ticket.reference %}"{% endif %}
       x-data="siteShell"
       data-browser-notifications="{{ user.profile.browser_notifications|yesno:'true,false' }}"
       data-theme-preference-url="{% url 'accounts:theme_preference' %}"
@@ -263,6 +265,7 @@
   <script src="{% static 'js/dashboard-filters.js' %}" defer></script>
   <script src="{% static 'js/searchable-selects.js' %}" defer></script>
   <script src="{% static 'js/portal.js' %}" defer></script>
+  <script src="{% static 'js/ticket-live.js' %}" defer></script>
   <script src="{% static 'js/portal-tables.js' %}" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/@alpinejs/csp@3.15.8/dist/cdn.min.js" defer></script>
   {% block extra_js %}{% endblock %}

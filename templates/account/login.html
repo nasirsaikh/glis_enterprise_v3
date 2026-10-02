@@ -38,7 +38,7 @@
           <div class="glis-field">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
               <label class="form-label" for="{{ form.password.id_for_label }}">{% translate "Password" %}</label>
-              <a class="link-body-emphasis link-primary glis-text-xs" href="{% url 'account_reset_password' %}">{% translate "Forgot password?" %}</a>
+              <a class="link-body-emphasis link-primary glis-text-xs" href="{% url 'accounts:password_reset_request' %}">{% translate "Forgot password?" %}</a>
             </div>
             {{ form.password }}{{ form.password.errors }}
           </div>

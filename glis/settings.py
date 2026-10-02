@@ -111,6 +111,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.accounts.middleware.LockedAccountMiddleware",
 
     "django_visitor_tracker.middleware.RequestLoggingMiddleware",
 
@@ -128,6 +129,7 @@ MIDDLEWARE = [
     "django_htmx.middleware.HtmxMiddleware",
     "apps.tpa.middleware.HtmxRedirectMiddleware",
     "csp.middleware.CSPMiddleware",
+    "apps.tickets.middleware.TicketRevisionMiddleware",
 ]
 
 ROOT_URLCONF = "glis.urls"
@@ -501,6 +503,7 @@ DEFAULT_FROM_EMAIL = env(
 )
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 SITE_URL = env("SITE_URL", default="https://greenline.om")
+PASSWORD_RESET_TIMEOUT = env.int('PASSWORD_RESET_TIMEOUT', default=3600)
 
 LOGGING = {
     "version": 1,

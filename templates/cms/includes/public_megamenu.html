@@ -4,15 +4,16 @@
     {% for child in children %}
       {% if child.children %}
       <li>
-        <details class="glis-nav-dropdown dropdown">
-          <summary class="glis-nav-trigger btn btn-light btn-sm rounded-pill gap-2 {% if child.selected or child.ancestor %}text-primary bg-body-tertiary{% endif %}">
+        <div class="glis-nav-dropdown dropdown">
+          <button type="button" data-bs-toggle="dropdown" aria-expanded="false" class="glis-nav-trigger btn btn-light btn-sm rounded-pill gap-2 {% if child.selected or child.ancestor %}text-primary bg-body-tertiary{% endif %}">
             <span>{{ child.get_menu_title }}</span>
             <i class="glis-nav-chevron bi bi-chevron-down glis-text-xs"></i>
-          </summary>
+          </button>
           <div class="glis-nav-panel dropdown-menu glis-layer-90 mt-2 glis-search-width rounded-3 bg-body p-3 shadow-lg border border-body">
             <div class="d-grid glis-grid-2 gap-2">
+              <a href="{{ child.get_absolute_url }}" class="dropdown-item p-2 fw-bold">{{ child.get_menu_title }}</a>
               {% for subchild in child.children %}
-              <a href="{{ subchild.get_absolute_url }}" class="d-flex flex-column gap-1 p-2 rounded-3 border border-body bg-body {% if subchild.selected %}border-primary bg-primary-subtle{% endif %}">
+              <a href="{{ subchild.get_absolute_url }}" class="dropdown-item d-flex flex-column gap-1 p-2 rounded-3 border border-body bg-body {% if subchild.selected %}border-primary bg-primary-subtle{% endif %}">
                 <div class="d-flex align-items-center justify-content-between">
                   <span class="d-grid glis-h-8 glis-w-8 glis-place-center rounded-2 bg-primary-subtle text-primary">
                     <i class="bi bi-grid-fill glis-text-xs"></i>
@@ -24,7 +25,7 @@
               {% endfor %}
             </div>
           </div>
-        </details>
+        </div>
       </li>
       {% else %}
       <li>

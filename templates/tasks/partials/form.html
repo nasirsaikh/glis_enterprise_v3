@@ -1,5 +1,5 @@
 {% load i18n %}
-<section class="card border border-primary-subtle bg-body shadow-lg" data-reveal>
+<section class="card border border-primary-subtle bg-body shadow-lg" data-reveal {% if task.ticket_id %}data-ticket-live data-ticket-reference="{{ task.ticket.reference }}" data-ticket-revision="{{ task.ticket.revision }}" data-ticket-updates-url="{% url 'portal:ticket_updates' task.ticket.reference %}"{% endif %}>
   <div class="card-body p-3 p-sm-4">
     <div class="d-flex align-items-start justify-content-between gap-3">
       <div><span class="badge text-bg-primary glis-badge-soft mb-2">{% if task %}{% translate "Edit task" %}{% else %}{% translate "Create task" %}{% endif %}</span><h2 class="card-title fs-5">{% translate "Task details" %}</h2><p class="mt-1 small text-body-secondary">{% translate "The task is synchronized with a GLIS ticket. Tagged users receive task status notifications." %}</p></div>
@@ -17,7 +17,7 @@
         <label class="glis-field glis-span-md-4"><span class="form-label">{% translate "Owner" %}</span>{{ form.owner }}{{ form.owner.errors }}</label>
         <label class="glis-field glis-span-md-4"><span class="form-label">{% translate "Priority" %}</span>{{ form.priority }}{{ form.priority.errors }}</label>
         <label class="glis-field glis-span-md-4"><span class="form-label">{% translate "Status" %}</span>{{ form.status }}{{ form.status.errors }}</label>
-        <fieldset class="glis-field glis-span-md-12"><legend class="form-label">{% translate "Tag / notify users" %}</legend><input class="form-control mb-2 w-100" type="search" placeholder="{% translate 'Search users' %}" data-multiselect-search="task-tagged-users"><div id="task-tagged-users" class="glis-max-h-56 overflow-y-auto rounded-3 border border-body bg-body-tertiary p-2">{% for checkbox in form.tagged_users %}<label class="d-flex glis-cursor-pointer align-items-center gap-2 rounded-3 px-2 py-2" data-multiselect-option data-search-text="{{ checkbox.choice_label|lower }}">{{ checkbox.tag }}<span class="small">{{ checkbox.choice_label }}</span></label>{% endfor %}</div>{{ form.tagged_users.errors }}<span class="form-text glis-text-xs text-body-secondary">{% translate "Tagged users are notified when the task ticket status changes." %}</span></fieldset>
+        <fieldset class="glis-field glis-span-md-12"><legend class="form-label">{% translate "Tag / notify users" %}</legend>{{ form.tagged_users }}{{ form.tagged_users.errors }}<span class="form-text glis-text-xs text-body-secondary">{% translate "Tagged users are notified when the task ticket status changes." %}</span></fieldset>
       </div>
       <div class="mt-3 d-flex justify-content-end"><button class="btn btn-primary rounded-pill" type="submit"><i class="bi bi-check2"></i>{% if task %}{% translate "Save changes" %}{% else %}{% translate "Create task" %}{% endif %}</button></div>
     </form>

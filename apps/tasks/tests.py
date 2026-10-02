@@ -2,6 +2,7 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
 from apps.tickets.models import Category, Product, Project
 
@@ -20,6 +21,19 @@ class RecurringTaskGenerationTests(TestCase):
 
     def test_month_end_is_clamped(self):
         self.assertEqual(_add_months(date(2026, 1, 31), 1), date(2026, 2, 28))
+
+    def test_task_tag_widget_and_multiple_selected_users_save(self):
+        admin = get_user_model().objects.create_superuser('task-admin', 'task-admin@example.test', 'test-pass')
+        self.client.force_login(admin)
+        response = self.client.get(reverse('tasks:create'))
+        self.assertContains(response, 'name="tagged_users"')
+        self.assertContains(response, '<select name="tagged_users"')
+        response = self.client.post(reverse('tasks:create'), {'title': 'Tagged task', 'due_date': '2026-10-03',
+            'project': self.project.pk, 'product': self.product.pk, 'category': self.category.pk, 'owner': self.owner.pk,
+            'priority': 'medium', 'status': 'new', 'tagged_users': [self.owner.pk, self.watcher.pk]})
+        self.assertEqual(response.status_code, 200)
+        task = Task.objects.get(title='Tagged task')
+        self.assertEqual(set(task.tagged_users.values_list('pk', flat=True)), {self.owner.pk, self.watcher.pk})
 
     def test_lead_days_create_once_and_copy_watchers(self):
         recurring = RecurringTask.objects.create(

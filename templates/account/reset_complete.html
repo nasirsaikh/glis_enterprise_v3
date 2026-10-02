@@ -1,0 +1,3 @@
+{% extends 'base_public.html' %}{% load i18n %}
+{% block title %}{% translate 'Password changed' %} · GLIS{% endblock %}
+{% block content %}<section class="py-5 px-3"><div class="mx-auto glis-max-lg card"><div class="card-body p-4"><h1 class="fs-4">{% translate 'Password changed' %}</h1><p>{% translate 'Sign in using your new password.' %}</p><a class="btn btn-primary" href="{% url 'account_login' %}">{% translate 'Sign in' %}</a></div></div></section>{% endblock %}

@@ -7,11 +7,10 @@
       <p class="mt-1 small text-body-secondary">{% translate "Task tickets remain part of the normal GLIS workflow and audit history." %}</p>
       {% else %}
       <h2 class="fs-5 fw-bold">{% blocktranslate count count=page_obj.paginator.count %}{{ count }} ticket{% plural %}{{ count }} tickets{% endblocktranslate %}</h2>
-      <p class="mt-1 small text-body-secondary">{% translate "Results respect your role, project and group access." %}</p>
       {% endif %}
     </div>
     <div class="d-flex align-items-center gap-2">
-      <span class="badge text-bg-success glis-badge-soft gap-1"><i class="bi bi-shield-check"></i>{% translate "Permission filtered" %}</span>
+      <span class="badge text-bg-success glis-badge-soft gap-1 p-2"><i class="bi bi-shield-check"></i>{% translate "Permission filtered" %}</span>
       <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal:export_tickets' %}?{{ request.GET.urlencode }}"><i class="bi bi-download"></i>{% translate "Export" %}</a>
     </div>
   </div>

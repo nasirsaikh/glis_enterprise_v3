@@ -774,14 +774,14 @@ class TicketApprovalAdmin(ScopedTicketAdminMixin, JSONModelAdmin):
 
     # Decisions must go through the shared service so the assigned actor,
     # audit ledger and linked domain state are updated together.
-    def has_add_permission(self, request):
-        return False
+    # def has_add_permission(self, request):
+    #     return False
 
-    def has_change_permission(self, request, obj=None):
-        return False
+    # def has_change_permission(self, request, obj=None):
+    #     return False
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+    # def has_delete_permission(self, request, obj=None):
+    #     return False
 
     list_display = (
         "ticket",

@@ -9,11 +9,12 @@
     <label class="glis-field"><span class="form-label">{% translate "Message" %} *</span>{{ comment_form.body }}</label>
 
     <div class="composer-options">
-    <label class="glis-field"><span class="form-label">{% translate "Status" %}</span>{{ comment_form.status }}</label>
+    <label class="glis-field">{{ comment_form.status }}</label>
     {% if comment_form.is_internal %}
     <label class="d-flex align-items-start gap-2 rounded-3 border border-body bg-body-tertiary p-2">
       {{ comment_form.is_internal }}
-      <span><strong class="d-block small">{% translate "Internal note" %}</strong><small class="text-body-secondary">{% translate "Internal notes are visible only to authorized staff." %}</small></span>
+      <span data-bs-toggle="tooltip" data-bs-placement="top" data-bs-custom-class="custom-tooltip" data-bs-title="{% translate "Internal notes are visible only to authorized staff." %}"><strong class="d-block small">{% translate "Internal note" %}</strong>
+  
     </label>
     {% endif %}
     </div>
@@ -22,6 +23,7 @@
     <div>
       <span class="mb-2 d-block small fw-semibold"><i class="bi bi-paperclip me-1"></i>{% translate "Documents" %} *</span>
       <div id="comment-dropzone" data-dropzone class="glis-cursor-pointer rounded-4 border glis-border-dashed border-body bg-body-tertiary p-4 text-center" role="button" tabindex="0">
+        
         <i class="bi bi-cloud-arrow-up mb-2 d-block fs-3 text-primary"></i>
         <strong class="d-block">{% translate "Drag & drop documents here" %}</strong>
         <span class="mt-1 d-block small text-body-secondary">{% translate "or click to select documents" %}</span>

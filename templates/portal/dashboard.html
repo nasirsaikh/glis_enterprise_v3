@@ -78,7 +78,7 @@
 
   <section class="portal-lower-grid" aria-label="{% translate 'Recent work and shortcuts' %}">
     <article class="portal-panel portal-recent-panel">
-      <div class="portal-panel__heading portal-panel__heading--padded"><div><span class="portal-section-kicker">{% translate "Recent activity" %}</span><h3>{% translate "Recent tickets" %}</h3><p>{% translate "The latest requests across your workspace." %}</p></div><a class="portal-text-link" href="{% url 'portal:ticket_list' %}">{% translate "View all" %}<i class="bi bi-arrow-up-right"></i></a></div>
+      <div class="portal-panel__heading portal-panel__heading--padded"><div><h3>{% translate "Recent tickets" %}</h3></div><a class="portal-text-link" href="{% url 'portal:ticket_list' %}">{% translate "View all" %}<i class="bi bi-arrow-up-right"></i></a></div>
       <div class="portal-table-wrap"><table class="portal-ticket-table"><thead><tr><th>{% translate "Ticket" %}</th><th>{% translate "Service" %}</th><th>{% translate "Priority" %}</th><th>{% translate "Status" %}</th><th>{% translate "SLA" %}</th><th><span class="visually-hidden">{% translate "Open ticket" %}</span></th></tr></thead><tbody>
         {% for ticket in recent_tickets %}
         <tr>
@@ -97,7 +97,11 @@
 
     <div class="portal-side-stack">
       <article class="portal-panel portal-attention-panel">
-        <div class="portal-panel__heading"><div><span class="portal-panel__eyebrow portal-panel__eyebrow--coral">{% translate "Attention" %}</span><h3>{% translate "Needs action" %}</h3><p>{% translate "Requests that may need a closer look." %}</p></div><span class="portal-count-badge">{{ attention|length }}</span></div>
+        <div class="portal-panel__heading"><div>
+          <!-- <span class="portal-panel__eyebrow portal-panel__eyebrow--coral">{% translate "Attention" %}</span> -->
+          <h3>{% translate "Needs action" %}</h3>
+        </div>
+          <span class="portal-count-badge">{{ attention|length }}</span></div>
         <ul class="portal-attention-list">
           {% for ticket in attention %}
           <li><span class="portal-attention-icon"><i class="bi bi-exclamation-lg"></i></span><a href="{% url 'portal:ticket_detail' ticket.reference %}"><strong>{{ ticket.reference }}</strong><small>{{ ticket.subject|truncatechars:42 }}</small></a><span class="badge text-bg-danger glis-badge-soft glis-badge-small">{{ ticket.sla_state|title }}</span></li>
@@ -107,7 +111,7 @@
         </ul>
       </article>
 
-      <article class="portal-panel portal-shortcuts-panel"><div class="portal-panel__heading"><div><span class="portal-panel__eyebrow">{% translate "Shortcuts" %}</span><h3>{% translate "Quick access" %}</h3></div></div>
+      <article class="portal-panel portal-shortcuts-panel"><div class="portal-panel__heading"><div><h3>{% translate "Quick access" %}</h3></div></div>
         <nav class="portal-shortcuts" aria-label="{% translate 'Quick access' %}">
           <a href="{% url 'portal:ticket_list' %}"><span class="portal-shortcut-icon"><i class="bi bi-ticket-perforated"></i></span><span><strong>{% translate "Tickets" %}</strong><small>{% translate "Manage service requests" %}</small></span><i class="bi bi-arrow-up-right portal-shortcut-arrow"></i></a>
           <a href="{% url 'tasks:list' %}"><span class="portal-shortcut-icon portal-shortcut-icon--blue"><i class="bi bi-list-task"></i></span><span><strong>{% translate "Tasks" %}</strong><small>{% translate "View your to-dos" %}</small></span><i class="bi bi-arrow-up-right portal-shortcut-arrow"></i></a>

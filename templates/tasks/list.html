@@ -2,7 +2,7 @@
 {% block content %}
 <div class="d-flex flex-column gap-3">
   <section class="card d-flex flex-column gap-4 rounded-4 border border-body bg-body p-4 shadow-sm flex-lg-row align-items-lg-end justify-content-lg-between" data-reveal>
-    <div><span class="badge text-bg-primary glis-badge-soft mb-2"><i class="bi bi-list-task me-1"></i>{% translate "Task workspace" %}</span><h1 class="fs-3 fw-bold">{% translate "Tasks" %}</h1><p class="mt-2 text-body-secondary">{% translate "Manage manual and recurring task occurrences. Every task is linked to a GLIS ticket." %}</p></div>
+    <div><h1 class="fs-3 fw-bold">{% translate "Recurring Tasks" %}</h1></div>
     <button class="btn btn-primary rounded-pill" type="button" hx-get="{% url 'tasks:create' %}" hx-target="#task-form-shell" hx-swap="innerHTML"><i class="bi bi-plus-lg"></i>{% translate "New task" %}</button>
   </section>
 

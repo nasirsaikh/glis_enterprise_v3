@@ -5,7 +5,7 @@
 <div class="glis-stack-5">
   <div class="glis-breadcrumbs small text-body-secondary"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li>{{ ticket.reference }}</li><li>{{ ticket.category }}</li></ul></div>
 
-  <section class="card rounded-4 border border-body bg-body p-3 shadow-sm p-sm-4" data-reveal>
+  <section class="card rounded-4 border border-body bg-body p-2 shadow-sm p-sm-4" data-reveal>
     <div class="d-flex flex-column gap-3 flex-xl-row align-items-xl-start justify-content-xl-between">
       <div class="glis-min-width-0 glis-flex-fill">
         <div class="d-flex flex-wrap align-items-center gap-2">
@@ -49,7 +49,8 @@
   <div class="d-grid gap-3 ticket-layout">
     <section class="card ticket-conversation glis-min-width-0 border border-body bg-body shadow-sm" data-reveal>
       <div class="d-flex align-items-center justify-content-between gap-3 border-bottom border-body px-3 py-3 px-sm-4">
-        <div><h2 class="d-flex align-items-center gap-2 fs-5 fw-bold"><i class="bi bi-chat-left-text text-primary"></i>{% translate "Conversation" %}</h2><p class="mt-1 glis-text-xs text-body-secondary">{{ comments|length }} {% translate "updates" %}</p></div>
+        <div><h2 class="d-flex align-items-center gap-2 fs-5 fw-bold">
+          <i class="bi bi-chat-left-text text-primary"></i>{{ comments|length }} {% translate "Conversation" %}</h2></div>
         <span class="badge bg-body-secondary text-body-secondary gap-1"><i class="bi bi-paperclip"></i>{{ ticket.attachments.count }} {% translate "files" %}</span>
       </div>
 
@@ -78,7 +79,8 @@
 
       <div id="comment-list" class="comment-list p-3 p-sm-4">
         {% for comment in comments %}{% include "tickets/partials/comment.html" %}{% empty %}
-        <div id="no-comments" class="d-flex flex-column align-items-center gap-2 py-4 text-center text-body-secondary"><i class="bi bi-chat-square fs-3"></i><strong class="text-body">{% translate "No conversation yet" %}</strong><span class="small">{% translate "Add the first update below." %}</span></div>
+        <div id="no-comments" class="d-flex flex-column align-items-center gap-2 py-4 text-center text-body-secondary"><i class="bi bi-chat-square fs-3"></i>
+          <strong class="text-body">{% translate "No conversation yet" %}</strong><span class="small">{% translate "Add the first update below." %}</span></div>
         {% endfor %}
       </div>
       <div id="comment-composer">{% if ticket.status != "closed" %}<div class="border-top border-body p-3 p-sm-4">{% include "tickets/partials/comment_form.html" %}</div>{% endif %}</div>

@@ -1,20 +1,62 @@
 {% load i18n %}
 <section class="card border border-body bg-body shadow-lg" data-reveal>
-  <div class="d-flex flex-column gap-2 border-bottom border-body px-3 py-3 flex-sm-row align-items-sm-center justify-content-sm-between px-sm-4">
-    <div><h2 class="fs-5 fw-bold">{% blocktranslate count count=page_obj.paginator.count %}{{ count }} task{% plural %}{{ count }} tasks{% endblocktranslate %}</h2><p class="mt-1 small text-body-secondary">{% translate "Recurring occurrences and manually created tasks in one workspace." %}</p></div>
-    <a class="btn btn-outline-secondary btn-sm" href="{% url 'portal:ticket_list' %}?tab=tasks"><i class="bi bi-ticket-perforated"></i>{% translate "Task tickets" %}</a>
+  <div
+    class="d-flex flex-column gap-2 border-bottom border-body px-2 py-2 flex-sm-row align-items-sm-center justify-content-sm-between px-sm-4">
+    <div>
+      <h2 class="fs-5 fw-bold">{% blocktranslate count count=page_obj.paginator.count %}{{ count }} task{% plural %}{{ count }} tasks{% endblocktranslate %}</h2>
+    </div>
+    <a class="btn btn-outline-success btn-sm" href="{% url 'portal:ticket_list' %}?tab=tasks"><i
+        class="bi bi-ticket-perforated"></i>{% translate "Task tickets" %}</a>
   </div>
-  <div class="overflow-x-auto"><table data-server-paginated="true" class="table table-striped">
-    <thead><tr><th>{% translate "Task" %}</th><th>{% translate "Owner / watchers" %}</th><th>{% translate "Due" %}</th><th>{% translate "Source" %}</th><th>{% translate "Priority" %}</th><th>{% translate "Status" %}</th><th>{% translate "Ticket" %}</th><th></th></tr></thead>
-    <tbody>{% for task in tasks %}<tr class="">
-      <td><strong class="d-block">{{ task.title }}</strong><small class="text-body-secondary">{{ task.project.name_en }} · {{ task.category.name_en }}</small></td>
-      <td><span class="d-block">{{ task.owner.get_full_name|default:task.owner.email }}</span><small class="d-block glis-max-w-56 text-truncate text-body-secondary">{% for watcher in task.tagged_users.all %}{{ watcher.get_full_name|default:watcher.email }}{% if not forloop.last %}, {% endif %}{% empty %}{% translate "No tagged users" %}{% endfor %}</small></td>
-      <td><span class="{% if task.due_date < today and task.status != 'resolved' and task.status != 'closed' %}fw-bold text-danger{% endif %}">{{ task.due_date|date:"d M Y" }}</span></td>
-      <td>{% if task.recurring_task_id %}<span class="badge text-bg-info glis-badge-soft"><i class="bi bi-arrow-repeat"></i>{% translate "Recurring" %}</span>{% else %}<span class="badge bg-body-secondary text-body-secondary">{% translate "Manual" %}</span>{% endif %}</td>
-      <td><span class="badge text-bg-warning glis-badge-soft glis-badge-small">{{ task.get_priority_display }}</span></td><td><span class="badge border text-body-secondary bg-transparent glis-badge-small">{{ task.status_display }}</span></td>
-      <td>{% if task.ticket_id %}<a class="fw-bold text-primary" href="{% url 'portal:ticket_detail' task.ticket.reference %}">{{ task.ticket.reference }}</a>{% else %}—{% endif %}</td>
-      <td><div class="d-flex justify-content-end gap-1"><button class="btn btn-light glis-btn-icon rounded-circle btn-sm" type="button" hx-get="{% url 'tasks:edit' task.pk %}" hx-target="#task-form-shell" hx-swap="innerHTML"><i class="bi bi-pencil"></i></button><button class="btn btn-light glis-btn-icon rounded-circle btn-sm text-danger" type="button" hx-post="{% url 'tasks:delete' task.pk %}" hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}' hx-confirm="{% translate 'Remove this task from the active list and close its linked ticket?' %}" hx-target="#task-table" hx-swap="innerHTML"><i class="bi bi-trash"></i></button></div></td>
-    </tr>{% empty %}<tr><td colspan="8"><div class="d-flex flex-column align-items-center gap-2 py-5 text-body-secondary"><i class="bi bi-list-task fs-3"></i><strong>{% translate "No matching tasks" %}</strong><p>{% translate "Adjust the filters or create a new task." %}</p></div></td></tr>{% endfor %}</tbody>
-  </table></div>
+  <div class="overflow-x-auto">
+    <table data-server-paginated="true" class="table table-striped table-sm">
+      <thead>
+        <tr>
+          <th>{% translate "Task" %}</th>
+          <th>{% translate "Category" %}</th>
+          <th>{% translate "Owner / watchers" %}</th>
+          <th>{% translate "Due" %}</th>
+          <th>{% translate "Source" %}</th>
+          <th>{% translate "Priority" %}</th>
+          <th>{% translate "Status" %}</th>
+          <th>{% translate "Ticket" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>{% for task in tasks %}<tr class="">
+          <td><strong class="d-block">{{ task.title }}</strong></td>
+          <td>{{ task.project.name_en }} · {{ task.category.name_en }}</td>
+          <td><span class="d-block">{{ task.owner.get_full_name|default:task.owner.email }}</span>
+            <small class="d-block glis-max-w-56 text-truncate text-body-secondary">
+              {% for watcher in task.tagged_users.all %}
+              {{ watcher.get_full_name|default:watcher.email }}
+              {% if not forloop.last %}, {% endif %}{% empty %}{% translate "No tagged users" %}{% endfor %}</small>
+            </td>
+          <td><span class="{% if task.due_date < today and task.status != 'resolved' and task.status != 'closed' %}fw-bold text-danger{% endif %}">{{ task.due_date|date:"d M Y" }}</span></td>
+          <td>{% if task.recurring_task_id %}<span class="badge text-bg-info glis-badge-soft">
+            <i class="bi bi-arrow-repeat"></i>{% translate "Recurring" %}</span>{% else %}<span class="badge bg-body-secondary text-body-secondary">{% translate "Manual" %}</span>{% endif %}</td>
+          <td><span class="badge text-bg-warning glis-badge-soft glis-badge-small">{{ task.get_priority_display }}</span></td>
+          <td><span class="badge border text-body-secondary bg-transparent glis-badge-small">{{ task.status_display }}</span></td>
+          <td>{% if task.ticket_id %}<a class="fw-bold text-primary" href="{% url 'portal:ticket_detail' task.ticket.reference %}">{{ task.ticket.reference }}</a>{% else %}—{% endif %}</td>
+          <td>
+            <div class="d-flex justify-content-end gap-1"><button
+                class="btn btn-light glis-btn-icon rounded-circle btn-sm" type="button"
+                hx-get="{% url 'tasks:edit' task.pk %}" hx-target="#task-form-shell" hx-swap="innerHTML"><i
+                  class="bi bi-pencil"></i></button><button
+                class="btn btn-light glis-btn-icon rounded-circle btn-sm text-danger" type="button"
+                hx-post="{% url 'tasks:delete' task.pk %}" hx-headers='{"X-CSRFToken":"{{ csrf_token }}"}'
+                hx-confirm="{% translate 'Remove this task from the active list and close its linked ticket?' %}"
+                hx-target="#task-table" hx-swap="innerHTML"><i class="bi bi-trash"></i></button></div>
+          </td>
+        </tr>{% empty %}<tr>
+          <td colspan="8">
+            <div class="d-flex flex-column align-items-center gap-2 py-5 text-body-secondary"><i
+                class="bi bi-list-task fs-3"></i><strong>{% translate "No matching tasks" %}</strong>
+              <p>{% translate "Adjust the filters or create a new task." %}</p>
+            </div>
+          </td>
+        </tr>{% endfor %}</tbody>
+    </table>
+  </div>
   {% include "components/table_pagination.html" %}
 </section>

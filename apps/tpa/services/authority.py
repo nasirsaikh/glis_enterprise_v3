@@ -14,11 +14,7 @@ def resolve_email_authority(email_address, policy, transaction_type, *, as_of=No
         return None
 
     day = as_of or timezone.localdate()
-    organization_ids = {
-        policy.organization_id,
-        policy.insurance_company_id,
-
-    }
+    organization_ids = {policy.organization_id}
     organization_ids.update(policy.workflow_organizations.filter(is_active=True).values_list("pk", flat=True))
     organization_ids.discard(None)
 

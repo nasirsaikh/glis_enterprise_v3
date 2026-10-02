@@ -12,7 +12,6 @@
       <dl class="d-grid glis-grid-2 gap-3 border-top border-body pt-3 glis-grid-md-4">
         <div><dt class="glis-text-xs opacity-50">{% translate "Policy status" %}</dt><dd class="badge glis-badge-soft {% if policy.status == 'active' %}text-bg-success{% else %}text-bg-warning{% endif %} mt-1">{{ policy.get_status_display }}</dd></div>
         <div><dt class="glis-text-xs opacity-50">{% translate "Coverage period" %}</dt><dd class="mt-1 small fw-semibold">{{ policy.start_date|date:"d M Y" }} – {{ policy.expiry_date|date:"d M Y" }}</dd></div>
-        <div><dt class="glis-text-xs opacity-50">{% translate "Insurer" %}</dt><dd class="mt-1 small fw-semibold">{{ policy.insurance_company.name_en }}</dd></div>
         <div><dt class="glis-text-xs opacity-50">{% translate "TPA" %}</dt><dd class="mt-1 small fw-semibold">{{ policy.workflow_organizations.first.name_en|default:"GLIS TPA Operations" }}</dd></div>
       </dl>
     </div>

@@ -10,7 +10,7 @@ from services.ticket_workflow import initialize_approval_workflow, notify_users
 def create_business_request(*, workflow_type, policy, requester, organization=None, subject='', description='', payload=None, project_id=None, initialize=True):
     organization = organization or policy.organization
     projects = Project.objects.filter(is_active=True, workflow_type=workflow_type).filter(
-        Q(organizations__isnull=True) | Q(organizations__in=[organization, policy.insurance_company])
+        Q(organizations__isnull=True) | Q(organizations=organization) | Q(organizations__in=policy.workflow_organizations.all())
     ).filter(Q(organization_types__isnull=True) | Q(organization_types__code=organization.organization_type_id)).distinct()
     if project_id:
         projects = projects.filter(pk=project_id)
@@ -47,6 +47,5 @@ def attach_organizations(ticket):
     if ticket.organization_id:
         TicketOrganization.objects.get_or_create(ticket=ticket,organization=ticket.organization,relationship_type='owner',defaults={'is_primary':True,'can_edit':True,'can_assign':True})
     if ticket.policy_id:
-        TicketOrganization.objects.get_or_create(ticket=ticket,organization=ticket.policy.insurance_company,relationship_type='insurer',defaults={'can_approve':True})
         for organization in ticket.policy.workflow_organizations.filter(is_active=True,organization_type__is_active=True):
             TicketOrganization.objects.get_or_create(ticket=ticket,organization=organization,relationship_type='processing',defaults={'can_edit':True,'can_assign':True})

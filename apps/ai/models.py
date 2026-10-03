@@ -62,6 +62,7 @@ class AIProviderConfig(TimeStampedModel):
     class Provider(models.TextChoices):
         MOCK="mock","Mock / Testing"
         OLLAMA="ollama","Ollama"
+        HUGGINGFACE="huggingface","Hugging Face"
         OPENAI_COMPATIBLE="openai_compatible","OpenAI-compatible"
         OPENAI="openai","OpenAI"
         ANTHROPIC="anthropic","Anthropic"

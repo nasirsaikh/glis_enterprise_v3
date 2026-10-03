@@ -99,6 +99,19 @@ def _endpoint(config, default):
     return (config.endpoint or default).rstrip("/")
 
 
+def _openai_style_endpoint(config, provider):
+    if provider == "openai":
+        default = "https://api.openai.com/v1"
+    elif provider == "huggingface":
+        default = "https://router.huggingface.co/v1"
+    else:
+        default = ""
+    endpoint = _endpoint(config, default)
+    if not endpoint:
+        raise RuntimeError("OpenAI-compatible provider endpoint is required.")
+    return endpoint if endpoint.endswith("/chat/completions") else f"{endpoint}/chat/completions"
+
+
 def generate_json(config, *, system_prompt, user_prompt, images=None, response_schema=None):
     started = time.perf_counter()
     provider = config.provider
@@ -155,12 +168,8 @@ def generate_json(config, *, system_prompt, user_prompt, images=None, response_s
             raw = (result.get("message") or {}).get("content", "")
         payload = _json_from_text(raw)
 
-    elif provider in {"openai", "openai_compatible"}:
-        default = "https://api.openai.com/v1" if provider == "openai" else ""
-        endpoint = _endpoint(config, default)
-        if not endpoint:
-            raise RuntimeError("OpenAI-compatible provider endpoint is required.")
-        url = endpoint if endpoint.endswith("/chat/completions") else f"{endpoint}/chat/completions"
+    elif provider in {"openai", "openai_compatible", "huggingface"}:
+        url = _openai_style_endpoint(config, provider)
         headers = {"Content-Type": "application/json"}
         if secret:
             headers["Authorization"] = f"Bearer {secret}"
@@ -180,6 +189,7 @@ def generate_json(config, *, system_prompt, user_prompt, images=None, response_s
         else:
             user_content = user_prompt
 
+        runtime_options = dict(config.runtime_options or {})
         body = {
             "model": config.model_name,
             "temperature": float(config.temperature or 0),
@@ -187,9 +197,13 @@ def generate_json(config, *, system_prompt, user_prompt, images=None, response_s
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content},
             ],
-            "response_format": {"type": "json_object"},
-            **(config.runtime_options or {}),
+            **runtime_options,
         }
+        # Hugging Face routes to multiple backends. Some do not support
+        # OpenAI response_format even when they support chat completions, so
+        # schema enforcement is carried in the system prompt for HF.
+        if provider != "huggingface":
+            body.setdefault("response_format", {"type": "json_object"})
         with httpx.Client(timeout=timeout) as client:
             response = client.post(url, headers=headers, json=body)
             response.raise_for_status()
@@ -287,12 +301,8 @@ def generate_text(config, *, system_prompt, user_prompt, images=None):
             result = _ollama_result(response, config.model_name)
             raw = (result.get("message") or {}).get("content") or result.get("response", "")
 
-    elif provider in {"openai", "openai_compatible"}:
-        default = "https://api.openai.com/v1" if provider == "openai" else ""
-        endpoint = _endpoint(config, default)
-        if not endpoint:
-            raise RuntimeError("OpenAI-compatible provider endpoint is required.")
-        url = endpoint if endpoint.endswith("/chat/completions") else f"{endpoint}/chat/completions"
+    elif provider in {"openai", "openai_compatible", "huggingface"}:
+        url = _openai_style_endpoint(config, provider)
         headers = {"Content-Type": "application/json"}
         if secret:
             headers["Authorization"] = f"Bearer {secret}"

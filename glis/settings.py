@@ -96,6 +96,7 @@ INSTALLED_APPS = [
     "location_field",
     "django_visitor_tracker",
     "apps.job_center.apps.JobCenterConfig",
+    "js_lib_dropzone",
 ]
 
 MIDDLEWARE = [

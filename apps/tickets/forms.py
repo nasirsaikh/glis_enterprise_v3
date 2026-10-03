@@ -73,10 +73,7 @@ class TicketCreateStep1Form(forms.Form):
         # --------------------------------
         # Projects user can access
         # --------------------------------
-        self.fields["project"].queryset = (
-            accessible_projects(user)
-            .order_by("name_en")
-        )
+        self.fields["project"].queryset = (accessible_projects(user).order_by("name_en"))
 
         if not self.supports_business_requests:
             self.fields['project'].queryset=self.fields['project'].queryset.filter(request_type__in=['service','other'])
@@ -197,6 +194,7 @@ class TicketCommentForm(forms.ModelForm):
 class TicketEditForm(forms.ModelForm):
     class Meta:
         model = Ticket
+        
         fields = ("subject", "description", "priority", "status")
         widgets = {
             "subject": forms.TextInput(attrs={"class": "form-control w-100"}),

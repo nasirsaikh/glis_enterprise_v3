@@ -635,7 +635,7 @@ def policy_enrollment_create(request):
 
     creation_steps = [
         {"label": _("Policy & Routing"), "fields": [form[name] for name in [
-            "organization", "insurance_company", "product", "policy_type", "policy_number", "policy_name"
+            "organization", "product", "policy_type", "policy_number", "policy_name"
         ]]},
         {"label": _("Period & Rules"), "fields": [form[name] for name in [
             "start_date", "expiry_date", "currency", "stp_enabled", "allowed_backdating_days"

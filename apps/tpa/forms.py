@@ -215,11 +215,7 @@ class PolicyEnrollmentForm(forms.Form):
     product = forms.ModelChoiceField(queryset=Product.objects.none(), required=False)
     policy_type = forms.ChoiceField(choices=[], required=False)
 
-    organization = forms.ModelChoiceField(
-        queryset=Organization.objects.none(),
-        label="Organization",
-        help_text="Organizations are assigned globally to your user account.",
-    )
+    organization = forms.ModelChoiceField(queryset=Organization.objects.none(),label="Organization")
     policy_number = forms.CharField(max_length=80)
     policy_name = forms.CharField(max_length=180)
     start_date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))

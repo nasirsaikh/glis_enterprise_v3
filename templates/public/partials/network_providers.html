@@ -2,23 +2,13 @@
 {% get_current_language as LANGUAGE_CODE %}
 
 <div id="network-provider-results" class="d-flex flex-column gap-4">
-  <div class="d-flex flex-column gap-3 flex-lg-row align-items-lg-end justify-content-lg-between">
-    <div class="glis-max-3xl">
-      <span class="badge text-bg-primary glis-badge-soft mb-2 gap-2"><i class="bi bi-geo-alt"></i>{% translate "Healthcare Network" %}</span>
-      <h2 class="fs-3 fw-bold">{% translate "Find a network provider" %}</h2>
-      <p class="mt-2 text-body-secondary">{% translate "Search hospitals, clinics, pharmacies and other healthcare providers in our medical network." %}</p>
-    </div>
-    <span class="badge text-bg-success border text-body-secondary bg-transparent">{{ providers|length }} {% translate "providers found" %}</span>
-  </div>
-
   <form hx-get="{% url 'home_network_providers' %}" hx-target="#network-provider-results" hx-swap="outerHTML" hx-trigger="submit, change delay:300ms">
     <!-- Compact Single-Line Filter Grid -->
     <div class="d-grid glis-grid-1 gap-2 glis-grid-sm-2 glis-grid-lg-5">
       <label class="glis-field m-0">
         <span class="form-label glis-text-xs">{% translate "Search" %}</span>
         <div class="position-relative">
-          <i class="bi bi-search pe-none position-absolute glis-start-3 top-50 glis-layer-10 translate-middle-y text-body-secondary"></i>
-          <input type="search" name="search" class="form-control form-control-sm w-100 ps-4" placeholder="{% translate 'Hospital, clinic...' %}" value="{{ request.GET.search }}" hx-trigger="input changed delay:400ms, search">
+          <input type="search" name="search" class="form-control form-control-sm w-100 ps-4" placeholder="🔍 {% translate 'Hospital, clinic...' %}" value="{{ request.GET.search }}" hx-trigger="input changed delay:400ms, search">
         </div>
       </label>
 
@@ -57,7 +47,7 @@
   </form>
 
   <div class="overflow-x-auto rounded-3 border border-body">
-    <table class="table table-striped glis-min-width-48rem">
+    <table class="table glis-min-width-48rem">
       <thead>
         <tr>
           <th>{% translate "Provider" %}</th>

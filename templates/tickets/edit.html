@@ -1,5 +1,12 @@
-{% extends 'base_portal.html' %}{% load i18n %}{% block title %}{% translate "Edit" %} {{ ticket.reference }}{% endblock %}
+{% extends 'base_portal.html' %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% translate "Edit" %} {{ ticket.reference }}{% endblock %}
 {% block content %}
+
+<link rel="stylesheet" href="{%static "js_lib_dropzone/dropzone.css" %}">
+
+
 <div class="mx-auto glis-max-5xl glis-stack-5">
   <div class="glis-breadcrumbs small text-body-secondary"><ul><li><a href="{% url 'portal:ticket_list' %}">{% translate "Tickets" %}</a></li><li><a href="{% url 'portal:ticket_detail' ticket.reference %}">{{ ticket.reference }}</a></li><li>{% translate "Edit" %}</li></ul></div>
   <section class="card rounded-4 border border-body bg-body p-4 shadow-sm" data-reveal>
@@ -20,4 +27,8 @@
     </div>
   </form>
 </div>
+
+<script src="{%static "js_lib_dropzone/js/dropzone.js" %}"></script>
+
+
 {% endblock %}

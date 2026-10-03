@@ -142,7 +142,11 @@ class Category(TimeStampedModel, LocalizedModelMixin):
             models.UniqueConstraint(fields=["product", "code"],name="unique_product_category",)]
         permissions = [("manage_categories","Can manage categories",)]
     def __str__(self):
-        return self.name_en
+        if self.product and self.product.project:
+            project_name = self.product.project.name_en
+        else:
+            project_name = "No Project"        
+        return f"{project_name} · {self.product} · {self.name_en}"
 
 def default_pause_statuses():
     return ["pending_customer"]

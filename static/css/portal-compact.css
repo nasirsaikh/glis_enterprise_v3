@@ -38,7 +38,7 @@
 .ticket-conversation .rich-content :is(p,ul,ol) { margin-block: .25rem; }
 .ticket-conversation .rich-content img { max-width: 100%; height: auto; border-radius: .6rem; }
 .ticket-conversation .rich-content table { display: block; max-width: 100%; overflow-x: auto; }
-.ticket-conversation #comment-list { max-height: 200px; overflow-y: auto; overscroll-behavior: contain; padding: .85rem; }
+.ticket-conversation #comment-list { max-height: 200vh; overflow-y: auto; overscroll-behavior: contain; padding: .85rem; }
 .ticket-conversation #comment-composer > div { padding: .85rem; }
 .ticket-conversation .composer-options { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
 .ticket-conversation .composer-options .glis-field { width: 12rem; }
